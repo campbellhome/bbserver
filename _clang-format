@@ -1,0 +1,35 @@
+# Documentation - Overview: http://clang.llvm.org/docs/ClangFormat.html
+# Documentation - Style Options: http://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
+AccessModifierOffset: -4
+TabWidth: 4
+IndentWidth: 4
+BreakBeforeBraces: Linux # work has Allman
+AllowShortIfStatementsOnASingleLine: false
+# not in 3.8 FixNamespaceComments: true
+# ForEachMacros: ['RANGES_FOR', 'FOREACH']
+IndentCaseLabels: false
+IndentWrappedFunctionNames: false
+ColumnLimit: 0
+Standard: Cpp11
+NamespaceIndentation: All
+PointerAlignment: Right
+BreakConstructorInitializersBeforeComma: true
+Cpp11BracedListStyle: false
+SpaceAfterCStyleCast: false
+# not in 3.8 SpaceAfterTemplateKeyword: false
+SpaceBeforeParens: Never # Always, Never, ControlStatements
+SpacesInAngles: true
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false # work has true
+SpacesInSquareBrackets: false
+UseTab: ForIndentation # Always, Never, ForIndentation, ForContinuationAndIndentation
+#AlignConsecutiveAssignments: true
+#AlignConsecutiveDeclarations: true
+AlignTrailingComments: true
+AllowShortCaseLabelsOnASingleLine: true
+AlwaysBreakTemplateDeclarations: true
+ReflowComments: true
+
+SortIncludes: true
+# not in 3.8 SortUsingDeclarations: true

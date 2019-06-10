@@ -1,0 +1,12 @@
+.git/
+bin/
+lib/
+linux/
+obj/
+src/a.out
+src/*.pdb
+vs/
+!vs/*.sln
+!vs/*.vcxproj
+!vs/*.vcxproj.filters
+!vs/*.props

@@ -1,0 +1,3 @@
+[submodule "submodules/mc_imgui"]
+	path = submodules/mc_imgui
+	url = https://github.com/campbellhome/mc_imgui

@@ -1,0 +1,4 @@
+clang-format -i include/*.h src/*.c*
+pushd submodules/mc_common
+./clang-format-all
+popd
