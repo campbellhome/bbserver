@@ -1,0 +1,11 @@
+#include "win32_resource.h"
+
+IDI_MAINICON ICON "blackbox.ico"
+
+IDR_SYSTRAY_MENU MENU
+BEGIN
+    POPUP "POPUP"
+    BEGIN
+        MENUITEM "Exit Blackbox", ID_SYSTRAY_EXIT
+    END
+END

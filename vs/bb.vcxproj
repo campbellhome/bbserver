@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>bb</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <OutDir>..\bin\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>$(ProjectName)_d</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ImDrawIdx=unsigned int;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Shcore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\bbserver_asserts.h" />
+    <ClInclude Include="..\src\bbserver_update.h" />
+    <ClInclude Include="..\src\bb_json_generated.h" />
+    <ClInclude Include="..\src\bb_structs_generated.h" />
+    <ClInclude Include="..\src\config.h" />
+    <ClInclude Include="..\src\config_whitelist_push.h" />
+    <ClInclude Include="..\src\devkit_autodetect.h" />
+    <ClInclude Include="..\src\discovery_thread.h" />
+    <ClInclude Include="..\src\dragdrop.h" />
+    <ClInclude Include="..\src\globals.h" />
+    <ClInclude Include="..\src\bb_colors.h" />
+    <ClInclude Include="..\src\imgui_tooltips.h" />
+    <ClInclude Include="..\src\line_parser.h" />
+    <ClInclude Include="..\src\message_queue.h" />
+    <ClInclude Include="..\src\recorded_session.h" />
+    <ClInclude Include="..\src\recorded_session_thread.h" />
+    <ClInclude Include="..\src\recorder_thread.h" />
+    <ClInclude Include="..\src\recordings.h" />
+    <ClInclude Include="..\src\recordings_config.h" />
+    <ClInclude Include="..\src\site_config.h" />
+    <ClInclude Include="..\src\system_tray.h" />
+    <ClInclude Include="..\src\theme_config.h" />
+    <ClInclude Include="..\src\ui_config.h" />
+    <ClInclude Include="..\src\ui_recordings.h" />
+    <ClInclude Include="..\src\ui_view.h" />
+    <ClInclude Include="..\src\ui_view_console_command.h" />
+    <ClInclude Include="..\src\update.h" />
+    <ClInclude Include="..\src\uuid_config.h" />
+    <ClInclude Include="..\src\view.h" />
+    <ClInclude Include="..\src\view_config.h" />
+    <ClInclude Include="..\src\win32_resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\bbserver_asserts.c" />
+    <ClCompile Include="..\src\bbserver_main.cpp" />
+    <ClCompile Include="..\src\bbserver_update.cpp" />
+    <ClCompile Include="..\src\bb_json_generated.c" />
+    <ClCompile Include="..\src\bb_structs_generated.c" />
+    <ClCompile Include="..\src\config.c" />
+    <ClCompile Include="..\src\config_whitelist_push.c" />
+    <ClCompile Include="..\src\devkit_autodetect.c" />
+    <ClCompile Include="..\src\discovery_thread.c" />
+    <ClCompile Include="..\src\dragdrop.c" />
+    <ClCompile Include="..\src\globals.c" />
+    <ClCompile Include="..\src\bb_colors.cpp" />
+    <ClCompile Include="..\src\imgui_tooltips.cpp" />
+    <ClCompile Include="..\src\line_parser.c" />
+    <ClCompile Include="..\src\message_queue.c" />
+    <ClCompile Include="..\src\recorded_session.c" />
+    <ClCompile Include="..\src\recorded_session_thread.c" />
+    <ClCompile Include="..\src\recorder_thread.c" />
+    <ClCompile Include="..\src\recordings.c" />
+    <ClCompile Include="..\src\recordings_config.c" />
+    <ClCompile Include="..\src\site_config.c" />
+    <ClCompile Include="..\src\system_tray.c" />
+    <ClCompile Include="..\src\theme_config.c" />
+    <ClCompile Include="..\src\ui_config.cpp" />
+    <ClCompile Include="..\src\ui_recordings.cpp" />
+    <ClCompile Include="..\src\ui_view.cpp" />
+    <ClCompile Include="..\src\ui_view_console_command.cpp" />
+    <ClCompile Include="..\src\update.c" />
+    <ClCompile Include="..\src\uuid_config.c" />
+    <ClCompile Include="..\src\view.c" />
+    <ClCompile Include="..\src\view_config.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\src\win32_resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\src\blackbox.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <Import Project="..\submodules\mc_imgui\vs\mc_imgui_lib.props" />
+  <Import Project="..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.props" />
+  <Import Project="..\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
+      <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\submodules\mc_imgui\vs\mc_imgui_lib.vcxproj">
+      <Project>{66884295-0814-45d5-8187-0ff01a6c0333}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <PreBuildEvent>
+      <Command>..\submodules\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -prefix=bb_ -src=..\src -include=..\src ..\src -header=..\submodules\mc_imgui\submodules\mc_common\include -header=..\submodules\mc_imgui\include
+if not exist "$(OutDir)freetype.dll" copy ..\submodules\mc_imgui\submodules\freetype\win64\freetype.dll "$(OutDir)"</Command>
+      <Message>Running mc_common_preproc</Message>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\submodules\mc_imgui\submodules\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <ClCompile>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5045</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5045</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>
