@@ -46,6 +46,7 @@ static char s_bbLogPath[kBBSize_MaxPath];
 static bool BBServer_InitViewer(const char *cmdline)
 {
 	if(cmdline && *cmdline) {
+		globals.viewer = true;
 		if(*cmdline == '\"') {
 			++cmdline;
 		}
