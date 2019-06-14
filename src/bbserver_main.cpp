@@ -280,6 +280,18 @@ static void BBServer_InitRegistry()
 
 //////////////////////////////////////////////////////////////////////////
 
+LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = Update_HandleWindowMessage(hWnd, msg, wParam, lParam);
+	if(result) {
+		return result;
+	}
+	if(msg == WM_DROPFILES) {
+		return DragDrop_OnDropFiles(wParam);
+	}
+	return 0;
+}
+
 int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
 {
 	crt_leak_check_init();
@@ -301,7 +313,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 						Fonts_AddFont(g_config.uiFontConfig);
 						Fonts_AddFont(g_config.logFontConfig);
 						Style_ReadConfig(Imgui_Core_GetColorScheme());
-						Imgui_Core_UserWndProc(Update_HandleWindowMessage);
+						Imgui_Core_SetUserWndProc(&BBServer_HandleWindowMessage);
 						while(!Imgui_Core_IsShuttingDown()) {
 							if(Imgui_Core_GetAndClearDirtyWindowPlacement()) {
 								config_getwindowplacement(hwnd);
