@@ -3,6 +3,8 @@
 
 #include "bbserver_update.h"
 #include "bbclient/bb_log.h"
+#include "bbclient/bb_string.h"
+#include "bbclient/bb_time.h"
 #include "devkit_autodetect.h"
 #include "fonts.h"
 #include "globals.h"
@@ -20,6 +22,7 @@
 #include "ui_recordings.h"
 #include "ui_view.h"
 #include "update.h"
+#include "va.h"
 #include "view.h"
 #include "wrap_imgui.h"
 
@@ -68,6 +71,122 @@ void BBServer_DebugInfiniteRecursion()
 {
 	BB_LOG("UI::Menu::Debug", "User-initiated infinite recursion");
 	infinite_recursion(0);
+}
+
+static void App_GenerateColorTestLogs()
+{
+	BB_LOG("Test::Blink", "^F"
+	                      "This"
+	                      "^F"
+	                      " is a %s"
+	                      "colored and ^Fblinking^F%s log\n",
+	       warningColorStr, normalColorStr);
+
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_VeryVerbose, 0, "Test::Color::VeryVerbose", "This log is VeryVerbose");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Verbose, 0, "Test::Color::Verbose", "This log is Verbose");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 0, "Test::Color::Log", "This log is Log");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Display, 0, "Test::Color::Display", "This log is Display");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Warning, 0, "Test::Color::Warning", "This log is Warning");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Error, 0, "Test::Color::Error", "This log is Error");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Fatal, 0, "Test::Color::Fatal", "This log is Fatal");
+
+	for(int i = 0; i < kNumColorKeys; ++i) {
+		char c = kFirstColorKey + (char)i;
+		BB_LOG("Test::Color::Log", "This is a log with %c%cColor %c%c%c%c%s, which should be %s\n",
+		       kColorKeyPrefix, c, kColorKeyPrefix, kColorKeyPrefix, c, c, normalColorStr, textColorNames[i + kColorKeyOffset]);
+	}
+
+	for(int i = 0; i < kNumColorKeys; ++i) {
+		char c = kFirstColorKey + (char)i;
+		BB_WARNING("Test::Color::Warning", "This is a warning with %c%cColor %c%c%c%c%s, which should be %s\n",
+		           kColorKeyPrefix, c, kColorKeyPrefix, kColorKeyPrefix, c, c, warningColorStr, textColorNames[i + kColorKeyOffset]);
+	}
+
+	for(int i = 0; i < kNumColorKeys; ++i) {
+		char c = kFirstColorKey + (char)i;
+		BB_ERROR("Test::Color::Error", "This is an error with %c%cColor %c%c%c%c%s, which should be %s\n",
+		         kColorKeyPrefix, c, kColorKeyPrefix, kColorKeyPrefix, c, c, errorColorStr, textColorNames[i + kColorKeyOffset]);
+	}
+
+	for(int i = kBBColor_UE4_Black; i < kBBColor_Count; ++i) {
+		BB_SET_COLOR((bb_color_t)i, kBBColor_Default);
+		BB_LOG("Test::Color::SetColor", "This log text should be %s", textColorNames[i]);
+	}
+	for(int i = kBBColor_UE4_Black; i < kBBColor_Count; ++i) {
+		bb_color_t fgColor = (i == kBBColor_UE4_DarkBlue ||
+		                      i == kBBColor_UE4_Blue ||
+		                      i == kBBColor_UE4_Black)
+		                         ? kBBColor_Default
+		                         : kBBColor_UE4_Black;
+		BB_SET_COLOR(fgColor, (bb_color_t)i);
+		BB_LOG("Test::Color::SetColor", "This log text should be on %s", textColorNames[i]);
+	}
+	BB_SET_COLOR(kBBColor_Default, kBBColor_Default);
+}
+
+static void App_GenerateLineTestLogs()
+{
+	BB_LOG("Test::Multiline", "FirstLine\nSecondLine\n");
+	BB_LOG("Test::Multiline", "FirstWithTrailingBlank\n\n");
+	BB_LOG("Test::Multiline", "\n\n");
+	BB_LOG("Test::Multiline", "\n\nPrevious was 2 blank lines - this has 2 before and 3 after.\n\n\n");
+
+	BB_LOG("Test::Long Line", "This is a reasonably long line, which one might expect to wrap in a tooltip, even though it does not in the log view.  It *should* wrap at 600px in the tooltip.  At least, it did when this was written.  That might have changed by now, but the point remains - this is a long log line.\n");
+
+	BB_LOG_PARTIAL("Test::Partial", "this is a ");
+	BB_LOG_PARTIAL("Test::Partial", "^0__partial__^7");
+	BB_LOG_PARTIAL("Test::Partial", " test\n");
+
+	BB_LOG_PARTIAL("Test::Partial", "this is a ");
+	BB_LOG_PARTIAL("Test::Partial", "__partial__");
+	BB_LOG_PARTIAL("Test::Partial::Subcategory", "(interrupting partial different category)");
+	BB_LOG_PARTIAL("Test::Partial", " test\n");
+
+	BB_LOG_PARTIAL("Test::Partial", "this is a ");
+	BB_LOG_PARTIAL("Test::Partial", "__partial__");
+	BB_WARNING_PARTIAL("Test::Partial", "(interrupting partial warning)");
+	BB_LOG_PARTIAL("Test::Partial", " test\n");
+
+	BB_LOG_PARTIAL("Test::Partial", "this is a ");
+	BB_LOG_PARTIAL("Test::Partial", "__partial__");
+	BB_LOG("Test::Partial", "(interrupting log)");
+	BB_LOG_PARTIAL("Test::Partial", " test\n");
+
+	BB_LOG("Test::Multiline", "^8Line terminated by \\r\\n\r\nLine terminated by \\n\nLine terminated by \\r\rLine unterminated");
+}
+
+static void App_GeneratePIEInstanceTestLogs()
+{
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 0, "Test::PIEInstance", "This log is from PIEInstance 0");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 1, "Test::PIEInstance", "This log is from PIEInstance 1");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 2, "Test::PIEInstance", "This log is from PIEInstance 2");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 3, "Test::PIEInstance", "This log is from PIEInstance 3");
+	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 4, "Test::PIEInstance", "This log is from PIEInstance 4");
+}
+
+static bb_thread_return_t app_test_log_thread(void *args)
+{
+	u32 i = (u32)(u64)args;
+	BB_THREAD_SET_NAME(va("app_test_log_thread %u", i));
+
+	u64 count = 0;
+	u64 start = bb_current_time_ms();
+	u64 now = start;
+	u64 end = now + 10000;
+	while(now < end) {
+		BB_TRACE(kBBLogLevel_Verbose, "Test::ThreadSpam", "app_test_log_thread %u %llu dt %llu ms", i, ++count, now - start);
+		now = bb_current_time_ms();
+	}
+
+	BB_THREAD_END();
+	return 0;
+}
+
+static void App_GenerateSpamTestLogs()
+{
+	for(u64 i = 0; i < 10; ++i) {
+		bbthread_create(app_test_log_thread, (void *)i);
+	}
 }
 
 void BBServer_MainMenuBar(void)
@@ -150,13 +269,105 @@ void BBServer_MainMenuBar(void)
 			}
 			ImGui::EndMenu();
 		}
-		if(ImGui::BeginMenu("Imgui Help")) {
-			ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
-			ImGui::MenuItem("About", nullptr, &s_showImguiAbout);
-			ImGui::MenuItem("Metrics", nullptr, &s_showImguiMetrics);
-			ImGui::MenuItem("User Guide", nullptr, &s_showImguiUserGuide);
-			ImGui::MenuItem("Style Editor", nullptr, &s_showImguiStyleEditor);
+		if(ImGui::BeginMenu("Help")) {
+			if(ImGui::BeginMenu("ImGui")) {
+				ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
+				ImGui::MenuItem("About", nullptr, &s_showImguiAbout);
+				ImGui::MenuItem("Metrics", nullptr, &s_showImguiMetrics);
+				ImGui::MenuItem("User Guide", nullptr, &s_showImguiUserGuide);
+				ImGui::MenuItem("Style Editor", nullptr, &s_showImguiStyleEditor);
+				ImGui::EndMenu();
+			}
+			if(ImGui::BeginMenu("Logging Test")) {
+				if(ImGui::MenuItem("Colors")) {
+					App_GenerateColorTestLogs();
+				}
+				if(ImGui::MenuItem("Lines")) {
+					App_GenerateLineTestLogs();
+				}
+				if(ImGui::MenuItem("PIEInstance")) {
+					App_GeneratePIEInstanceTestLogs();
+				}
+				if(ImGui::MenuItem("Thread Spam")) {
+					App_GenerateSpamTestLogs();
+				}
+				ImGui::EndMenu();
+			}
+#if 0
+			recording_t *r = recordings_find_main_log();
+			recorded_session_t *s = r ? recorded_session_find(r->path) : nullptr;
+			if(s) {
+				bool logReads = s->logReads != 0;
+				if(ImGui::MenuItem("Log All Reads", NULL, &logReads)) {
+					s->logReads = logReads;
+					BB_LOG("Debug", "Toggled spammy for '%s'\n", s->appInfo.packet.appInfo.applicationName);
+				}
+			}
+#endif
 			ImGui::EndMenu();
+		}
+		if(ImGui::BeginMenu("Update")) {
+			updateManifest_t *manifest = Update_GetManifest();
+			auto AnnotateVersion = [manifest](const char *version) {
+				const char *annotated = version;
+				if(version && !bb_stricmp(version, sb_get(&manifest->stable))) {
+					annotated = va("%s (stable)", version);
+				} else if(version && !bb_stricmp(version, sb_get(&manifest->latest))) {
+					annotated = va("%s (latest)", version);
+				}
+				return annotated;
+			};
+			const char *currentVersion = Update_GetCurrentVersion();
+			const char *currentVersionAnnotated = AnnotateVersion(currentVersion);
+			ImGui::MenuItem(va("version %s", *currentVersionAnnotated ? currentVersionAnnotated : "unknown"), nullptr, false, false);
+			if(ImGui::MenuItem("Check for updates")) {
+				Update_CheckForUpdates();
+			}
+			if(ImGui::BeginMenu("Set desired version")) {
+				if(ImGui::MenuItem("stable", nullptr, Update_IsDesiredVersion("stable"))) {
+					Update_SetDesiredVersion("stable");
+				}
+				if(ImGui::MenuItem("latest", nullptr, Update_IsDesiredVersion("latest"))) {
+					Update_SetDesiredVersion("latest");
+				}
+				for(u32 i = 0; i < (manifest ? manifest->versions.count : 0); ++i) {
+					updateVersion_t *version = manifest->versions.data + i;
+					const char *versionName = sb_get(&version->name);
+					if(ImGui::MenuItem(AnnotateVersion(versionName), nullptr, Update_IsDesiredVersion(versionName))) {
+						Update_SetDesiredVersion(versionName);
+					}
+				}
+				ImGui::EndMenu();
+			}
+			if(g_config.updateManagement && *currentVersion && !Update_IsStableVersion(currentVersion)) {
+				if(ImGui::MenuItem(va("Promote %s to stable version", currentVersion))) {
+					Update_SetStableVersion(currentVersion);
+				}
+			}
+			if(g_updateIgnoredVersion) {
+				if(ImGui::MenuItem(va("Update to version %u and restart", g_updateIgnoredVersion))) {
+					Update_RestartAndUpdate(g_updateIgnoredVersion);
+				}
+			}
+			ImGui::EndMenu();
+		}
+
+		ImFont *font = ImGui::GetFont();
+		ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "Recordings");
+
+		ImGuiStyle &style = ImGui::GetStyle();
+		float checkWidth = style.FramePadding.x * 4 + style.ItemInnerSpacing.x + textSize.y;
+
+		float width = BB_MAX((textSize.x + checkWidth + 10) * g_config.dpiScale, UIRecordings_WidthWhenOpen());
+		ImGui::SameLine(ImGui::GetWindowWidth() - width);
+		if(ImGui::Checkbox("Recordings", &g_config.recordingsOpen)) {
+			BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
+		}
+		if(ImGui::BeginPopupContextItem("RecordingsContext")) {
+			if(ImGui::Selectable("Auto-close all")) {
+				recorded_session_auto_close_all();
+			}
+			ImGui::EndPopup();
 		}
 		ImGui::EndMainMenuBar();
 	}
