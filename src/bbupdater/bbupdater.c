@@ -1,8 +1,8 @@
 // Copyright (c) 2012-2019 Matt Campbell
 // MIT license (see License.txt)
 
-#include "appdata.h"
 #include "bb.h"
+#include "appdata.h"
 #include "bbclient/bb_array.h"
 #include "bbclient/bb_defines.h"
 #include "bbclient/bb_packet.h"

@@ -1,4 +1,0 @@
-clang-format -i src/*.h src/*.c*
-pushd submodules/mc_imgui
-./clang-format-all
-popd

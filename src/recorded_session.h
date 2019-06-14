@@ -5,9 +5,9 @@
 
 #include "config.h"
 
+#include "bb_thread.h"
 #include "bbclient/bb_criticalsection.h"
 #include "bbclient/bb_packet.h"
-#include "bb_thread.h"
 
 #if defined(__cplusplus)
 extern "C" {
