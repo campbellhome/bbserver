@@ -1,8 +1,8 @@
 // Copyright (c) 2012-2019 Matt Campbell
 // MIT license (see License.txt)
 
-#include "bb.h"
 #include "appdata.h"
+#include "bb.h"
 #include "bbclient/bb_array.h"
 #include "bbclient/bb_defines.h"
 #include "bbclient/bb_packet.h"
@@ -12,6 +12,7 @@
 #include "file_utils.h"
 #include "path_utils.h"
 #include "update_utils.h"
+#include "va.h"
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
 #include "bb_thread.h"
@@ -20,13 +21,12 @@
 #include "sdict.h"
 #endif
 
-#include "bb_wrap_dirent.h"
-#include "parson/parson.h"
-
-#include "va.h"
 #include <stdarg.h>
 
 // thirdparty
+
+#include "bb_wrap_dirent.h"
+#include "parson/parson.h"
 
 BB_WARNING_PUSH(4100 4127 4232 4242 4244 4255 4468 4548 4668 4820 5045)
 #if defined(__clang__)
