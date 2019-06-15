@@ -200,7 +200,7 @@ static u32 get_p4_version(void)
 	u32 version = 0;
 	process_init();
 	const char *cmdline = "p4.exe -G filelog -m 1 ...#have";
-	processSpawnResult_t spawnRes = process_spawn("..", cmdline, kProcessSpawn_Tracked, kProcessLog_All);
+	processSpawnResult_t spawnRes = process_spawn("..\\..\\..\\..\\..", cmdline, kProcessSpawn_Tracked, kProcessLog_All);
 	if(spawnRes.success) {
 		processTickResult_t tickRes = { BB_EMPTY_INITIALIZER };
 		while(!tickRes.done) {
