@@ -302,6 +302,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 	if(BBServer_SingleInstanceCheck(classname)) {
 		if(Imgui_Core_Init(CommandLine)) {
 			if(BBServer_Init()) {
+				Imgui_Core_SetTextShadows(g_config.textShadows);
 				if(globals.viewer || SystemTray_Init(Instance)) {
 					Fonts_ClearFonts();
 					const char *title = (globals.viewer) ? va("%s.bbox - Blackbox", globals.viewerName) : "Blackbox";
