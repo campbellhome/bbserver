@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "recorder_thread.h"
+#include "bb_structs_generated.h"
 #include "message_queue.h"
 #include "recordings.h"
 
@@ -167,9 +168,9 @@ bb_thread_return_t recorder_thread(void *args)
 		b32 dirty = false;
 		u64 lastFlush = bb_current_time_ms();
 		new_recording_t recording;
-		recording.applicationName = data->applicationName;
-		recording.applicationFilename = applicationName;
-		recording.path = path;
+		recording.applicationName = sb_from_c_string(data->applicationName);
+		recording.applicationFilename = sb_from_c_string(applicationName);
+		recording.path = sb_from_c_string(path);
 		recording.openView = false;
 		recording.mainLog = false;
 		recording.mqId = mq_invalid_id();
@@ -251,6 +252,7 @@ bb_thread_return_t recorder_thread(void *args)
 		}
 		to_ui(kToUI_RecordingStop, "%s\n%s", data->applicationName, path);
 		mq_releaseref(recording.mqId);
+		new_recording_reset(&recording);
 	}
 
 	bbnet_gracefulclose(&con->socket);

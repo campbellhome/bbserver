@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "dragdrop.h"
+#include "bb_structs_generated.h"
 #include "bbclient/bb_string.h"
 #include "common.h"
 #include "message_queue.h"
@@ -29,16 +30,17 @@ static void DragDrop_ProcessPath(const char *path)
 		if(*filename) {
 			const char *ext = strrchr(filename, '.');
 			if(ext && !bb_stricmp(ext, ".bbox")) {
-				new_recording_t cmdlineRecording;
+				new_recording_t cmdlineRecording = { BB_EMPTY_INITIALIZER };
 				GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
-				cmdlineRecording.applicationName = filename;
-				cmdlineRecording.applicationFilename = filename;
-				cmdlineRecording.path = path;
+				cmdlineRecording.applicationName = sb_from_c_string(filename);
+				cmdlineRecording.applicationFilename = sb_from_c_string(filename);
+				cmdlineRecording.path = sb_from_c_string(path);
 				cmdlineRecording.openView = true;
 				cmdlineRecording.mainLog = false;
 				cmdlineRecording.mqId = mq_invalid_id();
 				cmdlineRecording.platform = kBBPlatform_Unknown;
 				to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));
+				new_recording_reset(&cmdlineRecording);
 				//to_ui(kToUI_RecordingStop, "%s\n%s", filename, path);
 			}
 		}

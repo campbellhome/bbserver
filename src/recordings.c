@@ -2,6 +2,8 @@
 // MIT license (see License.txt)
 
 #include "recordings.h"
+#include "bb_json_generated.h"
+#include "bb_structs_generated.h"
 #include "config.h"
 #include "fonts.h"
 #include "message_queue.h"
@@ -17,6 +19,7 @@
 
 #include "bbclient/bb_wrap_stdio.h"
 #include "globals.h"
+#include "parson/parson.h"
 #include <stdlib.h>
 
 void sanitize_app_filename(const char *applicationName, char *applicationFilename, size_t applicationFilenameLen);
@@ -71,37 +74,28 @@ static char *recording_get_next_string(char *src)
 
 const char *recording_build_start_identifier(new_recording_t recording)
 {
-	return va("%s\n%s\n%s\n%u\n%u\n%d\n%d\n%d\n%u",
-	          recording.applicationName,
-	          recording.applicationFilename,
-	          recording.path,
-	          recording.filetime.dwHighDateTime,
-	          recording.filetime.dwLowDateTime,
-	          recording.openView,
-	          recording.mainLog,
-	          recording.mqId,
-	          recording.platform);
+	char *result = "";
+	JSON_Value *json = json_serialize_new_recording_t(&recording);
+	if(json) {
+		char *str = json_serialize_to_string(json);
+		if(str) {
+			result = va("%s", str);
+			json_free_serialized_string(str);
+		}
+		json_value_free(json);
+	}
+	return result;
 }
 
 static new_recording_t recording_build_new_recording(char *data)
 {
-	char *hi, *lo, *openView, *mainLog, *mqId, *platform;
-	new_recording_t r;
-	r.applicationName = data;
-	r.applicationFilename = data = recording_get_next_string(data);
-	r.path = data = recording_get_next_string(data);
-	hi = data = recording_get_next_string(data);
-	lo = data = recording_get_next_string(data);
-	openView = data = recording_get_next_string(data);
-	mainLog = data = recording_get_next_string(data);
-	mqId = data = recording_get_next_string(data);
-	platform = data = recording_get_next_string(data);
-	r.filetime.dwHighDateTime = (hi) ? strtoul(hi, NULL, 10) : 0;
-	r.filetime.dwLowDateTime = (lo) ? strtoul(lo, NULL, 10) : 0;
-	r.openView = openView && atoi(openView) == 1;
-	r.mainLog = mainLog && atoi(mainLog) == 1;
-	r.mqId = mqId ? atoi(mqId) : mq_invalid_id();
-	r.platform = (platform) ? strtoul(platform, NULL, 10) : 0;
+	new_recording_t r = { BB_EMPTY_INITIALIZER };
+	r.mqId = mq_invalid_id();
+	JSON_Value *json = json_parse_string(data);
+	if(json) {
+		r = json_deserialize_new_recording_t(json);
+		json_value_free(json);
+	}
 	return r;
 }
 
@@ -205,70 +199,72 @@ void recording_add_existing(char *data, b32 valid)
 {
 	recording_t *recording;
 	new_recording_t r = recording_build_new_recording(data);
-	if(!r.path)
-		return;
-	if(recordings_find_by_path(r.path))
-		return;
-	recordings_t *recordings = (valid) ? &s_recordings : &s_invalidRecordings;
-	recording = bba_add(*recordings, 1);
-	if(recording) {
-		recording->id = ++s_nextRecordingId;
-		recording->active = false;
-		bb_strncpy(recording->applicationName, r.applicationName, sizeof(recording->applicationName));
-		bb_strncpy(recording->applicationFilename, r.applicationFilename, sizeof(recording->applicationFilename));
-		bb_strncpy(recording->path, r.path, sizeof(recording->path));
-		Fonts_CacheGlyphs(recording->applicationName);
-		Fonts_CacheGlyphs(recording->applicationFilename);
-		Fonts_CacheGlyphs(recording->path);
-		recording->filetimeHigh = r.filetime.dwHighDateTime;
-		recording->filetimeLow = r.filetime.dwLowDateTime;
-		recording->outgoingMqId = mq_invalid_id();
-		recording->platform = r.platform;
-		s_recordingsDirty = true;
+	if(sb_len(&r.path)) {
+		if(!recordings_find_by_path(sb_get(&r.path))) {
+			recordings_t *recordings = (valid) ? &s_recordings : &s_invalidRecordings;
+			recording = bba_add(*recordings, 1);
+			if(recording) {
+				recording->id = ++s_nextRecordingId;
+				recording->active = false;
+				bb_strncpy(recording->applicationName, sb_get(&r.applicationName), sizeof(recording->applicationName));
+				bb_strncpy(recording->applicationFilename, sb_get(&r.applicationFilename), sizeof(recording->applicationFilename));
+				bb_strncpy(recording->path, sb_get(&r.path), sizeof(recording->path));
+				Fonts_CacheGlyphs(recording->applicationName);
+				Fonts_CacheGlyphs(recording->applicationFilename);
+				Fonts_CacheGlyphs(recording->path);
+				recording->filetimeHigh = r.filetime.dwHighDateTime;
+				recording->filetimeLow = r.filetime.dwLowDateTime;
+				recording->outgoingMqId = mq_invalid_id();
+				recording->platform = r.platform;
+				s_recordingsDirty = true;
+			}
+		}
 	}
+	new_recording_reset(&r);
 }
 
 void recording_started(char *data)
 {
 	recording_t *recording, *existing;
 	new_recording_t r = recording_build_new_recording(data);
-	if(!r.path)
-		return;
-	existing = recordings_find_by_path(r.path);
-	if(existing) {
-		existing->active = true;
-		// #todo: existing sessions should become inactive and not try to read from the file any more
-		return;
-	}
-	recording = bba_add(s_recordings, 1);
-	if(recording) {
-		recording->id = ++s_nextRecordingId;
-		recording->active = true;
-		recording->mainLog = r.mainLog;
-		bb_strncpy(recording->applicationName, r.applicationName, sizeof(recording->applicationName));
-		bb_strncpy(recording->applicationFilename, r.applicationFilename, sizeof(recording->applicationFilename));
-		bb_strncpy(recording->path, r.path, sizeof(recording->path));
-		Fonts_CacheGlyphs(recording->applicationName);
-		Fonts_CacheGlyphs(recording->applicationFilename);
-		Fonts_CacheGlyphs(recording->path);
-		recording->filetimeHigh = r.filetime.dwHighDateTime;
-		recording->filetimeLow = r.filetime.dwLowDateTime;
-		recording->platform = r.platform;
-		if(r.mqId == mq_invalid_id()) {
-			recording->outgoingMqId = mq_invalid_id();
+	if(sb_len(&r.path)) {
+		existing = recordings_find_by_path(sb_get(&r.path));
+		if(existing) {
+			existing->active = true;
+			// #todo: existing sessions should become inactive and not try to read from the file any more
 		} else {
-			recording->outgoingMqId = mq_addref(r.mqId);
-		}
-		s_recordingsDirty = true;
-		if(r.openView) {
-			if(g_config.autoCloseAll) {
-				recorded_session_auto_close_all();
-			} else {
-				recorded_session_auto_close(r.applicationName);
+			recording = bba_add(s_recordings, 1);
+			if(recording) {
+				recording->id = ++s_nextRecordingId;
+				recording->active = true;
+				recording->mainLog = r.mainLog;
+				bb_strncpy(recording->applicationName, sb_get(&r.applicationName), sizeof(recording->applicationName));
+				bb_strncpy(recording->applicationFilename, sb_get(&r.applicationFilename), sizeof(recording->applicationFilename));
+				bb_strncpy(recording->path, sb_get(&r.path), sizeof(recording->path));
+				Fonts_CacheGlyphs(recording->applicationName);
+				Fonts_CacheGlyphs(recording->applicationFilename);
+				Fonts_CacheGlyphs(recording->path);
+				recording->filetimeHigh = r.filetime.dwHighDateTime;
+				recording->filetimeLow = r.filetime.dwLowDateTime;
+				recording->platform = r.platform;
+				if(r.mqId == mq_invalid_id()) {
+					recording->outgoingMqId = mq_invalid_id();
+				} else {
+					recording->outgoingMqId = mq_addref(r.mqId);
+				}
+				s_recordingsDirty = true;
+				if(r.openView) {
+					if(g_config.autoCloseAll) {
+						recorded_session_auto_close_all();
+					} else {
+						recorded_session_auto_close(sb_get(&r.applicationName));
+					}
+					recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), true, true, recording->outgoingMqId);
+				}
 			}
-			recorded_session_open(r.path, r.applicationFilename, true, true, recording->outgoingMqId);
 		}
 	}
+	new_recording_reset(&r);
 }
 
 void recording_stopped(char *data)
@@ -441,16 +437,17 @@ static void recordings_find_files_in_dir(const char *dir)
 					b32 valid = recordings_get_application_info(filter, &decoded);
 					char applicationFilename[kBBSize_ApplicationName];
 					new_recording_t recording;
-					recording.applicationName = decoded.packet.appInfo.applicationName;
-					sanitize_app_filename(recording.applicationName, applicationFilename, sizeof(applicationFilename));
-					recording.applicationFilename = applicationFilename;
-					recording.path = filter;
+					recording.applicationName = sb_from_c_string(decoded.packet.appInfo.applicationName);
+					sanitize_app_filename(sb_get(&recording.applicationName), applicationFilename, sizeof(applicationFilename));
+					recording.applicationFilename = sb_from_c_string(applicationFilename);
+					recording.path = sb_from_c_string(filter);
 					recording.filetime = find.ftLastWriteTime;
 					recording.openView = false;
 					recording.mainLog = false;
 					recording.mqId = mq_invalid_id();
 					recording.platform = decoded.packet.appInfo.platform;
 					to_ui(valid ? kToUI_AddExistingFile : kToUI_AddInvalidExistingFile, "%s", recording_build_start_identifier(recording));
+					new_recording_reset(&recording);
 				}
 			}
 		} while(FindNextFileA(hFind, &find));

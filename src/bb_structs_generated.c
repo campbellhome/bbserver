@@ -11,6 +11,7 @@
 
 #include "config.h"
 #include "fonts.h"
+#include "recordings.h"
 #include "sb.h"
 #include "sdict.h"
 #include "site_config.h"
@@ -263,6 +264,46 @@ config_t config_clone(const config_t *src)
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
 			dst.pad[i] = src->pad[i];
 		}
+	}
+	return dst;
+}
+
+void FILETIME_reset(FILETIME *val)
+{
+	if(val) {
+	}
+}
+FILETIME FILETIME_clone(const FILETIME *src)
+{
+	FILETIME dst = { 0 };
+	if(src) {
+		dst.dwLowDateTime = src->dwLowDateTime;
+		dst.dwHighDateTime = src->dwHighDateTime;
+	}
+	return dst;
+}
+
+void new_recording_reset(new_recording_t *val)
+{
+	if(val) {
+		sb_reset(&val->applicationName);
+		sb_reset(&val->applicationFilename);
+		sb_reset(&val->path);
+		FILETIME_reset(&val->filetime);
+	}
+}
+new_recording_t new_recording_clone(const new_recording_t *src)
+{
+	new_recording_t dst = { 0 };
+	if(src) {
+		dst.applicationName = sb_clone(&src->applicationName);
+		dst.applicationFilename = sb_clone(&src->applicationFilename);
+		dst.path = sb_clone(&src->path);
+		dst.filetime = FILETIME_clone(&src->filetime);
+		dst.openView = src->openView;
+		dst.mainLog = src->mainLog;
+		dst.mqId = src->mqId;
+		dst.platform = src->platform;
 	}
 	return dst;
 }

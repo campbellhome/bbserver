@@ -9,6 +9,14 @@
 extern "C" {
 #endif
 
+// define the Windows structs for preproc
+#if 0
+AUTOJSON typedef struct _FILETIME {
+    unsigned long dwLowDateTime;
+    unsigned long dwHighDateTime;
+} FILETIME;
+#endif
+
 typedef enum recording_sort_e {
 	kRecordingSort_StartTime,
 	kRecordingSort_Application,
@@ -34,10 +42,10 @@ typedef struct recording_s {
 	u32 platform;
 } recording_t;
 
-typedef struct new_recording_s {
-	const char *applicationName;
-	const char *applicationFilename;
-	const char *path;
+AUTOJSON typedef struct new_recording_s {
+	sb_t applicationName;
+	sb_t applicationFilename;
+	sb_t path;
 	FILETIME filetime;
 	b32 openView;
 	b32 mainLog;

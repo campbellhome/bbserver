@@ -16,6 +16,7 @@
 #include "crt_leak_check.h"
 #include "devkit_autodetect.h"
 #include "discovery_thread.h"
+#include "dragdrop.h"
 #include "globals.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"
@@ -36,8 +37,8 @@
 #include "view.h"
 #include "win32_resource.h"
 
+#include "bb_structs_generated.h"
 #include "bbclient/bb_wrap_stdio.h"
-#include "dragdrop.h"
 #include "va.h"
 
 static char s_imguiPath[kBBSize_MaxPath];
@@ -142,14 +143,15 @@ static b32 BBServer_Init(void)
 	if(globals.viewer) {
 		new_recording_t cmdlineRecording;
 		GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
-		cmdlineRecording.applicationName = globals.viewerName;
-		cmdlineRecording.applicationFilename = globals.viewerName;
-		cmdlineRecording.path = globals.viewerPath;
+		cmdlineRecording.applicationName = sb_from_c_string(globals.viewerName);
+		cmdlineRecording.applicationFilename = sb_from_c_string(globals.viewerName);
+		cmdlineRecording.path = sb_from_c_string(globals.viewerPath);
 		cmdlineRecording.openView = true;
 		cmdlineRecording.mainLog = false;
 		cmdlineRecording.mqId = mq_invalid_id();
 		cmdlineRecording.platform = kBBPlatform_Unknown;
 		to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));
+		new_recording_reset(&cmdlineRecording);
 
 		g_config.recordingsOpen = false;
 		g_config.autoTileViews = 1;
@@ -160,9 +162,9 @@ static b32 BBServer_Init(void)
 			new_recording_t recording;
 			config_push_whitelist(&g_config.whitelist);
 			GetSystemTimeAsFileTime(&recording.filetime);
-			recording.applicationName = applicationName;
-			recording.applicationFilename = "bb";
-			recording.path = s_bbLogPath;
+			recording.applicationName = sb_from_c_string(applicationName);
+			recording.applicationFilename = sb_from_c_string("bb");
+			recording.path = sb_from_c_string(s_bbLogPath);
 #ifdef _DEBUG
 			recording.openView = true;
 #else
@@ -172,6 +174,7 @@ static b32 BBServer_Init(void)
 			recording.mqId = mq_invalid_id();
 			recording.platform = bb_platform();
 			to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(recording));
+			new_recording_reset(&recording);
 
 			recordings_init();
 			return true;

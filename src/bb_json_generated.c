@@ -12,6 +12,7 @@
 
 #include "config.h"
 #include "fonts.h"
+#include "recordings.h"
 #include "sb.h"
 #include "sdict.h"
 #include "site_config.h"
@@ -217,6 +218,40 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
 				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
 			}
+		}
+	}
+	return dst;
+}
+
+FILETIME json_deserialize_FILETIME(JSON_Value *src)
+{
+	FILETIME dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.dwLowDateTime = (unsigned long)json_object_get_number(obj, "dwLowDateTime");
+			dst.dwHighDateTime = (unsigned long)json_object_get_number(obj, "dwHighDateTime");
+		}
+	}
+	return dst;
+}
+
+new_recording_t json_deserialize_new_recording_t(JSON_Value *src)
+{
+	new_recording_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.applicationName = json_deserialize_sb_t(json_object_get_value(obj, "applicationName"));
+			dst.applicationFilename = json_deserialize_sb_t(json_object_get_value(obj, "applicationFilename"));
+			dst.path = json_deserialize_sb_t(json_object_get_value(obj, "path"));
+			dst.filetime = json_deserialize_FILETIME(json_object_get_value(obj, "filetime"));
+			dst.openView = json_object_get_boolean_safe(obj, "openView");
+			dst.mainLog = json_object_get_boolean_safe(obj, "mainLog");
+			dst.mqId = (u32)json_object_get_number(obj, "mqId");
+			dst.platform = (u32)json_object_get_number(obj, "platform");
 		}
 	}
 	return dst;
@@ -682,6 +717,34 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
 			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
 		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_FILETIME(const FILETIME *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_number(obj, "dwLowDateTime", src->dwLowDateTime);
+		json_object_set_number(obj, "dwHighDateTime", src->dwHighDateTime);
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_new_recording_t(const new_recording_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "applicationName", json_serialize_sb_t(&src->applicationName));
+		json_object_set_value(obj, "applicationFilename", json_serialize_sb_t(&src->applicationFilename));
+		json_object_set_value(obj, "path", json_serialize_sb_t(&src->path));
+		json_object_set_value(obj, "filetime", json_serialize_FILETIME(&src->filetime));
+		json_object_set_boolean(obj, "openView", src->openView);
+		json_object_set_boolean(obj, "mainLog", src->mainLog);
+		json_object_set_number(obj, "mqId", src->mqId);
+		json_object_set_number(obj, "platform", src->platform);
 	}
 	return val;
 }
