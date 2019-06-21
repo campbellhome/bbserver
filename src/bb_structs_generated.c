@@ -301,7 +301,7 @@ new_recording_t new_recording_clone(const new_recording_t *src)
 		dst.path = sb_clone(&src->path);
 		dst.filetime = FILETIME_clone(&src->filetime);
 		dst.openView = src->openView;
-		dst.mainLog = src->mainLog;
+		dst.recordingType = src->recordingType;
 		dst.mqId = src->mqId;
 		dst.platform = src->platform;
 	}

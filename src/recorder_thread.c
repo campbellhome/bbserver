@@ -172,7 +172,7 @@ bb_thread_return_t recorder_thread(void *args)
 		recording.applicationFilename = sb_from_c_string(applicationName);
 		recording.path = sb_from_c_string(path);
 		recording.openView = false;
-		recording.mainLog = false;
+		recording.recordingType = kRecordingType_Normal;
 		recording.mqId = mq_invalid_id();
 		recording.platform = kBBPlatform_Unknown;
 		GetSystemTimeAsFileTime(&recording.filetime);

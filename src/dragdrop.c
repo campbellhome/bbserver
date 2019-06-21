@@ -36,7 +36,7 @@ static void DragDrop_ProcessPath(const char *path)
 				cmdlineRecording.applicationFilename = sb_from_c_string(filename);
 				cmdlineRecording.path = sb_from_c_string(path);
 				cmdlineRecording.openView = true;
-				cmdlineRecording.mainLog = false;
+				cmdlineRecording.recordingType = kRecordingType_ExternalFile;
 				cmdlineRecording.mqId = mq_invalid_id();
 				cmdlineRecording.platform = kBBPlatform_Unknown;
 				to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));

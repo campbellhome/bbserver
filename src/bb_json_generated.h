@@ -51,6 +51,7 @@ typedef struct fontConfig_s fontConfig_t;
 typedef struct fontConfigs_s fontConfigs_t;
 
 typedef enum tag_configColorUsage configColorUsage;
+typedef enum recording_type_e recording_type_t;
 typedef enum view_config_selector_e view_config_selector_t;
 
 POINT json_deserialize_POINT(JSON_Value *src);
@@ -129,9 +130,11 @@ JSON_Value *json_serialize_fontConfigs_t(const fontConfigs_t *src);
 
 
 configColorUsage json_deserialize_configColorUsage(JSON_Value *src);
+recording_type_t json_deserialize_recording_type_t(JSON_Value *src);
 view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src);
 
 JSON_Value *json_serialize_configColorUsage(const configColorUsage src);
+JSON_Value *json_serialize_recording_type_t(const recording_type_t src);
 JSON_Value *json_serialize_view_config_selector_t(const view_config_selector_t src);
 #if defined(__cplusplus)
 } // extern "C"

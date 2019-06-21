@@ -57,7 +57,7 @@ recording_t *recordings_find_main_log(void)
 	u32 i;
 	for(i = 0; i < s_recordings.count; ++i) {
 		recording_t *r = s_recordings.data + i;
-		if(r->mainLog != 0)
+		if(r->recordingType == kRecordingType_MainLog)
 			return r;
 	}
 	return NULL;
@@ -237,7 +237,7 @@ void recording_started(char *data)
 			if(recording) {
 				recording->id = ++s_nextRecordingId;
 				recording->active = true;
-				recording->mainLog = r.mainLog;
+				recording->recordingType = r.recordingType;
 				bb_strncpy(recording->applicationName, sb_get(&r.applicationName), sizeof(recording->applicationName));
 				bb_strncpy(recording->applicationFilename, sb_get(&r.applicationFilename), sizeof(recording->applicationFilename));
 				bb_strncpy(recording->path, sb_get(&r.path), sizeof(recording->path));
@@ -443,7 +443,7 @@ static void recordings_find_files_in_dir(const char *dir)
 					recording.path = sb_from_c_string(filter);
 					recording.filetime = find.ftLastWriteTime;
 					recording.openView = false;
-					recording.mainLog = false;
+					recording.recordingType = kRecordingType_ExistingFile;
 					recording.mqId = mq_invalid_id();
 					recording.platform = decoded.packet.appInfo.platform;
 					to_ui(valid ? kToUI_AddExistingFile : kToUI_AddInvalidExistingFile, "%s", recording_build_start_identifier(recording));

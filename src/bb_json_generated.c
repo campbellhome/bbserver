@@ -249,7 +249,7 @@ new_recording_t json_deserialize_new_recording_t(JSON_Value *src)
 			dst.path = json_deserialize_sb_t(json_object_get_value(obj, "path"));
 			dst.filetime = json_deserialize_FILETIME(json_object_get_value(obj, "filetime"));
 			dst.openView = json_object_get_boolean_safe(obj, "openView");
-			dst.mainLog = json_object_get_boolean_safe(obj, "mainLog");
+			dst.recordingType = json_deserialize_recording_type_t(json_object_get_value(obj, "recordingType"));
 			dst.mqId = (u32)json_object_get_number(obj, "mqId");
 			dst.platform = (u32)json_object_get_number(obj, "platform");
 		}
@@ -742,7 +742,7 @@ JSON_Value *json_serialize_new_recording_t(const new_recording_t *src)
 		json_object_set_value(obj, "path", json_serialize_sb_t(&src->path));
 		json_object_set_value(obj, "filetime", json_serialize_FILETIME(&src->filetime));
 		json_object_set_boolean(obj, "openView", src->openView);
-		json_object_set_boolean(obj, "mainLog", src->mainLog);
+		json_object_set_value(obj, "recordingType", json_serialize_recording_type_t(src->recordingType));
 		json_object_set_number(obj, "mqId", src->mqId);
 		json_object_set_number(obj, "platform", src->platform);
 	}
@@ -1019,6 +1019,22 @@ configColorUsage json_deserialize_configColorUsage(JSON_Value *src)
 	return dst;
 }
 
+recording_type_t json_deserialize_recording_type_t(JSON_Value *src)
+{
+	recording_type_t dst = kRecordingType_Count;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kRecordingType_Normal")) { dst = kRecordingType_Normal; }
+			if(!strcmp(str, "kRecordingType_ExistingFile")) { dst = kRecordingType_ExistingFile; }
+			if(!strcmp(str, "kRecordingType_MainLog")) { dst = kRecordingType_MainLog; }
+			if(!strcmp(str, "kRecordingType_ExternalFile")) { dst = kRecordingType_ExternalFile; }
+			if(!strcmp(str, "kRecordingType_Count")) { dst = kRecordingType_Count; }
+		}
+	}
+	return dst;
+}
+
 view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src)
 {
 	view_config_selector_t dst = kViewSelector_Categories;
@@ -1047,6 +1063,20 @@ JSON_Value *json_serialize_configColorUsage(const configColorUsage src)
 		case kConfigColors_NoBg: str = "kConfigColors_NoBg"; break;
 		case kConfigColors_None: str = "kConfigColors_None"; break;
 		case kConfigColors_Count: str = "kConfigColors_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
+JSON_Value *json_serialize_recording_type_t(const recording_type_t src)
+{
+	const char *str = "";
+	switch(src) {
+		case kRecordingType_Normal: str = "kRecordingType_Normal"; break;
+		case kRecordingType_ExistingFile: str = "kRecordingType_ExistingFile"; break;
+		case kRecordingType_MainLog: str = "kRecordingType_MainLog"; break;
+		case kRecordingType_ExternalFile: str = "kRecordingType_ExternalFile"; break;
+		case kRecordingType_Count: str = "kRecordingType_Count"; break;
 	}
 	JSON_Value *val = json_value_init_string(str);
 	return val;

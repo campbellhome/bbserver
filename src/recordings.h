@@ -29,6 +29,14 @@ typedef enum recording_group_e {
 	kRecordingGroup_Count
 } recording_group_t;
 
+AUTOJSON typedef enum recording_type_e {
+	kRecordingType_Normal,
+	kRecordingType_ExistingFile,
+	kRecordingType_MainLog,
+	kRecordingType_ExternalFile,
+	kRecordingType_Count
+} recording_type_t;
+
 typedef struct recording_s {
 	char applicationName[kBBSize_ApplicationName];
 	char applicationFilename[kBBSize_ApplicationName];
@@ -37,7 +45,7 @@ typedef struct recording_s {
 	u32 filetimeHigh;
 	u32 filetimeLow;
 	b32 active;
-	b32 mainLog;
+	recording_type_t recordingType;
 	u32 outgoingMqId;
 	u32 platform;
 } recording_t;
@@ -48,7 +56,7 @@ AUTOJSON typedef struct new_recording_s {
 	sb_t path;
 	FILETIME filetime;
 	b32 openView;
-	b32 mainLog;
+	recording_type_t recordingType;
 	u32 mqId;
 	u32 platform;
 } new_recording_t;

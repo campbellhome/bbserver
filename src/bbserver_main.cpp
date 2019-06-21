@@ -147,7 +147,7 @@ static b32 BBServer_Init(void)
 		cmdlineRecording.applicationFilename = sb_from_c_string(globals.viewerName);
 		cmdlineRecording.path = sb_from_c_string(globals.viewerPath);
 		cmdlineRecording.openView = true;
-		cmdlineRecording.mainLog = false;
+		cmdlineRecording.recordingType = kRecordingType_ExternalFile;
 		cmdlineRecording.mqId = mq_invalid_id();
 		cmdlineRecording.platform = kBBPlatform_Unknown;
 		to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));
@@ -170,7 +170,7 @@ static b32 BBServer_Init(void)
 #else
 			recording.openView = false;
 #endif
-			recording.mainLog = true;
+			recording.recordingType = kRecordingType_MainLog;
 			recording.mqId = mq_invalid_id();
 			recording.platform = bb_platform();
 			to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(recording));
