@@ -230,37 +230,39 @@ void recording_started(char *data)
 	if(sb_len(&r.path)) {
 		existing = recordings_find_by_path(sb_get(&r.path));
 		if(existing) {
-			existing->active = true;
-			// #todo: existing sessions should become inactive and not try to read from the file any more
+			recording = existing;
 		} else {
 			recording = bba_add(s_recordings, 1);
 			if(recording) {
 				recording->id = ++s_nextRecordingId;
-				recording->active = true;
-				recording->recordingType = r.recordingType;
 				bb_strncpy(recording->applicationName, sb_get(&r.applicationName), sizeof(recording->applicationName));
 				bb_strncpy(recording->applicationFilename, sb_get(&r.applicationFilename), sizeof(recording->applicationFilename));
 				bb_strncpy(recording->path, sb_get(&r.path), sizeof(recording->path));
 				Fonts_CacheGlyphs(recording->applicationName);
 				Fonts_CacheGlyphs(recording->applicationFilename);
 				Fonts_CacheGlyphs(recording->path);
-				recording->filetimeHigh = r.filetime.dwHighDateTime;
-				recording->filetimeLow = r.filetime.dwLowDateTime;
 				recording->platform = r.platform;
 				if(r.mqId == mq_invalid_id()) {
 					recording->outgoingMqId = mq_invalid_id();
 				} else {
 					recording->outgoingMqId = mq_addref(r.mqId);
 				}
-				s_recordingsDirty = true;
-				if(r.openView) {
-					if(g_config.autoCloseAll) {
-						recorded_session_auto_close_all();
-					} else {
-						recorded_session_auto_close(sb_get(&r.applicationName));
-					}
-					recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), true, true, recording->outgoingMqId);
+			}
+		}
+
+		if(recording) {
+			recording->active = r.recordingType == kRecordingType_Normal || r.recordingType == kRecordingType_MainLog;
+			recording->recordingType = r.recordingType;
+			recording->filetimeHigh = r.filetime.dwHighDateTime;
+			recording->filetimeLow = r.filetime.dwLowDateTime;
+			s_recordingsDirty = true;
+			if(r.openView) {
+				if(g_config.autoCloseAll) {
+					recorded_session_auto_close_all();
+				} else {
+					recorded_session_auto_close(sb_get(&r.applicationName));
 				}
+				recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), true, true, recording->outgoingMqId);
 			}
 		}
 	}

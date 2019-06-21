@@ -153,6 +153,10 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 			persistent->bookmarked = false;
 		}
 	}
+
+	for(i = 0; i <= session->pieInstances.count; ++i) {
+		view_add_pieInstance(view, i);
+	}
 }
 
 void view_init_appinfo(view_t *view)
