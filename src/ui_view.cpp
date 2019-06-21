@@ -311,11 +311,36 @@ static const char *BuildLogColumnText(view_t *view, view_log_t *viewLog, view_co
 	}
 }
 
+static size_t s_logColumnWidth[kColumn_Count];
+static void ResetLogColumnWidth()
+{
+	for(u32 i = 0; i < kColumn_Count; ++i) {
+		s_logColumnWidth[i] = 0;
+	}
+}
+static void UpdateLogColumnWidth(view_t *view, view_log_t *viewLog)
+{
+	for(u32 i = 0; i < kColumn_Count; ++i) {
+		view_column_e column = (view_column_e)i;
+		if(view->columns[column].visible) {
+			const char *text = BuildLogColumnText(view, viewLog, column);
+			size_t len = strlen(text);
+			if(s_logColumnWidth[column] < len) {
+				s_logColumnWidth[column] = len;
+			}
+		}
+	}
+}
+
 enum crlf_e {
 	kNoCRLF,
 	kAppendCRLF,
 };
-static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_t *sb, crlf_e crlf)
+enum columnSpacer_e {
+	kColumnSpacer_Spaces,
+	kColumnSpacer_Tab,
+};
+static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_t *sb, crlf_e crlf, columnSpacer_e spacer)
 {
 	u32 logIndex = viewLog->sessionLogIndex;
 	u32 subLine = viewLog->subLine;
@@ -328,8 +353,18 @@ static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_
 		for(i = 0; i < kColumn_Count; ++i) {
 			view_column_e column = (view_column_e)i;
 			if(view->columns[column].visible) {
-				sb_append(sb, BuildLogColumnText(view, viewLog, column));
-				sb_append_char(sb, '\t');
+				const char *line = BuildLogColumnText(view, viewLog, column);
+				sb_append(sb, line);
+				if(spacer == kColumnSpacer_Spaces) {
+					size_t target = s_logColumnWidth[column] + 2;
+					size_t len = strlen(line);
+					while(len < target) {
+						sb_append_char(sb, ' ');
+						++len;
+					}
+				} else {
+					sb_append_char(sb, '\t');
+				}
 			}
 		}
 	}
@@ -355,15 +390,24 @@ static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_
 	}
 }
 
-static void CopySelectedLogsToClipboard(view_t *view, bool allColumns)
+static void CopySelectedLogsToClipboard(view_t *view, bool allColumns, columnSpacer_e spacer)
 {
 	u32 i;
 	sb_t sb;
 	sb_init(&sb);
+	if(allColumns) {
+		ResetLogColumnWidth();
+		for(i = 0; i < view->visibleLogs.count; ++i) {
+			view_log_t *log = view->visibleLogs.data + i;
+			if(log->selected) {
+				UpdateLogColumnWidth(view, log);
+			}
+		}
+	}
 	for(i = 0; i < view->visibleLogs.count; ++i) {
 		view_log_t *log = view->visibleLogs.data + i;
 		if(log->selected) {
-			BuildLogLine(view, log, allColumns, &sb, kAppendCRLF);
+			BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer);
 		}
 	}
 	const char *clipboardText = sb_get(&sb);
@@ -371,13 +415,20 @@ static void CopySelectedLogsToClipboard(view_t *view, bool allColumns)
 	sb_reset(&sb);
 }
 
-static void UIRecordedView_SaveLog(view_t *view, bool allColumns)
+static void UIRecordedView_SaveLog(view_t *view, bool allColumns, columnSpacer_e spacer)
 {
 	sb_t sb;
 	sb_init(&sb);
+	if(allColumns) {
+		ResetLogColumnWidth();
+		for(u32 i = 0; i < view->visibleLogs.count; ++i) {
+			view_log_t *log = view->visibleLogs.data + i;
+			UpdateLogColumnWidth(view, log);
+		}
+	}
 	for(u32 i = 0; i < view->visibleLogs.count; ++i) {
 		view_log_t *log = view->visibleLogs.data + i;
-		BuildLogLine(view, log, allColumns, &sb, kAppendCRLF);
+		BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer);
 	}
 	if(sb.count > 1) {
 		sb_t path;
@@ -1026,10 +1077,13 @@ void UIRecordedView_LogPopup(view_t *view, view_log_t *viewLog)
 	recorded_log_t *sessionLog = session->logs.data[sessionLogIndex];
 	recorded_filename_t *filename = recorded_session_find_filename(session, sessionLog->packet.header.fileId);
 	if(ImGui::Selectable("Copy Text")) {
-		CopySelectedLogsToClipboard(view, false);
+		CopySelectedLogsToClipboard(view, false, kColumnSpacer_Tab);
 	}
 	if(ImGui::Selectable("Copy All Columns")) {
-		CopySelectedLogsToClipboard(view, true);
+		CopySelectedLogsToClipboard(view, true, kColumnSpacer_Spaces);
+	}
+	if(ImGui::Selectable("Copy All Columns (Tab-separated)")) {
+		CopySelectedLogsToClipboard(view, true, kColumnSpacer_Tab);
 	}
 	if(session->logs.count) {
 		if(ImGui::Selectable("Span: up to and including selection")) {
@@ -1497,10 +1551,13 @@ void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		if(BeginMenuBar()) {
 			if(ImGui::BeginMenu("File")) {
 				if(ImGui::MenuItem("Save text")) {
-					UIRecordedView_SaveLog(view, false);
+					UIRecordedView_SaveLog(view, false, kColumnSpacer_Tab);
 				}
 				if(ImGui::MenuItem("Save all columns")) {
-					UIRecordedView_SaveLog(view, true);
+					UIRecordedView_SaveLog(view, true, kColumnSpacer_Spaces);
+				}
+				if(ImGui::MenuItem("Save all columns (Tab-separated)")) {
+					UIRecordedView_SaveLog(view, true, kColumnSpacer_Tab);
 				}
 				if(ImGui::MenuItem("Open containing folder")) {
 					UIRecordedView_OpenContainingFolder(view);
@@ -1736,7 +1793,7 @@ void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			view_log_t *viewLog = visibleLogs->data + visibleLogs->lastClickIndex;
 			sb_t sb;
 			sb_init(&sb);
-			BuildLogLine(view, viewLog, false, &sb, kNoCRLF);
+			BuildLogLine(view, viewLog, false, &sb, kNoCRLF, kColumnSpacer_Tab);
 			if(sb.data) {
 				ImGui::PushItemWidth(-1.0f);
 				ImGui::SameLine(0, 20 * g_config.dpiScale);
@@ -1770,7 +1827,7 @@ void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				if(ImGui::IsKeyPressed('A') && ImGui::GetIO().KeyCtrl) {
 					UIRecordedView_Logs_SelectAll(view);
 				} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
-					CopySelectedLogsToClipboard(view, ImGui::GetIO().KeyShift);
+					CopySelectedLogsToClipboard(view, ImGui::GetIO().KeyShift, kColumnSpacer_Spaces);
 				} else if(key_is_pressed_this_frame(Key_F2)) {
 					if(ImGui::GetIO().KeyCtrl) {
 						if(ImGui::GetIO().KeyShift) {
