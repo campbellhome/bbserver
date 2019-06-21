@@ -31,6 +31,8 @@ BB_WARNING_PUSH(4820)
 #include <math.h>
 BB_WARNING_POP
 
+#include "parson/parson.h"
+
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 
@@ -347,6 +349,7 @@ static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_
 	recorded_session_t *session = view->session;
 	recorded_log_t *sessionLog = session->logs.data[logIndex];
 	bb_decoded_packet_t *decoded = &sessionLog->packet;
+	bool bJson = false;
 
 	if(allColumns) {
 		int i;
@@ -367,22 +370,37 @@ static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_
 				}
 			}
 		}
+	} else {
+		if(sessionLog->numLines == 1) {
+			JSON_Value *val = json_parse_string(decoded->packet.logText.text);
+			if(val) {
+				char *json = json_serialize_to_string_pretty(val);
+				if(json) {
+					bJson = true;
+					sb_append(sb, json);
+					json_free_serialized_string(json);
+				}
+				json_value_free(val);
+			}
+		}
 	}
 
-	span_t line = tokenizeNthLine(span_from_string(decoded->packet.logText.text), subLine);
-	const char *text = line.start;
-	if(text) {
-		while(*text && text < line.end) {
-			if(*text == '\r' || *text == '\n')
-				break;
-			if(*text == kColorKeyPrefix && text[1] >= kFirstColorKey && text[1] <= kLastColorKey) {
+	if(!bJson) {
+		span_t line = tokenizeNthLine(span_from_string(decoded->packet.logText.text), subLine);
+		const char *text = line.start;
+		if(text) {
+			while(*text && text < line.end) {
+				if(*text == '\r' || *text == '\n')
+					break;
+				if(*text == kColorKeyPrefix && text[1] >= kFirstColorKey && text[1] <= kLastColorKey) {
+					++text;
+				} else if(text[0] == '^' && text[1] == 'F') {
+					++text;
+				} else {
+					sb_append_char(sb, *text);
+				}
 				++text;
-			} else if(text[0] == '^' && text[1] == 'F') {
-				++text;
-			} else {
-				sb_append_char(sb, *text);
 			}
-			++text;
 		}
 	}
 	if(crlf == kAppendCRLF) {
@@ -944,7 +962,7 @@ void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
 	PIEInstanceToolTip(rf, startIndex);
 }
 
-static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *category, recorded_session_t *session)
+static void SetLogTooltip(recorded_log_t *sessionLog, bb_decoded_packet_t *decoded, recorded_category_t *category, recorded_session_t *session)
 {
 	if(IsTooltipActive()) {
 		BeginTooltip();
@@ -961,12 +979,27 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 		Text("PIE Instance: %u", decoded->packet.logText.pieInstance);
 		Separator();
 		PopUIFont();
-		PushTextWrapPos(600.0f);
-		span_t cursor = span_from_string(decoded->packet.logText.text);
-		for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
-			TextWrapped("%.*s", line.end - line.start, line.start);
+		bool bJson = false;
+		if(sessionLog->numLines == 1) {
+			JSON_Value *val = json_parse_string(decoded->packet.logText.text);
+			if(val) {
+				char *json = json_serialize_to_string_pretty(val);
+				if(json) {
+					bJson = true;
+					TextUnformatted(json);
+					json_free_serialized_string(json);
+				}
+				json_value_free(val);
+			}
 		}
-		PopTextWrapPos();
+		if(!bJson) {
+			PushTextWrapPos(600.0f);
+			span_t cursor = span_from_string(decoded->packet.logText.text);
+			for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
+				TextWrapped("%.*s", line.end - line.start, line.start);
+			}
+			PopTextWrapPos();
+		}
 		EndTooltip();
 	}
 }
@@ -1240,11 +1273,11 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 	if(!g_config.tooltips.onlyOverSelected || viewLog->selected) {
 		if(ImGui::GetMousePos().x >= ImGui::GetWindowPos().x + s_textColumnCursorPosX - ImGui::GetScrollX()) {
 			if(g_config.tooltips.overText) {
-				SetLogTooltip(decoded, category, session);
+				SetLogTooltip(sessionLog, decoded, category, session);
 			}
 		} else {
 			if(g_config.tooltips.overMisc) {
-				SetLogTooltip(decoded, category, session);
+				SetLogTooltip(sessionLog, decoded, category, session);
 			}
 		}
 	}
