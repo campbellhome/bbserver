@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "bbserver_update.h"
+#include "bb_colors.h"
 #include "bbclient/bb_log.h"
 #include "bbclient/bb_string.h"
 #include "bbclient/bb_time.h"
@@ -10,6 +11,7 @@
 #include "globals.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"
+#include "imgui_tooltips.h"
 #include "imgui_utils.h"
 #include "mc_callstack/callstack_utils.h"
 #include "message_box.h"
@@ -352,6 +354,25 @@ void BBServer_MainMenuBar(void)
 			ImGui::EndMenu();
 		}
 
+		if(s_failedDiscoveryStartup) {
+			ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
+			if(ImGui::MenuItem("Discovery Error")) {
+				recording_t *recording = recordings_find_main_log();
+				if(recording) {
+					recorded_session_t *session = recorded_session_find(recording->path);
+					if(!session) {
+						recorded_session_open(recording->path, recording->applicationFilename, true, recording->active != 0, recording->outgoingMqId);
+					}
+				}
+			}
+			if(ImGui::IsTooltipActive()) {
+				ImGui::BeginTooltip();
+				ImGui::TextUnformatted("Failed to start listening for incoming connections.\nSee log for details.");
+				ImGui::EndTooltip();
+			}
+			ImGui::PopStyleColor();
+		}
+
 		ImFont *font = ImGui::GetFont();
 		ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "Recordings");
 
@@ -396,20 +417,10 @@ static void BBServer_DispatchToUIMessageQueue()
 				++s_failedDiscoveryCount;
 				if(s_failedDiscoveryCount > 10) {
 					s_failedDiscoveryStartup = true;
-					recording_t *recording = recordings_find_main_log();
-					if(recording) {
-						recorded_session_t *session = recorded_session_find(recording->path);
-						if(!session) {
-							recorded_session_open(recording->path, recording->applicationFilename, true, recording->active != 0, recording->outgoingMqId);
-						}
-					}
-
-					messageBox mb = {};
-					sdict_add_raw(&mb.data, "title", "Discovery error");
-					sdict_add_raw(&mb.data, "text", "Failed to start listening for incoming connections.\nSee log for details.");
-					sdict_add_raw(&mb.data, "button1", "Ok");
-					mb_queue(mb);
 				}
+			} else if(!strcmp(message.text, "Running")) {
+				s_failedDiscoveryStartup = false;
+				s_failedDiscoveryCount = 0;
 			}
 			break;
 		default:
