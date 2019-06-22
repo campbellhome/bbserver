@@ -3,13 +3,18 @@
 
 #include "dragdrop.h"
 #include "bb_structs_generated.h"
+#include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
 #include "common.h"
+#include "file_utils.h"
 #include "message_queue.h"
 #include "recordings.h"
+#include "view.h"
 #include <shellapi.h>
 
 #pragma comment(lib, "Shell32.lib")
+
+void sanitize_app_filename(const char *applicationName, char *applicationFilename, size_t applicationFilenameLen);
 
 void DragDrop_Init(void *hwnd)
 {
@@ -30,18 +35,29 @@ static void DragDrop_ProcessPath(const char *path)
 		if(*filename) {
 			const char *ext = strrchr(filename, '.');
 			if(ext && !bb_stricmp(ext, ".bbox")) {
-				new_recording_t cmdlineRecording = { BB_EMPTY_INITIALIZER };
-				GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
-				cmdlineRecording.applicationName = sb_from_c_string(filename);
-				cmdlineRecording.applicationFilename = sb_from_c_string(filename);
-				cmdlineRecording.path = sb_from_c_string(path);
-				cmdlineRecording.openView = true;
-				cmdlineRecording.recordingType = kRecordingType_ExternalFile;
-				cmdlineRecording.mqId = mq_invalid_id();
-				cmdlineRecording.platform = kBBPlatform_Unknown;
-				to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));
-				new_recording_reset(&cmdlineRecording);
-				//to_ui(kToUI_RecordingStop, "%s\n%s", filename, path);
+				bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
+				b32 valid = recordings_get_application_info(path, &decoded);
+				if(valid) {
+					char applicationFilename[kBBSize_ApplicationName];
+					new_recording_t cmdlineRecording = { BB_EMPTY_INITIALIZER };
+					GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
+					FILETIME creationTime, accessTime, lastWriteTime;
+					if(file_getTimestamps(path, &creationTime, &accessTime, &lastWriteTime)) {
+						cmdlineRecording.filetime = lastWriteTime;
+					}
+					cmdlineRecording.applicationName = sb_from_c_string(decoded.packet.appInfo.applicationName);
+					sanitize_app_filename(sb_get(&cmdlineRecording.applicationName), applicationFilename, sizeof(applicationFilename));
+					cmdlineRecording.applicationFilename = sb_from_c_string(applicationFilename);
+					cmdlineRecording.path = sb_from_c_string(path);
+					cmdlineRecording.openView = true;
+					cmdlineRecording.recordingType = kRecordingType_ExternalFile;
+					cmdlineRecording.mqId = mq_invalid_id();
+					cmdlineRecording.platform = decoded.packet.appInfo.platform;
+					to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));
+					new_recording_reset(&cmdlineRecording);
+				} else {
+					BB_WARNING("DragDrop", "Failed to find application info for %s", path);
+				}
 			}
 		}
 	}

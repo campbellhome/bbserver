@@ -109,6 +109,7 @@ const char *recording_build_start_identifier(new_recording_t recording);
 void recording_add_existing(char *data, b32 valid);
 void recording_started(char *data);
 void recording_stopped(char *data);
+b32 recordings_get_application_info(const char *path, bb_decoded_packet_t *decoded);
 
 b32 recordings_delete_by_id(u32 id, recordings_t *recordings);
 

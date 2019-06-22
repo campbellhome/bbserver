@@ -391,7 +391,7 @@ void recordings_autodelete_old_recordings(void)
 	}
 }
 
-static b32 recordings_get_application_info(const char *path, bb_decoded_packet_t *decoded)
+b32 recordings_get_application_info(const char *path, bb_decoded_packet_t *decoded)
 {
 	FILE *fp = fopen(path, "rb");
 	if(fp) {
