@@ -983,7 +983,11 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 		}
 		Text("Category: %s", category->categoryName);
 		Text("Verbosity: %s", decoded->packet.logText.level < kBBLogLevel_Count ? logLevelNames[decoded->packet.logText.level] : "(unknown)");
-		Text("Source: %s:%u", GetSessionFilePath(session, decoded->header.fileId), decoded->header.line);
+		if(decoded->header.line) {
+			Text("Source: %s:%u", GetSessionFilePath(session, decoded->header.fileId), decoded->header.line);
+		} else {
+			Text("Source: %s", GetSessionFilePath(session, decoded->header.fileId));
+		}
 		Text("Thread: %s", GetSessionThreadName(session, decoded->header.threadId));
 		Text("PIE Instance: %u", decoded->packet.logText.pieInstance);
 		Separator();

@@ -9,6 +9,7 @@
 #include "file_utils.h"
 #include "message_queue.h"
 #include "recordings.h"
+#include "va.h"
 #include "view.h"
 #include <shellapi.h>
 
@@ -58,6 +59,24 @@ static void DragDrop_ProcessPath(const char *path)
 				} else {
 					BB_WARNING("DragDrop", "Failed to find application info for %s", path);
 				}
+			} else if(ext && strlen(ext) > 1) {
+				char applicationFilename[kBBSize_ApplicationName];
+				new_recording_t cmdlineRecording = { BB_EMPTY_INITIALIZER };
+				GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
+				FILETIME creationTime, accessTime, lastWriteTime;
+				if(file_getTimestamps(path, &creationTime, &accessTime, &lastWriteTime)) {
+					cmdlineRecording.filetime = lastWriteTime;
+				}
+				cmdlineRecording.applicationName = sb_from_c_string(va("%s file", ext + 1));
+				sanitize_app_filename(sb_get(&cmdlineRecording.applicationName), applicationFilename, sizeof(applicationFilename));
+				cmdlineRecording.applicationFilename = sb_from_c_string(applicationFilename);
+				cmdlineRecording.path = sb_from_c_string(path);
+				cmdlineRecording.openView = true;
+				cmdlineRecording.recordingType = kRecordingType_ExternalFile;
+				cmdlineRecording.mqId = mq_invalid_id();
+				cmdlineRecording.platform = bb_platform();
+				to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));
+				new_recording_reset(&cmdlineRecording);
 			}
 		}
 	}
