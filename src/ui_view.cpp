@@ -355,6 +355,19 @@ sb_t StripColorCodes(span_t span /*, bool bSingleLine*/)
 	return result;
 }
 
+static b32 line_can_be_json(sb_t line)
+{
+	b32 result = false;
+	if(line.data && line.count > 2) {
+		if(line.data[0] == '{' && line.data[line.count - 2] == '}') {
+			result = true;
+		} else if(line.data[0] == '[' && line.data[line.count - 2] == ']') {
+			result = true;
+		}
+	}
+	return result;
+}
+
 enum crlf_e {
 	kNoCRLF,
 	kAppendCRLF,
@@ -395,7 +408,7 @@ static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_
 	span_t line = tokenizeNthLine(span_from_string(decoded->packet.logText.text), subLine);
 	sb_t stripped = StripColorCodes(line);
 	bool bJson = false;
-	if(!allColumns) {
+	if(!allColumns && line_can_be_json(stripped)) {
 		JSON_Value *val = json_parse_string(sb_get(&stripped));
 		if(val) {
 			char *json = json_serialize_to_string_pretty(val);
@@ -996,15 +1009,17 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 		for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
 			bool bJson = false;
 			sb_t stripped = StripColorCodes(line);
-			JSON_Value *val = json_parse_string(sb_get(&stripped));
-			if(val) {
-				char *json = json_serialize_to_string_pretty(val);
-				if(json) {
-					bJson = true;
-					TextUnformatted(json);
-					json_free_serialized_string(json);
+			if(line_can_be_json(stripped)) {
+				JSON_Value *val = json_parse_string(sb_get(&stripped));
+				if(val) {
+					char *json = json_serialize_to_string_pretty(val);
+					if(json) {
+						bJson = true;
+						TextUnformatted(json);
+						json_free_serialized_string(json);
+					}
+					json_value_free(val);
 				}
-				json_value_free(val);
 			}
 			if(!bJson) {
 				PushTextWrapPos(600.0f);
