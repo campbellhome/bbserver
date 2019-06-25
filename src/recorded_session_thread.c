@@ -96,6 +96,23 @@ static void recorded_session_read_log(recorded_session_t *session, const char *f
 
 		span_t cursor = span_from_string(fd.buffer);
 		for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
+			size_t lineLen = line.end - line.start;
+			size_t maxLineLen = kBBSize_LogText - 1;
+			while(lineLen > maxLineLen) {
+				memset(&decoded, 0, sizeof(decoded));
+				decoded.type = kBBPacketType_LogTextPartial;
+				decoded.header.timestamp = bb_current_ticks();
+				decoded.header.threadId = 0;
+				decoded.header.fileId = 0;
+				decoded.header.line = 0;
+				decoded.packet.logText.level = kBBLogLevel_Log;
+				bb_strncpy(decoded.packet.logText.text, line.start, sizeof(decoded.packet.logText.text));
+				recorded_session_queue(session, &decoded);
+
+				line.start += maxLineLen;
+				lineLen -= maxLineLen;
+			}
+
 			memset(&decoded, 0, sizeof(decoded));
 			decoded.type = kBBPacketType_LogText;
 			decoded.header.timestamp = bb_current_ticks();
@@ -103,8 +120,7 @@ static void recorded_session_read_log(recorded_session_t *session, const char *f
 			decoded.header.fileId = 0;
 			decoded.header.line = 0;
 			decoded.packet.logText.level = kBBLogLevel_Log;
-			size_t len = BB_MIN(line.end - line.start, sizeof(decoded.packet.logText.text));
-			bb_strncpy(decoded.packet.logText.text, line.start, len);
+			bb_strncpy(decoded.packet.logText.text, line.start, lineLen);
 			recorded_session_queue(session, &decoded);
 		}
 	}

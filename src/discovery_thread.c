@@ -212,6 +212,7 @@ static bb_thread_return_t discovery_thread_func(void *args)
 
 	to_ui(kToUI_DiscoveryStatus, "Shutting down");
 	bb_discovery_server_shutdown(&host->ds);
+	BB_THREAD_END();
 	bb_thread_exit(0);
 }
 

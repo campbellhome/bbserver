@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 static void recorded_session_add_category(recorded_session_t *session, bb_decoded_packet_t *decoded);
+static void recorded_session_add_partial_log(recorded_session_t *session, bb_decoded_packet_t *decoded);
 static void recorded_session_add_log(recorded_session_t *session, bb_decoded_packet_t *decoded, recorded_thread_t *t);
 static void recorded_session_add_fileid(recorded_session_t *session, bb_decoded_packet_t *decoded);
 static recorded_thread_t *recorded_session_find_or_add_thread(recorded_session_t *session, bb_decoded_packet_t *decoded);
@@ -105,6 +106,7 @@ void recorded_session_restart(recorded_session_t *session)
 		view_restart(session->views.data + j);
 	}
 	recorded_logs_reset(&session->logs);
+	bba_free(session->partialLogs);
 	bba_free(session->categories);
 	bba_free(session->filenames);
 	bba_free(session->threads);
@@ -126,6 +128,7 @@ void recorded_session_close(recorded_session_t *session)
 				}
 				bba_free(session->views);
 				recorded_logs_reset(&session->logs);
+				bba_free(session->partialLogs);
 				bba_free(session->categories);
 				bba_free(session->filenames);
 				bba_free(session->threads);
@@ -257,6 +260,9 @@ void recorded_session_update(recorded_session_t *session)
 		case kBBPacketType_CategoryId:
 			recorded_session_add_category(session, &decoded);
 			break;
+		case kBBPacketType_LogTextPartial:
+			recorded_session_add_partial_log(session, &decoded);
+			break;
 		case kBBPacketType_LogText_v1:
 		case kBBPacketType_LogText:
 			recorded_session_add_log(session, &decoded, t);
@@ -273,7 +279,7 @@ void recorded_session_update(recorded_session_t *session)
 			}
 			break;
 		default:
-			break; // #TODO: handle other packet types
+			break;
 		}
 
 		// if we're spinning through data on the reading thread,
@@ -392,9 +398,13 @@ static void clear_to_zero(void *zp, size_t bytes)
 	}
 }
 
+static void recorded_session_add_partial_log(recorded_session_t *session, bb_decoded_packet_t *decoded)
+{
+	bba_push(session->partialLogs, *decoded);
+}
+
 static void recorded_session_add_log(recorded_session_t *session, bb_decoded_packet_t *decoded, recorded_thread_t *t)
 {
-	u32 i;
 	u32 categoryId = decoded->packet.logText.categoryId;
 	recorded_log_t **plog;
 	recorded_log_t *log;
@@ -425,7 +435,15 @@ static void recorded_session_add_log(recorded_session_t *session, bb_decoded_pac
 	plog = bba_add(session->logs, 1);
 	if(plog) {
 		char *text = decoded->packet.logText.text;
-		size_t decodedSize = (u8 *)text - (u8 *)decoded + strlen(text) + 1;
+		size_t textLen = strlen(text);
+		for(u32 i = 0; i < session->partialLogs.count; ++i) {
+			const bb_decoded_packet_t *partial = session->partialLogs.data + i;
+			if(partial->header.threadId == decoded->header.threadId) {
+				textLen += strlen(partial->packet.logText.text);
+			}
+		}
+		size_t preTextSize = (u8 *)text - (u8 *)decoded;
+		size_t decodedSize = preTextSize + textLen + 1;
 		size_t logSize = decodedSize + offsetof(recorded_log_t, packet);
 		*plog = malloc(logSize);
 		log = *plog;
@@ -437,12 +455,33 @@ static void recorded_session_add_log(recorded_session_t *session, bb_decoded_pac
 			for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
 				++log->numLines;
 			}
-			memcpy(&log->packet, decoded, decodedSize);
-			for(i = 0; i < session->views.count; ++i) {
+			memcpy(&log->packet, decoded, preTextSize);
+			char *textPos = log->packet.packet.logText.text;
+			for(u32 i = 0; i < session->partialLogs.count; ++i) {
+				const bb_decoded_packet_t *partial = session->partialLogs.data + i;
+				if(partial->header.threadId == decoded->header.threadId) {
+					size_t partialLen = strlen(partial->packet.logText.text);
+					memcpy(textPos, partial->packet.logText.text, partialLen);
+					textPos += partialLen;
+				}
+			}
+			size_t mainLen = strlen(decoded->packet.logText.text);
+			memcpy(textPos, decoded->packet.logText.text, mainLen);
+			textPos += mainLen;
+			*textPos = '\0';
+			for(u32 i = 0; i < session->views.count; ++i) {
 				view_add_log(session->views.data + i, log);
 			}
 		} else {
 			--session->logs.count;
+		}
+		for(u32 i = 0; i < session->partialLogs.count;) {
+			const bb_decoded_packet_t *partial = session->partialLogs.data + i;
+			if(partial->header.threadId == decoded->header.threadId) {
+				bba_erase(session->partialLogs, i);
+			} else {
+				++i;
+			}
 		}
 	}
 }

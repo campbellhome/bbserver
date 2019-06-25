@@ -40,6 +40,12 @@ typedef struct recorded_logs_s {
 	recorded_log_t **data;
 } recorded_logs_t;
 
+typedef struct partial_logs_s {
+	u32 count;
+	u32 allocated;
+	bb_decoded_packet_t *data;
+} partial_logs_t;
+
 typedef struct recorded_category_s {
 	char categoryName[kBBSize_Category];
 	u32 id;
@@ -98,6 +104,7 @@ typedef struct recorded_session_s {
 	bb_decoded_packet_t appInfo;
 	views_t views;
 	recorded_logs_t logs;
+	partial_logs_t partialLogs;
 	recorded_categories_t categories;
 	recorded_filenames_t filenames;
 	recorded_threads_t threads;

@@ -256,6 +256,6 @@ bb_thread_return_t recorder_thread(void *args)
 	}
 
 	bbnet_gracefulclose(&con->socket);
-
+	BB_THREAD_END();
 	bb_thread_exit(0);
 }
