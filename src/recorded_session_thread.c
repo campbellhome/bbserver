@@ -47,84 +47,154 @@ b32 recorded_session_consume(recorded_session_t *session, bb_decoded_packet_t *d
 	return result;
 }
 
+static void recorded_session_queue_log_appinfo(recorded_session_t *session, const char *filename)
+{
+	bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
+	decoded.type = kBBPacketType_AppInfo;
+	decoded.header.timestamp = bb_current_ticks();
+	decoded.header.threadId = 0;
+	decoded.header.fileId = 0;
+	decoded.header.line = 0;
+	decoded.packet.appInfo.initialTimestamp = decoded.header.timestamp;
+	decoded.packet.appInfo.millisPerTick = bb_millis_per_tick();
+	decoded.packet.appInfo.initFlags = 0;
+	decoded.packet.appInfo.platform = bb_platform();
+	decoded.packet.appInfo.microsecondsFromEpoch = bb_current_time_microseconds_from_epoch();
+	bb_strncpy(decoded.packet.appInfo.applicationName, filename, sizeof(decoded.packet.appInfo.applicationName));
+	recorded_session_queue(session, &decoded);
+
+	memset(&decoded, 0, sizeof(decoded));
+	decoded.type = kBBPacketType_FileId;
+	decoded.header.timestamp = bb_current_ticks();
+	decoded.header.threadId = 0;
+	decoded.header.fileId = 0;
+	decoded.header.line = 0;
+	decoded.packet.fileId.id = 0;
+	bb_strncpy(decoded.packet.fileId.name, "Unknown", sizeof(decoded.packet.fileId.name));
+	recorded_session_queue(session, &decoded);
+
+	memset(&decoded, 0, sizeof(decoded));
+	decoded.type = kBBPacketType_CategoryId;
+	decoded.header.timestamp = bb_current_ticks();
+	decoded.header.threadId = 0;
+	decoded.header.fileId = 0;
+	decoded.header.line = 0;
+	decoded.packet.categoryId.id = 0;
+	bb_strncpy(decoded.packet.categoryId.name, "Default", sizeof(decoded.packet.categoryId.name));
+	recorded_session_queue(session, &decoded);
+
+	memset(&decoded, 0, sizeof(decoded));
+	decoded.type = kBBPacketType_ThreadName;
+	decoded.header.timestamp = bb_current_ticks();
+	decoded.header.threadId = 0;
+	decoded.header.fileId = 0;
+	decoded.header.line = 0;
+	bb_strncpy(decoded.packet.threadName.text, "Unknown", sizeof(decoded.packet.threadName.text));
+	recorded_session_queue(session, &decoded);
+}
+
 static void recorded_session_read_log(recorded_session_t *session, const char *filename)
 {
-	fileData_t fd = fileData_read(session->path);
-	if(fd.buffer && fd.bufferSize) {
-		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
-		decoded.type = kBBPacketType_AppInfo;
-		decoded.header.timestamp = bb_current_ticks();
-		decoded.header.threadId = 0;
-		decoded.header.fileId = 0;
-		decoded.header.line = 0;
-		decoded.packet.appInfo.initialTimestamp = decoded.header.timestamp;
-		decoded.packet.appInfo.millisPerTick = bb_millis_per_tick();
-		decoded.packet.appInfo.initFlags = 0;
-		decoded.packet.appInfo.platform = bb_platform();
-		decoded.packet.appInfo.microsecondsFromEpoch = bb_current_time_microseconds_from_epoch();
-		bb_strncpy(decoded.packet.appInfo.applicationName, filename, sizeof(decoded.packet.appInfo.applicationName));
-		recorded_session_queue(session, &decoded);
+	bb_file_handle_t fp = bb_file_open_for_read(session->path);
+	if(fp) {
+		recorded_session_queue_log_appinfo(session, filename);
 
-		memset(&decoded, 0, sizeof(decoded));
-		decoded.type = kBBPacketType_FileId;
-		decoded.header.timestamp = bb_current_ticks();
-		decoded.header.threadId = 0;
-		decoded.header.fileId = 0;
-		decoded.header.line = 0;
-		decoded.packet.fileId.id = 0;
-		bb_strncpy(decoded.packet.fileId.name, "Unknown", sizeof(decoded.packet.fileId.name));
-		recorded_session_queue(session, &decoded);
-
-		memset(&decoded, 0, sizeof(decoded));
-		decoded.type = kBBPacketType_CategoryId;
-		decoded.header.timestamp = bb_current_ticks();
-		decoded.header.threadId = 0;
-		decoded.header.fileId = 0;
-		decoded.header.line = 0;
-		decoded.packet.categoryId.id = 0;
-		bb_strncpy(decoded.packet.categoryId.name, "Default", sizeof(decoded.packet.categoryId.name));
-		recorded_session_queue(session, &decoded);
-
-		memset(&decoded, 0, sizeof(decoded));
-		decoded.type = kBBPacketType_ThreadName;
-		decoded.header.timestamp = bb_current_ticks();
-		decoded.header.threadId = 0;
-		decoded.header.fileId = 0;
-		decoded.header.line = 0;
-		bb_strncpy(decoded.packet.threadName.text, "Unknown", sizeof(decoded.packet.threadName.text));
-		recorded_session_queue(session, &decoded);
-
-		span_t cursor = span_from_string(fd.buffer);
-		for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
-			size_t lineLen = line.end - line.start;
-			size_t maxLineLen = kBBSize_LogText - 1;
-			while(lineLen > maxLineLen) {
-				memset(&decoded, 0, sizeof(decoded));
-				decoded.type = kBBPacketType_LogTextPartial;
-				decoded.header.timestamp = bb_current_ticks();
-				decoded.header.threadId = 0;
-				decoded.header.fileId = 0;
-				decoded.header.line = 0;
-				decoded.packet.logText.level = kBBLogLevel_Log;
-				bb_strncpy(decoded.packet.logText.text, line.start, sizeof(decoded.packet.logText.text));
-				recorded_session_queue(session, &decoded);
-
-				line.start += maxLineLen;
-				lineLen -= maxLineLen;
+		u32 recvCursor = 0;
+		u32 decodeCursor = 0;
+		u32 fileSize = 0;
+		while(fp && session->threadDesiredActive && !session->failedToDeserialize) {
+			b32 done = false;
+			u32 bytesRead = bb_file_read(fp, session->recvBuffer + recvCursor, sizeof(session->recvBuffer) - recvCursor);
+			if(bytesRead) {
+				recvCursor += bytesRead;
+			} else {
+				u32 oldFileSize = fileSize;
+				fileSize = bb_file_size(fp);
+				if(fileSize < oldFileSize) {
+					BB_LOG("Recorder::Read::Start", "restarting read from %s\n", session->path);
+					bb_file_close(fp);
+					fp = bb_file_open_for_read(session->path);
+					recvCursor = 0;
+					decodeCursor = 0;
+					bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
+					decoded.type = kBBPacketType_Restart;
+					recorded_session_queue(session, &decoded);
+					recorded_session_queue_log_appinfo(session, filename);
+					continue;
+				} else {
+					bb_sleep_ms(100);
+				}
 			}
 
-			memset(&decoded, 0, sizeof(decoded));
-			decoded.type = kBBPacketType_LogText;
-			decoded.header.timestamp = bb_current_ticks();
-			decoded.header.threadId = 0;
-			decoded.header.fileId = 0;
-			decoded.header.line = 0;
-			decoded.packet.logText.level = kBBLogLevel_Log;
-			bb_strncpy(decoded.packet.logText.text, line.start, lineLen);
-			recorded_session_queue(session, &decoded);
+			while(!done) {
+				const u32 krecvBufferSize = sizeof(session->recvBuffer);
+				const u32 kHalfrecvBufferBytes = krecvBufferSize / 2;
+				bb_decoded_packet_t decoded;
+				u16 nDecodableBytes = (u16)(recvCursor - decodeCursor);
+				if(nDecodableBytes < 1) {
+					done = true;
+					break;
+				}
+
+				span_t cursor = span_from_string((const char *)(session->recvBuffer + decodeCursor));
+				const char *lineEnd = NULL;
+				for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
+					if(line.end && (*line.end == '\n' || !strncmp(line.end, "\r\n", 2))) {
+						if(*line.end == '\r') {
+							++line.end;
+						}
+						size_t lineLen = line.end - line.start;
+						size_t maxLineLen = kBBSize_LogText - 1;
+						while(lineLen > maxLineLen) {
+							memset(&decoded, 0, sizeof(decoded));
+							decoded.type = kBBPacketType_LogTextPartial;
+							decoded.header.timestamp = bb_current_ticks();
+							decoded.header.threadId = 0;
+							decoded.header.fileId = 0;
+							decoded.header.line = 0;
+							decoded.packet.logText.level = kBBLogLevel_Log;
+							bb_strncpy(decoded.packet.logText.text, line.start, sizeof(decoded.packet.logText.text));
+							recorded_session_queue(session, &decoded);
+
+							line.start += maxLineLen;
+							lineLen -= maxLineLen;
+						}
+
+						memset(&decoded, 0, sizeof(decoded));
+						decoded.type = kBBPacketType_LogText;
+						decoded.header.timestamp = bb_current_ticks();
+						decoded.header.threadId = 0;
+						decoded.header.fileId = 0;
+						decoded.header.line = 0;
+						decoded.packet.logText.level = kBBLogLevel_Log;
+						bb_strncpy(decoded.packet.logText.text, line.start, lineLen + 1);
+						recorded_session_queue(session, &decoded);
+
+						lineEnd = line.end + 1;
+					}
+				}
+
+				if(lineEnd) {
+					u32 nConsumedBytes = (u32)(lineEnd - (const char *)(session->recvBuffer + decodeCursor));
+					decodeCursor += nConsumedBytes;
+
+					// TODO: rather lame to keep resetting the buffer - this should be a circular buffer
+					if(decodeCursor >= kHalfrecvBufferBytes) {
+						u16 nBytesRemaining = (u16)(recvCursor - decodeCursor);
+						memmove(session->recvBuffer, session->recvBuffer + decodeCursor, nBytesRemaining);
+						decodeCursor = 0;
+						recvCursor = nBytesRemaining;
+					}
+				} else {
+					done = true;
+				}
+			}
+		}
+
+		if(fp) {
+			bb_file_close(fp);
 		}
 	}
-	fileData_reset(&fd);
 }
 
 bb_thread_return_t recorded_session_read_thread(void *args)

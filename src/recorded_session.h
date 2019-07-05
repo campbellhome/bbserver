@@ -99,8 +99,16 @@ typedef struct recorded_pieInstances_s {
 
 typedef struct recorded_session_s {
 	u8 recvBuffer[32768];
+	u8 terminator;
 	char path[kBBSize_MaxPath];
 	char applicationFilename[kBBSize_ApplicationName];
+	u8 threadDesiredActive;
+	u8 threadActive;
+	b8 logReads;
+	b8 recordingActive;
+	b8 failedToDeserialize;
+	b8 shownDeserializationMessageBox;
+	u8 pad;
 	bb_decoded_packet_t appInfo;
 	views_t views;
 	recorded_logs_t logs;
@@ -112,13 +120,6 @@ typedef struct recorded_session_s {
 	bb_thread_handle_t threadHandle;
 	u32 nextViewId;
 	u32 outgoingMqId;
-	u8 threadDesiredActive;
-	u8 threadActive;
-	b8 logReads;
-	b8 recordingActive;
-	b8 failedToDeserialize;
-	b8 shownDeserializationMessageBox;
-	u8 pad[2];
 	session_message_queue_t *incoming;
 } recorded_session_t;
 
