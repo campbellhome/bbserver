@@ -297,10 +297,16 @@ void UIRecordings_Update(bool autoTileViews)
 
 	recordings_t *recordings = recordings_get_all();
 	if(autoTileViews) {
+		ImVec2 viewportPos(0.0f, 0.0f);
+		ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
+		if(viewport) {
+			viewportPos.x += viewport->Pos.x;
+			viewportPos.y += viewport->Pos.y;
+		}
 		float startY = ImGui::GetFrameHeight();
 		ImGuiIO &io = ImGui::GetIO();
 		SetNextWindowSize(ImVec2(recordings->width, io.DisplaySize.y - startY), ImGuiCond_Always);
-		SetNextWindowPos(ImVec2(io.DisplaySize.x - recordings->width, startY), ImGuiCond_Always);
+		SetNextWindowPos(ImVec2(viewportPos.x + io.DisplaySize.x - recordings->width, viewportPos.y + startY), ImGuiCond_Always);
 	}
 
 	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;

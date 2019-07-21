@@ -2166,6 +2166,13 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 
 	if(!UIConfig_IsOpen()) {
 		if(autoTileViews) {
+			ImVec2 viewportPos(0.0f, 0.0f);
+			ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
+			if(viewport) {
+				viewportPos.x += viewport->Pos.x;
+				viewportPos.y += viewport->Pos.y;
+			}
+
 			float startY = globals.viewer ? 0 : ImGui::GetFrameHeight();
 			ImGuiIO &io = ImGui::GetIO();
 			float screenWidth = io.DisplaySize.x - UIRecordings_Width();
@@ -2186,7 +2193,7 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 			int col = 0;
 			for(u32 viewIndex = 0; viewIndex < views.count; ++viewIndex) {
 				SetNextWindowSize(windowSize, ImGuiCond_Always);
-				SetNextWindowPos(ImVec2(windowSpacing.x * col, startY + windowSpacing.y * row), ImGuiCond_Always);
+				SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * col, viewportPos.y + startY + windowSpacing.y * row), ImGuiCond_Always);
 				UIRecordedView_Update(*(views.data + viewIndex), autoTileViews);
 				++col;
 				if(col == cols) {
