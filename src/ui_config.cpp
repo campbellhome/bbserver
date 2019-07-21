@@ -281,8 +281,8 @@ void UIConfig_Update(config_t *config)
 	float UIRecordings_Width();
 	float startY = ImGui::GetFrameHeight();
 	ImGuiIO &io = ImGui::GetIO();
-	SetNextWindowSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), io.DisplaySize.y - startY), ImGuiSetCond_Always);
-	SetNextWindowPos(ImVec2(0, startY), ImGuiSetCond_Always);
+	SetNextWindowSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), io.DisplaySize.y - startY), ImGuiCond_Always);
+	SetNextWindowPos(ImVec2(0, startY), ImGuiCond_Always);
 
 	if(Begin("Preferences", &s_preferencesOpen, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
 		if(ImGui::CollapsingHeader("Interface", ImGuiTreeNodeFlags_DefaultOpen)) {

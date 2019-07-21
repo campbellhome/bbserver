@@ -2185,8 +2185,8 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 			int row = 0;
 			int col = 0;
 			for(u32 viewIndex = 0; viewIndex < views.count; ++viewIndex) {
-				SetNextWindowSize(windowSize, ImGuiSetCond_Always);
-				SetNextWindowPos(ImVec2(windowSpacing.x * col, startY + windowSpacing.y * row), ImGuiSetCond_Always);
+				SetNextWindowSize(windowSize, ImGuiCond_Always);
+				SetNextWindowPos(ImVec2(windowSpacing.x * col, startY + windowSpacing.y * row), ImGuiCond_Always);
 				UIRecordedView_Update(*(views.data + viewIndex), autoTileViews);
 				++col;
 				if(col == cols) {

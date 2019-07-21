@@ -304,6 +304,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 	const char *classname = (globals.viewer) ? "BlackboxViewer" : "BlackboxHost";
 	if(BBServer_SingleInstanceCheck(classname)) {
 		if(Imgui_Core_Init(CommandLine)) {
+			//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 			if(BBServer_Init()) {
 				Imgui_Core_SetTextShadows(g_config.textShadows);
 				if(globals.viewer || SystemTray_Init(Instance)) {
