@@ -8,6 +8,8 @@
 #include "win32_resource.h"
 #include <shellapi.h>
 
+int UISystemTray_Open(void);
+
 #define WM_USER_NOTIFYICON WM_USER + 1
 static UINT WM_TASKBAR_CREATED;
 static WNDCLASSEX g_sysTrayHiddenWindowClass;
@@ -42,21 +44,23 @@ static LRESULT CALLBACK SystemTray_WndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 			POINT point;
 			GetCursorPos(&point);
 
-			HMENU hMenu = LoadMenu(g_sysTrayHiddenWindowClass.hInstance, MAKEINTRESOURCE(IDR_SYSTRAY_MENU));
-			if(!hMenu)
-				break;
+			if(!UISystemTray_Open()) {
+				HMENU hMenu = LoadMenu(g_sysTrayHiddenWindowClass.hInstance, MAKEINTRESOURCE(IDR_SYSTRAY_MENU));
+				if(!hMenu)
+					break;
 
-			HMENU hSubMenu = GetSubMenu(hMenu, 0);
-			if(!hSubMenu) {
+				HMENU hSubMenu = GetSubMenu(hMenu, 0);
+				if(!hSubMenu) {
+					DestroyMenu(hMenu);
+					break;
+				}
+
+				SetForegroundWindow(hwnd);
+				// Blocking call :(
+				TrackPopupMenu(hSubMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_BOTTOMALIGN, point.x, point.y, 0, hwnd, NULL);
+				SendMessage(hwnd, WM_NULL, 0, 0);
 				DestroyMenu(hMenu);
-				break;
 			}
-
-			SetForegroundWindow(hwnd);
-			// Blocking call :(
-			TrackPopupMenu(hSubMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_BOTTOMALIGN, point.x, point.y, 0, hwnd, NULL);
-			SendMessage(hwnd, WM_NULL, 0, 0);
-			DestroyMenu(hMenu);
 			break;
 		}
 		default:

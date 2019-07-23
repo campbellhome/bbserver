@@ -28,6 +28,31 @@
 #include "view.h"
 #include "wrap_imgui.h"
 
+static bool s_showSystemTrayPopup;
+extern "C" int UISystemTray_Open(void)
+{
+	if(0) {
+		s_showSystemTrayPopup = true;
+		return 1;
+	} else {
+		return 0;
+	}
+}
+static void UISystemTray_Update(void)
+{
+	if(s_showSystemTrayPopup) {
+		//ImGui::SetNextWindowViewport(12345);
+		ImGui::OpenPopup("SystemTrayMenu");
+		s_showSystemTrayPopup = false;
+	}
+	if(ImGui::BeginPopup("SystemTrayMenu", ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove)) {
+		if(ImGui::Selectable("Exit Blackbox")) {
+			Imgui_Core_RequestShutDown();
+		}
+		ImGui::EndPopup();
+	}
+}
+
 static bool s_showImguiDemo;
 static bool s_showImguiAbout;
 static bool s_showImguiMetrics;
@@ -464,4 +489,5 @@ extern "C" void BBServer_Update(void)
 	UIConfig_Update(&g_config);
 	UIRecordings_Update(g_config.autoTileViews != 0);
 	UIRecordedView_UpdateAll(g_config.autoTileViews != 0);
+	UISystemTray_Update();
 }
