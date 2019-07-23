@@ -1632,7 +1632,7 @@ void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			}
 			if(globals.viewer && !UIConfig_IsOpen()) {
 				if(ImGui::BeginMenu("Edit")) {
-					if(ImGui::MenuItem("Preferences")) {
+					if(ImGui::MenuItem("Config")) {
 						BB_LOG("UI::Menu::Config", "UIConfig_Open");
 						UIConfig_Open(&g_config);
 					}
