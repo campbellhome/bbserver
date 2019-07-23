@@ -376,7 +376,11 @@ enum columnSpacer_e {
 	kColumnSpacer_Spaces,
 	kColumnSpacer_Tab,
 };
-static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_t *sb, crlf_e crlf, columnSpacer_e spacer)
+enum jsonExpansion_e {
+	kJsonExpansion_Off,
+	kJsonExpansion_On,
+};
+static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_t *sb, crlf_e crlf, columnSpacer_e spacer, jsonExpansion_e jsonExpansion)
 {
 	u32 logIndex = viewLog->sessionLogIndex;
 	u32 subLine = viewLog->subLine;
@@ -408,7 +412,7 @@ static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_
 	span_t line = tokenizeNthLine(span_from_string(decoded->packet.logText.text), subLine);
 	sb_t stripped = StripColorCodes(line);
 	bool bJson = false;
-	if(!allColumns && line_can_be_json(stripped)) {
+	if(!allColumns && jsonExpansion == kJsonExpansion_On && line_can_be_json(stripped)) {
 		JSON_Value *val = json_parse_string(sb_get(&stripped));
 		if(val) {
 			char *json = json_serialize_to_string_pretty(val);
@@ -447,7 +451,7 @@ static void CopySelectedLogsToClipboard(view_t *view, bool allColumns, columnSpa
 	for(i = 0; i < view->visibleLogs.count; ++i) {
 		view_log_t *log = view->visibleLogs.data + i;
 		if(log->selected) {
-			BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer);
+			BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer, kJsonExpansion_On);
 		}
 	}
 	const char *clipboardText = sb_get(&sb);
@@ -468,7 +472,7 @@ static void UIRecordedView_SaveLog(view_t *view, bool allColumns, columnSpacer_e
 	}
 	for(u32 i = 0; i < view->visibleLogs.count; ++i) {
 		view_log_t *log = view->visibleLogs.data + i;
-		BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer);
+		BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer, kJsonExpansion_On);
 	}
 	if(sb.count > 1) {
 		sb_t path;
@@ -1854,7 +1858,7 @@ void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			view_log_t *viewLog = visibleLogs->data + visibleLogs->lastClickIndex;
 			sb_t sb;
 			sb_init(&sb);
-			BuildLogLine(view, viewLog, false, &sb, kNoCRLF, kColumnSpacer_Tab);
+			BuildLogLine(view, viewLog, false, &sb, kNoCRLF, kColumnSpacer_Tab, kJsonExpansion_Off);
 			if(sb.data) {
 				ImGui::PushItemWidth(-1.0f);
 				ImGui::SameLine(0, 20 * g_config.dpiScale);
