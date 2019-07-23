@@ -136,8 +136,10 @@ static void recorded_session_read_log(recorded_session_t *session, const char *f
 					break;
 				}
 
-				span_t cursor = span_from_string((const char *)(session->recvBuffer + decodeCursor));
 				const char *lineEnd = NULL;
+				span_t cursor = { BB_EMPTY_INITIALIZER };
+				cursor.start = (const char *)(session->recvBuffer + decodeCursor);
+				cursor.end = (const char *)(session->recvBuffer + recvCursor);
 				for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
 					if(line.end && (*line.end == '\n' || !strncmp(line.end, "\r\n", 2))) {
 						if(*line.end == '\r') {
