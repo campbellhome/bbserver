@@ -45,11 +45,17 @@ static void UISystemTray_Update(void)
 		ImGui::OpenPopup("SystemTrayMenu");
 		s_showSystemTrayPopup = false;
 	}
-	if(ImGui::BeginPopup("SystemTrayMenu", ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove)) {
+	b32 open = true;
+	ImGui::SetNextWindowViewport(12345);
+	//ImGui::SetNextWindowViewportPos(1673,1087);
+	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoMove;
+	if(ImGui::Begin("SystemTrayMenu", &open, windowFlags)) {
+		Imgui_Core_RequestRender();
+		ImGui::TextUnformatted("[System Tray Menu]");
 		if(ImGui::Selectable("Exit Blackbox")) {
 			Imgui_Core_RequestShutDown();
 		}
-		ImGui::EndPopup();
+		ImGui::End();
 	}
 }
 
