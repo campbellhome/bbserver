@@ -40,6 +40,7 @@ extern "C" int UISystemTray_Open(void)
 }
 static void UISystemTray_Update(void)
 {
+#if 0
 	if(s_showSystemTrayPopup) {
 		//ImGui::SetNextWindowViewport(12345);
 		ImGui::OpenPopup("SystemTrayMenu");
@@ -57,6 +58,7 @@ static void UISystemTray_Update(void)
 		}
 		ImGui::End();
 	}
+#endif
 }
 
 static bool s_showImguiDemo;
