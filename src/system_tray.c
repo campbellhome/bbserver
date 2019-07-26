@@ -33,14 +33,18 @@ static LRESULT CALLBACK SystemTray_WndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 		switch(LOWORD(lParam)) {
 		case WM_LBUTTONDOWN: {
 			BB_LOG("SysTray", "Left click");
+			Imgui_Core_HideUnhideWindow();
 			break;
 		}
 		case WM_LBUTTONDBLCLK: {
 			BB_LOG("SysTray", "Double click");
+			Imgui_Core_UnhideWindow();
+			Imgui_Core_BringWindowToFront();
 			break;
 		}
 		case WM_RBUTTONUP: {
 			BB_LOG("SysTray", "Right click");
+			Imgui_Core_BringWindowToFront();
 			POINT point;
 			GetCursorPos(&point);
 

@@ -312,6 +312,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 					const char *title = (globals.viewer) ? va("%s.bbox - Blackbox", globals.viewerName) : "Blackbox";
 					HWND hwnd = Imgui_Core_InitWindow(classname, title, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), g_config.wp);
 					if(hwnd) {
+						Imgui_Core_SetCloseHidesWindow(true);
 						DragDrop_Init(hwnd);
 						BBServer_InitRegistry();
 						Fonts_ClearFonts();
