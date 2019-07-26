@@ -46,7 +46,7 @@ static char s_bbLogPath[kBBSize_MaxPath];
 
 static bool BBServer_InitViewer(const char *cmdline)
 {
-	if(cmdline && *cmdline) {
+	if(cmdline && *cmdline && *cmdline != '-') {
 		globals.viewer = true;
 		if(*cmdline == '\"') {
 			++cmdline;
@@ -312,7 +312,9 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 					const char *title = (globals.viewer) ? va("%s.bbox - Blackbox", globals.viewerName) : "Blackbox";
 					HWND hwnd = Imgui_Core_InitWindow(classname, title, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), g_config.wp);
 					if(hwnd) {
-						Imgui_Core_SetCloseHidesWindow(true);
+						if(!globals.viewer) {
+							Imgui_Core_SetCloseHidesWindow(true);
+						}
 						DragDrop_Init(hwnd);
 						BBServer_InitRegistry();
 						Fonts_ClearFonts();
@@ -320,6 +322,9 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 						Fonts_AddFont(g_config.logFontConfig);
 						Style_ReadConfig(Imgui_Core_GetColorScheme());
 						Imgui_Core_SetUserWndProc(&BBServer_HandleWindowMessage);
+						if(!globals.viewer && cmdline_find("-hide") > 0) {
+							Imgui_Core_HideWindow();
+						}
 						while(!Imgui_Core_IsShuttingDown()) {
 							if(Imgui_Core_GetAndClearDirtyWindowPlacement()) {
 								config_getwindowplacement(hwnd);
