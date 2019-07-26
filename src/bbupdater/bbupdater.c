@@ -512,12 +512,14 @@ int main(int argc, const char **argv)
 			CloseHandle(pi.hThread);
 			CloseHandle(pi.hProcess);
 		} else {
-			char *errorMessage = "Unable to format error message";
+			char *errorMessage = NULL;
 			DWORD lastError = GetLastError();
 			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errorMessage, 0, NULL);
 			BB_ERROR("Restart", "Failed to create process:\n  %s\n  Error %u (0x%8.8X): %s",
-			         cmdline, lastError, lastError, errorMessage);
-			LocalFree(errorMessage);
+			         cmdline, lastError, lastError, errorMessage ? errorMessage : "Unable to format error message");
+			if(errorMessage) {
+				LocalFree(errorMessage);
+			}
 		}
 #else
 #endif
