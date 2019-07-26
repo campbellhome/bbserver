@@ -15,7 +15,7 @@ b32 Update_Init(void);
 void Update_Shutdown(void);
 void Update_Tick(void);
 updateManifest_t *Update_GetManifest(void);
-void Update_CheckForUpdates(void);
+void Update_CheckForUpdates(b32 bUpdateImmediately);
 const char *Update_GetCurrentVersion(void);
 b32 Update_IsDesiredVersion(const char *versionName);
 void Update_SetDesiredVersion(const char *versionName);

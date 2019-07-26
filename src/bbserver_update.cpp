@@ -358,7 +358,7 @@ void BBServer_MainMenuBar(void)
 			const char *currentVersionAnnotated = AnnotateVersion(currentVersion);
 			ImGui::MenuItem(va("version %s", *currentVersionAnnotated ? currentVersionAnnotated : "unknown"), nullptr, false, false);
 			if(ImGui::MenuItem("Check for updates")) {
-				Update_CheckForUpdates();
+				Update_CheckForUpdates(false);
 			}
 			if(ImGui::BeginMenu("Set desired version")) {
 				if(ImGui::MenuItem("stable", nullptr, Update_IsDesiredVersion("stable"))) {

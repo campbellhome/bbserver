@@ -106,7 +106,7 @@ b32 Update_Init(void)
 	if(!s_desiredVersionName.name.count) {
 		sb_append(&s_desiredVersionName.name, "stable");
 	}
-	Update_CheckForUpdates();
+	Update_CheckForUpdates(!globals.viewer);
 
 	const char *updateArg = cmdline_find_prefix("-update=");
 	if(updateArg) {
@@ -257,7 +257,7 @@ static void Update_CheckVersions(b32 updateImmediately)
 void Update_Tick(void)
 {
 	if(!globals.viewer && g_site_config.updates.updateCheckMs > 0 && s_lastUpdateCheckMs + g_site_config.updates.updateCheckMs < bb_current_time_ms()) {
-		Update_CheckForUpdates();
+		Update_CheckForUpdates(false);
 	}
 }
 
@@ -266,7 +266,7 @@ updateManifest_t *Update_GetManifest(void)
 	return &s_updateManifest;
 }
 
-void Update_CheckForUpdates(void)
+void Update_CheckForUpdates(b32 bUpdateImmediately)
 {
 	updateManifest_reset(&s_updateManifest);
 	s_lastUpdateCheckMs = bb_current_time_ms();
@@ -280,7 +280,7 @@ void Update_CheckForUpdates(void)
 		json_value_free(val);
 	}
 	sb_reset(&manifestPath);
-	Update_CheckVersions(false);
+	Update_CheckVersions(bUpdateImmediately);
 }
 
 const char *Update_GetCurrentVersion(void)
@@ -347,7 +347,7 @@ static void update_promote_messageBoxFunc(messageBox *mb, const char *action)
 			}
 			json_value_free(val);
 			updateManifest_reset(&manifest);
-			Update_CheckForUpdates();
+			Update_CheckForUpdates(false);
 		}
 	}
 }
