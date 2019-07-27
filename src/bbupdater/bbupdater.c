@@ -210,7 +210,7 @@ static u32 get_p4_version(void)
 		pyParser parser = { BB_EMPTY_INITIALIZER };
 		parser.data = spawnRes.process->stdoutBuffer.data;
 		parser.count = spawnRes.process->stdoutBuffer.count;
-		while(py_parser_tick(&parser, &dicts)) {
+		while(py_parser_tick(&parser, &dicts, false)) {
 			// do nothing
 		}
 
