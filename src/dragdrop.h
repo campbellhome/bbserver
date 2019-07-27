@@ -12,6 +12,7 @@ extern "C" {
 void DragDrop_Init(void *hwnd);
 void DragDrop_Shutdown(void);
 s32 DragDrop_OnDropFiles(u64 wparam);
+void DragDrop_ProcessPath(const char *path);
 
 #if defined(__cplusplus)
 }

@@ -26,9 +26,23 @@ void DragDrop_Shutdown(void)
 {
 }
 
-static void DragDrop_ProcessPath(const char *path)
+void DragDrop_ProcessPath(const char *path)
 {
 	BB_LOG("DragDrop", "Dropped file: %s", path);
+
+	while(*path == ' ' || *path == '\t') {
+		++path;
+	}
+	sb_t pathStr = sb_from_c_string(path);
+	path = sb_get(&pathStr);
+	while(pathStr.count > 2) {
+		if(pathStr.data[pathStr.count - 2] == ' ' || pathStr.data[pathStr.count - 2] == '\t') {
+			--pathStr.count;
+			pathStr.data[pathStr.count - 1] = '\0';
+		} else {
+			break;
+		}
+	}
 
 	const char *separator = strrchr(path, '\\');
 	if(separator) {
@@ -80,6 +94,7 @@ static void DragDrop_ProcessPath(const char *path)
 			}
 		}
 	}
+	sb_reset(&pathStr);
 }
 
 s32 DragDrop_OnDropFiles(u64 wparam)

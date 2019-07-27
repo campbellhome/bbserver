@@ -41,6 +41,7 @@
 #include "bbclient/bb_wrap_stdio.h"
 #include "va.h"
 
+#define COPYDATA_MAGIC 0x1234567890abcdefu
 static char s_imguiPath[kBBSize_MaxPath];
 static char s_bbLogPath[kBBSize_MaxPath];
 static UINT s_bringToFrontMessage;
@@ -222,7 +223,19 @@ static void BBServer_Shutdown(void)
 
 static b32 BBServer_SingleInstanceCheck(const char *classname)
 {
-	if(!globals.viewer) {
+	if(globals.viewer) {
+		HWND hExisting = FindWindowA("BlackboxHost", nullptr);
+		if(hExisting) {
+			SendMessageA(hExisting, s_bringToFrontMessage, 0, 0);
+
+			COPYDATASTRUCT copyData = { BB_EMPTY_INITIALIZER };
+			copyData.lpData = globals.viewerPath;
+			copyData.cbData = BB_ARRAYSIZE(globals.viewerPath);
+			copyData.dwData = COPYDATA_MAGIC;
+			SendMessageA(hExisting, WM_COPYDATA, 0, (LPARAM)&copyData);
+			return false;
+		}
+	} else {
 		HWND hExisting = FindWindowA(classname, nullptr);
 		if(hExisting) {
 			SendMessageA(hExisting, s_bringToFrontMessage, 0, 0);
@@ -286,6 +299,14 @@ LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, 
 		Imgui_Core_UnhideWindow();
 		Imgui_Core_BringWindowToFront();
 		return 0;
+	}
+	if(msg == WM_COPYDATA && !globals.viewer) {
+		COPYDATASTRUCT *copyData = (COPYDATASTRUCT *)lParam;
+		if(copyData && copyData->dwData == COPYDATA_MAGIC && copyData->cbData == sizeof(globals.viewerPath)) {
+			const char *copyText = (const char *)copyData->lpData;
+			BB_LOG("IPC", "WM_COPYDATA received %s", copyText);
+			DragDrop_ProcessPath(copyText);
+		}
 	}
 	LRESULT result = Update_HandleWindowMessage(hWnd, msg, wParam, lParam);
 	if(result) {
