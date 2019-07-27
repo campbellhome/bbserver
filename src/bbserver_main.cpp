@@ -43,6 +43,7 @@
 
 static char s_imguiPath[kBBSize_MaxPath];
 static char s_bbLogPath[kBBSize_MaxPath];
+static UINT s_bringToFrontMessage;
 
 static bool BBServer_InitViewer(const char *cmdline)
 {
@@ -224,12 +225,7 @@ static b32 BBServer_SingleInstanceCheck(const char *classname)
 	if(!globals.viewer) {
 		HWND hExisting = FindWindowA(classname, nullptr);
 		if(hExisting) {
-			WINDOWINFO info = {};
-			info.cbSize = sizeof(WINDOWINFO);
-			if(!GetWindowInfo(hExisting, &info) || info.rcClient.left == info.rcClient.right) {
-				ShowWindow(hExisting, SW_RESTORE);
-			}
-			SetForegroundWindow(hExisting);
+			SendMessageA(hExisting, s_bringToFrontMessage, 0, 0);
 			return false;
 		}
 	}
@@ -285,6 +281,12 @@ static void BBServer_InitRegistry()
 
 LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	if(msg && msg == s_bringToFrontMessage) {
+		BB_LOG("IPC", "blackbox_bring_to_front received");
+		Imgui_Core_UnhideWindow();
+		Imgui_Core_BringWindowToFront();
+		return 0;
+	}
 	LRESULT result = Update_HandleWindowMessage(hWnd, msg, wParam, lParam);
 	if(result) {
 		return result;
@@ -300,9 +302,10 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 	crt_leak_check_init();
 
 	cmdline_init_composite(CommandLine);
+	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");
 	BBServer_InitViewer(CommandLine);
 	const char *classname = (globals.viewer) ? "BlackboxViewer" : "BlackboxHost";
-	if(BBServer_SingleInstanceCheck(classname)) {
+	if(BBServer_SingleInstanceCheck("BlackboxHost")) {
 		if(Imgui_Core_Init(CommandLine)) {
 			ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 			if(BBServer_Init()) {
