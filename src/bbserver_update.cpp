@@ -77,7 +77,18 @@ static const char *s_colorschemes[] = {
 	"Windows",
 };
 
-void BBServer_DebugCallstack()
+static void BBServer_OpenMainLog(b32 bNoDuplicates = true)
+{
+	recording_t *recording = recordings_find_main_log();
+	if(recording) {
+		recorded_session_t *session = recorded_session_find(recording->path);
+		if(!session || !bNoDuplicates) {
+			recorded_session_open(recording->path, recording->applicationFilename, true, recording->active != 0, recording->outgoingMqId);
+		}
+	}
+}
+
+static void BBServer_DebugCallstack()
 {
 	BB_LOG("UI::Menu::Debug", "User-initiated callstack log");
 	sb_t callstack = callstack_generate_sb(0);
@@ -85,12 +96,12 @@ void BBServer_DebugCallstack()
 	sb_reset(&callstack);
 }
 
-void BBServer_DebugAssert()
+static void BBServer_DebugAssert()
 {
 	BB_LOG("UI::Menu::Debug", "User-initiated assert");
 	BB_ASSERT(false);
 }
-void BBServer_DebugCrash()
+static void BBServer_DebugCrash()
 {
 	BB_LOG("UI::Menu::Debug", "User-initiated access violation");
 	char *badAddress = (char *)1;
@@ -102,7 +113,7 @@ static int infinite_recursion(int i)
 		return 0;
 	return i + infinite_recursion(i + 1);
 }
-void BBServer_DebugInfiniteRecursion()
+static void BBServer_DebugInfiniteRecursion()
 {
 	BB_LOG("UI::Menu::Debug", "User-initiated infinite recursion");
 	infinite_recursion(0);
@@ -110,6 +121,7 @@ void BBServer_DebugInfiniteRecursion()
 
 static void App_GenerateColorTestLogs()
 {
+	BBServer_OpenMainLog();
 	BB_LOG("Test::Blink", "^F"
 	                      "This"
 	                      "^F"
@@ -161,6 +173,7 @@ static void App_GenerateColorTestLogs()
 
 static void App_GenerateLineTestLogs()
 {
+	BBServer_OpenMainLog();
 	BB_LOG("Test::Multiline", "FirstLine\nSecondLine\n");
 	BB_LOG("Test::Multiline", "FirstWithTrailingBlank\n\n");
 	BB_LOG("Test::Multiline", "\n\n");
@@ -194,6 +207,7 @@ static void App_GenerateLineTestLogs()
 
 static void App_GeneratePIEInstanceTestLogs()
 {
+	BBServer_OpenMainLog();
 	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 0, "Test::PIEInstance", "This log is from PIEInstance 0");
 	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 1, "Test::PIEInstance", "This log is from PIEInstance 1");
 	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 2, "Test::PIEInstance", "This log is from PIEInstance 2");
@@ -203,6 +217,7 @@ static void App_GeneratePIEInstanceTestLogs()
 
 static bb_thread_return_t app_test_log_thread(void *args)
 {
+	BBServer_OpenMainLog();
 	u32 i = (u32)(u64)args;
 	BB_THREAD_SET_NAME(va("app_test_log_thread %u", i));
 
@@ -221,6 +236,7 @@ static bb_thread_return_t app_test_log_thread(void *args)
 
 static void App_GenerateSpamTestLogs()
 {
+	BBServer_OpenMainLog();
 	for(u64 i = 0; i < 10; ++i) {
 		bbthread_create(app_test_log_thread, (void *)i);
 	}
@@ -327,6 +343,9 @@ void BBServer_MainMenuBar(void)
 				}
 				if(ImGui::MenuItem("Thread Spam")) {
 					App_GenerateSpamTestLogs();
+				}
+				if(ImGui::MenuItem("Main Log")) {
+					BBServer_OpenMainLog(false);
 				}
 				ImGui::EndMenu();
 			}
