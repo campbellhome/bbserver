@@ -1584,21 +1584,32 @@ static void DrawViewToggles(view_t *view, const char *applicationName)
 	}
 }
 
-void UIRecordedView_Update(view_t *view, bool autoTileViews)
+static char *UIRecordedView_GetViewId(view_t *view)
 {
 	recorded_session_t *session = view->session;
 	const char *applicationName = session->appInfo.packet.appInfo.applicationName;
 	char *slash = strrchr(session->path, '\\');
 	char *filename = (slash) ? slash + 1 : session->path;
-	char *viewId = va("%s##View_%s_%u", applicationName, filename, view->viewId);
+	return va("%s##View_%s_%u", applicationName, filename, view->viewId);
+}
+
+static void UIRecordedView_Update(view_t *view, bool autoTileViews)
+{
+	recorded_session_t *session = view->session;
+	const char *applicationName = session->appInfo.packet.appInfo.applicationName;
+	char *viewId = UIRecordedView_GetViewId(view);
 	bool initializedLogColumns = false;
 	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
 	if(globals.viewer) {
 		windowFlags |= ImGuiWindowFlags_NoTitleBar;
 	}
+	b32 roundingPushed = false;
 	if(autoTileViews) {
-		windowFlags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		roundingPushed = true;
+		if(view->tiled) {
+			windowFlags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+		}
 	}
 
 	bool *viewOpen = globals.viewer ? nullptr : (bool *)&view->open;
@@ -1606,6 +1617,19 @@ void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		const recording_t *recording = recordings_find_by_path(session->path);
 		bool hasFocus = ImGui::IsWindowFocused() ||
 		                ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsRootWindowFocused();
+
+		view->overTileRegion = ImGui::GetWindowViewport() == ImGui::GetMainViewport();
+		if(hasFocus && ImGui::IsMouseDragging()) {
+			view->beingDragged = true;
+			view->tiled = false;
+		} else if(view->beingDragged) {
+			view->beingDragged = false;
+			if(view->overTileRegion) {
+				view->tiled = true;
+			} else {
+				view->tiled = false;
+			}
+		}
 
 		float combinedColumnsWidth = ImGui::GetWindowWidth();
 		if(view->combinedColumnsWidth != combinedColumnsWidth) {
@@ -2077,7 +2101,7 @@ void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		UIRecordedView_Console(view, hasFocus);
 	}
 	End();
-	if(autoTileViews) {
+	if(roundingPushed) {
 		PopStyleVar(); // ImGuiStyleVar_WindowRounding
 	}
 
@@ -2182,9 +2206,17 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 			float screenWidth = io.DisplaySize.x - UIRecordings_Width();
 			float screenHeight = io.DisplaySize.y - startY;
 
-			int cols = (int)ceil(sqrt((double)views.count));
+			int tiledCount = 0;
+			for(u32 viewIndex = 0; viewIndex < views.count; ++viewIndex) {
+				view_t *view = *(views.data + viewIndex);
+				if(view->tiled) {
+					++tiledCount;
+				}
+			}
+
+			int cols = (int)ceil(sqrt((double)tiledCount));
 			cols = (cols < 1) ? 1 : cols;
-			int rows = (int)ceil(views.count / (float)cols);
+			int rows = (int)ceil(tiledCount / (float)cols);
 			rows = (rows < 1) ? 1 : rows;
 			if(screenHeight > screenWidth) {
 				int tmp = cols;
@@ -2196,13 +2228,17 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 			int row = 0;
 			int col = 0;
 			for(u32 viewIndex = 0; viewIndex < views.count; ++viewIndex) {
-				SetNextWindowSize(windowSize, ImGuiCond_Always);
-				SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * col, viewportPos.y + startY + windowSpacing.y * row), ImGuiCond_Always);
-				UIRecordedView_Update(*(views.data + viewIndex), autoTileViews);
-				++col;
-				if(col == cols) {
-					col = 0;
-					++row;
+				view_t *view = *(views.data + viewIndex);
+				ImGuiCond positioningCond = (view->tiled) ? ImGuiCond_Always : ImGuiCond_Once;
+				SetNextWindowSize(windowSize, positioningCond);
+				SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * col, viewportPos.y + startY + windowSpacing.y * row), positioningCond);
+				UIRecordedView_Update(view, autoTileViews);
+				if(view->tiled) {
+					++col;
+					if(col == cols) {
+						col = 0;
+						++row;
+					}
 				}
 			}
 		} else {
