@@ -76,6 +76,8 @@ typedef struct recordings_s {
 	f32 width;
 	b32 showDate;
 	b32 showTime;
+	b32 showInternal;
+	b32 showExternal;
 	u8 pad[4];
 } recordings_t;
 

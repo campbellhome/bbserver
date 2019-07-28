@@ -58,6 +58,8 @@ b32 recordings_write_config(recordings_t *recordings)
 	}
 	fprintf(fp, "showDate %d\n", recordings->showDate);
 	fprintf(fp, "showTime %d\n", recordings->showTime);
+	fprintf(fp, "showInternal %d\n", recordings->showInternal);
+	fprintf(fp, "showExternal %d\n", recordings->showExternal);
 	fprintf(fp, "width %f\n", recordings->width);
 	fclose(fp);
 	return true;
@@ -149,6 +151,10 @@ static b32 recordings_read_config_lines(line_parser_t *parser, recordings_t *rec
 			ret = recordings_parse_b32(parser, &recordings->showDate, "showDate") || ret;
 		} else if(!strcmp(token, "showTime")) {
 			ret = recordings_parse_b32(parser, &recordings->showTime, "showTime") || ret;
+		} else if(!strcmp(token, "showInternal")) {
+			ret = recordings_parse_b32(parser, &recordings->showInternal, "showInternal") || ret;
+		} else if(!strcmp(token, "showExternal")) {
+			ret = recordings_parse_b32(parser, &recordings->showExternal, "showExternal") || ret;
 		} else if(!strcmp(token, "width")) {
 			ret = recordings_parse_float(parser, &recordings->width, "showTime") || ret;
 		} else {
@@ -164,6 +170,7 @@ static void recordings_default_config(recordings_t *recordings)
 	recordings->group = s_recordingsDefaultGroup;
 	recordings->width = 275.0f;
 	recordings->showDate = recordings->showTime = true;
+	recordings->showInternal = recordings->showExternal = true;
 }
 
 b32 recordings_read_config(recordings_t *recordings)

@@ -22,6 +22,8 @@
 #include "parson/parson.h"
 #include <stdlib.h>
 
+#include <ShlObj.h>
+
 void sanitize_app_filename(const char *applicationName, char *applicationFilename, size_t applicationFilenameLen);
 
 static recordings_t s_recordings;
@@ -164,11 +166,15 @@ void recordings_sort(void)
 		break;
 	}
 
+	b32 bFirst = true;
 	switch(s_recordings.group) {
 	case kRecordingGroup_None:
 		for(i = 0; i < s_recordings.count; ++i) {
-			grouped_recording_entry_t *g = bba_add(s_groupedRecordings, 1);
 			recording_t *r = s_recordings.data + i;
+			b32 bExternal = r->recordingType == kRecordingType_ExternalFile;
+			if(bExternal && !s_recordings.showExternal || !bExternal && !s_recordings.showInternal)
+				continue;
+			grouped_recording_entry_t *g = bba_add(s_groupedRecordings, 1);
 			if(g) {
 				g->recording = r;
 				g->groupId = i;
@@ -178,14 +184,18 @@ void recordings_sort(void)
 	case kRecordingGroup_Application:
 		for(i = 0; i < s_recordings.count; ++i) {
 			recording_t *r = s_recordings.data + i;
-			if(i) {
+			b32 bExternal = r->recordingType == kRecordingType_ExternalFile;
+			if(bExternal && !s_recordings.showExternal || !bExternal && !s_recordings.showInternal)
+				continue;
+			if(bFirst) {
+				recordings_add_group();
+				recordings_add_grouped_recording(r);
+				bFirst = false;
+			} else {
 				recording_t *prev = s_recordings.data + i - 1;
 				if(strcmp(prev->applicationName, r->applicationName)) {
 					recordings_add_group();
 				}
-				recordings_add_grouped_recording(r);
-			} else {
-				recordings_add_group();
 				recordings_add_grouped_recording(r);
 			}
 		}
@@ -216,6 +226,7 @@ void recording_add_existing(char *data, b32 valid)
 				recording->filetimeLow = r.filetime.dwLowDateTime;
 				recording->outgoingMqId = mq_invalid_id();
 				recording->platform = r.platform;
+				recording->recordingType = r.recordingType;
 				s_recordingsDirty = true;
 			}
 		}
@@ -243,6 +254,7 @@ void recording_started(char *data)
 				Fonts_CacheGlyphs(recording->applicationFilename);
 				Fonts_CacheGlyphs(recording->path);
 				recording->platform = r.platform;
+				recording->recordingType = r.recordingType;
 				if(r.mqId == mq_invalid_id()) {
 					recording->outgoingMqId = mq_invalid_id();
 				} else {
@@ -411,7 +423,7 @@ b32 recordings_get_application_info(const char *path, bb_decoded_packet_t *decod
 	}
 }
 
-static void recordings_find_files_in_dir(const char *dir)
+static void recordings_find_files_in_dir(const char *dir, b32 bExternal)
 {
 	bb_decoded_packet_t decoded;
 	WIN32_FIND_DATA find;
@@ -428,7 +440,7 @@ static void recordings_find_files_in_dir(const char *dir)
 					if(bb_snprintf(filter, sizeof(filter), "%s\\%s", dir, find.cFileName) < 0) {
 						filter[sizeof(filter) - 1] = '\0';
 					}
-					recordings_find_files_in_dir(filter);
+					recordings_find_files_in_dir(filter, bExternal);
 				}
 			} else {
 				const char *ext = strrchr(find.cFileName, '.');
@@ -446,7 +458,7 @@ static void recordings_find_files_in_dir(const char *dir)
 					recording.path = sb_from_c_string(filter);
 					recording.filetime = find.ftLastWriteTime;
 					recording.openView = false;
-					recording.recordingType = kRecordingType_ExistingFile;
+					recording.recordingType = bExternal ? kRecordingType_ExternalFile : kRecordingType_ExistingFile;
 					recording.mqId = mq_invalid_id();
 					recording.platform = decoded.packet.appInfo.platform;
 					to_ui(valid ? kToUI_AddExistingFile : kToUI_AddInvalidExistingFile, "%s", recording_build_start_identifier(recording));
@@ -458,6 +470,18 @@ static void recordings_find_files_in_dir(const char *dir)
 	}
 }
 
+static b32 get_downloads_folder(char *buffer, size_t bufferSize)
+{
+	PWSTR wpath;
+	if(SHGetKnownFolderPath(&FOLDERID_Downloads, 0, NULL, &wpath) != S_OK)
+		return false;
+
+	buffer[0] = 0;
+	size_t numCharsConverted = 0;
+	wcstombs_s(&numCharsConverted, buffer, bufferSize, wpath, _TRUNCATE);
+	return true;
+}
+
 void get_appdata_folder(char *buffer, size_t bufferSize);
 static bb_thread_return_t recordings_init_thread_func(void *args)
 {
@@ -466,9 +490,10 @@ static bb_thread_return_t recordings_init_thread_func(void *args)
 	bbthread_set_name("recordings_init_thread_func");
 
 	get_appdata_folder(basePath, sizeof(basePath));
-	recordings_find_files_in_dir(basePath);
-	for(u32 i = 0; i < 32; ++i) {
-		to_ui(kToUI_AddExistingFile, "");
+	recordings_find_files_in_dir(basePath, false);
+
+	if(get_downloads_folder(basePath, sizeof(basePath))) {
+		recordings_find_files_in_dir(basePath, true);
 	}
 
 	bb_thread_exit(0);

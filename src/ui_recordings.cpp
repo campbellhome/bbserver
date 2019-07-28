@@ -227,6 +227,12 @@ bool UIRecordings_ConfigMenu(recordings_t *recordings)
 	if(MenuItem("Show Time", nullptr, &recordings->showTime)) {
 		ret = true;
 	}
+	if(MenuItem("Show Internal Recordings", nullptr, &recordings->showInternal)) {
+		ret = true;
+	}
+	if(MenuItem("Show External Files", nullptr, &recordings->showExternal)) {
+		ret = true;
+	}
 	return ret;
 }
 
