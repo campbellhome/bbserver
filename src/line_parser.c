@@ -5,7 +5,7 @@
 #include "va.h"
 
 #include "bb.h"
-#include "bbclient/bb_string.h"
+#include "bb_string.h"
 
 #include <stdlib.h>
 

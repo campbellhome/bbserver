@@ -6,7 +6,7 @@
 // clang-format off
 
 #include "bb_json_generated.h"
-#include "bbclient/bb_array.h"
+#include "bb_array.h"
 #include "json_utils.h"
 #include "va.h"
 

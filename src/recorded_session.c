@@ -16,13 +16,13 @@
 #include "view_config.h"
 
 #include "bb.h"
+#include "bb_array.h"
+#include "bb_packet.h"
+#include "bb_string.h"
 #include "bb_thread.h"
-#include "bbclient/bb_array.h"
-#include "bbclient/bb_packet.h"
-#include "bbclient/bb_string.h"
-#include "bbclient/bb_time.h"
+#include "bb_time.h"
 
-#include "bbclient/bb_wrap_stdio.h"
+#include "bb_wrap_stdio.h"
 #include <stdlib.h>
 
 static void recorded_session_add_category(recorded_session_t *session, bb_decoded_packet_t *decoded);

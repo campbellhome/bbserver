@@ -8,8 +8,8 @@
 
 #if BB_USING(FEATURE_CALLSTACKS)
 
+#include "bb_file.h"
 #include "bb_thread.h"
-#include "bbclient/bb_file.h"
 #include "cmdline.h"
 #include "config.h"
 #include "mc_callstack/bug_reporter.h"
@@ -20,7 +20,7 @@
 #include "update.h"
 #include "va.h"
 
-#include "bbclient/bb_wrap_stdio.h"
+#include "bb_wrap_stdio.h"
 
 static const char *s_logPath;
 

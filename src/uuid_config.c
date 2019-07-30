@@ -5,7 +5,7 @@
 #include "appdata.h"
 #include "bb_json_generated.h"
 #include "bb_structs_generated.h"
-#include "bbclient/bb_wrap_stdio.h"
+#include "bb_wrap_stdio.h"
 #include "sb.h"
 
 static sb_t uuid_get_path(const char *appName)

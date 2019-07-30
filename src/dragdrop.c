@@ -2,9 +2,9 @@
 // MIT license (see License.txt)
 
 #include "dragdrop.h"
+#include "bb_packet.h"
+#include "bb_string.h"
 #include "bb_structs_generated.h"
-#include "bbclient/bb_packet.h"
-#include "bbclient/bb_string.h"
 #include "common.h"
 #include "file_utils.h"
 #include "message_queue.h"

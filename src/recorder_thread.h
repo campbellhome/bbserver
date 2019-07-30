@@ -8,9 +8,9 @@ extern "C" {
 #endif
 
 #include "bb.h"
+#include "bb_common.h"
+#include "bb_connection.h"
 #include "bb_thread.h"
-#include "bbclient/bb_common.h"
-#include "bbclient/bb_connection.h"
 
 typedef struct bb_server_connection_data_s {
 	bb_connection_t con;

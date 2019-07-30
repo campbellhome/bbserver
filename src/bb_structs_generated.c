@@ -6,7 +6,7 @@
 // clang-format off
 
 #include "bb_structs_generated.h"
-#include "bbclient/bb_array.h"
+#include "bb_array.h"
 #include "va.h"
 
 #include "config.h"

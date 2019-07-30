@@ -2,12 +2,12 @@
 // MIT license (see License.txt)
 
 #include "appdata.h"
+#include "bb_array.h"
+#include "bb_common.h"
+#include "bb_log.h"
+#include "bb_sockets.h"
+#include "bb_string.h"
 #include "bb_thread.h"
-#include "bbclient/bb_array.h"
-#include "bbclient/bb_common.h"
-#include "bbclient/bb_log.h"
-#include "bbclient/bb_sockets.h"
-#include "bbclient/bb_string.h"
 #include "bbserver_asserts.h"
 #include "bbserver_update.h"
 #include "cmdline.h"
@@ -38,7 +38,7 @@
 #include "win32_resource.h"
 
 #include "bb_structs_generated.h"
-#include "bbclient/bb_wrap_stdio.h"
+#include "bb_wrap_stdio.h"
 #include "va.h"
 
 #define COPYDATA_MAGIC 0x1234567890abcdefu

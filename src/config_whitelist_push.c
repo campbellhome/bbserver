@@ -2,9 +2,9 @@
 // MIT license (see License.txt)
 
 #include "config_whitelist_push.h"
-#include "bbclient/bb_array.h"
-#include "bbclient/bb_log.h"
-#include "bbclient/bb_string.h"
+#include "bb_array.h"
+#include "bb_log.h"
+#include "bb_string.h"
 #include "config.h"
 #include "dns_task.h"
 #include "globals.h"

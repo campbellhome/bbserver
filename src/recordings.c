@@ -12,12 +12,12 @@
 #include "sb.h"
 #include "va.h"
 
+#include "bb_array.h"
+#include "bb_packet.h"
+#include "bb_string.h"
 #include "bb_thread.h"
-#include "bbclient/bb_array.h"
-#include "bbclient/bb_packet.h"
-#include "bbclient/bb_string.h"
 
-#include "bbclient/bb_wrap_stdio.h"
+#include "bb_wrap_stdio.h"
 #include "globals.h"
 #include "parson/parson.h"
 #include <stdlib.h>

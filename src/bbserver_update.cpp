@@ -3,9 +3,9 @@
 
 #include "bbserver_update.h"
 #include "bb_colors.h"
-#include "bbclient/bb_log.h"
-#include "bbclient/bb_string.h"
-#include "bbclient/bb_time.h"
+#include "bb_log.h"
+#include "bb_string.h"
+#include "bb_time.h"
 #include "devkit_autodetect.h"
 #include "fonts.h"
 #include "globals.h"

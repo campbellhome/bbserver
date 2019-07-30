@@ -2,9 +2,9 @@
 // MIT license (see License.txt)
 
 #include "ui_recordings.h"
+#include "bb_array.h"
 #include "bb_colors.h"
-#include "bbclient/bb_array.h"
-#include "bbclient/bb_string.h"
+#include "bb_string.h"
 #include "config.h"
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"

@@ -2,8 +2,8 @@
 // MIT license (see License.txt)
 
 #include "recordings_config.h"
-#include "bbclient/bb_string.h"
-#include "bbclient/bb_wrap_stdio.h"
+#include "bb_string.h"
+#include "bb_wrap_stdio.h"
 #include "file_utils.h"
 #include "line_parser.h"
 #include "recordings.h"

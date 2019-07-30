@@ -2,8 +2,8 @@
 // MIT license (see License.txt)
 
 #include "ui_config.h"
-#include "bbclient/bb_array.h"
-#include "bbclient/bb_string.h"
+#include "bb_array.h"
+#include "bb_string.h"
 #include "fonts.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"

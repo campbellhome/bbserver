@@ -3,8 +3,8 @@
 
 #include "theme_config.h"
 #include "bb_json_generated.h"
+#include "bb_string.h"
 #include "bb_structs_generated.h"
-#include "bbclient/bb_string.h"
 #include "cmdline.h"
 
 resolvedStyle g_styleConfig;

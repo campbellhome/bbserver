@@ -6,13 +6,13 @@
 #include "message_queue.h"
 #include "recordings.h"
 
-#include "bbclient/bb_log.h"
-#include "bbclient/bb_packet.h"
-#include "bbclient/bb_string.h"
-#include "bbclient/bb_time.h"
+#include "bb_log.h"
+#include "bb_packet.h"
+#include "bb_string.h"
+#include "bb_time.h"
 #include "uuid_rfc4122/uuid.h"
 
-#include "bbclient/bb_wrap_stdio.h"
+#include "bb_wrap_stdio.h"
 #include <string.h>
 
 #if BB_USING(BB_PLATFORM_WINDOWS)

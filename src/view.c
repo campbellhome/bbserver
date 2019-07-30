@@ -2,9 +2,9 @@
 // MIT license (see License.txt)
 
 #include "view.h"
+#include "bb_array.h"
+#include "bb_string.h"
 #include "bb_structs_generated.h"
-#include "bbclient/bb_array.h"
-#include "bbclient/bb_string.h"
 #include "globals.h"
 #include "line_parser.h"
 #include "recorded_session.h"

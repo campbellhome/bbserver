@@ -2,8 +2,8 @@
 // MIT license (see License.txt)
 
 #include "system_tray.h"
-#include "bbclient/bb_common.h"
-#include "bbclient/bb_string.h"
+#include "bb_common.h"
+#include "bb_string.h"
 #include "imgui_core.h"
 #include "win32_resource.h"
 #include <shellapi.h>

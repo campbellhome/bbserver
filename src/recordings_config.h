@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 #include "bb.h"
-#include "bbclient/bb_common.h"
+#include "bb_common.h"
 
 typedef struct recordings_s recordings_t;
 b32 recordings_read_config(recordings_t *recordings);

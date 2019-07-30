@@ -7,15 +7,15 @@
 #include "recorder_thread.h"
 
 #include "bb.h"
+#include "bb_array.h"
+#include "bb_discovery_client.h"
+#include "bb_discovery_server.h"
+#include "bb_log.h"
+#include "bb_packet.h"
+#include "bb_sockets.h"
+#include "bb_string.h"
 #include "bb_thread.h"
-#include "bbclient/bb_array.h"
-#include "bbclient/bb_discovery_client.h"
-#include "bbclient/bb_discovery_server.h"
-#include "bbclient/bb_log.h"
-#include "bbclient/bb_packet.h"
-#include "bbclient/bb_sockets.h"
-#include "bbclient/bb_string.h"
-#include "bbclient/bb_time.h"
+#include "bb_time.h"
 #include "globals.h"
 #include <stdlib.h>
 

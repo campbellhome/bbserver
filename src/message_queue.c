@@ -2,11 +2,11 @@
 // MIT license (see License.txt)
 
 #include "message_queue.h"
+#include "bb_criticalsection.h"
 #include "bb_thread.h"
-#include "bbclient/bb_criticalsection.h"
-#include "bbclient/bb_time.h"
+#include "bb_time.h"
 
-#include "bbclient/bb_wrap_stdio.h"
+#include "bb_wrap_stdio.h"
 
 typedef enum {
 	kMessageQueue_ToUI,
