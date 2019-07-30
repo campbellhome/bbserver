@@ -456,7 +456,7 @@ static void recordings_find_files_in_dir(const char *dir, b32 bExternal)
 					sanitize_app_filename(sb_get(&recording.applicationName), applicationFilename, sizeof(applicationFilename));
 					recording.applicationFilename = sb_from_c_string(applicationFilename);
 					recording.path = sb_from_c_string(filter);
-					recording.filetime = find.ftLastWriteTime;
+					recording.filetime = CompareFileTime(&find.ftLastWriteTime, &find.ftCreationTime) >= 0 ? find.ftLastWriteTime : find.ftCreationTime;
 					recording.openView = false;
 					recording.recordingType = bExternal ? kRecordingType_ExternalFile : kRecordingType_ExistingFile;
 					recording.mqId = mq_invalid_id();

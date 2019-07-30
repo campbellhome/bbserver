@@ -58,7 +58,7 @@ void DragDrop_ProcessPath(const char *path)
 					GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
 					FILETIME creationTime, accessTime, lastWriteTime;
 					if(file_getTimestamps(path, &creationTime, &accessTime, &lastWriteTime)) {
-						cmdlineRecording.filetime = lastWriteTime;
+						cmdlineRecording.filetime = CompareFileTime(&lastWriteTime, &creationTime) >= 0 ? lastWriteTime : creationTime;
 					}
 					cmdlineRecording.applicationName = sb_from_c_string(decoded.packet.appInfo.applicationName);
 					sanitize_app_filename(sb_get(&cmdlineRecording.applicationName), applicationFilename, sizeof(applicationFilename));
