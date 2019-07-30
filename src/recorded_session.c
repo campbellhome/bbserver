@@ -405,6 +405,15 @@ static void recorded_session_add_partial_log(recorded_session_t *session, bb_dec
 
 static void recorded_session_add_log(recorded_session_t *session, bb_decoded_packet_t *decoded, recorded_thread_t *t)
 {
+	u32 numLines = 0;
+	span_t linesCursor = span_from_string(decoded->packet.logText.text);
+	for(span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor)) {
+		++numLines;
+	}
+	if(!numLines) {
+		return;
+	}
+
 	u32 categoryId = decoded->packet.logText.categoryId;
 	recorded_log_t **plog;
 	recorded_log_t *log;
@@ -450,11 +459,7 @@ static void recorded_session_add_log(recorded_session_t *session, bb_decoded_pac
 		if(log) {
 			Fonts_CacheGlyphs(text);
 			log->sessionLogIndex = session->logs.count - 1;
-			log->numLines = 0;
-			span_t cursor = span_from_string(text);
-			for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
-				++log->numLines;
-			}
+			log->numLines = numLines;
 			memcpy(&log->packet, decoded, preTextSize);
 			char *textPos = log->packet.packet.logText.text;
 			for(u32 i = 0; i < session->partialLogs.count; ++i) {
