@@ -1620,8 +1620,11 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 
 		view->overTileRegion = ImGui::GetWindowViewport() == ImGui::GetMainViewport();
 		if(hasFocus && ImGui::IsCurrentWindowMoving()) {
-			view->beingDragged = true;
-			view->tiled = false;
+			ImVec2 dragDelta = ImGui::GetMouseDragDelta();
+			if(dragDelta.x != 0.0f || dragDelta.y != 0.0f) {
+				view->beingDragged = true;
+				view->tiled = false;
+			}
 		} else if(view->beingDragged) {
 			view->beingDragged = false;
 			if(view->overTileRegion) {
