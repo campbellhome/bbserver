@@ -1619,7 +1619,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		                ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsRootWindowFocused();
 
 		view->overTileRegion = ImGui::GetWindowViewport() == ImGui::GetMainViewport();
-		if(hasFocus && ImGui::IsMouseDragging()) {
+		if(hasFocus && ImGui::IsCurrentWindowMoving()) {
 			view->beingDragged = true;
 			view->tiled = false;
 		} else if(view->beingDragged) {
