@@ -275,7 +275,7 @@ void recording_started(char *data)
 				} else {
 					recorded_session_auto_close(sb_get(&r.applicationName));
 				}
-				recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), true, true, recording->outgoingMqId);
+				recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), recording->recordingType != kRecordingType_ExternalFile, true, recording->outgoingMqId);
 			}
 		}
 	}
