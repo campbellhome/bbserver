@@ -175,6 +175,9 @@
       <Project>{66884295-0814-45d5-8187-0ff01a6c0333}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\linux\build_linux.sh" />
+  </ItemGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
       <Command>..\submodules\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -prefix=bb_ -src=..\src -include=..\src ..\src -header=..\submodules\mc_imgui\submodules\mc_common\include -header=..\submodules\mc_imgui\include
