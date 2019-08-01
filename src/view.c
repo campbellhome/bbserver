@@ -94,7 +94,6 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 {
 	u32 i, j;
 	view->tiled = true;
-	view->overTileRegion = true;
 	view->session = session;
 	view->open = true;
 	view->viewId = session->nextViewId++;

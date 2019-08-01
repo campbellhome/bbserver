@@ -1593,6 +1593,9 @@ static char *UIRecordedView_GetViewId(view_t *view)
 	return va("%s##View_%s_%u", applicationName, filename, view->viewId);
 }
 
+static inline ImVec2 operator+(const ImVec2 &lhs, const ImVec2 &rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
+static inline ImVec2 operator-(const ImVec2 &lhs, const ImVec2 &rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
+
 static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 {
 	recorded_session_t *session = view->session;
@@ -1618,7 +1621,20 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		bool hasFocus = ImGui::IsWindowFocused() ||
 		                ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsRootWindowFocused();
 
-		view->overTileRegion = ImGui::GetWindowViewport() == ImGui::GetMainViewport();
+		ImGuiViewport *WindowViewport = ImGui::GetWindowViewport();
+		ImGuiViewport *MainViewport = ImGui::GetMainViewport();
+		b32 overTileRegion = WindowViewport == MainViewport;
+		if(!overTileRegion) {
+			ImVec2 tolerance(100.0f, 100.0f);
+			ImVec2 WindowLo = WindowViewport->Pos + tolerance;
+			ImVec2 WindowHi = WindowViewport->Pos + WindowViewport->Size - tolerance;
+			ImVec2 MainLo = MainViewport->Pos;
+			ImVec2 MainHi = MainViewport->Pos + WindowViewport->Size;
+			if(WindowLo.x >= MainLo.x && WindowLo.y >= MainLo.y &&
+			   WindowHi.x <= MainHi.x && WindowHi.y <= MainHi.y) {
+				overTileRegion = true;
+			}
+		}
 		if(hasFocus && ImGui::IsCurrentWindowMoving()) {
 			ImVec2 dragDelta = ImGui::GetMouseDragDelta();
 			if(dragDelta.x != 0.0f || dragDelta.y != 0.0f) {
@@ -1627,10 +1643,14 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			}
 		} else if(view->beingDragged) {
 			view->beingDragged = false;
-			if(view->overTileRegion) {
+			if(overTileRegion) {
 				view->tiled = true;
 			} else {
 				view->tiled = false;
+			}
+		} else if(!view->tiled) {
+			if(overTileRegion) {
+				view->tiled = true;
 			}
 		}
 

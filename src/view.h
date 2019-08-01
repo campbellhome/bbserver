@@ -282,8 +282,7 @@ typedef struct view_s {
 	b8 changedFavoriteColumnVisibility;
 	b8 tiled;
 	b8 beingDragged;
-	b8 overTileRegion;
-	u8 pad[2];
+	u8 pad[3];
 } view_t;
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);
