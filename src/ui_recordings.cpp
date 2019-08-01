@@ -315,7 +315,7 @@ void UIRecordings_Update(bool autoTileViews)
 		SetNextWindowPos(ImVec2(viewportPos.x + io.DisplaySize.x - recordings->width, viewportPos.y + startY), ImGuiCond_Always);
 	}
 
-	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 	if(autoTileViews) {
 		windowFlags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
