@@ -41,6 +41,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_lib", "..\submodu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_example_wchar", "..\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_example_wchar.vcxproj", "{CF7689D6-2341-43F3-89C0-EB59791675AB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_example", "..\submodules\mc_imgui\vs\mc_imgui_example.vcxproj", "{3C7E2D15-F723-4C73-AF12-C87A066522EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -79,6 +81,10 @@ Global
 		{CF7689D6-2341-43F3-89C0-EB59791675AB}.Debug|x64.Build.0 = Debug|x64
 		{CF7689D6-2341-43F3-89C0-EB59791675AB}.Release|x64.ActiveCfg = Release|x64
 		{CF7689D6-2341-43F3-89C0-EB59791675AB}.Release|x64.Build.0 = Release|x64
+		{3C7E2D15-F723-4C73-AF12-C87A066522EE}.Debug|x64.ActiveCfg = Debug|x64
+		{3C7E2D15-F723-4C73-AF12-C87A066522EE}.Debug|x64.Build.0 = Debug|x64
+		{3C7E2D15-F723-4C73-AF12-C87A066522EE}.Release|x64.ActiveCfg = Release|x64
+		{3C7E2D15-F723-4C73-AF12-C87A066522EE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
