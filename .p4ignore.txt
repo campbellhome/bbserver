@@ -2,7 +2,6 @@
 bin/
 !bin/v141/bb/x64/Release/bb_site_config.json
 lib/
-linux/
 obj/
 src/a.out
 src/*.pdb
