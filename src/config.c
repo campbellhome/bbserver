@@ -11,6 +11,7 @@
 #include "common.h"
 #include "env_utils.h"
 #include "file_utils.h"
+#include "fonts.h"
 #include "line_parser.h"
 #include "process_task.h"
 #include "sb.h"
@@ -74,10 +75,12 @@ b32 config_read(config_t *config)
 		config->dpiScale = 1.0f;
 		config->uiFontConfig.enabled = true;
 		config->uiFontConfig.size = 16;
-		sb_append(&config->uiFontConfig.path, "C:\\Windows\\Fonts\\verdana.ttf");
+		config->uiFontConfig.path = Fonts_GetSystemFontDir();
+		sb_append(&config->uiFontConfig.path, "\\verdana.ttf");
 		config->logFontConfig.enabled = true;
 		config->logFontConfig.size = 14;
-		sb_append(&config->logFontConfig.path, "C:\\Windows\\Fonts\\consola.ttf");
+		config->logFontConfig.path = Fonts_GetSystemFontDir();
+		sb_append(&config->logFontConfig.path, "\\consola.ttf");
 		sb_append(&config->colorscheme, "ImGui Dark");
 	}
 	if(config->version <= 1) {
