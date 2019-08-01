@@ -1629,7 +1629,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			ImVec2 WindowLo = WindowViewport->Pos + tolerance;
 			ImVec2 WindowHi = WindowViewport->Pos + WindowViewport->Size - tolerance;
 			ImVec2 MainLo = MainViewport->Pos;
-			ImVec2 MainHi = MainViewport->Pos + WindowViewport->Size;
+			ImVec2 MainHi = MainViewport->Pos + MainViewport->Size;
 			if(WindowLo.x >= MainLo.x && WindowLo.y >= MainLo.y &&
 			   WindowHi.x <= MainHi.x && WindowHi.y <= MainHi.y) {
 				overTileRegion = true;
