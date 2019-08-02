@@ -29,6 +29,9 @@
 #include "view.h"
 #include "wrap_imgui.h"
 
+extern s64 g_imgui_allocatedCount;
+extern s64 g_imgui_allocatedBytes;
+
 static bool s_showSystemTrayPopup;
 extern "C" int UISystemTray_Open(void)
 {
@@ -509,6 +512,8 @@ extern "C" void BBServer_Update(void)
 			ImGui::Separator();
 			ImGui::Text("bba allocs: %lld", g_bba_allocatedCount);
 			ImGui::Text("bba bytes: %lld", g_bba_allocatedBytes);
+			ImGui::Text("ImGui allocs: %lld", g_imgui_allocatedCount);
+			ImGui::Text("ImGui bytes: %lld", g_imgui_allocatedBytes);
 		}
 		ImGui::End();
 	}

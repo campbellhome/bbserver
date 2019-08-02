@@ -320,10 +320,76 @@ LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, 
 	return 0;
 }
 
+struct ImGuiAlloc {
+	void *addr;
+	size_t bytes;
+};
+
+struct ImGuiAllocs {
+	u32 count;
+	u32 allocated;
+	ImGuiAlloc *data;
+};
+
+static ImGuiAllocs s_imguiAllocs;
+s64 g_imgui_allocatedCount;
+s64 g_imgui_allocatedBytes;
+
+static void trackImGuiAlloc(void *addr, size_t bytes)
+{
+	ImGuiAlloc alloc;
+	alloc.addr = addr;
+	alloc.bytes = bytes;
+	bba_push(s_imguiAllocs, alloc);
+	++g_imgui_allocatedCount;
+	g_imgui_allocatedBytes += bytes;
+}
+
+static void untrackImGuiAlloc(void *addr)
+{
+	for(u32 i = 0; i < s_imguiAllocs.count; ++i) {
+		ImGuiAlloc *alloc = s_imguiAllocs.data + i;
+		if(alloc->addr == addr) {
+			--g_imgui_allocatedCount;
+			g_imgui_allocatedBytes -= alloc->bytes;
+			bba_erase(s_imguiAllocs, i);
+			return;
+		}
+	}
+	BB_ASSERT(addr == nullptr || Imgui_Core_IsShuttingDown());
+}
+
+static void *LoggingMallocWrapper(size_t size, void *user_data)
+{
+	IM_UNUSED(user_data);
+
+	void *out = malloc(size);
+	//char buf[256];
+	//if(bb_snprintf(buf, sizeof(buf), "imMalloc(0x%p) %zu bytes\n", out, size) < 0) {
+	//	buf[sizeof(buf) - 1] = '\0';
+	//}
+	//OutputDebugStringA(buf);
+	trackImGuiAlloc(out, size);
+	return out;
+}
+static void LoggingFreeWrapper(void *ptr, void *user_data)
+{
+	IM_UNUSED(user_data);
+
+	//char buf[256];
+	//if(bb_snprintf(buf, sizeof(buf), "imFree(0x%p)\n", ptr) < 0) {
+	//	buf[sizeof(buf) - 1] = '\0';
+	//}
+	//OutputDebugStringA(buf);
+	untrackImGuiAlloc(ptr);
+	free(ptr);
+}
+
 int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
 {
 	crt_leak_check_init();
 	//bba_set_logging(true, true);
+	ImGui::SetAllocatorFunctions(&LoggingMallocWrapper, &LoggingFreeWrapper);
 
 	cmdline_init_composite(CommandLine);
 	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");
@@ -376,6 +442,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 		Imgui_Core_Shutdown();
 	}
 
+	bba_free(s_imguiAllocs);
 	cmdline_shutdown();
 
 	return 0;
