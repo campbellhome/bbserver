@@ -33,6 +33,14 @@ BB_WARNING_POP
 
 #include "parson/parson.h"
 
+typedef struct gathered_views_s {
+	u32 count;
+	u32 allocated;
+	view_t **data;
+} gathered_views_t;
+
+static gathered_views_t s_gathered_views;
+static sb_t s_strippedLine;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 
@@ -336,7 +344,7 @@ static void UpdateLogColumnWidth(view_t *view, view_log_t *viewLog)
 
 sb_t StripColorCodes(span_t span /*, bool bSingleLine*/)
 {
-	sb_t result = { BB_EMPTY_INITIALIZER };
+	s_strippedLine.count = 0;
 	const char *text = span.start;
 	if(text) {
 		while(*text && text < span.end) {
@@ -347,12 +355,12 @@ sb_t StripColorCodes(span_t span /*, bool bSingleLine*/)
 			} else if(text[0] == '^' && text[1] == 'F') {
 				++text;
 			} else {
-				sb_append_char(&result, *text);
+				sb_append_char(&s_strippedLine, *text);
 			}
 			++text;
 		}
 	}
-	return result;
+	return s_strippedLine;
 }
 
 static b32 line_can_be_json(sb_t line)
@@ -427,7 +435,6 @@ static void BuildLogLine(view_t *view, view_log_t *viewLog, bool allColumns, sb_
 	if(!bJson) {
 		sb_append(sb, sb_get(&stripped));
 	}
-	sb_reset(&stripped);
 
 	if(crlf == kAppendCRLF) {
 		sb_append(sb, "\r\n");
@@ -1030,7 +1037,6 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 				TextWrapped("%s", sb_get(&stripped));
 				PopTextWrapPos();
 			}
-			sb_reset(&stripped);
 		}
 		EndTooltip();
 	}
@@ -2173,12 +2179,6 @@ static int GatheredViewSort(const void *_a, const void *_b)
 	return (int)(aAppInfo->initialTimestamp - bAppInfo->initialTimestamp);
 }
 
-typedef struct gathered_views_s {
-	u32 count;
-	u32 allocated;
-	view_t **data;
-} gathered_views_t;
-
 void UIRecordedView_GatherViews(gathered_views_t &views)
 {
 	for(u32 sessionIndex = 0; sessionIndex < recorded_session_count(); ++sessionIndex) {
@@ -2203,14 +2203,13 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 		}
 	}
 
-	gathered_views_t views;
-	memset(&views, 0, sizeof(views));
-	UIRecordedView_GatherViews(views);
+	s_gathered_views.count = 0;
+	UIRecordedView_GatherViews(s_gathered_views);
 
 	if(s_lastDpiScale != g_config.dpiScale) {
 		s_lastDpiScale = g_config.dpiScale;
-		for(u32 viewIndex = 0; viewIndex < views.count; ++viewIndex) {
-			view_t *view = views.data[viewIndex];
+		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+			view_t *view = s_gathered_views.data[viewIndex];
 			view_reset_column_widths(view);
 		}
 	}
@@ -2230,8 +2229,8 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 			float screenHeight = io.DisplaySize.y - startY;
 
 			int tiledCount = 0;
-			for(u32 viewIndex = 0; viewIndex < views.count; ++viewIndex) {
-				view_t *view = *(views.data + viewIndex);
+			for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+				view_t *view = *(s_gathered_views.data + viewIndex);
 				if(view->tiled) {
 					++tiledCount;
 				}
@@ -2250,8 +2249,8 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 			ImVec2 windowSize(windowSpacing.x - 1, windowSpacing.y - 1);
 			int row = 0;
 			int col = 0;
-			for(u32 viewIndex = 0; viewIndex < views.count; ++viewIndex) {
-				view_t *view = *(views.data + viewIndex);
+			for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+				view_t *view = *(s_gathered_views.data + viewIndex);
 				ImGuiCond positioningCond = (view->tiled) ? ImGuiCond_Always : ImGuiCond_Once;
 				SetNextWindowSize(windowSize, positioningCond);
 				SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * col, viewportPos.y + startY + windowSpacing.y * row), positioningCond);
@@ -2265,12 +2264,17 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 				}
 			}
 		} else {
-			for(u32 viewIndex = 0; viewIndex < views.count; ++viewIndex) {
-				UIRecordedView_Update(*(views.data + viewIndex), autoTileViews);
+			for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+				UIRecordedView_Update(*(s_gathered_views.data + viewIndex), autoTileViews);
 			}
 		}
 	}
-	bba_free(views);
 
 	UIRecordedView_RemoveClosedViews();
+}
+
+void UIRecordedView_Shutdown(void)
+{
+	bba_free(s_gathered_views);
+	sb_reset(&s_strippedLine);
 }

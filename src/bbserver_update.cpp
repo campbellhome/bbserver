@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "bbserver_update.h"
+#include "bb_array.h"
 #include "bb_colors.h"
 #include "bb_log.h"
 #include "bb_string.h"
@@ -504,6 +505,12 @@ extern "C" void BBServer_Update(void)
 	}
 	if(s_showImguiMetrics) {
 		ImGui::ShowMetricsWindow(&s_showImguiMetrics);
+		if(ImGui::Begin("Dear ImGui Metrics", &s_showImguiMetrics)) {
+			ImGui::Separator();
+			ImGui::Text("bba allocs: %lld", g_bba_allocatedCount);
+			ImGui::Text("bba bytes: %lld", g_bba_allocatedBytes);
+		}
+		ImGui::End();
 	}
 	if(s_showImguiUserGuide) {
 		ImGui::ShowUserGuide();

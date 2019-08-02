@@ -31,15 +31,16 @@
 #include "tasks.h"
 #include "theme_config.h"
 #include "ui_config.h"
+#include "ui_view.h"
 #include "update.h"
 #include "uuid_config.h"
 #include "uuid_rfc4122/uuid.h"
+#include "va.h"
 #include "view.h"
 #include "win32_resource.h"
 
 #include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
-#include "va.h"
 
 #define COPYDATA_MAGIC 0x1234567890abcdefu
 static char s_imguiPath[kBBSize_MaxPath];
@@ -194,6 +195,7 @@ static void BBServer_Shutdown(void)
 	tasks_shutdown();
 	devkit_autodetect_shutdown();
 	UIConfig_Reset();
+	UIRecordedView_Shutdown();
 	recordings_shutdown();
 	discovery_thread_shutdown();
 	while(recorded_session_t *session = recorded_session_get(0)) {
@@ -321,6 +323,7 @@ LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, 
 int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
 {
 	crt_leak_check_init();
+	//bba_set_logging(true, true);
 
 	cmdline_init_composite(CommandLine);
 	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");

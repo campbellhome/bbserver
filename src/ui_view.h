@@ -7,6 +7,7 @@
 #include "wrap_imgui.h"
 
 void UIRecordedView_UpdateAll(bool autoTileViews);
+void UIRecordedView_Shutdown(void);
 
 const char kColorKeyPrefix = '^';
 const char kFirstColorKey = '0';
