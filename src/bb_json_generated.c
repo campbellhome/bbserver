@@ -204,7 +204,6 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.textShadows = json_object_get_boolean_safe(obj, "textShadows");
 			dst.logColorUsage = json_deserialize_configColorUsage(json_object_get_value(obj, "logColorUsage"));
 			dst.tooltips = json_deserialize_tooltipConfig(json_object_get_value(obj, "tooltips"));
-			dst.recordingsOpen = json_object_get_boolean_safe(obj, "recordingsOpen");
 			dst.dpiAware = json_object_get_boolean_safe(obj, "dpiAware");
 			dst.autoDeleteAfterDays = (u32)json_object_get_number(obj, "autoDeleteAfterDays");
 			dst.autoCloseAll = json_object_get_boolean_safe(obj, "autoCloseAll");
@@ -215,9 +214,6 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.updatePauseAfterSuccessfulUpdate = json_object_get_boolean_safe(obj, "updatePauseAfterSuccessfulUpdate");
 			dst.updatePauseAfterFailedUpdate = json_object_get_boolean_safe(obj, "updatePauseAfterFailedUpdate");
 			dst.assertMessageBox = json_object_get_boolean_safe(obj, "assertMessageBox");
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
-				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
-			}
 		}
 	}
 	return dst;
@@ -252,6 +248,41 @@ new_recording_t json_deserialize_new_recording_t(JSON_Value *src)
 			dst.recordingType = json_deserialize_recording_type_t(json_object_get_value(obj, "recordingType"));
 			dst.mqId = (u32)json_object_get_number(obj, "mqId");
 			dst.platform = (u32)json_object_get_number(obj, "platform");
+		}
+	}
+	return dst;
+}
+
+recordings_tab_config_t json_deserialize_recordings_tab_config_t(JSON_Value *src)
+{
+	recordings_tab_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.group = json_deserialize_recording_group_t(json_object_get_value(obj, "group"));
+			dst.sort = json_deserialize_recording_sort_t(json_object_get_value(obj, "sort"));
+			dst.showDate = json_object_get_boolean_safe(obj, "showDate");
+			dst.showTime = json_object_get_boolean_safe(obj, "showTime");
+			dst.showInternal = json_object_get_boolean_safe(obj, "showInternal");
+			dst.showExternal = json_object_get_boolean_safe(obj, "showExternal");
+		}
+	}
+	return dst;
+}
+
+recordings_config_t json_deserialize_recordings_config_t(JSON_Value *src)
+{
+	recordings_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.tabs); ++i) {
+				dst.tabs[i] = json_deserialize_recordings_tab_config_t(json_object_get_value(obj, va("tabs.%u", i)));
+			}
+			dst.width = (float)json_object_get_number(obj, "width");
+			dst.recordingsOpen = json_object_get_boolean_safe(obj, "recordingsOpen");
 		}
 	}
 	return dst;
@@ -703,7 +734,6 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "textShadows", src->textShadows);
 		json_object_set_value(obj, "logColorUsage", json_serialize_configColorUsage(src->logColorUsage));
 		json_object_set_value(obj, "tooltips", json_serialize_tooltipConfig(&src->tooltips));
-		json_object_set_boolean(obj, "recordingsOpen", src->recordingsOpen);
 		json_object_set_boolean(obj, "dpiAware", src->dpiAware);
 		json_object_set_number(obj, "autoDeleteAfterDays", src->autoDeleteAfterDays);
 		json_object_set_boolean(obj, "autoCloseAll", src->autoCloseAll);
@@ -714,9 +744,6 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "updatePauseAfterSuccessfulUpdate", src->updatePauseAfterSuccessfulUpdate);
 		json_object_set_boolean(obj, "updatePauseAfterFailedUpdate", src->updatePauseAfterFailedUpdate);
 		json_object_set_boolean(obj, "assertMessageBox", src->assertMessageBox);
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
-		}
 	}
 	return val;
 }
@@ -745,6 +772,35 @@ JSON_Value *json_serialize_new_recording_t(const new_recording_t *src)
 		json_object_set_value(obj, "recordingType", json_serialize_recording_type_t(src->recordingType));
 		json_object_set_number(obj, "mqId", src->mqId);
 		json_object_set_number(obj, "platform", src->platform);
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_recordings_tab_config_t(const recordings_tab_config_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "group", json_serialize_recording_group_t(src->group));
+		json_object_set_value(obj, "sort", json_serialize_recording_sort_t(src->sort));
+		json_object_set_boolean(obj, "showDate", src->showDate);
+		json_object_set_boolean(obj, "showTime", src->showTime);
+		json_object_set_boolean(obj, "showInternal", src->showInternal);
+		json_object_set_boolean(obj, "showExternal", src->showExternal);
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_recordings_config_t(const recordings_config_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->tabs); ++i) {
+			json_object_set_value(obj, va("tabs.%u", i), json_serialize_recordings_tab_config_t(&src->tabs[i]));
+		}
+		json_object_set_number(obj, "width", src->width);
+		json_object_set_boolean(obj, "recordingsOpen", src->recordingsOpen);
 	}
 	return val;
 }
@@ -1019,6 +1075,48 @@ configColorUsage json_deserialize_configColorUsage(JSON_Value *src)
 	return dst;
 }
 
+recording_tab_t json_deserialize_recording_tab_t(JSON_Value *src)
+{
+	recording_tab_t dst = kRecordingTab_Count;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kRecordingTab_Internal")) { dst = kRecordingTab_Internal; }
+			if(!strcmp(str, "kRecordingTab_External")) { dst = kRecordingTab_External; }
+			if(!strcmp(str, "kRecordingTab_Count")) { dst = kRecordingTab_Count; }
+		}
+	}
+	return dst;
+}
+
+recording_sort_t json_deserialize_recording_sort_t(JSON_Value *src)
+{
+	recording_sort_t dst = kRecordingSort_Count;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kRecordingSort_StartTime")) { dst = kRecordingSort_StartTime; }
+			if(!strcmp(str, "kRecordingSort_Application")) { dst = kRecordingSort_Application; }
+			if(!strcmp(str, "kRecordingSort_Count")) { dst = kRecordingSort_Count; }
+		}
+	}
+	return dst;
+}
+
+recording_group_t json_deserialize_recording_group_t(JSON_Value *src)
+{
+	recording_group_t dst = kRecordingGroup_Count;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kRecordingGroup_None")) { dst = kRecordingGroup_None; }
+			if(!strcmp(str, "kRecordingGroup_Application")) { dst = kRecordingGroup_Application; }
+			if(!strcmp(str, "kRecordingGroup_Count")) { dst = kRecordingGroup_Count; }
+		}
+	}
+	return dst;
+}
+
 recording_type_t json_deserialize_recording_type_t(JSON_Value *src)
 {
 	recording_type_t dst = kRecordingType_Count;
@@ -1063,6 +1161,42 @@ JSON_Value *json_serialize_configColorUsage(const configColorUsage src)
 		case kConfigColors_NoBg: str = "kConfigColors_NoBg"; break;
 		case kConfigColors_None: str = "kConfigColors_None"; break;
 		case kConfigColors_Count: str = "kConfigColors_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
+JSON_Value *json_serialize_recording_tab_t(const recording_tab_t src)
+{
+	const char *str = "";
+	switch(src) {
+		case kRecordingTab_Internal: str = "kRecordingTab_Internal"; break;
+		case kRecordingTab_External: str = "kRecordingTab_External"; break;
+		case kRecordingTab_Count: str = "kRecordingTab_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
+JSON_Value *json_serialize_recording_sort_t(const recording_sort_t src)
+{
+	const char *str = "";
+	switch(src) {
+		case kRecordingSort_StartTime: str = "kRecordingSort_StartTime"; break;
+		case kRecordingSort_Application: str = "kRecordingSort_Application"; break;
+		case kRecordingSort_Count: str = "kRecordingSort_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
+JSON_Value *json_serialize_recording_group_t(const recording_group_t src)
+{
+	const char *str = "";
+	switch(src) {
+		case kRecordingGroup_None: str = "kRecordingGroup_None"; break;
+		case kRecordingGroup_Application: str = "kRecordingGroup_Application"; break;
+		case kRecordingGroup_Count: str = "kRecordingGroup_Count"; break;
 	}
 	JSON_Value *val = json_value_init_string(str);
 	return val;

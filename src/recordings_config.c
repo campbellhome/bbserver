@@ -2,10 +2,13 @@
 // MIT license (see License.txt)
 
 #include "recordings_config.h"
+#include "appdata.h"
+#include "bb_json_generated.h"
 #include "bb_string.h"
 #include "bb_wrap_stdio.h"
 #include "file_utils.h"
 #include "line_parser.h"
+#include "parson/parson.h"
 #include "recordings.h"
 #include "sb.h"
 #include "va.h"
@@ -37,35 +40,7 @@ static b32 recordings_get_config_path(char *buffer, size_t bufferSize)
 	return true;
 }
 
-b32 recordings_write_config(recordings_t *recordings)
-{
-	char path[kBBSize_MaxPath];
-	FILE *fp;
-	if(!recordings_get_config_path(path, sizeof(path)))
-		return false;
-
-	fp = fopen(path, "wb");
-	if(!fp)
-		return false;
-
-	fprintf(fp, "[1] # Version - do not remove\n");
-	fprintf(fp, "\n");
-	if(recordings->sort != s_recordingsDefaultSort) {
-		fprintf(fp, "sort \"%s\"\n", s_recordingsSortNames[recordings->sort]);
-	}
-	if(recordings->group != s_recordingsDefaultGroup) {
-		fprintf(fp, "group \"%s\"\n", s_recordingsGroupNames[recordings->group]);
-	}
-	fprintf(fp, "showDate %d\n", recordings->showDate);
-	fprintf(fp, "showTime %d\n", recordings->showTime);
-	fprintf(fp, "showInternal %d\n", recordings->showInternal);
-	fprintf(fp, "showExternal %d\n", recordings->showExternal);
-	fprintf(fp, "width %f\n", recordings->width);
-	fclose(fp);
-	return true;
-}
-
-static b32 recordings_parse_sort(line_parser_t *parser, recordings_t *recordings)
+static b32 recordings_parse_sort(line_parser_t *parser, recordings_config_t *config)
 {
 	b32 ret = true;
 	u32 i;
@@ -74,7 +49,7 @@ static b32 recordings_parse_sort(line_parser_t *parser, recordings_t *recordings
 		b32 found = false;
 		for(i = 0; i < kRecordingSort_Count; ++i) {
 			if(!strcmp(s_recordingsSortNames[i], token)) {
-				recordings->sort = (recording_sort_t)i;
+				config->tabs[0].sort = (recording_sort_t)i;
 				found = true;
 				break;
 			}
@@ -88,7 +63,7 @@ static b32 recordings_parse_sort(line_parser_t *parser, recordings_t *recordings
 	return ret;
 }
 
-static b32 recordings_parse_group(line_parser_t *parser, recordings_t *recordings)
+static b32 recordings_parse_group(line_parser_t *parser, recordings_config_t *config)
 {
 	b32 ret = true;
 	u32 i;
@@ -97,7 +72,7 @@ static b32 recordings_parse_group(line_parser_t *parser, recordings_t *recording
 		b32 found = false;
 		for(i = 0; i < kRecordingGroup_Count; ++i) {
 			if(!strcmp(s_recordingsGroupNames[i], token)) {
-				recordings->group = (recording_group_t)i;
+				config->tabs[0].group = (recording_group_t)i;
 				found = true;
 				break;
 			}
@@ -135,52 +110,56 @@ static b32 recordings_parse_float(line_parser_t *parser, float *target, const ch
 	return ret;
 }
 
-static b32 recordings_read_config_lines(line_parser_t *parser, recordings_t *recordings)
+static b32 recordings_read_config_lines(line_parser_t *parser, recordings_config_t *config)
 {
 	char *line;
 	char *token;
 	b32 ret = true;
+	b32 dummy = false;
 	while((line = line_parser_next_line(parser)) != NULL) {
 		//BB_LOG("Parser", "Line %u: [%s]\n", parser->lineIndex, line);
 		token = line_parser_next_token(parser);
 		if(!strcmp(token, "sort")) {
-			ret = recordings_parse_sort(parser, recordings) || ret;
+			ret = recordings_parse_sort(parser, config) || ret;
 		} else if(!strcmp(token, "group")) {
-			ret = recordings_parse_group(parser, recordings) || ret;
+			ret = recordings_parse_group(parser, config) || ret;
 		} else if(!strcmp(token, "showDate")) {
-			ret = recordings_parse_b32(parser, &recordings->showDate, "showDate") || ret;
+			ret = recordings_parse_b32(parser, &config->tabs[0].showDate, "showDate") || ret;
 		} else if(!strcmp(token, "showTime")) {
-			ret = recordings_parse_b32(parser, &recordings->showTime, "showTime") || ret;
+			ret = recordings_parse_b32(parser, &config->tabs[0].showTime, "showTime") || ret;
 		} else if(!strcmp(token, "showInternal")) {
-			ret = recordings_parse_b32(parser, &recordings->showInternal, "showInternal") || ret;
+			ret = recordings_parse_b32(parser, &dummy, "showInternal") || ret;
 		} else if(!strcmp(token, "showExternal")) {
-			ret = recordings_parse_b32(parser, &recordings->showExternal, "showExternal") || ret;
+			ret = recordings_parse_b32(parser, &dummy, "showExternal") || ret;
 		} else if(!strcmp(token, "width")) {
-			ret = recordings_parse_float(parser, &recordings->width, "showTime") || ret;
+			ret = recordings_parse_float(parser, &config->width, "showTime") || ret;
 		} else {
 			ret = line_parser_error(parser, va("unknown token '%s'", token));
 		}
 	}
-	return 0;
+	return ret;
 }
 
-static void recordings_default_config(recordings_t *recordings)
+static void recordings_default_config(recordings_config_t *config)
 {
-	recordings->sort = s_recordingsDefaultSort;
-	recordings->group = s_recordingsDefaultGroup;
-	recordings->width = 275.0f;
-	recordings->showDate = recordings->showTime = true;
-	recordings->showInternal = recordings->showExternal = true;
+	config->tabs[0].sort = s_recordingsDefaultSort;
+	config->tabs[0].group = s_recordingsDefaultGroup;
+	config->tabs[0].showDate = config->tabs[0].showTime = true;
+	for(u32 tab = 1; tab < kRecordingTab_Count; ++tab) {
+		config->tabs[tab] = config->tabs[0];
+	}
+	config->width = 275.0f;
+	config->recordingsOpen = true;
 }
 
-b32 recordings_read_config(recordings_t *recordings)
+static b32 recordings_read_config_old(recordings_config_t *config)
 {
 	char path[kBBSize_MaxPath];
 	fileData_t fileData;
 	line_parser_t parser;
 	u32 version;
 	b32 result;
-	recordings_default_config(recordings);
+	recordings_default_config(config);
 	if(!recordings_get_config_path(path, sizeof(path)))
 		return false;
 
@@ -195,10 +174,58 @@ b32 recordings_read_config(recordings_t *recordings)
 	if(version > 1) {
 		return line_parser_error(&parser, va("expected version 1, saw [%u]", version));
 	}
-	result = recordings_read_config_lines(&parser, recordings);
+	result = recordings_read_config_lines(&parser, config);
 	fileData_reset(&fileData);
-	if(recordings->width == 0.0f) {
-		recordings_default_config(recordings);
+	if(config->width == 0.0f) {
+		recordings_default_config(config);
 	}
+	for(u32 tab = 1; tab < kRecordingTab_Count; ++tab) {
+		config->tabs[tab] = config->tabs[0];
+	}
+	return result;
+}
+
+static sb_t recordings_config_get_path(const char *appName)
+{
+	sb_t s = appdata_get(appName);
+	sb_append(&s, "\\bb_recordings_config.json");
+	return s;
+}
+
+b32 recordings_config_read(recordings_config_t *config)
+{
+	b32 ret = false;
+	sb_t path = recordings_config_get_path("bb");
+	JSON_Value *val = json_parse_file(sb_get(&path));
+	if(val) {
+		*config = json_deserialize_recordings_config_t(val);
+		json_value_free(val);
+		ret = true;
+	}
+
+	if(!ret) {
+		ret = recordings_read_config_old(config);
+	}
+	sb_reset(&path);
+	return ret;
+}
+
+b32 recordings_config_write(recordings_config_t *config)
+{
+	b32 result = false;
+	JSON_Value *val = json_serialize_recordings_config_t(config);
+	if(val) {
+		sb_t path = recordings_config_get_path("bb");
+		FILE *fp = fopen(sb_get(&path), "wb");
+		if(fp) {
+			char *serialized_string = json_serialize_to_string_pretty(val);
+			fputs(serialized_string, fp);
+			fclose(fp);
+			json_free_serialized_string(serialized_string);
+			result = true;
+		}
+		sb_reset(&path);
+	}
+	json_value_free(val);
 	return result;
 }

@@ -26,30 +26,38 @@
 
 void sanitize_app_filename(const char *applicationName, char *applicationFilename, size_t applicationFilenameLen);
 
-static recordings_t s_recordings;
-static recordings_t s_invalidRecordings;
-static grouped_recordings_t s_groupedRecordings;
+static recordings_t s_recordings[kRecordingTab_Count];
+static recordings_t s_invalidRecordings[kRecordingTab_Count];
+static grouped_recordings_t s_groupedRecordings[kRecordingTab_Count];
 static u32 s_nextRecordingId;
-static b32 s_recordingsDirty;
+static b32 s_recordingsDirty[kRecordingTab_Count];
+static recordings_config_t s_recordingsConfig;
+
+static recording_tab_t recording_tab_from_recording_type(recording_type_t recordingType)
+{
+	return recordingType == kRecordingType_ExternalFile ? kRecordingTab_External : kRecordingTab_Internal;
+}
 
 recording_t *recordings_find_by_id(u32 id)
 {
-	u32 i;
-	for(i = 0; i < s_recordings.count; ++i) {
-		recording_t *r = s_recordings.data + i;
-		if(r->id == id)
-			return r;
+	for(u32 tab = 0; tab < kRecordingTab_Count; ++tab) {
+		for(u32 i = 0; i < s_recordings[tab].count; ++i) {
+			recording_t *r = s_recordings[tab].data + i;
+			if(r->id == id)
+				return r;
+		}
 	}
 	return NULL;
 }
 
 recording_t *recordings_find_by_path(const char *path)
 {
-	u32 i;
-	for(i = 0; i < s_recordings.count; ++i) {
-		recording_t *r = s_recordings.data + i;
-		if(!strcmp(r->path, path))
-			return r;
+	for(u32 tab = 0; tab < kRecordingTab_Count; ++tab) {
+		for(u32 i = 0; i < s_recordings[tab].count; ++i) {
+			recording_t *r = s_recordings[tab].data + i;
+			if(!strcmp(r->path, path))
+				return r;
+		}
 	}
 	return NULL;
 }
@@ -57,8 +65,8 @@ recording_t *recordings_find_by_path(const char *path)
 recording_t *recordings_find_main_log(void)
 {
 	u32 i;
-	for(i = 0; i < s_recordings.count; ++i) {
-		recording_t *r = s_recordings.data + i;
+	for(i = 0; i < s_recordings[kRecordingTab_Internal].count; ++i) {
+		recording_t *r = s_recordings[kRecordingTab_Internal].data + i;
 		if(r->recordingType == kRecordingType_MainLog)
 			return r;
 	}
@@ -132,34 +140,34 @@ static int recordings_compare_application(const void *_a, const void *_b)
 	}
 	return strcmp(a->path, b->path);
 }
-static void recordings_add_group(void)
+static void recordings_add_group(recording_tab_t tab)
 {
-	grouped_recording_entry_t *prev = s_groupedRecordings.count ? s_groupedRecordings.data + s_groupedRecordings.count - 1 : NULL;
-	grouped_recording_entry_t *g = bba_add(s_groupedRecordings, 1);
+	grouped_recording_entry_t *prev = s_groupedRecordings[tab].count ? s_groupedRecordings[tab].data + s_groupedRecordings[tab].count - 1 : NULL;
+	grouped_recording_entry_t *g = bba_add(s_groupedRecordings[tab], 1);
 	if(g) {
 		g->groupId = (prev) ? prev->groupId + 1 : 1;
 	}
 }
-static void recordings_add_grouped_recording(recording_t *r)
+static void recordings_add_grouped_recording(recording_tab_t tab, recording_t *r)
 {
-	grouped_recording_entry_t *prev = s_groupedRecordings.data + s_groupedRecordings.count - 1;
-	grouped_recording_entry_t *g = bba_add(s_groupedRecordings, 1);
+	grouped_recording_entry_t *prev = s_groupedRecordings[tab].data + s_groupedRecordings[tab].count - 1;
+	grouped_recording_entry_t *g = bba_add(s_groupedRecordings[tab], 1);
 	if(g) {
 		g->groupId = prev->groupId;
 		g->recording = r;
 	}
 }
-void recordings_sort(void)
+void recordings_sort(recording_tab_t tab)
 {
 	u32 i;
-	bba_clear(s_groupedRecordings);
-	s_groupedRecordings.lastClickIndex = ~0u;
-	switch(s_recordings.sort) {
+	bba_clear(s_groupedRecordings[tab]);
+	s_groupedRecordings[tab].lastClickIndex = ~0u;
+	switch(s_recordingsConfig.tabs[tab].sort) {
 	case kRecordingSort_StartTime:
-		qsort(s_recordings.data, s_recordings.count, sizeof(s_recordings.data[0]), recordings_compare_starttime);
+		qsort(s_recordings[tab].data, s_recordings[tab].count, sizeof(s_recordings[tab].data[0]), recordings_compare_starttime);
 		break;
 	case kRecordingSort_Application:
-		qsort(s_recordings.data, s_recordings.count, sizeof(s_recordings.data[0]), recordings_compare_application);
+		qsort(s_recordings[tab].data, s_recordings[tab].count, sizeof(s_recordings[tab].data[0]), recordings_compare_application);
 		break;
 	default:
 		BB_ASSERT(0);
@@ -167,14 +175,11 @@ void recordings_sort(void)
 	}
 
 	b32 bFirst = true;
-	switch(s_recordings.group) {
+	switch(s_recordingsConfig.tabs[tab].group) {
 	case kRecordingGroup_None:
-		for(i = 0; i < s_recordings.count; ++i) {
-			recording_t *r = s_recordings.data + i;
-			b32 bExternal = r->recordingType == kRecordingType_ExternalFile;
-			if(bExternal && !s_recordings.showExternal || !bExternal && !s_recordings.showInternal)
-				continue;
-			grouped_recording_entry_t *g = bba_add(s_groupedRecordings, 1);
+		for(i = 0; i < s_recordings[tab].count; ++i) {
+			recording_t *r = s_recordings[tab].data + i;
+			grouped_recording_entry_t *g = bba_add(s_groupedRecordings[tab], 1);
 			if(g) {
 				g->recording = r;
 				g->groupId = i;
@@ -182,21 +187,18 @@ void recordings_sort(void)
 		}
 		break;
 	case kRecordingGroup_Application:
-		for(i = 0; i < s_recordings.count; ++i) {
-			recording_t *r = s_recordings.data + i;
-			b32 bExternal = r->recordingType == kRecordingType_ExternalFile;
-			if(bExternal && !s_recordings.showExternal || !bExternal && !s_recordings.showInternal)
-				continue;
+		for(i = 0; i < s_recordings[tab].count; ++i) {
+			recording_t *r = s_recordings[tab].data + i;
 			if(bFirst) {
-				recordings_add_group();
-				recordings_add_grouped_recording(r);
+				recordings_add_group(tab);
+				recordings_add_grouped_recording(tab, r);
 				bFirst = false;
 			} else {
-				recording_t *prev = s_recordings.data + i - 1;
+				recording_t *prev = s_recordings[tab].data + i - 1;
 				if(strcmp(prev->applicationName, r->applicationName)) {
-					recordings_add_group();
+					recordings_add_group(tab);
 				}
-				recordings_add_grouped_recording(r);
+				recordings_add_grouped_recording(tab, r);
 			}
 		}
 		break;
@@ -211,7 +213,8 @@ void recording_add_existing(char *data, b32 valid)
 	new_recording_t r = recording_build_new_recording(data);
 	if(sb_len(&r.path)) {
 		if(!recordings_find_by_path(sb_get(&r.path))) {
-			recordings_t *recordings = (valid) ? &s_recordings : &s_invalidRecordings;
+			recording_tab_t tab = recording_tab_from_recording_type(r.recordingType);
+			recordings_t *recordings = (valid) ? s_recordings + tab : s_invalidRecordings + tab;
 			recording = bba_add(*recordings, 1);
 			if(recording) {
 				recording->id = ++s_nextRecordingId;
@@ -227,7 +230,7 @@ void recording_add_existing(char *data, b32 valid)
 				recording->outgoingMqId = mq_invalid_id();
 				recording->platform = r.platform;
 				recording->recordingType = r.recordingType;
-				s_recordingsDirty = true;
+				s_recordingsDirty[tab] = true;
 			}
 		}
 	}
@@ -240,11 +243,13 @@ void recording_started(char *data)
 	recording_t *recording, *existing;
 	new_recording_t r = recording_build_new_recording(data);
 	if(sb_len(&r.path)) {
+		recording_tab_t tab = recording_tab_from_recording_type(r.recordingType);
 		existing = recordings_find_by_path(sb_get(&r.path));
 		if(existing) {
 			recording = existing;
+			tab = recording_tab_from_recording_type(recording->recordingType);
 		} else {
-			recording = bba_add(s_recordings, 1);
+			recording = bba_add(s_recordings[tab], 1);
 			if(recording) {
 				recording->id = ++s_nextRecordingId;
 				bb_strncpy(recording->applicationName, sb_get(&r.applicationName), sizeof(recording->applicationName));
@@ -268,7 +273,7 @@ void recording_started(char *data)
 			recording->recordingType = r.recordingType;
 			recording->filetimeHigh = r.filetime.dwHighDateTime;
 			recording->filetimeLow = r.filetime.dwLowDateTime;
-			s_recordingsDirty = true;
+			s_recordingsDirty[tab] = true;
 			if(r.openView) {
 				if(g_config.autoCloseAll) {
 					recorded_session_auto_close_all();
@@ -289,22 +294,21 @@ void recording_stopped(char *data)
 	if(!path)
 		return;
 	++path;
-	for(i = 0; i < s_recordings.count; ++i) {
-		recording_t *recording = s_recordings.data + i;
-		if(!strcmp(recording->path, path)) {
-			recording->active = false;
-			mq_releaseref(recording->outgoingMqId);
-			recorded_session_recording_stopped(recording->path);
+	for(u32 tab = 0; tab < kRecordingTab_Count; ++tab) {
+		for(i = 0; i < s_recordings[tab].count; ++i) {
+			recording_t *recording = s_recordings[tab].data + i;
+			if(!strcmp(recording->path, path)) {
+				recording->active = false;
+				mq_releaseref(recording->outgoingMqId);
+				recorded_session_recording_stopped(recording->path);
+			}
 		}
 	}
 }
 
-b32 recordings_delete_by_id(u32 id, recordings_t *recordings)
+static b32 recordings_delete_by_id_internal(u32 id, recordings_t *recordings)
 {
 	u32 i;
-	if(!recordings) {
-		recordings = &s_recordings;
-	}
 	for(i = 0; i < recordings->count; ++i) {
 		recording_t *r = recordings->data + i;
 		if(r->id == id) {
@@ -343,6 +347,19 @@ b32 recordings_delete_by_id(u32 id, recordings_t *recordings)
 	return false;
 }
 
+b32 recordings_delete_by_id(u32 id)
+{
+	for(u32 tab = 0; tab < kRecordingTab_Count; ++tab) {
+		if(recordings_delete_by_id_internal(id, s_recordings + tab)) {
+			return true;
+		}
+		if(recordings_delete_by_id_internal(id, s_invalidRecordings + tab)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static void recordings_check_autodelete(ULARGE_INTEGER nowInt, recordingIds_t *pendingDeletions, recording_t *recording)
 {
 	if(!recording->active) {
@@ -370,35 +387,35 @@ static void recordings_check_autodelete(ULARGE_INTEGER nowInt, recordingIds_t *p
 void recordings_autodelete_old_recordings(void)
 {
 	if(g_config.autoDeleteAfterDays > 0) {
-		u32 i;
-		recordingIds_t pendingDeletions;
-		recordings_t *recordings = recordings_get_all();
-		FILETIME now;
-		ULARGE_INTEGER nowInt;
-		GetSystemTimeAsFileTime(&now);
-		nowInt.LowPart = now.dwLowDateTime;
-		nowInt.HighPart = now.dwHighDateTime;
+		for(u32 tab = 0; tab < kRecordingTab_Count; ++tab) {
+			u32 i;
+			recordingIds_t pendingDeletions;
+			recordings_t *recordings = recordings_get_all(tab);
+			FILETIME now;
+			ULARGE_INTEGER nowInt;
+			GetSystemTimeAsFileTime(&now);
+			nowInt.LowPart = now.dwLowDateTime;
+			nowInt.HighPart = now.dwHighDateTime;
 
-		memset(&pendingDeletions, 0, sizeof(pendingDeletions));
+			memset(&pendingDeletions, 0, sizeof(pendingDeletions));
 
-		for(i = 0; i < recordings->count; ++i) {
-			recording_t *recording = recordings->data + i;
-			recordings_check_autodelete(nowInt, &pendingDeletions, recording);
-		}
-
-		for(i = 0; i < s_invalidRecordings.count; ++i) {
-			recording_t *recording = s_invalidRecordings.data + i;
-			recordings_check_autodelete(nowInt, &pendingDeletions, recording);
-		}
-
-		if(pendingDeletions.count) {
-			s_recordingsDirty = true;
-			for(i = 0; i < pendingDeletions.count; ++i) {
-				if(!recordings_delete_by_id(pendingDeletions.data[i], &s_recordings)) {
-					recordings_delete_by_id(pendingDeletions.data[i], &s_invalidRecordings);
-				}
+			for(i = 0; i < recordings->count; ++i) {
+				recording_t *recording = recordings->data + i;
+				recordings_check_autodelete(nowInt, &pendingDeletions, recording);
 			}
-			bba_free(pendingDeletions);
+
+			for(i = 0; i < s_invalidRecordings[tab].count; ++i) {
+				recording_t *recording = s_invalidRecordings[tab].data + i;
+				recordings_check_autodelete(nowInt, &pendingDeletions, recording);
+			}
+
+			if(pendingDeletions.count) {
+				s_recordingsDirty[tab] = true;
+				for(i = 0; i < pendingDeletions.count; ++i) {
+					recordings_delete_by_id(pendingDeletions.data[i]);
+				}
+				bba_free(pendingDeletions);
+			}
 		}
 	}
 }
@@ -504,39 +521,47 @@ static bb_thread_handle_t recordings_thread_id;
 void recordings_init(void)
 {
 	recordings_thread_id = bbthread_create(recordings_init_thread_func, NULL);
-	recordings_read_config(&s_recordings);
+	recordings_config_read(&s_recordingsConfig);
+	s_recordingsConfig.width = 275.0f;
 }
 
 void recordings_shutdown(void)
 {
 	if(!globals.viewer) {
-		recordings_write_config(&s_recordings);
+		recordings_config_write(&s_recordingsConfig);
 	}
-	bba_free(s_recordings);
-	bba_free(s_invalidRecordings);
-	bba_free(s_groupedRecordings);
+	for(u32 tab = 0; tab < kRecordingTab_Count; ++tab) {
+		bba_free(s_recordings[tab]);
+		bba_free(s_invalidRecordings[tab]);
+		bba_free(s_groupedRecordings[tab]);
+	}
 	if(recordings_thread_id != 0) {
 		bbthread_join(recordings_thread_id);
 		recordings_thread_id = 0;
 	}
 }
 
-b32 recordings_are_dirty(void)
+recordings_config_t *recordings_get_config(void)
 {
-	return s_recordingsDirty;
+	return &s_recordingsConfig;
 }
 
-void recordings_clear_dirty(void)
+b32 recordings_are_dirty(recording_tab_t tab)
 {
-	s_recordingsDirty = false;
+	return s_recordingsDirty[tab];
 }
 
-recordings_t *recordings_get_all(void)
+void recordings_clear_dirty(recording_tab_t tab)
 {
-	return &s_recordings;
+	s_recordingsDirty[tab] = false;
 }
 
-grouped_recordings_t *grouped_recordings_get_all(void)
+recordings_t *recordings_get_all(recording_tab_t tab)
 {
-	return &s_groupedRecordings;
+	return &s_recordings[tab];
+}
+
+grouped_recordings_t *grouped_recordings_get_all(recording_tab_t tab)
+{
+	return &s_groupedRecordings[tab];
 }

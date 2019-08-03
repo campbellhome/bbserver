@@ -256,7 +256,7 @@ void BBServer_MainMenuBar(void)
 			ImGui::EndMenu();
 		}
 		if(ImGui::BeginMenu("Edit")) {
-			if(ImGui::MenuItem("Recordings", NULL, &g_config.recordingsOpen)) {
+			if(ImGui::MenuItem("Recordings", NULL, &recordings_get_config()->recordingsOpen)) {
 				BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
 			}
 			if(ImGui::MenuItem("Config")) {
@@ -439,7 +439,7 @@ void BBServer_MainMenuBar(void)
 
 		float width = BB_MAX((textSize.x + checkWidth + 10) * g_config.dpiScale, UIRecordings_WidthWhenOpen());
 		ImGui::SameLine(ImGui::GetWindowWidth() - width);
-		if(ImGui::Checkbox("Recordings", &g_config.recordingsOpen)) {
+		if(ImGui::Checkbox("Recordings", &recordings_get_config()->recordingsOpen)) {
 			BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
 		}
 		if(ImGui::BeginPopupContextItem("RecordingsContext")) {

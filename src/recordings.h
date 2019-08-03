@@ -17,13 +17,19 @@ AUTOJSON typedef struct _FILETIME {
 } FILETIME;
 #endif
 
-typedef enum recording_sort_e {
+AUTOJSON typedef enum recording_tab_t {
+	kRecordingTab_Internal,
+	kRecordingTab_External,
+	kRecordingTab_Count
+} recording_tab_t;
+
+AUTOJSON typedef enum recording_sort_e {
 	kRecordingSort_StartTime,
 	kRecordingSort_Application,
 	kRecordingSort_Count
 } recording_sort_t;
 
-typedef enum recording_group_e {
+AUTOJSON typedef enum recording_group_e {
 	kRecordingGroup_None,
 	kRecordingGroup_Application,
 	kRecordingGroup_Count
@@ -67,18 +73,25 @@ typedef struct recordingIds_s {
 	u32 *data;
 } recordingIds_t;
 
-typedef struct recordings_s {
-	u32 count;
-	u32 allocated;
-	recording_t *data;
+AUTOJSON typedef struct recordings_tab_config_s {
 	recording_group_t group;
 	recording_sort_t sort;
-	f32 width;
 	b32 showDate;
 	b32 showTime;
 	b32 showInternal;
 	b32 showExternal;
-	u8 pad[4];
+} recordings_tab_config_t;
+
+AUTOJSON typedef struct recordings_config_s {
+	recordings_tab_config_t tabs[kRecordingTab_Count];
+	float width;
+	b32 recordingsOpen;
+} recordings_config_t;
+
+typedef struct recordings_s {
+	u32 count;
+	u32 allocated;
+	recording_t *data;
 } recordings_t;
 
 typedef struct grouped_recording_entry_s {
@@ -97,12 +110,13 @@ typedef struct grouped_recordings_s {
 
 void recordings_init(void);
 void recordings_shutdown(void);
-b32 recordings_are_dirty(void);
-void recordings_clear_dirty(void);
-void recordings_sort(void);
+b32 recordings_are_dirty(recording_tab_t tab);
+void recordings_clear_dirty(recording_tab_t tab);
+void recordings_sort(recording_tab_t tab);
 void recordings_autodelete_old_recordings(void);
-recordings_t *recordings_get_all(void);
-grouped_recordings_t *grouped_recordings_get_all(void);
+recordings_t *recordings_get_all(recording_tab_t tab);
+recordings_config_t *recordings_get_config(void);
+grouped_recordings_t *grouped_recordings_get_all(recording_tab_t tab);
 
 recording_t *recordings_find_by_id(u32 id);
 recording_t *recordings_find_by_path(const char *path);
@@ -113,7 +127,7 @@ void recording_started(char *data);
 void recording_stopped(char *data);
 b32 recordings_get_application_info(const char *path, bb_decoded_packet_t *decoded);
 
-b32 recordings_delete_by_id(u32 id, recordings_t *recordings);
+b32 recordings_delete_by_id(u32 id);
 
 #if defined(__cplusplus)
 }

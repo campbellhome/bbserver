@@ -250,7 +250,6 @@ config_t config_clone(const config_t *src)
 		dst.textShadows = src->textShadows;
 		dst.logColorUsage = src->logColorUsage;
 		dst.tooltips = tooltipConfig_clone(&src->tooltips);
-		dst.recordingsOpen = src->recordingsOpen;
 		dst.dpiAware = src->dpiAware;
 		dst.autoDeleteAfterDays = src->autoDeleteAfterDays;
 		dst.autoCloseAll = src->autoCloseAll;
@@ -261,9 +260,6 @@ config_t config_clone(const config_t *src)
 		dst.updatePauseAfterSuccessfulUpdate = src->updatePauseAfterSuccessfulUpdate;
 		dst.updatePauseAfterFailedUpdate = src->updatePauseAfterFailedUpdate;
 		dst.assertMessageBox = src->assertMessageBox;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
 	}
 	return dst;
 }
@@ -304,6 +300,46 @@ new_recording_t new_recording_clone(const new_recording_t *src)
 		dst.recordingType = src->recordingType;
 		dst.mqId = src->mqId;
 		dst.platform = src->platform;
+	}
+	return dst;
+}
+
+void recordings_tab_config_reset(recordings_tab_config_t *val)
+{
+	if(val) {
+	}
+}
+recordings_tab_config_t recordings_tab_config_clone(const recordings_tab_config_t *src)
+{
+	recordings_tab_config_t dst = { 0 };
+	if(src) {
+		dst.group = src->group;
+		dst.sort = src->sort;
+		dst.showDate = src->showDate;
+		dst.showTime = src->showTime;
+		dst.showInternal = src->showInternal;
+		dst.showExternal = src->showExternal;
+	}
+	return dst;
+}
+
+void recordings_config_reset(recordings_config_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < BB_ARRAYSIZE(val->tabs); ++i) {
+			recordings_tab_config_reset(val->tabs + i);
+		}
+	}
+}
+recordings_config_t recordings_config_clone(const recordings_config_t *src)
+{
+	recordings_config_t dst = { 0 };
+	if(src) {
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->tabs); ++i) {
+			dst.tabs[i] = recordings_tab_config_clone(&src->tabs[i]);
+		}
+		dst.width = src->width;
+		dst.recordingsOpen = src->recordingsOpen;
 	}
 	return dst;
 }

@@ -101,7 +101,6 @@ AUTOJSON typedef struct config_s {
 	b32 textShadows;
 	configColorUsage logColorUsage;
 	tooltipConfig tooltips;
-	b32 recordingsOpen;
 	b32 dpiAware;
 	u32 autoDeleteAfterDays;
 	b32 autoCloseAll;
@@ -112,7 +111,6 @@ AUTOJSON typedef struct config_s {
 	b32 updatePauseAfterSuccessfulUpdate;
 	b32 updatePauseAfterFailedUpdate;
 	b32 assertMessageBox;
-	u8 pad[4];
 } config_t;
 
 enum { kConfigVersion = 5 };

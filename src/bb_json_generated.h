@@ -26,6 +26,8 @@ typedef struct tag_tooltipConfig tooltipConfig;
 typedef struct config_s config_t;
 typedef struct _FILETIME FILETIME;
 typedef struct new_recording_s new_recording_t;
+typedef struct recordings_tab_config_s recordings_tab_config_t;
+typedef struct recordings_config_s recordings_config_t;
 typedef struct updateConfig_s updateConfig_t;
 typedef struct site_config_s site_config_t;
 typedef struct uuidState_s uuidState_t;
@@ -51,6 +53,9 @@ typedef struct fontConfig_s fontConfig_t;
 typedef struct fontConfigs_s fontConfigs_t;
 
 typedef enum tag_configColorUsage configColorUsage;
+typedef enum recording_tab_t recording_tab_t;
+typedef enum recording_sort_e recording_sort_t;
+typedef enum recording_group_e recording_group_t;
 typedef enum recording_type_e recording_type_t;
 typedef enum view_config_selector_e view_config_selector_t;
 
@@ -67,6 +72,8 @@ tooltipConfig json_deserialize_tooltipConfig(JSON_Value *src);
 config_t json_deserialize_config_t(JSON_Value *src);
 FILETIME json_deserialize_FILETIME(JSON_Value *src);
 new_recording_t json_deserialize_new_recording_t(JSON_Value *src);
+recordings_tab_config_t json_deserialize_recordings_tab_config_t(JSON_Value *src);
+recordings_config_t json_deserialize_recordings_config_t(JSON_Value *src);
 updateConfig_t json_deserialize_updateConfig_t(JSON_Value *src);
 site_config_t json_deserialize_site_config_t(JSON_Value *src);
 uuidState_t json_deserialize_uuidState_t(JSON_Value *src);
@@ -104,6 +111,8 @@ JSON_Value *json_serialize_tooltipConfig(const tooltipConfig *src);
 JSON_Value *json_serialize_config_t(const config_t *src);
 JSON_Value *json_serialize_FILETIME(const FILETIME *src);
 JSON_Value *json_serialize_new_recording_t(const new_recording_t *src);
+JSON_Value *json_serialize_recordings_tab_config_t(const recordings_tab_config_t *src);
+JSON_Value *json_serialize_recordings_config_t(const recordings_config_t *src);
 JSON_Value *json_serialize_updateConfig_t(const updateConfig_t *src);
 JSON_Value *json_serialize_site_config_t(const site_config_t *src);
 JSON_Value *json_serialize_uuidState_t(const uuidState_t *src);
@@ -130,10 +139,16 @@ JSON_Value *json_serialize_fontConfigs_t(const fontConfigs_t *src);
 
 
 configColorUsage json_deserialize_configColorUsage(JSON_Value *src);
+recording_tab_t json_deserialize_recording_tab_t(JSON_Value *src);
+recording_sort_t json_deserialize_recording_sort_t(JSON_Value *src);
+recording_group_t json_deserialize_recording_group_t(JSON_Value *src);
 recording_type_t json_deserialize_recording_type_t(JSON_Value *src);
 view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src);
 
 JSON_Value *json_serialize_configColorUsage(const configColorUsage src);
+JSON_Value *json_serialize_recording_tab_t(const recording_tab_t src);
+JSON_Value *json_serialize_recording_sort_t(const recording_sort_t src);
+JSON_Value *json_serialize_recording_group_t(const recording_group_t src);
 JSON_Value *json_serialize_recording_type_t(const recording_type_t src);
 JSON_Value *json_serialize_view_config_selector_t(const view_config_selector_t src);
 #if defined(__cplusplus)

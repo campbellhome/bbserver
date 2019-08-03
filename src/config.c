@@ -68,7 +68,6 @@ b32 config_read(config_t *config)
 		config->autoTileViews = true;
 		config->alternateRowBackground = true;
 		config->logColorUsage = kConfigColors_Full;
-		config->recordingsOpen = true;
 		config->autoDeleteAfterDays = 14;
 		config->doubleClickSeconds = 0.3f;
 		config->dpiAware = true;

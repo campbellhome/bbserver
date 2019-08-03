@@ -156,7 +156,6 @@ static b32 BBServer_Init(void)
 		to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));
 		new_recording_reset(&cmdlineRecording);
 
-		g_config.recordingsOpen = false;
 		g_config.autoTileViews = 1;
 		g_config.autoDeleteAfterDays = 0;
 		return true;
