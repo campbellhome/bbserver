@@ -223,12 +223,21 @@ static void BBServer_Shutdown(void)
 	BB_SHUTDOWN();
 }
 
+static void BBServer_BringWindowToFront(HWND hwnd)
+{
+	DWORD processId;
+	if(GetWindowThreadProcessId(hwnd, &processId)) {
+		AllowSetForegroundWindow(processId);
+	}
+	SendMessageA(hwnd, s_bringToFrontMessage, 0, 0);
+}
+
 static b32 BBServer_SingleInstanceCheck(const char *classname)
 {
 	if(globals.viewer) {
 		HWND hExisting = FindWindowA("BlackboxHost", nullptr);
 		if(hExisting) {
-			SendMessageA(hExisting, s_bringToFrontMessage, 0, 0);
+			BBServer_BringWindowToFront(hExisting);
 
 			COPYDATASTRUCT copyData = { BB_EMPTY_INITIALIZER };
 			copyData.lpData = globals.viewerPath;
@@ -240,7 +249,7 @@ static b32 BBServer_SingleInstanceCheck(const char *classname)
 	} else {
 		HWND hExisting = FindWindowA(classname, nullptr);
 		if(hExisting) {
-			SendMessageA(hExisting, s_bringToFrontMessage, 0, 0);
+			BBServer_BringWindowToFront(hExisting);
 			return false;
 		}
 	}
