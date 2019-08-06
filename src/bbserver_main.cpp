@@ -9,6 +9,7 @@
 #include "bb_string.h"
 #include "bb_thread.h"
 #include "bbserver_asserts.h"
+#include "bbserver_fileopendialog.h"
 #include "bbserver_update.h"
 #include "cmdline.h"
 #include "common.h"
@@ -143,6 +144,7 @@ static b32 BBServer_Init(void)
 	config_validate_open_targets(&g_config.openTargets);
 	Style_Init();
 	Imgui_Core_SetColorScheme(sb_get(&g_config.colorscheme));
+	FileOpenDialog_Init();
 	if(globals.viewer) {
 		new_recording_t cmdlineRecording;
 		GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
@@ -452,6 +454,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 
 	bba_free(s_imguiAllocs);
 	cmdline_shutdown();
+	FileOpenDialog_Shutdown();
 
 	return 0;
 }

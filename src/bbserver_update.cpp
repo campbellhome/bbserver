@@ -7,7 +7,9 @@
 #include "bb_log.h"
 #include "bb_string.h"
 #include "bb_time.h"
+#include "bbserver_fileopendialog.h"
 #include "devkit_autodetect.h"
+#include "dragdrop.h"
 #include "fonts.h"
 #include "globals.h"
 #include "imgui_core.h"
@@ -250,6 +252,13 @@ void BBServer_MainMenuBar(void)
 {
 	if(ImGui::BeginMainMenuBar()) {
 		if(ImGui::BeginMenu("File")) {
+			if(ImGui::MenuItem("Open...")) {
+				sb_t path = FileOpenDialog_Show();
+				if(sb_len(&path)) {
+					DragDrop_ProcessPath(sb_get(&path));
+				}
+				sb_reset(&path);
+			}
 			if(ImGui::MenuItem("Exit")) {
 				Imgui_Core_RequestShutDown();
 			}
