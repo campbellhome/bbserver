@@ -11,6 +11,7 @@
 #include "file_utils.h"
 #include "line_parser.h"
 #include "recorded_session.h"
+#include "recordings.h"
 #include "sb.h"
 #include "va.h"
 #include "view.h"
@@ -18,9 +19,14 @@
 
 static sb_t view_config_get_path(view_t *view, const char *appName)
 {
+	recording_t *recording = recordings_find_by_path(view->session->path);
 	const char *filename = view->session->applicationFilename;
 	sb_t s = appdata_get(appName);
-	sb_va(&s, "\\bb_view_%s.json", filename);
+	if(recording && recording->recordingType == kRecordingType_ExternalFile) {
+		sb_va(&s, "\\bb_external_view_%s.json", filename);
+	} else {
+		sb_va(&s, "\\bb_view_%s.json", filename);
+	}
 	return s;
 }
 
