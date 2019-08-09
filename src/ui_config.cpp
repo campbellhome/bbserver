@@ -350,6 +350,15 @@ void UIConfig_Update(config_t *config)
 				ImGui::SetTooltip("Delay before showing tooltips");
 			}
 			ImGui::EndGroup();
+			ImGui::SliderInt("Scrollbar Size", &s_preferencesConfig.sizes.scrollbarSize, 0, 20);
+			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+				ImGui::SetTooltip("Scrollbar width/height (0 for default)");
+			}
+			ImGui::SameLine();
+			ImGui::SliderInt("Resize Bar Size", &s_preferencesConfig.sizes.resizeBarSize, 0, 10);
+			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+				ImGui::SetTooltip("Resize bar width/height (0 for default)");
+			}
 		}
 		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Open Targets", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Columns(3, "opentargetscolumns");

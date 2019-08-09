@@ -184,6 +184,20 @@ tooltipConfig json_deserialize_tooltipConfig(JSON_Value *src)
 	return dst;
 }
 
+sizeConfig json_deserialize_sizeConfig(JSON_Value *src)
+{
+	sizeConfig dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.resizeBarSize = (s32)json_object_get_number(obj, "resizeBarSize");
+			dst.scrollbarSize = (s32)json_object_get_number(obj, "scrollbarSize");
+		}
+	}
+	return dst;
+}
+
 config_t json_deserialize_config_t(JSON_Value *src)
 {
 	config_t dst;
@@ -204,6 +218,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.textShadows = json_object_get_boolean_safe(obj, "textShadows");
 			dst.logColorUsage = json_deserialize_configColorUsage(json_object_get_value(obj, "logColorUsage"));
 			dst.tooltips = json_deserialize_tooltipConfig(json_object_get_value(obj, "tooltips"));
+			dst.sizes = json_deserialize_sizeConfig(json_object_get_value(obj, "sizes"));
 			dst.dpiAware = json_object_get_boolean_safe(obj, "dpiAware");
 			dst.autoDeleteAfterDays = (u32)json_object_get_number(obj, "autoDeleteAfterDays");
 			dst.autoCloseAll = json_object_get_boolean_safe(obj, "autoCloseAll");
@@ -716,6 +731,17 @@ JSON_Value *json_serialize_tooltipConfig(const tooltipConfig *src)
 	return val;
 }
 
+JSON_Value *json_serialize_sizeConfig(const sizeConfig *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_number(obj, "resizeBarSize", src->resizeBarSize);
+		json_object_set_number(obj, "scrollbarSize", src->scrollbarSize);
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_config_t(const config_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -734,6 +760,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "textShadows", src->textShadows);
 		json_object_set_value(obj, "logColorUsage", json_serialize_configColorUsage(src->logColorUsage));
 		json_object_set_value(obj, "tooltips", json_serialize_tooltipConfig(&src->tooltips));
+		json_object_set_value(obj, "sizes", json_serialize_sizeConfig(&src->sizes));
 		json_object_set_boolean(obj, "dpiAware", src->dpiAware);
 		json_object_set_number(obj, "autoDeleteAfterDays", src->autoDeleteAfterDays);
 		json_object_set_boolean(obj, "autoCloseAll", src->autoCloseAll);

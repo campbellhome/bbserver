@@ -220,6 +220,21 @@ tooltipConfig tooltipConfig_clone(const tooltipConfig *src)
 	return dst;
 }
 
+void sizeConfig_reset(sizeConfig *val)
+{
+	if(val) {
+	}
+}
+sizeConfig sizeConfig_clone(const sizeConfig *src)
+{
+	sizeConfig dst = { 0 };
+	if(src) {
+		dst.resizeBarSize = src->resizeBarSize;
+		dst.scrollbarSize = src->scrollbarSize;
+	}
+	return dst;
+}
+
 void config_reset(config_t *val)
 {
 	if(val) {
@@ -231,6 +246,7 @@ void config_reset(config_t *val)
 		sb_reset(&val->colorscheme);
 		WINDOWPLACEMENT_reset(&val->wp);
 		tooltipConfig_reset(&val->tooltips);
+		sizeConfig_reset(&val->sizes);
 	}
 }
 config_t config_clone(const config_t *src)
@@ -250,6 +266,7 @@ config_t config_clone(const config_t *src)
 		dst.textShadows = src->textShadows;
 		dst.logColorUsage = src->logColorUsage;
 		dst.tooltips = tooltipConfig_clone(&src->tooltips);
+		dst.sizes = sizeConfig_clone(&src->sizes);
 		dst.dpiAware = src->dpiAware;
 		dst.autoDeleteAfterDays = src->autoDeleteAfterDays;
 		dst.autoCloseAll = src->autoCloseAll;

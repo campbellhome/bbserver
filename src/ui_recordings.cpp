@@ -306,7 +306,7 @@ void UIRecordings_UpdateTab(recording_tab_t tab)
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(normal, normal, normal, 1.0f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(hovered, hovered, hovered, 1.0f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(active, active, active, 1.0f));
-	ImGui::Button("|", ImVec2(3 * g_config.dpiScale, ImGui::GetContentRegionAvail().y - 2));
+	ImGui::Button("|", ImVec2(config_get_resizeBarSize(&g_config), ImGui::GetContentRegionAvail().y - 2));
 	ImGui::PopStyleColor(3);
 	if(ImGui::IsItemActive() || ImGui::IsItemHovered()) {
 		ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);

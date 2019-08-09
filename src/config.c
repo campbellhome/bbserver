@@ -98,6 +98,10 @@ b32 config_read(config_t *config)
 	if(config->version <= 4) {
 		config->textShadows = true;
 	}
+	if(config->version <= 5) {
+		config->sizes.resizeBarSize = 0;
+		config->sizes.scrollbarSize = 0;
+	}
 	config->version = kConfigVersion;
 
 	for(u32 entryIndex = 0; entryIndex < config->whitelist.count;) {
@@ -230,4 +234,9 @@ void path_fixup_move_entry(pathFixupList_t *pathFixups, u32 indexA, u32 indexB)
 		*entryA = *entryB;
 		*entryB = tmp;
 	}
+}
+
+float config_get_resizeBarSize(config_t *config)
+{
+	return ((config->sizes.resizeBarSize > 0) ? config->sizes.resizeBarSize : 3) * config->dpiScale;
 }

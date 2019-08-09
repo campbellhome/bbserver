@@ -499,6 +499,11 @@ static void BBServer_DispatchToUIMessageQueue()
 
 extern "C" void BBServer_Update(void)
 {
+	b32 bAppliedScrollbarSize = g_config.sizes.scrollbarSize > 0;
+	if(bAppliedScrollbarSize) {
+		ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, g_config.sizes.scrollbarSize * g_config.dpiScale);
+	}
+
 	devkit_autodetect_tick();
 	tasks_tick();
 
@@ -538,4 +543,8 @@ extern "C" void BBServer_Update(void)
 	UIRecordings_Update(g_config.autoTileViews != 0);
 	UIRecordedView_UpdateAll(g_config.autoTileViews != 0);
 	UISystemTray_Update();
+
+	if(bAppliedScrollbarSize) {
+		ImGui::PopStyleVar();
+	}
 }

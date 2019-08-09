@@ -87,6 +87,11 @@ AUTOJSON typedef struct tag_tooltipConfig {
 	u8 pad[4];
 } tooltipConfig;
 
+AUTOJSON typedef struct tag_sizeConfig {
+	s32 resizeBarSize;
+	s32 scrollbarSize;
+} sizeConfig;
+
 AUTOJSON typedef struct config_s {
 	configWhitelist_t whitelist;
 	openTargetList_t openTargets;
@@ -101,6 +106,7 @@ AUTOJSON typedef struct config_s {
 	b32 textShadows;
 	configColorUsage logColorUsage;
 	tooltipConfig tooltips;
+	sizeConfig sizes;
 	b32 dpiAware;
 	u32 autoDeleteAfterDays;
 	b32 autoCloseAll;
@@ -113,7 +119,7 @@ AUTOJSON typedef struct config_s {
 	b32 assertMessageBox;
 } config_t;
 
-enum { kConfigVersion = 5 };
+enum { kConfigVersion = 6 };
 
 extern config_t g_config;
 
@@ -129,6 +135,7 @@ void open_target_move_entry(openTargetList_t *openTargets, u32 indexA, u32 index
 void config_validate_open_targets(openTargetList_t *openTargets);
 void path_fixup_move_entry(pathFixupList_t *pathFixups, u32 indexA, u32 indexB);
 void config_getwindowplacement(HWND hwnd);
+float config_get_resizeBarSize(config_t *config);
 
 #if defined(__cplusplus)
 }
