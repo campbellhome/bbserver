@@ -24,50 +24,6 @@
 
 static const char *s_logPath;
 
-static void App_WriteRuntimeXml(const bugReport *report)
-{
-	sb_t contents = { BB_EMPTY_INITIALIZER };
-
-	sb_append(&contents, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	sb_append(&contents, "<FGenericCrashContext>\n");
-	sb_append(&contents, "<RuntimeProperties>\n");
-	sb_va(&contents, "<CrashGUID>%s</CrashGUID>\n", sb_get(&report->guid));
-	switch(report->type) {
-	case kBugType_Bug:
-		sb_append(&contents, "<CrashType>Bug</CrashType>\n");
-		break;
-	case kBugType_Assert:
-		sb_append(&contents, "<CrashType>Assert</CrashType>\n");
-		break;
-	case kBugType_Crash:
-		sb_append(&contents, "<CrashType>Crash</CrashType>\n");
-		break;
-	default:
-		BB_BREAK();
-	}
-	sb_append(&contents, "<GameName>Blackbox</GameName>\n");
-	sb_append(&contents, "<ExecutableName>bb</ExecutableName>\n");
-	sb_va(&contents, "<EngineVersion>%s</EngineVersion>\n", Update_GetCurrentVersion());
-	sb_va(&contents, "<BuildVersion>%s</BuildVersion>\n", Update_GetCurrentVersion());
-	sb_va(&contents, "<CommandLine>%s</CommandLine>\n", cmdline_get_full());
-	sb_append(&contents, "<Misc.OSVersionMajor>Windows</Misc.OSVersionMajor>\n");
-	sb_append(&contents, "<Misc.OSVersionMinor></Misc.OSVersionMinor>\n");
-	sb_append(&contents, "</RuntimeProperties>\n");
-	sb_append(&contents, "</FGenericCrashContext>\n");
-
-	if(contents.count > 1) {
-		sb_t path = { BB_EMPTY_INITIALIZER };
-		sb_va(&path, "%s\\CrashContext.runtime-xml", sb_get(&report->dir));
-		bb_file_handle_t fp = bb_file_open_for_write(sb_get(&path));
-		if(fp) {
-			bb_file_write(fp, contents.data, contents.count - 1);
-			bb_file_close(fp);
-		}
-		sb_reset(&path);
-	}
-	sb_reset(&contents);
-}
-
 static bbassert_action_e App_AssertHandler(const char *condition, const char *message, const char *file, const int line)
 {
 	// static buffers so we can safely assert in a memory allocator :)
@@ -96,6 +52,9 @@ static bbassert_action_e App_AssertHandler(const char *condition, const char *me
 		if(report) {
 			report->type = kBugType_Assert;
 			report->bSilent = true;
+			report->addr = 127 << 24 | 1;
+			report->port = 51984;
+			sb_append(&report->version, Update_GetCurrentVersion());
 			sb_append(&report->title, output);
 			sb_t target = { BB_EMPTY_INITIALIZER };
 			if(s_logPath && *s_logPath) {
@@ -113,7 +72,6 @@ static bbassert_action_e App_AssertHandler(const char *condition, const char *me
 				}
 				sb_reset(&target);
 			}
-			App_WriteRuntimeXml(report);
 			bug_report_dispatch_async(report);
 		}
 	}
@@ -197,6 +155,9 @@ static void App_ExceptionHandler(EXCEPTION_POINTERS *pExPtrs)
 	if(report) {
 		report->type = kBugType_Crash;
 		report->bSilent = false;
+		report->addr = 127 << 24 | 1;
+		report->port = 51984;
+		sb_append(&report->version, Update_GetCurrentVersion());
 		report->title = sb_clone(&title);
 		sb_t target = { BB_EMPTY_INITIALIZER };
 		if(s_logPath && *s_logPath) {
@@ -214,7 +175,6 @@ static void App_ExceptionHandler(EXCEPTION_POINTERS *pExPtrs)
 			}
 			sb_reset(&target);
 		}
-		App_WriteRuntimeXml(report);
 		bug_report_dispatch_sync(report);
 	} else {
 		MessageBoxA(0, va("%s\n\n%s", sb_get(&title), sb_get(&callstack)), "Blackbox Unhandled Exception", MB_OK);
