@@ -334,6 +334,10 @@ site_config_t json_deserialize_site_config_t(JSON_Value *src)
 			dst.updates = json_deserialize_updateConfig_t(json_object_get_value(obj, "updates"));
 			dst.bugAssignee = json_deserialize_sb_t(json_object_get_value(obj, "bugAssignee"));
 			dst.bugProject = json_deserialize_sb_t(json_object_get_value(obj, "bugProject"));
+			dst.bugPort = (u16)json_object_get_number(obj, "bugPort");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -858,6 +862,10 @@ JSON_Value *json_serialize_site_config_t(const site_config_t *src)
 		json_object_set_value(obj, "updates", json_serialize_updateConfig_t(&src->updates));
 		json_object_set_value(obj, "bugAssignee", json_serialize_sb_t(&src->bugAssignee));
 		json_object_set_value(obj, "bugProject", json_serialize_sb_t(&src->bugProject));
+		json_object_set_number(obj, "bugPort", src->bugPort);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }

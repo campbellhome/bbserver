@@ -53,7 +53,7 @@ static bbassert_action_e App_AssertHandler(const char *condition, const char *me
 			report->type = kBugType_Assert;
 			report->bSilent = true;
 			report->addr = 127 << 24 | 1;
-			report->port = 51984;
+			report->port = g_site_config.bugPort;
 			sb_append(&report->version, Update_GetCurrentVersion());
 			sb_append(&report->title, output);
 			sb_t target = { BB_EMPTY_INITIALIZER };
@@ -156,7 +156,7 @@ static void App_ExceptionHandler(EXCEPTION_POINTERS *pExPtrs)
 		report->type = kBugType_Crash;
 		report->bSilent = false;
 		report->addr = 127 << 24 | 1;
-		report->port = 51984;
+		report->port = g_site_config.bugPort;
 		sb_append(&report->version, Update_GetCurrentVersion());
 		report->title = sb_clone(&title);
 		sb_t target = { BB_EMPTY_INITIALIZER };

@@ -403,6 +403,10 @@ site_config_t site_config_clone(const site_config_t *src)
 		dst.updates = updateConfig_clone(&src->updates);
 		dst.bugAssignee = sb_clone(&src->bugAssignee);
 		dst.bugProject = sb_clone(&src->bugProject);
+		dst.bugPort = src->bugPort;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
 	}
 	return dst;
 }

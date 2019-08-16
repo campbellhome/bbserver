@@ -14,6 +14,9 @@ void site_config_init(void)
 		g_site_config = json_deserialize_site_config_t(val);
 		json_value_free(val);
 	}
+	if(!g_site_config.bugPort) {
+		g_site_config.bugPort = 51984;
+	}
 }
 
 void site_config_shutdown(void)
