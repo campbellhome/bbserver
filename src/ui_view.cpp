@@ -345,6 +345,9 @@ static void UpdateLogColumnWidth(view_t *view, view_log_t *viewLog)
 sb_t StripColorCodes(span_t span /*, bool bSingleLine*/)
 {
 	s_strippedLine.count = 0;
+	if (s_strippedLine.data) {
+		s_strippedLine.data[0] = '\0';
+	}
 	const char *text = span.start;
 	if(text) {
 		while(*text && text < span.end) {
