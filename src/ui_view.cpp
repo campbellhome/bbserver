@@ -1620,7 +1620,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		roundingPushed = true;
 		if(view->tiled) {
-			windowFlags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+			windowFlags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
 		}
 	}
 
