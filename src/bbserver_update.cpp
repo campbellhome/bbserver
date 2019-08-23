@@ -11,7 +11,6 @@
 #include "devkit_autodetect.h"
 #include "dragdrop.h"
 #include "fonts.h"
-#include "globals.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
@@ -487,7 +486,7 @@ static void BBServer_DispatchToUIMessageQueue()
 			recording_stopped(message.text);
 			break;
 		case kToUI_DiscoveryStatus:
-			if(!s_failedDiscoveryStartup && !strcmp(message.text, "Retrying") && !globals.viewer) {
+			if(!s_failedDiscoveryStartup && !strcmp(message.text, "Retrying")) {
 				++s_failedDiscoveryCount;
 				if(s_failedDiscoveryCount > 10) {
 					s_failedDiscoveryStartup = true;
@@ -514,9 +513,7 @@ extern "C" void BBServer_Update(void)
 	devkit_autodetect_tick();
 	tasks_tick();
 
-	if(!globals.viewer) {
-		BBServer_MainMenuBar();
-	}
+	BBServer_MainMenuBar();
 
 	BBServer_DispatchToUIMessageQueue();
 	recordings_autodelete_old_recordings();

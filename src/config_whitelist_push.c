@@ -7,7 +7,6 @@
 #include "bb_string.h"
 #include "config.h"
 #include "dns_task.h"
-#include "globals.h"
 #include "sdict.h"
 #include "va.h"
 #include <stdlib.h>
@@ -58,6 +57,7 @@ static void config_push_whitelist_task_statechanged(task *t)
 			discovery_push_whitelist(&resolvedWhitelist);
 		} else {
 			BB_WARNING("whitelist", "ignored whitelist %d in favor of pending whitelist %d", whitelistId, s_lastWhitelistId);
+			bba_free(resolvedWhitelist);
 		}
 	}
 }
@@ -88,9 +88,6 @@ static void queue_dns_task(task *groupTask,
 
 void config_push_whitelist(configWhitelist_t *configWhitelist)
 {
-	if(globals.viewer)
-		return;
-
 	task groupTask = { BB_EMPTY_INITIALIZER };
 	groupTask.tick = task_tick_subtasks;
 	sb_append(&groupTask.name, "config_push_whitelist");

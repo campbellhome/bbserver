@@ -16,7 +16,6 @@
 #include "bb_string.h"
 #include "bb_thread.h"
 #include "bb_time.h"
-#include "globals.h"
 #include <stdlib.h>
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
@@ -115,13 +114,11 @@ void discovery_push_whitelist(resolved_whitelist_t *resolvedWhitelist)
 	u32 i;
 	resolved_whitelist_t oldWhitelist;
 
-	if(!globals.viewer) {
-		bb_critical_section_lock(&s_discovery_data.whitelist_cs);
-		oldWhitelist = s_discovery_data.whitelist;
-		s_discovery_data.whitelist = *resolvedWhitelist;
-		bb_critical_section_unlock(&s_discovery_data.whitelist_cs);
-		bba_free(oldWhitelist);
-	}
+	bb_critical_section_lock(&s_discovery_data.whitelist_cs);
+	oldWhitelist = s_discovery_data.whitelist;
+	s_discovery_data.whitelist = *resolvedWhitelist;
+	bb_critical_section_unlock(&s_discovery_data.whitelist_cs);
+	bba_free(oldWhitelist);
 
 	bb_log("whitelist has %u entries (%u allocated):", resolvedWhitelist->count, resolvedWhitelist->allocated);
 	for(i = 0; i < resolvedWhitelist->count; ++i) {

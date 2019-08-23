@@ -100,7 +100,6 @@
     <ClInclude Include="..\src\devkit_autodetect.h" />
     <ClInclude Include="..\src\discovery_thread.h" />
     <ClInclude Include="..\src\dragdrop.h" />
-    <ClInclude Include="..\src\globals.h" />
     <ClInclude Include="..\src\bb_colors.h" />
     <ClInclude Include="..\src\imgui_tooltips.h" />
     <ClInclude Include="..\src\line_parser.h" />
@@ -135,7 +134,6 @@
     <ClCompile Include="..\src\devkit_autodetect.c" />
     <ClCompile Include="..\src\discovery_thread.c" />
     <ClCompile Include="..\src\dragdrop.c" />
-    <ClCompile Include="..\src\globals.c" />
     <ClCompile Include="..\src\bb_colors.cpp" />
     <ClCompile Include="..\src\imgui_tooltips.cpp" />
     <ClCompile Include="..\src\line_parser.c" />

@@ -5,7 +5,6 @@
 #include "bb_array.h"
 #include "bb_string.h"
 #include "bb_structs_generated.h"
-#include "globals.h"
 #include "line_parser.h"
 #include "recorded_session.h"
 #include "view_config.h"
@@ -168,12 +167,10 @@ void view_init_appinfo(view_t *view)
 
 void view_reset(view_t *view)
 {
-	if(!globals.viewer) {
-		if(view_config_write(view)) {
-			//BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
-		} else {
-			BB_ERROR("View", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
-		}
+	if(view_config_write(view)) {
+		//BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
+	} else {
+		BB_ERROR("View", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
 	}
 
 	bba_free(view->threads);
@@ -191,12 +188,10 @@ void view_reset(view_t *view)
 
 void view_restart(view_t *view)
 {
-	if(!globals.viewer) {
-		if(view_config_write(view)) {
-			//BB_LOG("View::Config", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
-		} else {
-			BB_ERROR("View::Config", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
-		}
+	if(view_config_write(view)) {
+		//BB_LOG("View::Config", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
+	} else {
+		BB_ERROR("View::Config", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
 	}
 	bba_free(view->threads);
 	bba_free(view->files);

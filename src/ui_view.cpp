@@ -7,7 +7,6 @@
 #include "bb_string.h"
 #include "bb_wrap_stdio.h"
 #include "fonts.h"
-#include "globals.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
@@ -345,7 +344,7 @@ static void UpdateLogColumnWidth(view_t *view, view_log_t *viewLog)
 sb_t StripColorCodes(span_t span /*, bool bSingleLine*/)
 {
 	s_strippedLine.count = 0;
-	if (s_strippedLine.data) {
+	if(s_strippedLine.data) {
 		s_strippedLine.data[0] = '\0';
 	}
 	const char *text = span.start;
@@ -1612,9 +1611,6 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 	char *viewId = UIRecordedView_GetViewId(view);
 	bool initializedLogColumns = false;
 	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
-	if(globals.viewer) {
-		windowFlags |= ImGuiWindowFlags_NoTitleBar;
-	}
 	b32 roundingPushed = false;
 	if(autoTileViews) {
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -1624,7 +1620,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		}
 	}
 
-	bool *viewOpen = globals.viewer ? nullptr : (bool *)&view->open;
+	bool *viewOpen = (bool *)&view->open;
 	if(Begin(viewId, viewOpen, windowFlags)) {
 		const recording_t *recording = recordings_find_by_path(session->path);
 		bool hasFocus = ImGui::IsWindowFocused() ||
@@ -1683,21 +1679,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				if(ImGui::MenuItem("Open containing folder")) {
 					UIRecordedView_OpenContainingFolder(view);
 				}
-				if(globals.viewer) {
-					if(ImGui::MenuItem("Exit")) {
-						Imgui_Core_RequestShutDown();
-					}
-				}
 				ImGui::EndMenu();
-			}
-			if(globals.viewer && !UIConfig_IsOpen()) {
-				if(ImGui::BeginMenu("Edit")) {
-					if(ImGui::MenuItem("Config")) {
-						BB_LOG("UI::Menu::Config", "UIConfig_Open");
-						UIConfig_Open(&g_config);
-					}
-					ImGui::EndMenu();
-				}
 			}
 			PushStyleColor(ImGuiCol_Text, recording && recording->active ? MakeColor(kStyleColor_ActiveSession) : MakeColor(kStyleColor_InactiveSession));
 			Text("%s", view->session->appInfo.packet.appInfo.applicationName);
@@ -2226,7 +2208,7 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 				viewportPos.y += viewport->Pos.y;
 			}
 
-			float startY = globals.viewer ? 0 : ImGui::GetFrameHeight();
+			float startY = ImGui::GetFrameHeight();
 			ImGuiIO &io = ImGui::GetIO();
 			float screenWidth = io.DisplaySize.x - UIRecordings_Width();
 			float screenHeight = io.DisplaySize.y - startY;

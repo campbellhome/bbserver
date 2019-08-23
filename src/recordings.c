@@ -18,7 +18,6 @@
 #include "bb_thread.h"
 
 #include "bb_wrap_stdio.h"
-#include "globals.h"
 #include "parson/parson.h"
 #include <stdlib.h>
 
@@ -527,9 +526,7 @@ void recordings_init(void)
 
 void recordings_shutdown(void)
 {
-	if(!globals.viewer) {
-		recordings_config_write(&s_recordingsConfig);
-	}
+	recordings_config_write(&s_recordingsConfig);
 	for(u32 tab = 0; tab < kRecordingTab_Count; ++tab) {
 		bba_free(s_recordings[tab]);
 		bba_free(s_invalidRecordings[tab]);

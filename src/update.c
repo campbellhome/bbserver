@@ -14,7 +14,6 @@
 #include "config.h"
 #include "env_utils.h"
 #include "file_utils.h"
-#include "globals.h"
 #include "imgui_core.h"
 #include "message_box.h"
 #include "parson/parson.h"
@@ -106,7 +105,7 @@ b32 Update_Init(void)
 	if(!s_desiredVersionName.name.count) {
 		sb_append(&s_desiredVersionName.name, "stable");
 	}
-	Update_CheckForUpdates(!globals.viewer);
+	Update_CheckForUpdates(true);
 
 	const char *updateArg = cmdline_find_prefix("-update=");
 	if(updateArg) {
@@ -256,7 +255,7 @@ static void Update_CheckVersions(b32 updateImmediately)
 
 void Update_Tick(void)
 {
-	if(!globals.viewer && g_site_config.updates.updateCheckMs > 0 && s_lastUpdateCheckMs + g_site_config.updates.updateCheckMs < bb_current_time_ms()) {
+	if(g_site_config.updates.updateCheckMs > 0 && s_lastUpdateCheckMs + g_site_config.updates.updateCheckMs < bb_current_time_ms()) {
 		Update_CheckForUpdates(false);
 	}
 }

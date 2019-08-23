@@ -18,7 +18,6 @@
 #include "devkit_autodetect.h"
 #include "discovery_thread.h"
 #include "dragdrop.h"
-#include "globals.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"
 #include "message_box.h"
@@ -47,46 +46,6 @@
 static char s_imguiPath[kBBSize_MaxPath];
 static char s_bbLogPath[kBBSize_MaxPath];
 static UINT s_bringToFrontMessage;
-
-static bool BBServer_InitViewer(const char *cmdline)
-{
-	if(cmdline && *cmdline && *cmdline != '-') {
-		globals.viewer = true;
-		if(*cmdline == '\"') {
-			++cmdline;
-		}
-		size_t pathLen = bb_strncpy(globals.viewerPath, cmdline, sizeof(globals.viewerPath));
-		if(pathLen) {
-			if(globals.viewerPath[pathLen - 1] == '\"') {
-				globals.viewerPath[pathLen - 1] = '\0';
-			}
-			FILE *fp = fopen(globals.viewerPath, "rb");
-			if(fp) {
-				fclose(fp);
-
-				const char *srcName = strrchr(globals.viewerPath, '\\');
-				if(srcName) {
-					++srcName;
-				} else {
-					srcName = globals.viewerPath;
-				}
-				const char *closeBrace = strrchr(srcName, '}');
-				if(closeBrace) {
-					srcName = closeBrace + 1;
-				}
-
-				bb_strncpy(globals.viewerName, srcName, sizeof(globals.viewerName));
-				char *ext = strrchr(globals.viewerName, '.');
-				if(ext) {
-					*ext = '\0';
-				}
-
-				return true;
-			}
-		}
-	}
-	return false;
-}
 
 static void BBServer_SetImguiPath(void)
 {
@@ -122,8 +81,7 @@ static b32 BBServer_Init(void)
 	BBServer_SetImguiPath();
 	BBServer_SetLogPath();
 
-	const char *applicationName = globals.viewer ? u8"Blackbox Viewer" : u8"Blackbox";
-
+	const char *applicationName = u8"Blackbox";
 	BB_INIT_WITH_FLAGS(applicationName, kBBInitFlag_NoOpenView);
 	BB_THREAD_SET_NAME("main");
 	BB_LOG("Startup", "%s starting...\nPath: %s\n", applicationName, s_bbLogPath);
@@ -145,23 +103,7 @@ static b32 BBServer_Init(void)
 	Style_Init();
 	Imgui_Core_SetColorScheme(sb_get(&g_config.colorscheme));
 	FileOpenDialog_Init();
-	if(globals.viewer) {
-		new_recording_t cmdlineRecording;
-		GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
-		cmdlineRecording.applicationName = sb_from_c_string(globals.viewerName);
-		cmdlineRecording.applicationFilename = sb_from_c_string(globals.viewerName);
-		cmdlineRecording.path = sb_from_c_string(globals.viewerPath);
-		cmdlineRecording.openView = true;
-		cmdlineRecording.recordingType = kRecordingType_ExternalFile;
-		cmdlineRecording.mqId = mq_invalid_id();
-		cmdlineRecording.platform = kBBPlatform_Unknown;
-		to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(cmdlineRecording));
-		new_recording_reset(&cmdlineRecording);
-
-		g_config.autoTileViews = 1;
-		g_config.autoDeleteAfterDays = 0;
-		return true;
-	} else if(bbnet_init()) {
+	if(bbnet_init()) {
 		if(discovery_thread_init() != 0) {
 			new_recording_t recording;
 			config_push_whitelist(&g_config.whitelist);
@@ -208,7 +150,7 @@ static void BBServer_Shutdown(void)
 		}
 		recorded_session_close(session);
 	}
-	if(!globals.viewer && g_config.version != 0) {
+	if(g_config.version != 0) {
 		config_write(&g_config);
 	}
 	config_reset(&g_config);
@@ -233,26 +175,41 @@ static void BBServer_BringWindowToFront(HWND hwnd)
 	SendMessageA(hwnd, s_bringToFrontMessage, 0, 0);
 }
 
-static b32 BBServer_SingleInstanceCheck(const char *classname)
+static sb_t BBServer_GetCommandLineRecording(const char *cmdline)
 {
-	if(globals.viewer) {
-		HWND hExisting = FindWindowA("BlackboxHost", nullptr);
-		if(hExisting) {
-			BBServer_BringWindowToFront(hExisting);
+	sb_t result = { BB_EMPTY_INITIALIZER };
+	char viewerPath[kBBSize_MaxPath];
+	if(cmdline && *cmdline && *cmdline != '-') {
+		if(*cmdline == '\"') {
+			++cmdline;
+		}
+		size_t pathLen = bb_strncpy(viewerPath, cmdline, sizeof(viewerPath));
+		if(pathLen) {
+			if(viewerPath[pathLen - 1] == '\"') {
+				viewerPath[pathLen - 1] = '\0';
+			}
+			result = sb_from_c_string(viewerPath);
+		}
+	}
+	return result;
+}
 
+static b32 BBServer_SingleInstanceCheck(const char *classname, const char *cmdline)
+{
+	HWND hExisting = FindWindowA(classname, nullptr);
+	if(hExisting) {
+		BBServer_BringWindowToFront(hExisting);
+
+		sb_t viewerPath = BBServer_GetCommandLineRecording(cmdline);
+		if(viewerPath.data) {
 			COPYDATASTRUCT copyData = { BB_EMPTY_INITIALIZER };
-			copyData.lpData = globals.viewerPath;
-			copyData.cbData = BB_ARRAYSIZE(globals.viewerPath);
+			copyData.lpData = viewerPath.data;
+			copyData.cbData = sb_len(&viewerPath);
 			copyData.dwData = COPYDATA_MAGIC;
 			SendMessageA(hExisting, WM_COPYDATA, 0, (LPARAM)&copyData);
-			return false;
 		}
-	} else {
-		HWND hExisting = FindWindowA(classname, nullptr);
-		if(hExisting) {
-			BBServer_BringWindowToFront(hExisting);
-			return false;
-		}
+		sb_reset(&viewerPath);
+		return false;
 	}
 	return true;
 }
@@ -312,9 +269,9 @@ LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, 
 		Imgui_Core_BringWindowToFront();
 		return 0;
 	}
-	if(msg == WM_COPYDATA && !globals.viewer) {
+	if(msg == WM_COPYDATA) {
 		COPYDATASTRUCT *copyData = (COPYDATASTRUCT *)lParam;
-		if(copyData && copyData->dwData == COPYDATA_MAGIC && copyData->cbData == sizeof(globals.viewerPath)) {
+		if(copyData && copyData->dwData == COPYDATA_MAGIC) {
 			const char *copyText = (const char *)copyData->lpData;
 			BB_LOG("IPC", "WM_COPYDATA received %s", copyText);
 			DragDrop_ProcessPath(copyText);
@@ -399,13 +356,12 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 {
 	crt_leak_check_init();
 	//bba_set_logging(true, true);
-	ImGui::SetAllocatorFunctions(&LoggingMallocWrapper, &LoggingFreeWrapper);
 
 	cmdline_init_composite(CommandLine);
 	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");
-	BBServer_InitViewer(CommandLine);
-	const char *classname = (globals.viewer) ? "BlackboxViewer" : "BlackboxHost";
-	if(BBServer_SingleInstanceCheck("BlackboxHost")) {
+	const char *classname = "BlackboxHost";
+	if(BBServer_SingleInstanceCheck(classname, CommandLine)) {
+		ImGui::SetAllocatorFunctions(&LoggingMallocWrapper, &LoggingFreeWrapper);
 		if(Imgui_Core_Init(CommandLine)) {
 			ImGuiIO &IO = ImGui::GetIO();
 			IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
@@ -413,14 +369,12 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 			IO.ConfigWindowsMoveFromTitleBarOnly = true;
 			if(BBServer_Init()) {
 				Imgui_Core_SetTextShadows(g_config.textShadows);
-				if(globals.viewer || SystemTray_Init(Instance)) {
+				if(SystemTray_Init(Instance)) {
 					Fonts_ClearFonts();
-					const char *title = (globals.viewer) ? va("%s.bbox - Blackbox", globals.viewerName) : "Blackbox";
+					const char *title = "Blackbox";
 					HWND hwnd = Imgui_Core_InitWindow(classname, title, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), g_config.wp);
 					if(hwnd) {
-						if(!globals.viewer) {
-							Imgui_Core_SetCloseHidesWindow(true);
-						}
+						Imgui_Core_SetCloseHidesWindow(true);
 						DragDrop_Init(hwnd);
 						BBServer_InitRegistry();
 						Fonts_ClearFonts();
@@ -428,9 +382,14 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 						Fonts_AddFont(g_config.logFontConfig);
 						Style_ReadConfig(Imgui_Core_GetColorScheme());
 						Imgui_Core_SetUserWndProc(&BBServer_HandleWindowMessage);
-						if(!globals.viewer && cmdline_find("-hide") > 0) {
+						if(cmdline_find("-hide") > 0) {
 							Imgui_Core_HideWindow();
 						}
+						sb_t viewerPath = BBServer_GetCommandLineRecording(CommandLine);
+						if(viewerPath.data) {
+							DragDrop_ProcessPath(viewerPath.data);
+						}
+						sb_reset(&viewerPath);
 						while(!Imgui_Core_IsShuttingDown()) {
 							if(Imgui_Core_GetAndClearDirtyWindowPlacement()) {
 								config_getwindowplacement(hwnd);

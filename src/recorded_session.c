@@ -3,7 +3,6 @@
 
 #include "recorded_session.h"
 #include "fonts.h"
-#include "globals.h"
 #include "imgui_core.h"
 #include "message_box.h"
 #include "message_queue.h"
@@ -163,12 +162,10 @@ void recorded_session_auto_close(const char *applicationName)
 					if(!recording || !recording->active) {
 						if(view->open) {
 							view->open = false;
-							if(!globals.viewer) {
-								if(view_config_write(view)) {
-									BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
-								} else {
-									BB_ERROR("View", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
-								}
+							if(view_config_write(view)) {
+								BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
+							} else {
+								BB_ERROR("View", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
 							}
 						}
 					}
@@ -191,12 +188,10 @@ void recorded_session_auto_close_all(void)
 				if(!recording || !recording->active) {
 					if(view->open) {
 						view->open = false;
-						if(!globals.viewer) {
-							if(view_config_write(view)) {
-								BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
-							} else {
-								BB_ERROR("View", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
-							}
+						if(view_config_write(view)) {
+							BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
+						} else {
+							BB_ERROR("View", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
 						}
 					}
 				}
@@ -293,7 +288,7 @@ void recorded_session_update(recorded_session_t *session)
 	if(session->failedToDeserialize && !session->shownDeserializationMessageBox) {
 		session->shownDeserializationMessageBox = true;
 		messageBox mb = { BB_EMPTY_INITIALIZER };
-		if(globals.viewer && !session->logs.count) {
+		if(!session->logs.count) {
 			mb.callback = recorded_session_corrupt_messageBoxFunc;
 		}
 		sdict_add_raw(&mb.data, "title", "Data Corruption");
