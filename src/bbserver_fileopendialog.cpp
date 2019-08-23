@@ -103,15 +103,10 @@ public:
 	IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize *, DWORD, BOOL) { return S_OK; }
 	IFACEMETHODIMP OnControlActivating(IFileDialogCustomize *, DWORD) { return S_OK; }
 
-	CDialogEventHandler()
-	    : _cRef(1)
-	{
-	}
-
 private:
 	virtual ~CDialogEventHandler() {}
-	long _cRef;
-	u8 pad[4];
+	long _cRef = 1;
+	u8 pad[4] = {};
 };
 
 // Instance creation helper
