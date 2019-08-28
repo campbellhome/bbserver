@@ -204,7 +204,7 @@ static b32 BBServer_SingleInstanceCheck(const char *classname, const char *cmdli
 		if(viewerPath.data) {
 			COPYDATASTRUCT copyData = { BB_EMPTY_INITIALIZER };
 			copyData.lpData = viewerPath.data;
-			copyData.cbData = sb_len(&viewerPath);
+			copyData.cbData = viewerPath.count;
 			copyData.dwData = COPYDATA_MAGIC;
 			SendMessageA(hExisting, WM_COPYDATA, 0, (LPARAM)&copyData);
 		}
@@ -271,10 +271,14 @@ LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, 
 	}
 	if(msg == WM_COPYDATA) {
 		COPYDATASTRUCT *copyData = (COPYDATASTRUCT *)lParam;
-		if(copyData && copyData->dwData == COPYDATA_MAGIC) {
+		if(copyData && copyData->dwData == COPYDATA_MAGIC && copyData->cbData > 0) {
 			const char *copyText = (const char *)copyData->lpData;
-			BB_LOG("IPC", "WM_COPYDATA received %s", copyText);
-			DragDrop_ProcessPath(copyText);
+			if(copyText[copyData->cbData - 1] == '\0') {
+				BB_LOG("IPC", "WM_COPYDATA received %s", copyText);
+				DragDrop_ProcessPath(copyText);
+			} else {
+				BB_WARNING("IPC", "WM_COPYDATA ignored - %u bytes malformed data received", copyData->cbData);
+			}
 		}
 	}
 	LRESULT result = Update_HandleWindowMessage(hWnd, msg, wParam, lParam);
