@@ -196,7 +196,7 @@ void task_vswhere_statechanged(task *t)
 {
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
-		task_process *p = t->userdata;
+		task_process *p = t->taskData;
 		if(p->process) {
 			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t path = tokenize(&cursor, "\r\n");

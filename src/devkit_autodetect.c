@@ -185,7 +185,7 @@ static void task_orbis_info_statechanged(task *t)
 {
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
-		task_process *p = t->userdata;
+		task_process *p = t->taskData;
 		if(p->process) {
 			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t line = tokenize(&cursor, "\r\n");
@@ -247,7 +247,7 @@ static void task_orbis_list_statechanged(task *t)
 {
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
-		task_process *p = t->userdata;
+		task_process *p = t->taskData;
 		sb_t dir = env_resolve("%SCE_ROOT_DIR%\\ORBIS\\Tools\\Target Manager Server\\bin");
 		task *groupTask = t->parent;
 		if(p->process) {
@@ -302,7 +302,7 @@ static void task_xbconfig_statechanged(task *t)
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
 		const char *key = sdict_find(&t->extraData, "key");
-		task_process *p = t->userdata;
+		task_process *p = t->taskData;
 		if(p->process && key) {
 			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t line = tokenize(&cursor, " \r\n");
@@ -325,7 +325,7 @@ static void task_xbconnect_statechanged(task *t)
 {
 	task_process_statechanged(t);
 	if(t->state == kTaskState_Succeeded) {
-		task_process *p = t->userdata;
+		task_process *p = t->taskData;
 		if(p->process) {
 			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t token = tokenize(&cursor, " \r\n");
