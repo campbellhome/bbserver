@@ -186,7 +186,7 @@ static bb_thread_return_t discovery_thread_func(void *args)
 				for(c = 0; c < BB_ARRAYSIZE(host->con); ++c) {
 					bb_server_connection_data_t *data = host->con + c;
 					bb_connection_t *con = &data->con;
-					if(!bbcon_is_connected(con) && !bbcon_is_connecting(con)) {
+					if(!bbcon_is_connected(con) && !bbcon_is_listening(con)) {
 						found = true;
 						BB_LOG("bb:discovery", "using con %p with socket %d state %d", con, con->socket, con->state);
 						bbcon_init(con);

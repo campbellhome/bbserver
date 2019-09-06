@@ -82,7 +82,7 @@ static b32 BBServer_Init(void)
 	BBServer_SetLogPath();
 
 	const char *applicationName = u8"Blackbox";
-	BB_INIT_WITH_FLAGS(applicationName, kBBInitFlag_NoOpenView);
+	BB_INIT_WITH_FLAGS(applicationName, kBBInitFlag_NoOpenView | kBBInitFlag_NoDiscovery);
 	BB_THREAD_SET_NAME("main");
 	BB_LOG("Startup", "%s starting...\nPath: %s\n", applicationName, s_bbLogPath);
 	BB_LOG("Startup", "Arguments: %s", cmdline_get_full());

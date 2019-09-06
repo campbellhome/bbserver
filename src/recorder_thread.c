@@ -238,8 +238,8 @@ bb_thread_return_t recorder_thread(void *args)
 						lastFlush = now;
 					}
 				}
-			} else if(bbcon_is_connecting(con)) {
-				bbcon_tick_connecting(con);
+			} else if(bbcon_is_listening(con)) {
+				bbcon_tick_listening(con);
 			} else {
 				break;
 			}
