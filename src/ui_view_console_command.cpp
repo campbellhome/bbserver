@@ -63,7 +63,6 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiTextEditCallbackData *Callba
 		}
 
 	default:
-		BB_ASSERT(false);
 		break;
 	}
 	return 0;
