@@ -137,3 +137,17 @@ fontConfigs_t fontConfigs_clone(const fontConfigs_t *src);
 #if defined(__cplusplus)
 } // extern "C"
 #endif
+
+#if !defined(sb_reset)
+#define sb_reset(var) sb_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(sbs_reset)
+#define sbs_reset(var) sbs_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+
+#if !defined(sb_clone)
+#define sb_clone(var) sb_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(sbs_clone)
+#define sbs_clone(var) sbs_clone_from_loc(__FILE__, __LINE__, var);
+#endif
