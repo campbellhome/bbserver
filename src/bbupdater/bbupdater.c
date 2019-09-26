@@ -44,37 +44,6 @@ BB_WARNING_POP
 #include <crtdbg.h>
 #endif
 
-static void RedirectBlackboxToStdout(void *context, bb_decoded_packet_t *decoded)
-{
-	BB_UNUSED(context);
-	if(decoded->type == kBBPacketType_LogText) {
-		switch(decoded->packet.logText.level) {
-		case kBBLogLevel_Warning:
-		case kBBLogLevel_Error:
-		case kBBLogLevel_Fatal:
-			fputs(decoded->packet.logText.text, stderr);
-#if BB_USING(BB_PLATFORM_WINDOWS)
-			OutputDebugStringA(decoded->packet.logText.text);
-#endif
-			break;
-
-		case kBBLogLevel_Log:
-		case kBBLogLevel_Display:
-			fputs(decoded->packet.logText.text, stdout);
-#if BB_USING(BB_PLATFORM_WINDOWS)
-			OutputDebugStringA(decoded->packet.logText.text);
-#endif
-			break;
-
-		default:
-#if BB_USING(BB_PLATFORM_WINDOWS)
-			OutputDebugStringA(decoded->packet.logText.text);
-#endif
-			break;
-		}
-	}
-}
-
 b32 zip_contains_path(mz_zip_archive *zipArchive, const char *pathToFind)
 {
 	mz_uint numFiles = mz_zip_reader_get_num_files(zipArchive);
@@ -411,7 +380,7 @@ int main(int argc, const char **argv)
 	u64 timeVal = 0;
 #endif
 
-	bb_set_send_callback(&RedirectBlackboxToStdout, NULL);
+	bb_set_send_callback(&bb_echo_to_stdout, NULL);
 	sb_t logPath = appdata_get("bb");
 	sb_append(&logPath, "/bbupdater");
 	path_mkdir(sb_get(&logPath));

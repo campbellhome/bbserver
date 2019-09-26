@@ -1,8 +1,6 @@
 // Copyright (c) 2012-2019 Matt Campbell
 // MIT license (see License.txt)
 
-#include "bb_array.h"
-#include "bb_packet.h"
 #include "bb_time.h"
 #include "cmdline.h"
 #include "crt_leak_check.h"
@@ -12,39 +10,9 @@
 #include "mc_build/mc_build_structs_generated.h"
 #include "mc_build/mc_build_utils.h"
 #include "process_task.h"
+#include "str.h"
 #include "va.h"
 #include <stdio.h>
-
-static void RedirectBlackboxToStdout(void *context, bb_decoded_packet_t *decoded)
-{
-	BB_UNUSED(context);
-	if(decoded->type == kBBPacketType_LogText) {
-		switch(decoded->packet.logText.level) {
-		case kBBLogLevel_Warning:
-		case kBBLogLevel_Error:
-		case kBBLogLevel_Fatal:
-			fputs(decoded->packet.logText.text, stderr);
-#if BB_USING(BB_PLATFORM_WINDOWS)
-			OutputDebugStringA(decoded->packet.logText.text);
-#endif
-			break;
-
-		case kBBLogLevel_Log:
-		case kBBLogLevel_Display:
-			fputs(decoded->packet.logText.text, stdout);
-#if BB_USING(BB_PLATFORM_WINDOWS)
-			OutputDebugStringA(decoded->packet.logText.text);
-#endif
-			break;
-
-		default:
-#if BB_USING(BB_PLATFORM_WINDOWS)
-			OutputDebugStringA(decoded->packet.logText.text);
-#endif
-			break;
-		}
-	}
-}
 
 int main(int argc, const char **argv)
 {
@@ -61,7 +29,7 @@ int main(int argc, const char **argv)
 	}
 #endif
 
-	bb_set_send_callback(&RedirectBlackboxToStdout, NULL);
+	bb_set_send_callback(&bb_echo_to_stdout, NULL);
 	u32 bbFlags = kBBInitFlag_NoOpenView | kBBInitFlag_NoDiscovery;
 	bb_init_file("mc_build.bbox");
 	BB_INIT_WITH_FLAGS("mc_build", bbFlags);
@@ -70,11 +38,19 @@ int main(int argc, const char **argv)
 
 	u64 start = bb_current_time_ms();
 
-	b32 bRebuild = false;
-	b32 bStopOnErrors = true;
-	b32 bDebugDeps = false;
-	b32 bShowCommands = false;
+	b32 bRebuild = (cmdline_find("-rebuild") > 0);
+	b32 bStopOnErrors = !(cmdline_find("-nostop") > 0);
+	b32 bDebugDeps = (cmdline_find("-debug") > 0);
+	b32 bShowCommands = (cmdline_find("-showcommands") > 0);
 	u32 concurrency = 16;
+	const char *concurrencyStr = cmdline_find_prefix("-j=");
+	if(concurrencyStr) {
+		concurrency = strtou32(concurrencyStr);
+		if(concurrency == 0) {
+			concurrency = 1;
+			BB_WARNING("startup", "Invalid concurrency '%s' - clamping to 1", concurrencyStr);
+		}
+	}
 
 	tasks_startup();
 	process_init();
@@ -90,18 +66,18 @@ int main(int argc, const char **argv)
 	sbs_t bb_example_cpp = { BB_EMPTY_INITIALIZER };
 	sbs_t bboxtolog_c = { BB_EMPTY_INITIALIZER };
 
-	buildDependencyTable_insertFromDir(&deps, &times, &bbclient_c, "../submodules/mc_imgui/submodules/mc_common/submodules/bbclient/src", objDir, false);
-	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/src", objDir, false);
-	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/submodules/parson", objDir, false);
-	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/src/uuid_rfc4122", objDir, false);
-	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/src/md5_rfc1321", objDir, false);
-	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/src/mc_callstack", objDir, false);
-	buildDependencyTable_insertFromDir(NULL, &times, NULL, "../obj/linux", NULL, false);
-	buildDependencyTable_insertFromDir(NULL, &times, NULL, "../submodules/mc_imgui/submodules/mc_common/submodules/bbclient/include", NULL, true);
-	buildDependencyTable_insertFromDir(NULL, &times, NULL, "../submodules/mc_imgui/submodules/mc_common/include", NULL, true);
+	buildDependencyTable_insertFromDir(&deps, &times, &bbclient_c, "../submodules/mc_imgui/submodules/mc_common/submodules/bbclient/src", objDir, false, false, false);
+	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/src", objDir, false, false, false);
+	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/submodules/parson", objDir, false, false, false);
+	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/src/uuid_rfc4122", objDir, false, false, false);
+	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/src/md5_rfc1321", objDir, false, false, false);
+	buildDependencyTable_insertFromDir(&deps, &times, &mc_common_c, "../submodules/mc_imgui/submodules/mc_common/src/mc_callstack", objDir, false, false, false);
+	buildDependencyTable_insertFromDir(NULL, &times, NULL, "../obj/linux", NULL, false, false, false);
+	buildDependencyTable_insertFromDir(NULL, &times, NULL, "../submodules/mc_imgui/submodules/mc_common/submodules/bbclient/include", NULL, true, false, false);
+	buildDependencyTable_insertFromDir(NULL, &times, NULL, "../submodules/mc_imgui/submodules/mc_common/include", NULL, true, false, false);
 
-	buildDependencyTable_insertFromDir(&deps, &times, &bb_example_cpp, "../submodules/mc_imgui/submodules/mc_common/submodules/bbclient/examples", objDir, false);
-	buildDependencyTable_insertFromDir(&deps, &times, &bboxtolog_c, "../src/bboxtolog", objDir, false);
+	buildDependencyTable_insertFromDir(&deps, &times, &bb_example_cpp, "../submodules/mc_imgui/submodules/mc_common/submodules/bbclient/examples", objDir, false, false, false);
+	buildDependencyTable_insertFromDir(&deps, &times, &bboxtolog_c, "../src/bboxtolog", objDir, false, false, false);
 
 	//buildDependencyTable_dump(&deps);
 	//sourceTimestampTable_dump(&times);
@@ -116,27 +92,29 @@ int main(int argc, const char **argv)
 	u32 bbExampleCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bb_example_cpp, objDir, bDebugDeps, bRebuild, ".", va("%s clang++ -MMD -c -g -Werror -Wall -Wextra -I../submodules/mc_imgui/submodules/mc_common/submodules/bbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&wslPath)));
 	u32 bboxtologCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bboxtolog_c, objDir, bDebugDeps, bRebuild, ".", va("%s clang -DBB_WIDECHAR=0 -MMD -c -g -Werror -Wall -Wextra -I../submodules/mc_imgui/submodules/mc_common/submodules/bbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&wslPath)));
 
-	buildCommands_dispatch(&commands, concurrency, bStopOnErrors, bShowCommands);
+	buildCommandsState_t dispatchState = buildCommands_dispatch(&commands, concurrency, bStopOnErrors, bShowCommands);
 	buildCommands_reset(&commands);
 
-	if(bbclientCommands || bbExampleCommands) {
-		sb_t cmd = sb_from_va("%s clang -MMD -g -o ../bin/linux/bbclient_example_wchar", sb_get(&wslPath));
-		buildUtils_appendObjects(objDir, &bbclient_c, &cmd);
-		buildUtils_appendObjects(objDir, &bb_example_cpp, &cmd);
-		buildCommands_push(&commands, "Linking bbclient_example_wchar", ".", sb_get(&cmd));
-		sb_reset(&cmd);
-	}
+	if(dispatchState.errorCount == 0) {
+		if(bbclientCommands || bbExampleCommands) {
+			sb_t cmd = sb_from_va("%s clang -MMD -g -o ../bin/linux/bbclient_example_wchar", sb_get(&wslPath));
+			buildUtils_appendObjects(objDir, &bbclient_c, &cmd);
+			buildUtils_appendObjects(objDir, &bb_example_cpp, &cmd);
+			buildCommands_push(&commands, "Linking bbclient_example_wchar", ".", sb_get(&cmd));
+			sb_reset(&cmd);
+		}
 
-	if(bbclientCommands || bboxtologCommands) {
-		sb_t cmd = sb_from_va("%s clang -MMD -g -o ../bin/linux/bboxtolog", sb_get(&wslPath));
-		buildUtils_appendObjects(objDir, &bbclient_c, &cmd);
-		buildUtils_appendObjects(objDir, &bboxtolog_c, &cmd);
-		buildCommands_push(&commands, "Linking bboxtolog", ".", sb_get(&cmd));
-		sb_reset(&cmd);
-	}
+		if(bbclientCommands || bboxtologCommands) {
+			sb_t cmd = sb_from_va("%s clang -MMD -g -o ../bin/linux/bboxtolog", sb_get(&wslPath));
+			buildUtils_appendObjects(objDir, &bbclient_c, &cmd);
+			buildUtils_appendObjects(objDir, &bboxtolog_c, &cmd);
+			buildCommands_push(&commands, "Linking bboxtolog", ".", sb_get(&cmd));
+			sb_reset(&cmd);
+		}
 
-	buildCommands_dispatch(&commands, concurrency, bStopOnErrors, bShowCommands);
-	buildCommands_reset(&commands);
+		buildCommands_dispatch(&commands, concurrency, bStopOnErrors, bShowCommands);
+		buildCommands_reset(&commands);
+	}
 
 	sbs_reset(&bbclient_c);
 	sbs_reset(&mc_common_c);
