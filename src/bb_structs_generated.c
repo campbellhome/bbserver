@@ -7,6 +7,7 @@
 
 #include "bb_structs_generated.h"
 #include "bb_array.h"
+#include "str.h"
 #include "va.h"
 
 #include "config.h"
@@ -16,8 +17,10 @@
 #include "sdict.h"
 #include "site_config.h"
 #include "uuid_config.h"
-#include "uuid_rfc4122\sysdep.h"
+#include "uuid_rfc4122/sysdep.h"
 #include "view.h"
+
+#include <string.h>
 
 
 void POINT_reset(POINT *val)

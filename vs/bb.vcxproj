@@ -180,9 +180,8 @@
   </ItemGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
-      <Command>..\submodules\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -prefix=bb_ -src=..\src -include=..\src ..\src -header=..\submodules\mc_imgui\submodules\mc_common\include -header=..\submodules\mc_imgui\include
+      <Command>..\submodules\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -config=..\bb_preproc.json
 if not exist "$(OutDir)freetype.dll" copy ..\submodules\mc_imgui\submodules\freetype\win64\freetype.dll "$(OutDir)"</Command>
-      <Message>Running mc_common_preproc</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>

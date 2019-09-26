@@ -1,0 +1,17 @@
+{
+	"input": {
+		"sourceDirs": [
+			{ "dir": "src" },
+		],
+		"includeDirs": [
+			{ "dir": "submodules/mc_imgui/submodules/mc_common/include" },
+			{ "dir": "submodules/mc_imgui/submodules/mc_common/include/uuid_rfc_4122", "base": "submodules/mc_common/include/" },
+			{ "dir": "submodules/mc_imgui/include" }
+		]
+	},
+	"output": {
+		"prefix": "bb_",
+		"sourceDir": "src",
+		"includeDir": "src"
+	}
+}

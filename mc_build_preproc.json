@@ -1,0 +1,18 @@
+{
+	"bb": true,
+	"input": {
+		"sourceDirs": [
+			{ "dir": "submodules/mc_imgui/submodules/mc_common/include/mc_build", "base": "submodules/mc_imgui/submodules/mc_common/include/" }
+		],
+		"includeDirs": [
+			{ "dir": "submodules/mc_imgui/submodules/mc_common/include" },
+			{ "dir": "submodules/mc_imgui/submodules/mc_common/include/uuid_rfc_4122", "base": "submodules/mc_imgui/submodules/mc_common/include/" }
+		]
+	},
+	"output": {
+		"prefix": "mc_build_",
+		"sourceDir": "submodules/mc_imgui/submodules/mc_common/src/mc_build",
+		"includeDir": "submodules/mc_imgui/submodules/mc_common/include/mc_build",
+		"baseDir": "submodules/mc_imgui/submodules/mc_common/include/"
+	}
+}

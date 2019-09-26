@@ -84,8 +84,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
-      <Command>..\submodules\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -prefix=mc_build_ -src=..\submodules\mc_imgui\submodules\mc_common\src\mc_build -include=..\submodules\mc_imgui\submodules\mc_common\include\mc_build -headernorecurse=..\submodules\mc_imgui\submodules\mc_common\include ..\submodules\mc_imgui\submodules\mc_common\include\mc_build -includePrefix=mc_build/</Command>
-      <Message>Running mc_common_preproc</Message>
+      <Command>..\submodules\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -config=..\mc_build_preproc.json</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
