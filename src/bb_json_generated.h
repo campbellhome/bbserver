@@ -13,6 +13,13 @@
 extern "C" {
 #endif
 
+typedef struct sb_s sb_t;
+typedef struct sbs_s sbs_t;
+typedef struct sdictEntry_s sdictEntry_t;
+typedef struct sdict_s sdict_t;
+typedef struct uuid_node_s uuid_node_t;
+typedef struct fontConfig_s fontConfig_t;
+typedef struct fontConfigs_s fontConfigs_t;
 typedef struct tagPOINT POINT;
 typedef struct tagRECT RECT;
 typedef struct tagWINDOWPLACEMENT WINDOWPLACEMENT;
@@ -46,13 +53,6 @@ typedef struct view_console_history_entry_t view_console_history_entry_t;
 typedef struct view_console_entries_t view_console_history_entries_t;
 typedef struct view_console_history_t view_console_history_t;
 typedef struct view_config_s view_config_t;
-typedef struct sb_s sb_t;
-typedef struct sbs_s sbs_t;
-typedef struct sdictEntry_s sdictEntry_t;
-typedef struct sdict_s sdict_t;
-typedef struct uuid_node_s uuid_node_t;
-typedef struct fontConfig_s fontConfig_t;
-typedef struct fontConfigs_s fontConfigs_t;
 
 typedef enum tag_configColorUsage configColorUsage;
 typedef enum recording_tab_t recording_tab_t;
@@ -61,6 +61,13 @@ typedef enum recording_group_e recording_group_t;
 typedef enum recording_type_e recording_type_t;
 typedef enum view_config_selector_e view_config_selector_t;
 
+sb_t json_deserialize_sb_t(JSON_Value *src);
+sbs_t json_deserialize_sbs_t(JSON_Value *src);
+sdictEntry_t json_deserialize_sdictEntry_t(JSON_Value *src);
+sdict_t json_deserialize_sdict_t(JSON_Value *src);
+uuid_node_t json_deserialize_uuid_node_t(JSON_Value *src);
+fontConfig_t json_deserialize_fontConfig_t(JSON_Value *src);
+fontConfigs_t json_deserialize_fontConfigs_t(JSON_Value *src);
 POINT json_deserialize_POINT(JSON_Value *src);
 RECT json_deserialize_RECT(JSON_Value *src);
 WINDOWPLACEMENT json_deserialize_WINDOWPLACEMENT(JSON_Value *src);
@@ -94,14 +101,14 @@ view_console_history_entry_t json_deserialize_view_console_history_entry_t(JSON_
 view_console_history_entries_t json_deserialize_view_console_history_entries_t(JSON_Value *src);
 view_console_history_t json_deserialize_view_console_history_t(JSON_Value *src);
 view_config_t json_deserialize_view_config_t(JSON_Value *src);
-sb_t json_deserialize_sb_t(JSON_Value *src);
-sbs_t json_deserialize_sbs_t(JSON_Value *src);
-sdictEntry_t json_deserialize_sdictEntry_t(JSON_Value *src);
-sdict_t json_deserialize_sdict_t(JSON_Value *src);
-uuid_node_t json_deserialize_uuid_node_t(JSON_Value *src);
-fontConfig_t json_deserialize_fontConfig_t(JSON_Value *src);
-fontConfigs_t json_deserialize_fontConfigs_t(JSON_Value *src);
 
+JSON_Value *json_serialize_sb_t(const sb_t *src);
+JSON_Value *json_serialize_sbs_t(const sbs_t *src);
+JSON_Value *json_serialize_sdictEntry_t(const sdictEntry_t *src);
+JSON_Value *json_serialize_sdict_t(const sdict_t *src);
+JSON_Value *json_serialize_uuid_node_t(const uuid_node_t *src);
+JSON_Value *json_serialize_fontConfig_t(const fontConfig_t *src);
+JSON_Value *json_serialize_fontConfigs_t(const fontConfigs_t *src);
 JSON_Value *json_serialize_POINT(const POINT *src);
 JSON_Value *json_serialize_RECT(const RECT *src);
 JSON_Value *json_serialize_WINDOWPLACEMENT(const WINDOWPLACEMENT *src);
@@ -135,13 +142,6 @@ JSON_Value *json_serialize_view_console_history_entry_t(const view_console_histo
 JSON_Value *json_serialize_view_console_history_entries_t(const view_console_history_entries_t *src);
 JSON_Value *json_serialize_view_console_history_t(const view_console_history_t *src);
 JSON_Value *json_serialize_view_config_t(const view_config_t *src);
-JSON_Value *json_serialize_sb_t(const sb_t *src);
-JSON_Value *json_serialize_sbs_t(const sbs_t *src);
-JSON_Value *json_serialize_sdictEntry_t(const sdictEntry_t *src);
-JSON_Value *json_serialize_sdict_t(const sdict_t *src);
-JSON_Value *json_serialize_uuid_node_t(const uuid_node_t *src);
-JSON_Value *json_serialize_fontConfig_t(const fontConfig_t *src);
-JSON_Value *json_serialize_fontConfigs_t(const fontConfigs_t *src);
 
 
 configColorUsage json_deserialize_configColorUsage(JSON_Value *src);

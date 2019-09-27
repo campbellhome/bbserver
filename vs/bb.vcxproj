@@ -176,6 +176,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\bb_preproc.json" />
     <None Include="..\linux\build_linux.sh" />
   </ItemGroup>
   <ItemDefinitionGroup>

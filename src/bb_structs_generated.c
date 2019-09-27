@@ -30,7 +30,7 @@ void POINT_reset(POINT *val)
 }
 POINT POINT_clone(const POINT *src)
 {
-	POINT dst = { 0 };
+	POINT dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.x = src->x;
 		dst.y = src->y;
@@ -45,7 +45,7 @@ void RECT_reset(RECT *val)
 }
 RECT RECT_clone(const RECT *src)
 {
-	RECT dst = { 0 };
+	RECT dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.left = src->left;
 		dst.top = src->top;
@@ -65,7 +65,7 @@ void WINDOWPLACEMENT_reset(WINDOWPLACEMENT *val)
 }
 WINDOWPLACEMENT WINDOWPLACEMENT_clone(const WINDOWPLACEMENT *src)
 {
-	WINDOWPLACEMENT dst = { 0 };
+	WINDOWPLACEMENT dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.length = src->length;
 		dst.flags = src->flags;
@@ -87,7 +87,7 @@ void configWhitelistEntry_reset(configWhitelistEntry_t *val)
 }
 configWhitelistEntry_t configWhitelistEntry_clone(const configWhitelistEntry_t *src)
 {
-	configWhitelistEntry_t dst = { 0 };
+	configWhitelistEntry_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.allow = src->allow;
 		dst.autodetectedDevkit = src->autodetectedDevkit;
@@ -113,7 +113,7 @@ void configWhitelist_reset(configWhitelist_t *val)
 }
 configWhitelist_t configWhitelist_clone(const configWhitelist_t *src)
 {
-	configWhitelist_t dst = { 0 };
+	configWhitelist_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -133,7 +133,7 @@ void openTargetEntry_reset(openTargetEntry_t *val)
 }
 openTargetEntry_t openTargetEntry_clone(const openTargetEntry_t *src)
 {
-	openTargetEntry_t dst = { 0 };
+	openTargetEntry_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.displayName = sb_clone(&src->displayName);
 		dst.commandLine = sb_clone(&src->commandLine);
@@ -152,7 +152,7 @@ void openTargetList_reset(openTargetList_t *val)
 }
 openTargetList_t openTargetList_clone(const openTargetList_t *src)
 {
-	openTargetList_t dst = { 0 };
+	openTargetList_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -172,7 +172,7 @@ void pathFixupEntry_reset(pathFixupEntry_t *val)
 }
 pathFixupEntry_t pathFixupEntry_clone(const pathFixupEntry_t *src)
 {
-	pathFixupEntry_t dst = { 0 };
+	pathFixupEntry_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.src = sb_clone(&src->src);
 		dst.dst = sb_clone(&src->dst);
@@ -191,7 +191,7 @@ void pathFixupList_reset(pathFixupList_t *val)
 }
 pathFixupList_t pathFixupList_clone(const pathFixupList_t *src)
 {
-	pathFixupList_t dst = { 0 };
+	pathFixupList_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -209,7 +209,7 @@ void tooltipConfig_reset(tooltipConfig *val)
 }
 tooltipConfig tooltipConfig_clone(const tooltipConfig *src)
 {
-	tooltipConfig dst = { 0 };
+	tooltipConfig dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.enabled = src->enabled;
 		dst.overText = src->overText;
@@ -230,7 +230,7 @@ void sizeConfig_reset(sizeConfig *val)
 }
 sizeConfig sizeConfig_clone(const sizeConfig *src)
 {
-	sizeConfig dst = { 0 };
+	sizeConfig dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.resizeBarSize = src->resizeBarSize;
 		dst.scrollbarSize = src->scrollbarSize;
@@ -254,7 +254,7 @@ void config_reset(config_t *val)
 }
 config_t config_clone(const config_t *src)
 {
-	config_t dst = { 0 };
+	config_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.whitelist = configWhitelist_clone(&src->whitelist);
 		dst.openTargets = openTargetList_clone(&src->openTargets);
@@ -291,7 +291,7 @@ void FILETIME_reset(FILETIME *val)
 }
 FILETIME FILETIME_clone(const FILETIME *src)
 {
-	FILETIME dst = { 0 };
+	FILETIME dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.dwLowDateTime = src->dwLowDateTime;
 		dst.dwHighDateTime = src->dwHighDateTime;
@@ -310,7 +310,7 @@ void new_recording_reset(new_recording_t *val)
 }
 new_recording_t new_recording_clone(const new_recording_t *src)
 {
-	new_recording_t dst = { 0 };
+	new_recording_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.applicationName = sb_clone(&src->applicationName);
 		dst.applicationFilename = sb_clone(&src->applicationFilename);
@@ -331,7 +331,7 @@ void recordings_tab_config_reset(recordings_tab_config_t *val)
 }
 recordings_tab_config_t recordings_tab_config_clone(const recordings_tab_config_t *src)
 {
-	recordings_tab_config_t dst = { 0 };
+	recordings_tab_config_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.group = src->group;
 		dst.sort = src->sort;
@@ -353,7 +353,7 @@ void recordings_config_reset(recordings_config_t *val)
 }
 recordings_config_t recordings_config_clone(const recordings_config_t *src)
 {
-	recordings_config_t dst = { 0 };
+	recordings_config_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->tabs); ++i) {
 			dst.tabs[i] = recordings_tab_config_clone(&src->tabs[i]);
@@ -376,7 +376,7 @@ void updateConfig_reset(updateConfig_t *val)
 }
 updateConfig_t updateConfig_clone(const updateConfig_t *src)
 {
-	updateConfig_t dst = { 0 };
+	updateConfig_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.updateResultDir = sb_clone(&src->updateResultDir);
 		dst.updateAvailableMessage = sb_clone(&src->updateAvailableMessage);
@@ -401,7 +401,7 @@ void site_config_reset(site_config_t *val)
 }
 site_config_t site_config_clone(const site_config_t *src)
 {
-	site_config_t dst = { 0 };
+	site_config_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.updates = updateConfig_clone(&src->updates);
 		dst.bugAssignee = sb_clone(&src->bugAssignee);
@@ -422,7 +422,7 @@ void uuidState_reset(uuidState_t *val)
 }
 uuidState_t uuidState_clone(const uuidState_t *src)
 {
-	uuidState_t dst = { 0 };
+	uuidState_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.timestampLow = src->timestampLow;
 		dst.timestampHi = src->timestampHi;
@@ -439,7 +439,7 @@ void view_pieInstance_reset(view_pieInstance_t *val)
 }
 view_pieInstance_t view_pieInstance_clone(const view_pieInstance_t *src)
 {
-	view_pieInstance_t dst = { 0 };
+	view_pieInstance_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.selected = src->selected;
 		dst.visible = src->visible;
@@ -458,7 +458,7 @@ void view_pieInstances_reset(view_pieInstances_t *val)
 }
 view_pieInstances_t view_pieInstances_clone(const view_pieInstances_t *src)
 {
-	view_pieInstances_t dst = { 0 };
+	view_pieInstances_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -477,7 +477,7 @@ void view_config_thread_reset(view_config_thread_t *val)
 }
 view_config_thread_t view_config_thread_clone(const view_config_thread_t *src)
 {
-	view_config_thread_t dst = { 0 };
+	view_config_thread_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.name = sb_clone(&src->name);
 		dst.selected = src->selected;
@@ -497,7 +497,7 @@ void view_config_threads_reset(view_config_threads_t *val)
 }
 view_config_threads_t view_config_threads_clone(const view_config_threads_t *src)
 {
-	view_config_threads_t dst = { 0 };
+	view_config_threads_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -516,7 +516,7 @@ void view_config_file_reset(view_config_file_t *val)
 }
 view_config_file_t view_config_file_clone(const view_config_file_t *src)
 {
-	view_config_file_t dst = { 0 };
+	view_config_file_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.path = sb_clone(&src->path);
 		dst.selected = src->selected;
@@ -536,7 +536,7 @@ void view_config_files_reset(view_config_files_t *val)
 }
 view_config_files_t view_config_files_clone(const view_config_files_t *src)
 {
-	view_config_files_t dst = { 0 };
+	view_config_files_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -555,7 +555,7 @@ void view_config_category_reset(view_config_category_t *val)
 }
 view_config_category_t view_config_category_clone(const view_config_category_t *src)
 {
-	view_config_category_t dst = { 0 };
+	view_config_category_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.name = sb_clone(&src->name);
 		dst.selected = src->selected;
@@ -577,7 +577,7 @@ void view_config_categories_reset(view_config_categories_t *val)
 }
 view_config_categories_t view_config_categories_clone(const view_config_categories_t *src)
 {
-	view_config_categories_t dst = { 0 };
+	view_config_categories_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -596,7 +596,7 @@ void view_config_column_reset(view_config_column_t *val)
 }
 view_config_column_t view_config_column_clone(const view_config_column_t *src)
 {
-	view_config_column_t dst = { 0 };
+	view_config_column_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.name = sb_clone(&src->name);
 		dst.visible = src->visible;
@@ -616,7 +616,7 @@ void view_config_columns_reset(view_config_columns_t *val)
 }
 view_config_columns_t view_config_columns_clone(const view_config_columns_t *src)
 {
-	view_config_columns_t dst = { 0 };
+	view_config_columns_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -635,7 +635,7 @@ void view_console_history_entry_reset(view_console_history_entry_t *val)
 }
 view_console_history_entry_t view_console_history_entry_clone(const view_console_history_entry_t *src)
 {
-	view_console_history_entry_t dst = { 0 };
+	view_console_history_entry_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.command = sb_clone(&src->command);
 	}
@@ -653,7 +653,7 @@ void view_console_history_entries_reset(view_console_history_entries_t *val)
 }
 view_console_history_entries_t view_console_history_entries_clone(const view_console_history_entries_t *src)
 {
-	view_console_history_entries_t dst = { 0 };
+	view_console_history_entries_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
@@ -672,7 +672,7 @@ void view_console_history_reset(view_console_history_t *val)
 }
 view_console_history_t view_console_history_clone(const view_console_history_t *src)
 {
-	view_console_history_t dst = { 0 };
+	view_console_history_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.entries = view_console_history_entries_clone(&src->entries);
 		dst.pos = src->pos;
@@ -697,7 +697,7 @@ void view_config_reset(view_config_t *val)
 }
 view_config_t view_config_clone(const view_config_t *src)
 {
-	view_config_t dst = { 0 };
+	view_config_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.configColumns = view_config_columns_clone(&src->configColumns);
 		dst.configThreads = view_config_threads_clone(&src->configThreads);

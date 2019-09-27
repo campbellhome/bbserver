@@ -12,8 +12,6 @@
 
 #include "config.h"
 #include "fonts.h"
-#include "mc_build/mc_build_commands.h"
-#include "mc_build/mc_build_dependencies.h"
 #include "recordings.h"
 #include "sb.h"
 #include "sdict.h"

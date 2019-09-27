@@ -1,11 +1,11 @@
 {
 	"input": {
 		"sourceDirs": [
-			{ "dir": "src" },
+			{ "dir": "src" }
 		],
 		"includeDirs": [
 			{ "dir": "submodules/mc_imgui/submodules/mc_common/include" },
-			{ "dir": "submodules/mc_imgui/submodules/mc_common/include/uuid_rfc_4122", "base": "submodules/mc_common/include/" },
+			{ "dir": "submodules/mc_imgui/submodules/mc_common/include/uuid_rfc4122", "base": "submodules/mc_imgui/submodules/mc_common/include/" },
 			{ "dir": "submodules/mc_imgui/include" }
 		]
 	},

@@ -103,6 +103,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\mc_build_preproc.json" />
     <None Include="..\_clang-format" />
   </ItemGroup>
   <ItemGroup>

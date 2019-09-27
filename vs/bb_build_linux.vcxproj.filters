@@ -32,6 +32,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\_clang-format" />
+    <None Include="..\mc_build_preproc.json">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_json_generated.h">

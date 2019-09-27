@@ -13,6 +13,13 @@
 extern "C" {
 #endif
 
+typedef struct sb_s sb_t;
+typedef struct sbs_s sbs_t;
+typedef struct sdictEntry_s sdictEntry_t;
+typedef struct sdict_s sdict_t;
+typedef struct uuid_node_s uuid_node_t;
+typedef struct fontConfig_s fontConfig_t;
+typedef struct fontConfigs_s fontConfigs_t;
 typedef struct tagPOINT POINT;
 typedef struct tagRECT RECT;
 typedef struct tagWINDOWPLACEMENT WINDOWPLACEMENT;
@@ -46,14 +53,14 @@ typedef struct view_console_history_entry_t view_console_history_entry_t;
 typedef struct view_console_entries_t view_console_history_entries_t;
 typedef struct view_console_history_t view_console_history_t;
 typedef struct view_config_s view_config_t;
-typedef struct sb_s sb_t;
-typedef struct sbs_s sbs_t;
-typedef struct sdictEntry_s sdictEntry_t;
-typedef struct sdict_s sdict_t;
-typedef struct uuid_node_s uuid_node_t;
-typedef struct fontConfig_s fontConfig_t;
-typedef struct fontConfigs_s fontConfigs_t;
 
+void sb_reset_from_loc(const char *file, int line, sb_t *val);
+void sbs_reset_from_loc(const char *file, int line, sbs_t *val);
+void sdictEntry_reset(sdictEntry_t *val);
+void sdict_reset(sdict_t *val);
+void uuid_node_reset(uuid_node_t *val);
+void fontConfig_reset(fontConfig_t *val);
+void fontConfigs_reset(fontConfigs_t *val);
 void POINT_reset(POINT *val);
 void RECT_reset(RECT *val);
 void WINDOWPLACEMENT_reset(WINDOWPLACEMENT *val);
@@ -87,14 +94,14 @@ void view_console_history_entry_reset(view_console_history_entry_t *val);
 void view_console_history_entries_reset(view_console_history_entries_t *val);
 void view_console_history_reset(view_console_history_t *val);
 void view_config_reset(view_config_t *val);
-void sb_reset_from_loc(const char *file, int line, sb_t *val);
-void sbs_reset_from_loc(const char *file, int line, sbs_t *val);
-void sdictEntry_reset(sdictEntry_t *val);
-void sdict_reset(sdict_t *val);
-void uuid_node_reset(uuid_node_t *val);
-void fontConfig_reset(fontConfig_t *val);
-void fontConfigs_reset(fontConfigs_t *val);
 
+sb_t sb_clone_from_loc(const char *file, int line, const sb_t *src);
+sbs_t sbs_clone_from_loc(const char *file, int line, const sbs_t *src);
+sdictEntry_t sdictEntry_clone(const sdictEntry_t *src);
+sdict_t sdict_clone(const sdict_t *src);
+uuid_node_t uuid_node_clone(const uuid_node_t *src);
+fontConfig_t fontConfig_clone(const fontConfig_t *src);
+fontConfigs_t fontConfigs_clone(const fontConfigs_t *src);
 POINT POINT_clone(const POINT *src);
 RECT RECT_clone(const RECT *src);
 WINDOWPLACEMENT WINDOWPLACEMENT_clone(const WINDOWPLACEMENT *src);
@@ -128,13 +135,6 @@ view_console_history_entry_t view_console_history_entry_clone(const view_console
 view_console_history_entries_t view_console_history_entries_clone(const view_console_history_entries_t *src);
 view_console_history_t view_console_history_clone(const view_console_history_t *src);
 view_config_t view_config_clone(const view_config_t *src);
-sb_t sb_clone_from_loc(const char *file, int line, const sb_t *src);
-sbs_t sbs_clone_from_loc(const char *file, int line, const sbs_t *src);
-sdictEntry_t sdictEntry_clone(const sdictEntry_t *src);
-sdict_t sdict_clone(const sdict_t *src);
-uuid_node_t uuid_node_clone(const uuid_node_t *src);
-fontConfig_t fontConfig_clone(const fontConfig_t *src);
-fontConfigs_t fontConfigs_clone(const fontConfigs_t *src);
 
 #if defined(__cplusplus)
 } // extern "C"
