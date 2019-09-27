@@ -12,6 +12,7 @@
 	"output": {
 		"prefix": "bb_",
 		"sourceDir": "src",
-		"includeDir": "src"
+		"includeDir": "src",
+		"baseDir": "src"
 	}
 }
