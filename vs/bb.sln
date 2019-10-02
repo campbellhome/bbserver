@@ -29,7 +29,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_lib", "..\submodul
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_preproc", "..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_preproc.vcxproj", "{766B8754-81EE-4880-91CE-5DEAF459205F}"
 	ProjectSection(ProjectDependencies) = postProject
-		{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206} = {6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_lib", "..\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.vcxproj", "{383FD59A-3CD9-4ECC-9395-6EE453A114FA}"
