@@ -1682,7 +1682,13 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				ImGui::EndMenu();
 			}
 			PushStyleColor(ImGuiCol_Text, recording && recording->active ? MakeColor(kStyleColor_ActiveSession) : MakeColor(kStyleColor_InactiveSession));
-			Text("%s", view->session->appInfo.packet.appInfo.applicationName);
+			if(recording) {
+				const char *sep = strrchr(recording->path, '\\');
+				const char *filename = sep ? sep + 1 : recording->path;
+				Text("%s - %s", view->session->appInfo.packet.appInfo.applicationName, filename);
+			} else {
+				Text("%s", view->session->appInfo.packet.appInfo.applicationName);
+			}
 			if(ImGui::IsItemHovered()) {
 				if(view->session->appInfo.packet.appInfo.platform == kBBPlatform_Unknown) {
 					SetTooltip("%s", view->session->path);
