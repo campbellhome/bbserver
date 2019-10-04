@@ -2,7 +2,9 @@
 // MIT license (see License.txt)
 
 #include "message_queue.h"
+#include "bb_array.h"
 #include "bb_criticalsection.h"
+#include "bb_structs_generated.h"
 #include "bb_thread.h"
 #include "bb_time.h"
 
@@ -16,7 +18,7 @@ typedef enum {
 } message_queue_type_e;
 
 enum {
-	kMessageQueue_Length = 128
+	kMessageQueue_Length = 16
 };
 
 typedef struct
@@ -24,7 +26,10 @@ typedef struct
 	u64 refcount;
 	u64 readCursor;
 	u64 writeCursor;
+	b32 bGrowable;
+	u8 pad[4];
 	bb_critical_section cs;
+	message_queue_messages_t messages;
 	message_queue_message_t entries[kMessageQueue_Length];
 } message_queue_t;
 
@@ -39,6 +44,7 @@ void mq_init(void)
 		bb_critical_section_init(&s_mq[i].cs);
 	}
 	bb_critical_section_init(&s_mq_reserve_cs);
+	s_mq[kMessageQueue_ToUI].bGrowable = true;
 }
 
 void mq_pre_shutdown(void)
@@ -51,13 +57,13 @@ void mq_shutdown(void)
 	size_t i;
 	for(i = 0; i < BB_ARRAYSIZE(s_mq); ++i) {
 		bb_critical_section_shutdown(&s_mq[i].cs);
+		message_queue_messages_reset(&s_mq[i].messages);
 	}
 	bb_critical_section_shutdown(&s_mq_reserve_cs);
 }
 
 b32 mq_vqueue(u32 queueId, u32 command, const char *fmt, va_list args)
 {
-	u64 used;
 	message_queue_t *mq;
 	b32 ret = false;
 	char szBuffer[kMessageQueue_MessageSize];
@@ -78,13 +84,22 @@ b32 mq_vqueue(u32 queueId, u32 command, const char *fmt, va_list args)
 
 	bb_critical_section_lock(&mq->cs);
 
-	used = mq->writeCursor - mq->readCursor;
-	if(used < BB_ARRAYSIZE(mq->entries)) {
-		message_queue_message_t *message = mq->entries + (mq->writeCursor % BB_ARRAYSIZE(mq->entries));
-		message->command = command;
-		memcpy(message->text, szBuffer, sizeof(message->text));
-		++mq->writeCursor;
-		ret = true;
+	if(mq->bGrowable) {
+		message_queue_message_t *message = bba_add(mq->messages, 1);
+		if(message) {
+			message->command = command;
+			memcpy(message->text, szBuffer, sizeof(message->text));
+			ret = true;
+		}
+	} else {
+		u64 used = mq->writeCursor - mq->readCursor;
+		if(used < BB_ARRAYSIZE(mq->entries)) {
+			message_queue_message_t *message = mq->entries + (mq->writeCursor % BB_ARRAYSIZE(mq->entries));
+			message->command = command;
+			memcpy(message->text, szBuffer, sizeof(message->text));
+			++mq->writeCursor;
+			ret = true;
+		}
 	}
 
 	bb_critical_section_unlock(&mq->cs);
@@ -97,14 +112,23 @@ b32 mq_consume(u32 queueId, message_queue_message_t *message)
 	b32 result = false;
 	if(queueId < kMessageQueue_Count) {
 		message_queue_t *mq = s_mq + queueId;
-		u64 used = mq->writeCursor - mq->readCursor;
+		u64 used = mq->bGrowable ? mq->messages.count : mq->writeCursor - mq->readCursor;
 		if(used) {
 			bb_critical_section_lock(&mq->cs);
-			if(mq->writeCursor > mq->readCursor) {
-				message_queue_message_t *src = mq->entries + (mq->readCursor % BB_ARRAYSIZE(mq->entries));
-				memcpy(message, src, sizeof(*message));
-				++mq->readCursor;
-				result = true;
+			if(mq->bGrowable) {
+				if(mq->messages.count) {
+					message_queue_message_t *src = mq->messages.data;
+					memcpy(message, src, sizeof(*message));
+					bba_erase(mq->messages, 0);
+					result = true;
+				}
+			} else {
+				if(mq->writeCursor > mq->readCursor) {
+					message_queue_message_t *src = mq->entries + (mq->readCursor % BB_ARRAYSIZE(mq->entries));
+					memcpy(message, src, sizeof(*message));
+					++mq->readCursor;
+					result = true;
+				}
 			}
 			bb_critical_section_unlock(&mq->cs);
 		}
@@ -118,11 +142,15 @@ const message_queue_message_t *mq_peek(u32 queueId)
 	message_queue_message_t *result = NULL;
 	if(queueId < kMessageQueue_Count) {
 		message_queue_t *mq = s_mq + queueId;
-		u64 used = mq->writeCursor - mq->readCursor;
+		u64 used = mq->bGrowable ? mq->messages.count : mq->writeCursor - mq->readCursor;
 		if(used) {
 			bb_critical_section_lock(&mq->cs);
-			if(mq->writeCursor > mq->readCursor) {
-				result = mq->entries + (mq->readCursor % BB_ARRAYSIZE(mq->entries));
+			if(mq->bGrowable) {
+				result = mq->messages.data;
+			} else {
+				if(mq->writeCursor > mq->readCursor) {
+					result = mq->entries + (mq->readCursor % BB_ARRAYSIZE(mq->entries));
+				}
 			}
 			bb_critical_section_unlock(&mq->cs);
 		}
@@ -135,11 +163,15 @@ void mq_consume_peek_result(u32 queueId)
 	// #TODO: multi producer, single consumer shouldn't lock for read - just use InterlockedIncrement, InterlockedCompare
 	if(queueId < kMessageQueue_Count) {
 		message_queue_t *mq = s_mq + queueId;
-		u64 used = mq->writeCursor - mq->readCursor;
+		u64 used = mq->bGrowable ? mq->messages.count : mq->writeCursor - mq->readCursor;
 		if(used) {
 			bb_critical_section_lock(&mq->cs);
-			if(mq->writeCursor > mq->readCursor) {
-				++mq->readCursor;
+			if(mq->bGrowable) {
+				bba_erase(mq->messages, 0);
+			} else {
+				if(mq->writeCursor > mq->readCursor) {
+					++mq->readCursor;
+				}
 			}
 			bb_critical_section_unlock(&mq->cs);
 		}
@@ -211,6 +243,7 @@ void mq_releaseref(u32 id)
 		if(s_mq[id].refcount) {
 			--s_mq[id].refcount;
 			if(!s_mq[id].refcount) {
+				message_queue_messages_reset(&s_mq[id].messages);
 				s_mq[id].readCursor = 0;
 				s_mq[id].writeCursor = 0;
 			}

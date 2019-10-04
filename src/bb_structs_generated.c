@@ -12,6 +12,7 @@
 
 #include "config.h"
 #include "fonts.h"
+#include "message_queue.h"
 #include "recordings.h"
 #include "sb.h"
 #include "sdict.h"
@@ -280,6 +281,45 @@ config_t config_clone(const config_t *src)
 		dst.updatePauseAfterSuccessfulUpdate = src->updatePauseAfterSuccessfulUpdate;
 		dst.updatePauseAfterFailedUpdate = src->updatePauseAfterFailedUpdate;
 		dst.assertMessageBox = src->assertMessageBox;
+	}
+	return dst;
+}
+
+void message_queue_message_reset(message_queue_message_t *val)
+{
+	if(val) {
+	}
+}
+message_queue_message_t message_queue_message_clone(const message_queue_message_t *src)
+{
+	message_queue_message_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.command = src->command;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->text); ++i) {
+			dst.text[i] = src->text[i];
+		}
+	}
+	return dst;
+}
+
+void message_queue_messages_reset(message_queue_messages_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			message_queue_message_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+message_queue_messages_t message_queue_messages_clone(const message_queue_messages_t *src)
+{
+	message_queue_messages_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = message_queue_message_clone(src->data + i);
+			}
+		}
 	}
 	return dst;
 }

@@ -21,11 +21,16 @@ enum {
 	kMessageQueue_MessageSize = 1020
 };
 
-typedef struct
-{
+AUTOSTRUCT typedef struct message_queue_message_s {
 	u32 command;
 	char text[kMessageQueue_MessageSize];
 } message_queue_message_t;
+
+AUTOSTRUCT typedef struct message_queue_messages_s {
+	u32 count;
+	u32 allocated;
+	message_queue_message_t *data;
+} message_queue_messages_t;
 
 void mq_init(void);
 void mq_pre_shutdown(void);

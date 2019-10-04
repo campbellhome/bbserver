@@ -12,6 +12,7 @@
 
 #include "config.h"
 #include "fonts.h"
+#include "message_queue.h"
 #include "recordings.h"
 #include "sb.h"
 #include "sdict.h"
