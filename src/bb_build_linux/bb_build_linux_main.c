@@ -132,6 +132,7 @@ int main(int argc, const char **argv)
 			sb_t cmd = sb_from_va("%s clang -MMD -g -o %s", sb_get(&wslPath), sb_get(&bboxtolog));
 			buildUtils_appendObjects(objDir, &bbclient_c, &cmd);
 			buildUtils_appendObjects(objDir, &bboxtolog_c, &cmd);
+			sb_append(&cmd, " -lpthread");
 			buildCommands_push(&commands, "Linking bboxtolog", ".", sb_get(&cmd));
 			sb_reset(&cmd);
 		}
