@@ -255,7 +255,9 @@ bb_thread_return_t recorder_thread(void *args)
 		new_recording_reset(&recording);
 	}
 
-	bbnet_gracefulclose(&con->socket);
+	BB_LOG("bb::recorder", "recorder con %p finished using path %s", con, path);
+	bbcon_reset(con);
+	data->bInUse = false;
 	BB_THREAD_END();
 	bb_thread_exit(0);
 }

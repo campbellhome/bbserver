@@ -186,9 +186,10 @@ static bb_thread_return_t discovery_thread_func(void *args)
 				for(c = 0; c < BB_ARRAYSIZE(host->con); ++c) {
 					bb_server_connection_data_t *data = host->con + c;
 					bb_connection_t *con = &data->con;
-					if(!bbcon_is_connected(con) && !bbcon_is_listening(con)) {
+					if(!bbcon_is_connected(con) && !bbcon_is_listening(con) && con->socket == BB_INVALID_SOCKET && !data->bInUse) {
+						data->bInUse = true;
 						found = true;
-						BB_LOG("bb:discovery", "using con %p with socket %d state %d", con, con->socket, con->state);
+						BB_LOG("bb:discovery", "pending con %u using con %u / %p with socket %d state %d", i, c, con, con->socket, con->state);
 						bbcon_init(con);
 						bb_strncpy(data->applicationName, pending->applicationName, sizeof(data->applicationName));
 						if(!bbcon_connect_server(con, pending->socket, pending->localIp, pending->localPort)) {
