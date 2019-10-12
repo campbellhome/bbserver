@@ -153,6 +153,7 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 			persistent->bookmarked = false;
 		}
 	}
+	view->visibleLogsAdded = true;
 
 	for(i = 0; i <= session->pieInstances.count; ++i) {
 		view_add_pieInstance(view, i);
@@ -892,7 +893,11 @@ void view_add_log(view_t *view, recorded_log_t *log)
 		persistent->subLine = i;
 		persistent->bookmarked = false;
 	}
+	u32 visibleLogCount = view->visibleLogs.count;
 	view_add_log_internal(view, log, persistentLogIndex);
+	if (visibleLogCount < view->visibleLogs.count) {
+		view->visibleLogsAdded = true;
+	}
 }
 
 static void view_add_log_internal(view_t *view, recorded_log_t *log, u32 persistentLogIndex)

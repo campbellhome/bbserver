@@ -1817,23 +1817,21 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			view_update_visible_logs(view);
 			view->visibleLogsDirty = false;
 
-			if(!view->tail) {
-				if(view->lastVisibleSelectedSessionIndexStart != ~0U) {
-					for(u32 i = 0; i < view->visibleLogs.count; ++i) {
-						view_log_t *log = view->visibleLogs.data + i;
-						if(log->sessionLogIndex >= view->lastVisibleSelectedSessionIndexStart) {
-							view->gotoTarget = (int)i;
-							break;
-						}
+			if(view->lastVisibleSelectedSessionIndexStart != ~0U) {
+				for(u32 i = 0; i < view->visibleLogs.count; ++i) {
+					view_log_t *log = view->visibleLogs.data + i;
+					if(log->sessionLogIndex >= view->lastVisibleSelectedSessionIndexStart) {
+						view->gotoTarget = (int)i;
+						break;
 					}
-				} else if(view->lastVisibleSessionIndexStart != ~0U) {
-					u32 target = (view->lastVisibleSessionIndexStart + view->lastVisibleSessionIndexEnd) / 2;
-					for(u32 i = 0; i < view->visibleLogs.count; ++i) {
-						view_log_t *log = view->visibleLogs.data + i;
-						if(log->sessionLogIndex >= target) {
-							view->gotoTarget = (int)i;
-							break;
-						}
+				}
+			} else if(view->lastVisibleSessionIndexStart != ~0U) {
+				u32 target = (view->lastVisibleSessionIndexStart + view->lastVisibleSessionIndexEnd) / 2;
+				for(u32 i = 0; i < view->visibleLogs.count; ++i) {
+					view_log_t *log = view->visibleLogs.data + i;
+					if(log->sessionLogIndex >= target) {
+						view->gotoTarget = (int)i;
+						break;
 					}
 				}
 			}
@@ -1956,6 +1954,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				ImGui::SetKeyboardFocusHere();
 			}
 			if(InputInt((view->gotoViewRelative) ? "Goto (View-Relative)###Goto" : "Goto (Absolute)###Goto", &view->gotoTargetInput, 0, 0, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue)) {
+				ClearViewTail(view, "goto target");
 				view->gotoTarget = view->gotoTargetInput > 0 ? view->gotoTargetInput : 0;
 				view->gotoVisible = 0;
 
@@ -2035,7 +2034,6 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			const float kScreenPercent = 0.5f;
 			//view->bookmarkThreshold = (int)(clipper.DisplayStart + visibleLines * 0.5f);
 			if(view->gotoTarget >= 0) {
-				ClearViewTail(view, "goto target");
 				int adjustedTarget = view->gotoTarget - (int)(visibleLines * kScreenPercent);
 				if(adjustedTarget < 0) {
 					adjustedTarget = 0;
@@ -2095,7 +2093,10 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				if(curScrollY < view->prevScrollY && view->prevScrollY <= ImGui::GetScrollMaxY()) {
 					ClearViewTail(view, "not at bottom");
 				}
-				ImGui::SetScrollHere();
+				if(view->visibleLogsAdded) {
+					ImGui::SetScrollHere();
+					view->visibleLogsAdded = false;
+				}
 			}
 			view->prevScrollY = curScrollY;
 			PopLogFont();
