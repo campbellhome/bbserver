@@ -40,6 +40,7 @@ static u64 s_lastDevkitAutodetectMillis;
 static b32 s_devkitAutodetectActive;
 static devkits_t s_devkits;
 static HANDLE s_interfaceChangeHandle;
+static b32 s_interfaceChanged;
 
 static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPINTERFACE_ROW Row OPTIONAL, IN MIB_NOTIFICATION_TYPE NotificationType)
 {
@@ -47,6 +48,7 @@ static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPINTERFACE_ROW Row
 	BB_UNUSED(Row);
 	BB_UNUSED(NotificationType);
 	s_lastDevkitAutodetectMillis = 0;
+	s_interfaceChanged = true;
 }
 
 static void RegisterForInterfaceChanges(void)
@@ -136,7 +138,8 @@ static void devkit_autodetect_finish(void)
 			}
 		}
 	}
-	if(changes) {
+	if(changes || s_interfaceChanged) {
+		s_interfaceChanged = false;
 		config_push_whitelist(&g_config.whitelist);
 	}
 	s_devkitAutodetectActive = false;
