@@ -13,9 +13,15 @@
 #include "file_utils.h"
 #include "process_task.h"
 #include "sb.h"
+#include "system_error_utils.h"
 #include "tasks.h"
 #include "tokenize.h"
 #include "va.h"
+
+BB_WARNING_PUSH(4820)
+#include <Iphlpapi.h>
+#pragma comment(lib, "Iphlpapi.lib")
+BB_WARNING_POP
 
 typedef struct devkit_s {
 	sb_t addr;
@@ -33,6 +39,31 @@ static const u64 kDevkitAutodetectIntervalMillis = 5 * 60 * 1000;
 static u64 s_lastDevkitAutodetectMillis;
 static b32 s_devkitAutodetectActive;
 static devkits_t s_devkits;
+static HANDLE s_interfaceChangeHandle;
+
+static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPINTERFACE_ROW Row OPTIONAL, IN MIB_NOTIFICATION_TYPE NotificationType)
+{
+	BB_UNUSED(CallerContext);
+	BB_UNUSED(Row);
+	BB_UNUSED(NotificationType);
+	s_lastDevkitAutodetectMillis = 0;
+}
+
+static void RegisterForInterfaceChanges(void)
+{
+	int ret = NotifyIpInterfaceChange(AF_INET, &InterfaceChanged, NULL, FALSE, &s_interfaceChangeHandle);
+	if(ret != NO_ERROR) {
+		system_error_to_log(ret, "Devkit", "NotifyIpInterfaceChange");
+	}
+}
+
+static void UnregisterForInterfaceChanges(void)
+{
+	if(s_interfaceChangeHandle) {
+		CancelMibChangeNotify2(s_interfaceChangeHandle);
+		s_interfaceChangeHandle = NULL;
+	}
+}
 
 static void devkits_reset(devkits_t *devkits)
 {
@@ -47,6 +78,7 @@ static void devkits_reset(devkits_t *devkits)
 void devkit_autodetect_shutdown(void)
 {
 	devkits_reset(&s_devkits);
+	UnregisterForInterfaceChanges();
 }
 
 static void devkit_autodetect_finish(void)
@@ -111,6 +143,8 @@ static void devkit_autodetect_finish(void)
 	s_lastDevkitAutodetectMillis = bb_current_time_ms();
 	devkits_reset(&s_devkits);
 	BB_TRACE(kBBLogLevel_Verbose, "Devkit", "Devkit autodetect END");
+
+	RegisterForInterfaceChanges();
 }
 
 static void devkit_autodetect_add(span_t addr, const char *platformName, const char *name)
@@ -407,6 +441,8 @@ void devkit_autodetect_tick(void)
 		return;
 
 	BB_TRACE(kBBLogLevel_Verbose, "Devkit", "Devkit autodetect BEGIN");
+
+	UnregisterForInterfaceChanges();
 
 	task groupTask = { BB_EMPTY_INITIALIZER };
 	groupTask.tick = task_tick_subtasks;
