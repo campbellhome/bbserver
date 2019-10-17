@@ -47,7 +47,9 @@ static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPINTERFACE_ROW Row
 	BB_UNUSED(CallerContext);
 	BB_UNUSED(Row);
 	BB_UNUSED(NotificationType);
-	s_lastDevkitAutodetectMillis = 0;
+	if(!s_devkitAutodetectActive) {
+		s_lastDevkitAutodetectMillis = 0;
+	}
 	s_interfaceChanged = true;
 }
 
@@ -146,8 +148,6 @@ static void devkit_autodetect_finish(void)
 	s_lastDevkitAutodetectMillis = bb_current_time_ms();
 	devkits_reset(&s_devkits);
 	BB_TRACE(kBBLogLevel_Verbose, "Devkit", "Devkit autodetect END");
-
-	RegisterForInterfaceChanges();
 }
 
 static void devkit_autodetect_add(span_t addr, const char *platformName, const char *name)
@@ -445,7 +445,9 @@ void devkit_autodetect_tick(void)
 
 	BB_TRACE(kBBLogLevel_Verbose, "Devkit", "Devkit autodetect BEGIN");
 
-	UnregisterForInterfaceChanges();
+	if(!s_interfaceChangeHandle) {
+		RegisterForInterfaceChanges();
+	}
 
 	task groupTask = { BB_EMPTY_INITIALIZER };
 	groupTask.tick = task_tick_subtasks;
