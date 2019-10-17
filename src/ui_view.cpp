@@ -1835,6 +1835,17 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 					}
 				}
 			}
+		} else if(view->prevDpiScale != Imgui_Core_GetDpiScale()) {
+			if(view->lastVisibleSessionIndexStart != ~0U) {
+				u32 target = (view->lastVisibleSessionIndexStart + view->lastVisibleSessionIndexEnd) / 2;
+				for(u32 i = 0; i < view->visibleLogs.count; ++i) {
+					view_log_t *log = view->visibleLogs.data + i;
+					if(log->sessionLogIndex >= target) {
+						view->gotoTarget = (int)i;
+						break;
+					}
+				}
+			}
 		}
 
 		BeginChild("scrollingParent", ImVec2(0, consoleInputHeight), false, 0);
@@ -2039,8 +2050,11 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 					adjustedTarget = 0;
 				}
 				SetScrollY(adjustedTarget * GetTextLineHeightWithSpacing());
-				view->gotoTarget = -1;
+				if(view->prevDpiScale == Imgui_Core_GetDpiScale()) {
+					view->gotoTarget = -1;
+				}
 			} else if(hovered && ImGui::GetIO().MouseWheel != 0.0f) {
+				view->prevDpiScale = Imgui_Core_GetDpiScale();
 				if(ImGui::GetIO().MouseWheel > 0) {
 					ClearViewTail(view, "Mouse Wheel");
 				} else {
@@ -2050,6 +2064,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 					}
 				}
 			} else if(scrollDir != kVerticalScroll_None) {
+				view->prevDpiScale = Imgui_Core_GetDpiScale();
 				const int pageLines = 20;
 				switch(scrollDir) {
 				case kVerticalScroll_PageUp:
@@ -2079,7 +2094,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 					ClearViewTail(view, "Home");
 					break;
 				case kVerticalScroll_End:
-					SetScrollHere(0.0f);
+					ImGui::SetScrollHereY(0.0f);
 					if(!view->tail) {
 						view->tail = true;
 						BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
@@ -2094,11 +2109,16 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 					ClearViewTail(view, "not at bottom");
 				}
 				if(view->visibleLogsAdded) {
-					ImGui::SetScrollHere();
+					ImGui::SetScrollHereY();
 					view->visibleLogsAdded = false;
+					view->prevDpiScale = Imgui_Core_GetDpiScale();
 				}
 			}
 			view->prevScrollY = curScrollY;
+			float dpiScale = Imgui_Core_GetDpiScale();
+			if(view->prevDpiScale != dpiScale) {
+				view->prevDpiScale = dpiScale;
+			}
 			PopLogFont();
 		}
 		EndChild(); // logentries

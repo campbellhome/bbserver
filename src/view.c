@@ -5,6 +5,7 @@
 #include "bb_array.h"
 #include "bb_string.h"
 #include "bb_structs_generated.h"
+#include "imgui_core.h"
 #include "line_parser.h"
 #include "recorded_session.h"
 #include "view_config.h"
@@ -100,6 +101,7 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	view->visibleLogsDirty = true;
 	view->autoClose = autoClose;
 	view->prevScrollY = 0.0f;
+	view->prevDpiScale = Imgui_Core_GetDpiScale();
 	view->bookmarkThreshold = -1;
 	view->gotoTargetInput = 0;
 	view->gotoTarget = -1;
@@ -895,7 +897,7 @@ void view_add_log(view_t *view, recorded_log_t *log)
 	}
 	u32 visibleLogCount = view->visibleLogs.count;
 	view_add_log_internal(view, log, persistentLogIndex);
-	if (visibleLogCount < view->visibleLogs.count) {
+	if(visibleLogCount < view->visibleLogs.count) {
 		view->visibleLogsAdded = true;
 	}
 }

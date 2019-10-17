@@ -266,6 +266,7 @@ typedef struct view_s {
 	float scrollWidth;
 	float prevScrollX;
 	float prevScrollY;
+	float prevDpiScale;
 	int bookmarkThreshold;
 	int gotoTargetInput;
 	int gotoTarget;
@@ -283,7 +284,7 @@ typedef struct view_s {
 	b8 tiled;
 	b8 beingDragged;
 	b8 visibleLogsAdded;
-	u8 pad[2];
+	u8 pad[6];
 } view_t;
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);
