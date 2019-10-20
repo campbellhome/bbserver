@@ -274,6 +274,7 @@ config_t config_clone(const config_t *src)
 		dst.dpiAware = src->dpiAware;
 		dst.autoDeleteAfterDays = src->autoDeleteAfterDays;
 		dst.autoCloseAll = src->autoCloseAll;
+		dst.autoCloseManual = src->autoCloseManual;
 		dst.updateManagement = src->updateManagement;
 		dst.doubleClickSeconds = src->doubleClickSeconds;
 		dst.dpiScale = src->dpiScale;
@@ -281,6 +282,9 @@ config_t config_clone(const config_t *src)
 		dst.updatePauseAfterSuccessfulUpdate = src->updatePauseAfterSuccessfulUpdate;
 		dst.updatePauseAfterFailedUpdate = src->updatePauseAfterFailedUpdate;
 		dst.assertMessageBox = src->assertMessageBox;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
 	}
 	return dst;
 }

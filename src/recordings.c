@@ -274,11 +274,6 @@ void recording_started(char *data)
 			recording->filetimeLow = r.filetime.dwLowDateTime;
 			s_recordingsDirty[tab] = true;
 			if(r.openView) {
-				if(g_config.autoCloseAll) {
-					recorded_session_auto_close_all();
-				} else {
-					recorded_session_auto_close(sb_get(&r.applicationName));
-				}
 				recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), recording->recordingType != kRecordingType_ExternalFile, true, recording->outgoingMqId);
 			}
 		}

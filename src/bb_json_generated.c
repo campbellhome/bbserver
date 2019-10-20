@@ -223,6 +223,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.dpiAware = json_object_get_boolean_safe(obj, "dpiAware");
 			dst.autoDeleteAfterDays = (u32)json_object_get_number(obj, "autoDeleteAfterDays");
 			dst.autoCloseAll = json_object_get_boolean_safe(obj, "autoCloseAll");
+			dst.autoCloseManual = json_object_get_boolean_safe(obj, "autoCloseManual");
 			dst.updateManagement = json_object_get_boolean_safe(obj, "updateManagement");
 			dst.doubleClickSeconds = (float)json_object_get_number(obj, "doubleClickSeconds");
 			dst.dpiScale = (float)json_object_get_number(obj, "dpiScale");
@@ -230,6 +231,9 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.updatePauseAfterSuccessfulUpdate = json_object_get_boolean_safe(obj, "updatePauseAfterSuccessfulUpdate");
 			dst.updatePauseAfterFailedUpdate = json_object_get_boolean_safe(obj, "updatePauseAfterFailedUpdate");
 			dst.assertMessageBox = json_object_get_boolean_safe(obj, "assertMessageBox");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -769,6 +773,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "dpiAware", src->dpiAware);
 		json_object_set_number(obj, "autoDeleteAfterDays", src->autoDeleteAfterDays);
 		json_object_set_boolean(obj, "autoCloseAll", src->autoCloseAll);
+		json_object_set_boolean(obj, "autoCloseManual", src->autoCloseManual);
 		json_object_set_boolean(obj, "updateManagement", src->updateManagement);
 		json_object_set_number(obj, "doubleClickSeconds", src->doubleClickSeconds);
 		json_object_set_number(obj, "dpiScale", src->dpiScale);
@@ -776,6 +781,9 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "updatePauseAfterSuccessfulUpdate", src->updatePauseAfterSuccessfulUpdate);
 		json_object_set_boolean(obj, "updatePauseAfterFailedUpdate", src->updatePauseAfterFailedUpdate);
 		json_object_set_boolean(obj, "assertMessageBox", src->assertMessageBox);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }

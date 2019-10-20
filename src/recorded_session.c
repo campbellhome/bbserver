@@ -48,6 +48,12 @@ static void recorded_logs_reset(recorded_logs_t *logs)
 
 void recorded_session_open(const char *path, const char *applicationFilename, b8 autoClose, b32 recordingActive, u32 outgoingMqId)
 {
+	if(g_config.autoCloseAll) {
+		recorded_session_auto_close_all();
+	} else {
+		recorded_session_auto_close(applicationFilename);
+	}
+
 	view_t *view;
 	recorded_session_t *session = recorded_session_find(path);
 	if(!session) {

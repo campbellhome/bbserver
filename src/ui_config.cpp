@@ -492,6 +492,8 @@ void UIConfig_Update(config_t *config)
 			val = BB_CLAMP(val, 0, 9999);
 			s_preferencesConfig.autoDeleteAfterDays = (u32)val;
 			Checkbox("Auto-close all applications instead of just the one starting up", &s_preferencesConfig.autoCloseAll);
+			SameLine();
+			Checkbox("Manually opened views are marked to auto close", &s_preferencesConfig.autoCloseManual);
 			Checkbox("Show advanced config", &s_preferencesAdvanced);
 		}
 		Separator();

@@ -99,7 +99,7 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	view->viewId = session->nextViewId++;
 	view->tail = true;
 	view->visibleLogsDirty = true;
-	view->autoClose = autoClose;
+	view->autoClose = autoClose || g_config.autoCloseManual;
 	view->prevScrollY = 0.0f;
 	view->prevDpiScale = Imgui_Core_GetDpiScale();
 	view->bookmarkThreshold = -1;
