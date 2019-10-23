@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\bbupdater\bbupdater.c" />
+    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_updater\mc_updater.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -96,5 +97,8 @@
     <ProjectReference Include="..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
       <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_updater\mc_updater.h" />
   </ItemGroup>
 </Project>
