@@ -182,42 +182,6 @@ static void devkit_autodetect_add(span_t addr, const char *platformName, const c
 
 //////////////////////////////////////////////////////////////////////////
 
-static void report_bad_orbis_data(sb_t existing, const char *key, span_t val, b32 *bSawBadData, task_process *p)
-{
-	if(existing.data) {
-		if(!*bSawBadData) {
-			BB_LOG("Devkit::Orbis", "Saw bad data from process:");
-			BB_LOG("Devkit::Orbis", "cmdline: %s", sb_get(&p->cmdline));
-			BB_LOG("Devkit::Orbis", "dir: %s", sb_get(&p->dir));
-			p->process->stdoutBuffer;
-			p->process->stderrBuffer;
-
-			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
-			if(cursor && *cursor) {
-				BB_LOG("Devkit::Orbis", "stdout:");
-				span_t line = tokenize(&cursor, "\r\n");
-				while(line.start) {
-					line = tokenize(&cursor, "\r\n");
-					BB_LOG("Devkit::Orbis::stdout", "%.*s", line.end - line.start, line.start);
-				}
-			}
-
-			cursor = p->process->stderrBuffer.data ? p->process->stderrBuffer.data : "";
-			if(cursor && *cursor) {
-				BB_LOG("Devkit::Orbis", "stderr:");
-				span_t line = tokenize(&cursor, "\r\n");
-				while(line.start) {
-					line = tokenize(&cursor, "\r\n");
-					BB_LOG("Devkit::Orbis::stderr", "%.*s", line.end - line.start, line.start);
-				}
-			}
-		}
-
-		BB_ASSERT_MSG(false, "saw multiple orbis_ctrl info lines for %s '%s' and '%.*s'", key, sb_get(&existing), val.end - val.start, val.start);
-		*bSawBadData = true;
-	}
-}
-
 static void task_orbis_info_statechanged(task *t)
 {
 	task_process_statechanged(t);
@@ -231,21 +195,18 @@ static void task_orbis_info_statechanged(task *t)
 			b32 bDefault = false;
 			b32 bConnected = false;
 			b32 bInUse = false;
-			b32 bSawBadData = false;
 			while(line.start) {
 				const char *lineCursor = line.start;
 				span_t key = tokenize(&lineCursor, " \r\n");
 				if(!bb_strnicmp(key.start, "CachedName:", key.end - key.start)) {
 					span_t val = tokenize(&lineCursor, " \r\n");
 					if(val.start) {
-						report_bad_orbis_data(devkitName, "CachedName:", val, &bSawBadData, p);
 						sb_reset(&devkitName);
 						sb_append_range(&devkitName, val.start, val.end);
 					}
 				} else if(!bb_strnicmp(key.start, "GameLanIpAddress:", key.end - key.start)) {
 					span_t val = tokenize(&lineCursor, " \r\n");
 					if(val.start) {
-						report_bad_orbis_data(gameAddr, "GameLanIpAddress:", val, &bSawBadData, p);
 						sb_reset(&gameAddr);
 						sb_append_range(&gameAddr, val.start, val.end);
 					}
