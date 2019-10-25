@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2019 Matt Campbell
 // MIT license (see License.txt)
 
+#include "app_update.h"
 #include "appdata.h"
 #include "bb_array.h"
 #include "bb_common.h"
@@ -32,7 +33,6 @@
 #include "theme_config.h"
 #include "ui_config.h"
 #include "ui_view.h"
-#include "update.h"
 #include "uuid_config.h"
 #include "uuid_rfc4122/uuid.h"
 #include "va.h"
@@ -46,6 +46,7 @@
 static char s_imguiPath[kBBSize_MaxPath];
 static char s_bbLogPath[kBBSize_MaxPath];
 static UINT s_bringToFrontMessage;
+static updateData s_updateData;
 
 static void BBServer_SetImguiPath(void)
 {
@@ -90,14 +91,25 @@ static b32 BBServer_Init(void)
 
 	BBServer_InitAsserts(s_bbLogPath);
 
-	if(!Update_Init()) {
+	config_read(&g_config);
+
+	s_updateData.appName = "bb";
+	s_updateData.appName = "bb.exe";
+	s_updateData.windowClassname = "BlackboxHost";
+	s_updateData.resultDir = sb_get(&g_site_config.updates.updateResultDir);
+	s_updateData.manifestDir = sb_get(&g_site_config.updates.updateManifestDir);
+	s_updateData.waitForDebugger = g_config.updateWaitForDebugger;
+	s_updateData.pauseAfterSuccess = g_config.updatePauseAfterSuccessfulUpdate;
+	s_updateData.pauseAfterFailure = g_config.updatePauseAfterFailedUpdate;
+	s_updateData.updateCheckMs = g_site_config.updates.updateCheckMs;
+	s_updateData.showUpdateManagement = g_config.updateManagement;
+	if(!Update_Init(&s_updateData)) {
 		return false;
 	}
 
 	process_init();
 	tasks_startup();
 	mq_init();
-	config_read(&g_config);
 	config_validate_whitelist(&g_config.whitelist);
 	config_validate_open_targets(&g_config.openTargets);
 	Style_Init();
@@ -263,6 +275,7 @@ static void BBServer_InitRegistry()
 
 LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	BB_UNUSED(hWnd);
 	if(msg && msg == s_bringToFrontMessage) {
 		BB_LOG("IPC", "blackbox_bring_to_front received");
 		Imgui_Core_UnhideWindow();
@@ -280,10 +293,6 @@ LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, 
 				BB_WARNING("IPC", "WM_COPYDATA ignored - %u bytes malformed data received", copyData->cbData);
 			}
 		}
-	}
-	LRESULT result = Update_HandleWindowMessage(hWnd, msg, wParam, lParam);
-	if(result) {
-		return result;
 	}
 	if(msg == WM_DROPFILES) {
 		return DragDrop_OnDropFiles(wParam);

@@ -8,6 +8,7 @@
 
 #if BB_USING(FEATURE_CALLSTACKS)
 
+#include "app_update.h"
 #include "bb_file.h"
 #include "bb_thread.h"
 #include "cmdline.h"
@@ -17,7 +18,6 @@
 #include "mc_callstack/exception_handler.h"
 #include "sb.h"
 #include "site_config.h"
-#include "update.h"
 #include "va.h"
 
 #include "bb_wrap_stdio.h"

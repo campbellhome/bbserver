@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "bbserver_update.h"
+#include "app_update.h"
 #include "bb_array.h"
 #include "bb_colors.h"
 #include "bb_log.h"
@@ -25,7 +26,6 @@
 #include "ui_config.h"
 #include "ui_recordings.h"
 #include "ui_view.h"
-#include "update.h"
 #include "va.h"
 #include "view.h"
 #include "wrap_imgui.h"
@@ -383,51 +383,7 @@ void BBServer_MainMenuBar(void)
 				ImGui::EndMenu();
 			}
 		}
-		if(ImGui::BeginMenu("Update")) {
-			updateManifest_t *manifest = Update_GetManifest();
-			auto AnnotateVersion = [manifest](const char *version) {
-				const char *annotated = version;
-				if(version && !bb_stricmp(version, sb_get(&manifest->stable))) {
-					annotated = va("%s (stable)", version);
-				} else if(version && !bb_stricmp(version, sb_get(&manifest->latest))) {
-					annotated = va("%s (latest)", version);
-				}
-				return annotated;
-			};
-			const char *currentVersion = Update_GetCurrentVersion();
-			const char *currentVersionAnnotated = AnnotateVersion(currentVersion);
-			ImGui::MenuItem(va("version %s", *currentVersionAnnotated ? currentVersionAnnotated : "unknown"), nullptr, false, false);
-			if(ImGui::MenuItem("Check for updates")) {
-				Update_CheckForUpdates(false);
-			}
-			if(ImGui::BeginMenu("Set desired version")) {
-				if(ImGui::MenuItem("stable", nullptr, Update_IsDesiredVersion("stable"))) {
-					Update_SetDesiredVersion("stable");
-				}
-				if(ImGui::MenuItem("latest", nullptr, Update_IsDesiredVersion("latest"))) {
-					Update_SetDesiredVersion("latest");
-				}
-				for(u32 i = 0; i < (manifest ? manifest->versions.count : 0); ++i) {
-					updateVersion_t *version = manifest->versions.data + i;
-					const char *versionName = sb_get(&version->name);
-					if(ImGui::MenuItem(AnnotateVersion(versionName), nullptr, Update_IsDesiredVersion(versionName))) {
-						Update_SetDesiredVersion(versionName);
-					}
-				}
-				ImGui::EndMenu();
-			}
-			if(g_config.updateManagement && *currentVersion && !Update_IsStableVersion(currentVersion)) {
-				if(ImGui::MenuItem(va("Promote %s to stable version", currentVersion))) {
-					Update_SetStableVersion(currentVersion);
-				}
-			}
-			if(g_updateIgnoredVersion) {
-				if(ImGui::MenuItem(va("Update to version %u and restart", g_updateIgnoredVersion))) {
-					Update_RestartAndUpdate(g_updateIgnoredVersion);
-				}
-			}
-			ImGui::EndMenu();
-		}
+		Update_Menu();
 
 		if(s_failedDiscoveryStartup) {
 			ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
