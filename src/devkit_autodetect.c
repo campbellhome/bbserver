@@ -42,7 +42,7 @@ static devkits_t s_devkits;
 static HANDLE s_interfaceChangeHandle;
 static b32 s_interfaceChanged;
 
-static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPINTERFACE_ROW Row OPTIONAL, IN MIB_NOTIFICATION_TYPE NotificationType)
+static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPFORWARD_ROW2 Row OPTIONAL, IN MIB_NOTIFICATION_TYPE NotificationType)
 {
 	BB_UNUSED(CallerContext);
 	BB_UNUSED(Row);
@@ -55,9 +55,9 @@ static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPINTERFACE_ROW Row
 
 static void RegisterForInterfaceChanges(void)
 {
-	int ret = NotifyIpInterfaceChange(AF_INET, &InterfaceChanged, NULL, FALSE, &s_interfaceChangeHandle);
+	int ret = NotifyRouteChange2(AF_INET, &InterfaceChanged, NULL, FALSE, &s_interfaceChangeHandle);
 	if(ret != NO_ERROR) {
-		system_error_to_log(ret, "Devkit", "NotifyIpInterfaceChange");
+		system_error_to_log(ret, "Devkit", "NotifyRouteChange2");
 	}
 }
 
