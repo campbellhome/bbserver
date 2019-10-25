@@ -231,9 +231,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.updatePauseAfterSuccessfulUpdate = json_object_get_boolean_safe(obj, "updatePauseAfterSuccessfulUpdate");
 			dst.updatePauseAfterFailedUpdate = json_object_get_boolean_safe(obj, "updatePauseAfterFailedUpdate");
 			dst.assertMessageBox = json_object_get_boolean_safe(obj, "assertMessageBox");
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
-				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
-			}
+			dst.showDebugMenu = json_object_get_boolean_safe(obj, "showDebugMenu");
 		}
 	}
 	return dst;
@@ -781,9 +779,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "updatePauseAfterSuccessfulUpdate", src->updatePauseAfterSuccessfulUpdate);
 		json_object_set_boolean(obj, "updatePauseAfterFailedUpdate", src->updatePauseAfterFailedUpdate);
 		json_object_set_boolean(obj, "assertMessageBox", src->assertMessageBox);
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
-		}
+		json_object_set_boolean(obj, "showDebugMenu", src->showDebugMenu);
 	}
 	return val;
 }

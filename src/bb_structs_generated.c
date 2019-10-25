@@ -282,9 +282,7 @@ config_t config_clone(const config_t *src)
 		dst.updatePauseAfterSuccessfulUpdate = src->updatePauseAfterSuccessfulUpdate;
 		dst.updatePauseAfterFailedUpdate = src->updatePauseAfterFailedUpdate;
 		dst.assertMessageBox = src->assertMessageBox;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
+		dst.showDebugMenu = src->showDebugMenu;
 	}
 	return dst;
 }

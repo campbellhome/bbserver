@@ -273,101 +273,102 @@ void BBServer_MainMenuBar(void)
 			}
 			ImGui::EndMenu();
 		}
-		if(ImGui::BeginMenu("Debug")) {
-			if(ImGui::MenuItem("Message box")) {
-				messageBox mb = { BB_EMPTY_INITIALIZER };
-				sdict_add_raw(&mb.data, "title", "Test Message Box");
-				sdict_add_raw(&mb.data, "text", "Test message box text\nNothing to see here...");
-				sdict_add_raw(&mb.data, "button1", "Ok");
-				mb_queue(mb);
-			}
-			if(ImGui::MenuItem("DEBUG Reload style colors")) {
-				Style_ReadConfig(Imgui_Core_GetColorScheme());
-			}
-			if(ImGui::BeginMenu("Color schemes")) {
-				const char *colorscheme = Imgui_Core_GetColorScheme();
-				for(int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i) {
-					bool bSelected = !strcmp(colorscheme, s_colorschemes[i]);
-					if(ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected)) {
-						Imgui_Core_SetColorScheme(s_colorschemes[i]);
-						Style_ReadConfig(Imgui_Core_GetColorScheme());
+		if(g_config.showDebugMenu) {
+			if(ImGui::BeginMenu("Debug")) {
+				if(ImGui::MenuItem("Message box")) {
+					messageBox mb = { BB_EMPTY_INITIALIZER };
+					sdict_add_raw(&mb.data, "title", "Test Message Box");
+					sdict_add_raw(&mb.data, "text", "Test message box text\nNothing to see here...");
+					sdict_add_raw(&mb.data, "button1", "Ok");
+					mb_queue(mb);
+				}
+				if(ImGui::MenuItem("DEBUG Reload style colors")) {
+					Style_ReadConfig(Imgui_Core_GetColorScheme());
+				}
+				if(ImGui::BeginMenu("Color schemes")) {
+					const char *colorscheme = Imgui_Core_GetColorScheme();
+					for(int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i) {
+						bool bSelected = !strcmp(colorscheme, s_colorschemes[i]);
+						if(ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected)) {
+							Imgui_Core_SetColorScheme(s_colorschemes[i]);
+							Style_ReadConfig(Imgui_Core_GetColorScheme());
+						}
 					}
+					ImGui::EndMenu();
+				}
+				if(ImGui::BeginMenu("DEBUG Scale")) {
+					float dpiScale = Imgui_Core_GetDpiScale();
+					if(ImGui::MenuItem("1", nullptr, dpiScale == 1.0f)) {
+						Imgui_Core_SetDpiScale(1.0f);
+					}
+					if(ImGui::MenuItem("1.25", nullptr, dpiScale == 1.25f)) {
+						Imgui_Core_SetDpiScale(1.25f);
+					}
+					if(ImGui::MenuItem("1.5", nullptr, dpiScale == 1.5f)) {
+						Imgui_Core_SetDpiScale(1.5f);
+					}
+					if(ImGui::MenuItem("1.75", nullptr, dpiScale == 1.75f)) {
+						Imgui_Core_SetDpiScale(1.75f);
+					}
+					if(ImGui::MenuItem("2", nullptr, dpiScale == 2.0f)) {
+						Imgui_Core_SetDpiScale(2.0f);
+					}
+					ImGui::EndMenu();
+				}
+				Fonts_Menu();
+				if(ImGui::BeginMenu("Asserts and Crashes")) {
+					if(ImGui::Checkbox("Assert MessageBox", &g_config.assertMessageBox)) {
+						BB_LOG("UI::Menu::Debug", "Assert MessageBox: %d", g_config.assertMessageBox);
+					}
+					if(ImGui::MenuItem("Log Callstack")) {
+						BBServer_DebugCallstack();
+					}
+					if(ImGui::MenuItem("Assert")) {
+						BBServer_DebugAssert();
+					}
+					if(ImGui::MenuItem("Crash - access violation")) {
+						BBServer_DebugCrash();
+					}
+					if(ImGui::MenuItem("Crash - infinite recursion")) {
+						BBServer_DebugInfiniteRecursion();
+					}
+					ImGui::EndMenu();
+				}
+				if(ImGui::BeginMenu("DEBUG Updates")) {
+					ImGui::MenuItem("Wait for debugger", nullptr, &g_config.updateWaitForDebugger);
+					ImGui::MenuItem("Pause after successful update", nullptr, &g_config.updatePauseAfterSuccessfulUpdate);
+					ImGui::MenuItem("Pause after failed update", nullptr, &g_config.updatePauseAfterFailedUpdate);
+					ImGui::EndMenu();
 				}
 				ImGui::EndMenu();
 			}
-			if(ImGui::BeginMenu("DEBUG Scale")) {
-				float dpiScale = Imgui_Core_GetDpiScale();
-				if(ImGui::MenuItem("1", nullptr, dpiScale == 1.0f)) {
-					Imgui_Core_SetDpiScale(1.0f);
+			if(ImGui::BeginMenu("Help")) {
+				if(ImGui::BeginMenu("ImGui")) {
+					ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
+					ImGui::MenuItem("About", nullptr, &s_showImguiAbout);
+					ImGui::MenuItem("Metrics", nullptr, &s_showImguiMetrics);
+					ImGui::MenuItem("User Guide", nullptr, &s_showImguiUserGuide);
+					ImGui::MenuItem("Style Editor", nullptr, &s_showImguiStyleEditor);
+					ImGui::EndMenu();
 				}
-				if(ImGui::MenuItem("1.25", nullptr, dpiScale == 1.25f)) {
-					Imgui_Core_SetDpiScale(1.25f);
+				if(ImGui::BeginMenu("Logging Test")) {
+					if(ImGui::MenuItem("Colors")) {
+						App_GenerateColorTestLogs();
+					}
+					if(ImGui::MenuItem("Lines")) {
+						App_GenerateLineTestLogs();
+					}
+					if(ImGui::MenuItem("PIEInstance")) {
+						App_GeneratePIEInstanceTestLogs();
+					}
+					if(ImGui::MenuItem("Thread Spam")) {
+						App_GenerateSpamTestLogs();
+					}
+					if(ImGui::MenuItem("Main Log")) {
+						BBServer_OpenMainLog(false);
+					}
+					ImGui::EndMenu();
 				}
-				if(ImGui::MenuItem("1.5", nullptr, dpiScale == 1.5f)) {
-					Imgui_Core_SetDpiScale(1.5f);
-				}
-				if(ImGui::MenuItem("1.75", nullptr, dpiScale == 1.75f)) {
-					Imgui_Core_SetDpiScale(1.75f);
-				}
-				if(ImGui::MenuItem("2", nullptr, dpiScale == 2.0f)) {
-					Imgui_Core_SetDpiScale(2.0f);
-				}
-				ImGui::EndMenu();
-			}
-			Fonts_Menu();
-			if(ImGui::BeginMenu("Asserts and Crashes")) {
-				if(ImGui::Checkbox("Assert MessageBox", &g_config.assertMessageBox)) {
-					BB_LOG("UI::Menu::Debug", "Assert MessageBox: %d", g_config.assertMessageBox);
-				}
-				if(ImGui::MenuItem("Log Callstack")) {
-					BBServer_DebugCallstack();
-				}
-				if(ImGui::MenuItem("Assert")) {
-					BBServer_DebugAssert();
-				}
-				if(ImGui::MenuItem("Crash - access violation")) {
-					BBServer_DebugCrash();
-				}
-				if(ImGui::MenuItem("Crash - infinite recursion")) {
-					BBServer_DebugInfiniteRecursion();
-				}
-				ImGui::EndMenu();
-			}
-			if(ImGui::BeginMenu("DEBUG Updates")) {
-				ImGui::MenuItem("Wait for debugger", nullptr, &g_config.updateWaitForDebugger);
-				ImGui::MenuItem("Pause after successful update", nullptr, &g_config.updatePauseAfterSuccessfulUpdate);
-				ImGui::MenuItem("Pause after failed update", nullptr, &g_config.updatePauseAfterFailedUpdate);
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenu();
-		}
-		if(ImGui::BeginMenu("Help")) {
-			if(ImGui::BeginMenu("ImGui")) {
-				ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
-				ImGui::MenuItem("About", nullptr, &s_showImguiAbout);
-				ImGui::MenuItem("Metrics", nullptr, &s_showImguiMetrics);
-				ImGui::MenuItem("User Guide", nullptr, &s_showImguiUserGuide);
-				ImGui::MenuItem("Style Editor", nullptr, &s_showImguiStyleEditor);
-				ImGui::EndMenu();
-			}
-			if(ImGui::BeginMenu("Logging Test")) {
-				if(ImGui::MenuItem("Colors")) {
-					App_GenerateColorTestLogs();
-				}
-				if(ImGui::MenuItem("Lines")) {
-					App_GenerateLineTestLogs();
-				}
-				if(ImGui::MenuItem("PIEInstance")) {
-					App_GeneratePIEInstanceTestLogs();
-				}
-				if(ImGui::MenuItem("Thread Spam")) {
-					App_GenerateSpamTestLogs();
-				}
-				if(ImGui::MenuItem("Main Log")) {
-					BBServer_OpenMainLog(false);
-				}
-				ImGui::EndMenu();
-			}
 #if 0
 			recording_t *r = recordings_find_main_log();
 			recorded_session_t *s = r ? recorded_session_find(r->path) : nullptr;
@@ -379,7 +380,8 @@ void BBServer_MainMenuBar(void)
 				}
 			}
 #endif
-			ImGui::EndMenu();
+				ImGui::EndMenu();
+			}
 		}
 		if(ImGui::BeginMenu("Update")) {
 			updateManifest_t *manifest = Update_GetManifest();
