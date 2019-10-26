@@ -94,7 +94,7 @@ static b32 BBServer_Init(void)
 	config_read(&g_config);
 
 	s_updateData.appName = "bb";
-	s_updateData.appName = "bb.exe";
+	s_updateData.exeName = "bb.exe";
 	s_updateData.windowClassname = "BlackboxHost";
 	s_updateData.resultDir = sb_get(&g_site_config.updates.updateResultDir);
 	s_updateData.manifestDir = sb_get(&g_site_config.updates.updateManifestDir);
