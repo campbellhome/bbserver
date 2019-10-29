@@ -55,7 +55,7 @@ int main(int argc, const char **argv)
 
 	b32 success = mc_updater_main(&globals);
 
-	free(&globals.contentsFilenames);
+	free((void *)&globals.contentsFilenames.data);
 
 	cmdline_shutdown();
 	BB_SHUTDOWN();
