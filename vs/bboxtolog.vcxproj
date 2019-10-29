@@ -89,10 +89,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Import Project="..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.props" />
   <Import Project="..\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.props" />
   <ItemGroup>
-    <ProjectReference Include="..\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.vcxproj">
-      <Project>{383FD59A-3CD9-4ECC-9395-6EE453A114FA}</Project>
+    <ProjectReference Include="..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
+      <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
     </ProjectReference>
   </ItemGroup>
 </Project>

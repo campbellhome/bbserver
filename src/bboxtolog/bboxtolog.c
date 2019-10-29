@@ -10,10 +10,16 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
 #include "bbclient/bb_time.h"
+#include "sb.h"
+#include "span.h"
+#include "tokenize.h"
 
 #include "bbclient/bb_wrap_malloc.h"
 #include "bbclient/bb_wrap_stdio.h"
+#include <stdlib.h>
 #include <string.h>
+
+BB_WARNING_DISABLE(5045);
 
 typedef enum tag_program {
 	kProgram_bboxtolog,
@@ -29,13 +35,11 @@ typedef enum tag_exitCode {
 	kExitCode_Error_Decode,
 } exitCode;
 
-static char *g_exe;
-static program g_program;
-static u8 g_recvBuffer[1 * 1024 * 1024];
-
-static bb_decoded_packet_t g_tailPackets[10];
-static size_t g_nextTailPacketIndex;
-static b32 g_inTailCatchup;
+typedef struct partial_logs_s {
+	u32 count;
+	u32 allocated;
+	bb_decoded_packet_t *data;
+} partial_logs_t;
 
 typedef struct category_s {
 	u32 id;
@@ -48,6 +52,36 @@ typedef struct categories_s {
 	u32 allocated;
 } categories_t;
 
+typedef struct logPacket_s {
+	s64 ms;
+	sb_t lines;
+	u32 categoryId;
+	u8 pad[4];
+} logPacket_t;
+
+typedef struct logPackets_s {
+	u32 count;
+	u32 allocated;
+	logPacket_t *data;
+} logPackets_t;
+
+static char *g_exe;
+static program g_program;
+static u8 g_recvBuffer[1 * 1024 * 1024];
+
+static partial_logs_t g_partialLogs;
+static bb_decoded_packet_t g_tailPackets[10];
+static size_t g_nextTailPacketIndex;
+static b32 g_inTailCatchup;
+static b32 g_follow;
+static u32 g_numLines;
+static bb_log_level_e g_verbosity;
+
+categories_t g_categories = { 0, 0, 0 };
+double g_millisPerTick = 1.0;
+u64 g_initialTimestamp = 0;
+static logPackets_t g_queuedPackets;
+
 static int usage(void)
 {
 	if(g_program == kProgram_bboxtolog) {
@@ -59,23 +93,111 @@ static int usage(void)
 	return kExitCode_Error_Usage;
 }
 
-static inline void print_packet(const bb_decoded_packet_t *decoded, FILE *ofp, double millisPerTick, u64 initialTimestamp, const categories_t *categories)
+static inline const char *get_category(u32 categoryId)
 {
 	const char *category = "";
-	int ms = (int)((decoded->header.timestamp - initialTimestamp) * millisPerTick);
-	const char *text = decoded->packet.logText.text;
-	size_t textLen = strlen(text);
-	u32 i;
-	for(i = 0; i < categories->count; ++i) {
-		category_t *c = categories->data + i;
-		if(c->id == decoded->packet.logText.categoryId) {
+	for(u32 i = 0; i < g_categories.count; ++i) {
+		category_t *c = g_categories.data + i;
+		if(c->id == categoryId) {
 			category = c->name;
 			break;
 		}
 	}
-	fprintf(ofp, "[%7d] [%13s] %s%s",
-	        ms, category, text,
-	        textLen && text[textLen - 1] == '\n' ? "" : "\n");
+	return category;
+}
+
+static void print_lines(logPacket_t packet, FILE *ofp)
+{
+	const char *category = get_category(packet.categoryId);
+	const char *lines = sb_get(&packet.lines);
+	span_t linesCursor = span_from_string(lines);
+	for(span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor)) {
+		sb_t text = sb_from_va("[%7lld] [%13s] %.*s\n", packet.ms, category, (int)(line.end - line.start), line.start);
+		fputs(sb_get(&text), ofp);
+#if BB_USING(BB_PLATFORM_WINDOWS)
+		OutputDebugStringA(sb_get(&text));
+#endif
+		sb_reset(&text);
+	}
+}
+
+static void reset_logPacket_t(logPacket_t *packet)
+{
+	sb_reset(&packet->lines);
+}
+
+static void queue_lines(sb_t lines, u32 categoryId, s64 ms, FILE *ofp)
+{
+	logPacket_t packet = { BB_EMPTY_INITIALIZER };
+	packet.ms = ms;
+	packet.lines = lines;
+	packet.categoryId = categoryId;
+
+	if(g_inTailCatchup) {
+		if(g_queuedPackets.count >= g_numLines) {
+			reset_logPacket_t(g_queuedPackets.data);
+			bba_erase(g_queuedPackets, 0);
+		}
+		bba_push(g_queuedPackets, packet);
+	} else {
+		print_lines(packet, ofp);
+		reset_logPacket_t(&packet);
+	}
+}
+
+static s32 get_verbosity_sort(bb_log_level_e verbosity)
+{
+	switch(verbosity) {
+	case kBBLogLevel_VeryVerbose: return 1;
+	case kBBLogLevel_Verbose: return 2;
+	case kBBLogLevel_Log: return 3;
+	case kBBLogLevel_Display: return 4;
+	case kBBLogLevel_Warning: return 5;
+	case kBBLogLevel_Error: return 6;
+	case kBBLogLevel_Fatal: return 7;
+	default: return 0;
+	}
+}
+static b32 test_verbosity(const bb_decoded_packet_t *decoded)
+{
+	bb_log_level_e verbosity = decoded->packet.logText.level;
+	return (get_verbosity_sort(verbosity) >= get_verbosity_sort(g_verbosity));
+}
+
+static void queue_packet(const bb_decoded_packet_t *decoded, FILE *ofp)
+{
+	sb_t lines = { BB_EMPTY_INITIALIZER };
+	for(u32 i = 0; i < g_partialLogs.count; ++i) {
+		const bb_decoded_packet_t *partial = g_partialLogs.data + i;
+		if(partial->header.threadId == decoded->header.threadId) {
+			sb_append(&lines, partial->packet.logText.text);
+		}
+	}
+	sb_append(&lines, decoded->packet.logText.text);
+
+	s64 ms = (s64)((decoded->header.timestamp - g_initialTimestamp) * g_millisPerTick);
+	if(test_verbosity(decoded)) {
+		queue_lines(lines, decoded->packet.logText.categoryId, ms, ofp);
+	} else {
+		sb_reset(&lines);
+	}
+
+	for(u32 i = 0; i < g_partialLogs.count;) {
+		const bb_decoded_packet_t *partial = g_partialLogs.data + i;
+		if(partial->header.threadId == decoded->header.threadId) {
+			bba_erase(g_partialLogs, i);
+		} else {
+			++i;
+		}
+	}
+}
+
+static void print_queued(FILE *ofp)
+{
+	for(u32 i = 0; i < g_queuedPackets.count; ++i) {
+		logPacket_t *packet = g_queuedPackets.data + i;
+		print_lines(*packet, ofp);
+	}
 }
 
 int main(int argc, char **argv)
@@ -99,26 +221,92 @@ int main(int argc, char **argv)
 		g_program = kProgram_bbcat;
 	} else if(!bb_stricmp(g_exe, "bbtail")) {
 		g_program = kProgram_bbtail;
+	}
+
+	const char *source = NULL;
+	char *target = NULL;
+	b32 bPastSwitches = false;
+	for(int i = 1; i < argc; ++i) {
+		const char *arg = argv[i];
+		if(!strcmp(arg, "--")) {
+			bPastSwitches = true;
+			continue;
+		}
+
+		if(!bPastSwitches && *arg == '-') {
+			if(!strcmp(arg, "-f")) {
+				g_follow = true;
+			} else if(!strcmp(arg, "-n")) {
+				if(i + 1 < argc) {
+					g_numLines = atoi(argv[i + 1]);
+					++i;
+				} else {
+					return usage();
+				}
+			} else if(!strcmp(arg, "-v") || !strcmp(arg, "-verbosity")) {
+				if(i + 1 < argc) {
+					++i;
+					arg = argv[i];
+					if(!bb_stricmp(arg, "log")) {
+						g_verbosity = kBBLogLevel_Log;
+					} else if(!bb_stricmp(arg, "warning")) {
+						g_verbosity = kBBLogLevel_Warning;
+					} else if(!bb_stricmp(arg, "error")) {
+						g_verbosity = kBBLogLevel_Error;
+					} else if(!bb_stricmp(arg, "display")) {
+						g_verbosity = kBBLogLevel_Display;
+					} else if(!bb_stricmp(arg, "veryverbose")) {
+						g_verbosity = kBBLogLevel_VeryVerbose;
+					} else if(!bb_stricmp(arg, "verbose")) {
+						g_verbosity = kBBLogLevel_Verbose;
+					} else if(!bb_stricmp(arg, "fatal")) {
+						g_verbosity = kBBLogLevel_Fatal;
+					} else {
+						return usage();
+					}
+				} else {
+					return usage();
+				}
+			} else if(!strcmp(arg, "-bbcat")) {
+				g_program = kProgram_bbcat;
+			} else if(!strcmp(arg, "-bbtail")) {
+				g_program = kProgram_bbtail;
+			} else {
+				return usage();
+			}
+		} else {
+			if(!source) {
+				source = arg;
+			} else if(!target) {
+				target = bb_strdup(arg);
+			} else {
+				return usage();
+			}
+		}
+	}
+
+	if(!source)
+		return usage(); // TODO: read stdin
+
+	if(target && g_program != kProgram_bboxtolog)
+		return usage();
+
+	if(g_follow && g_program == kProgram_bboxtolog)
+		return usage;
+
+	if(g_program == kProgram_bbtail) {
 		g_inTailCatchup = true;
 	}
 
-	if(g_program == kProgram_bboxtolog && (argc < 2 || argc > 3))
-		return usage();
-
-	if(g_program != kProgram_bboxtolog && argc != 2)
-		return usage();
-
-	const char *source = argv[1];
+	if(g_numLines == 0) {
+		g_numLines = 10;
+	}
 
 	size_t sourceLen = strlen(source);
-	if(sourceLen < 6)
-		return usage();
-
-	if(bb_stricmp(source + sourceLen - 5, ".bbox")) {
+	if(sourceLen < 6 || bb_stricmp(source + sourceLen - 5, ".bbox")) {
 		return usage();
 	}
 
-	char *target = (argc == 3) ? argv[2] : NULL;
 	if(!target && (g_program == kProgram_bboxtolog)) {
 		target = bb_strdup(source);
 		strcpy(target + sourceLen - 5, ".log");
@@ -135,9 +323,6 @@ int main(int argc, char **argv)
 	if(fp) {
 		FILE *ofp = (target) ? fopen(target, "wt") : stdout;
 		if(ofp) {
-			categories_t categories = { 0, 0, 0 };
-			double millisPerTick = 1.0;
-			u64 initialTimestamp = 0;
 
 			u32 recvCursor = 0;
 			u32 decodeCursor = 0;
@@ -159,13 +344,12 @@ int main(int argc, char **argv)
 				if(nPacketBytes == 0 || nPacketBytes > nDecodableBytes) {
 					if(g_program == kProgram_bbtail) {
 						if(g_inTailCatchup) {
-							size_t numPackets = g_nextTailPacketIndex > BB_ARRAYSIZE(g_tailPackets) ? BB_ARRAYSIZE(g_tailPackets) : g_nextTailPacketIndex;
-							for(u32 i = 0; i < numPackets; ++i) {
-								size_t packetIndex = g_nextTailPacketIndex - numPackets + i;
-								print_packet(g_tailPackets + (packetIndex % BB_ARRAYSIZE(g_tailPackets)), ofp, millisPerTick, initialTimestamp, &categories);
-							}
+							print_queued(ofp);
 							g_inTailCatchup = false;
 						}
+					}
+
+					if(g_follow) {
 						bb_sleep_ms(10);
 						continue;
 					} else {
@@ -176,12 +360,12 @@ int main(int argc, char **argv)
 
 				if(bbpacket_deserialize(cursor + 2, nPacketBytes - 2, &decoded)) {
 					if(bbpacket_is_app_info_type(decoded.type)) {
-						initialTimestamp = decoded.packet.appInfo.initialTimestamp;
-						millisPerTick = decoded.packet.appInfo.millisPerTick;
+						g_initialTimestamp = decoded.packet.appInfo.initialTimestamp;
+						g_millisPerTick = decoded.packet.appInfo.millisPerTick;
 					} else {
 						switch(decoded.type) {
 						case kBBPacketType_CategoryId: {
-							category_t *c = bba_add(categories, 1);
+							category_t *c = bba_add(g_categories, 1);
 							if(c) {
 								const char *temp;
 								const char *category = decoded.packet.categoryId.name;
@@ -197,15 +381,14 @@ int main(int argc, char **argv)
 							}
 							break;
 						}
+						case kBBPacketType_LogTextPartial: {
+							bba_push(g_partialLogs, decoded);
+							break;
+						}
 						case kBBPacketType_LogText_v1:
 						case kBBPacketType_LogText_v2:
 						case kBBPacketType_LogText: {
-							if(g_inTailCatchup) {
-								size_t packetIndex = g_nextTailPacketIndex++ % BB_ARRAYSIZE(g_tailPackets);
-								memcpy(g_tailPackets + packetIndex, &decoded, sizeof(decoded));
-							} else {
-								print_packet(&decoded, ofp, millisPerTick, initialTimestamp, &categories);
-							}
+							queue_packet(&decoded, ofp);
 							break;
 						}
 						default:
@@ -231,7 +414,7 @@ int main(int argc, char **argv)
 
 			fclose(fp);
 			fclose(ofp);
-			bba_free(categories);
+			bba_free(g_categories);
 		} else {
 			if(target) {
 				fprintf(stderr, "Could not write to %s\n", target);
@@ -244,7 +427,7 @@ int main(int argc, char **argv)
 		ret = kExitCode_Error_ReadSource;
 	}
 
-	if(argc != 3 && target) {
+	if(target) {
 		free(target);
 	}
 
