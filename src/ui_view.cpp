@@ -6,6 +6,7 @@
 #include "bb_colors.h"
 #include "bb_string.h"
 #include "bb_wrap_stdio.h"
+#include "bbserver_utils.h"
 #include "fonts.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"
@@ -13,6 +14,7 @@
 #include "imgui_utils.h"
 #include "keys.h"
 #include "message_queue.h"
+#include "path_utils.h"
 #include "recorded_session.h"
 #include "recordings.h"
 #include "sb.h"
@@ -569,30 +571,10 @@ static void UIRecordedView_Logs_HandleClick(view_t *view, view_log_t *log)
 
 static void UIRecordedView_OpenContainingFolder(view_t *view)
 {
-	sb_t sb;
-	sb_init(&sb);
-	sb_append(&sb, "C:\\Windows\\explorer.exe \"");
-	sb_append(&sb, view->session->path);
-	char *ext = (sb.data) ? strrchr(sb.data, '\\') : nullptr;
-	if(ext) {
-		sb.count = (u32)(ext + 1 - sb.data);
-		sb_append(&sb, "\"");
-
-		STARTUPINFOA startupInfo;
-		memset(&startupInfo, 0, sizeof(startupInfo));
-		startupInfo.cb = sizeof(startupInfo);
-		PROCESS_INFORMATION procInfo;
-		memset(&procInfo, 0, sizeof(procInfo));
-		BOOL ret = CreateProcessA(nullptr, sb.data, nullptr, nullptr, FALSE, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &startupInfo, &procInfo);
-		if(!ret) {
-			BB_ERROR("View", "Failed to create process for '%s'", sb.data);
-		} else {
-			BB_LOG("View", "Created process for '%s'", sb.data);
-		}
-		CloseHandle(procInfo.hThread);
-		CloseHandle(procInfo.hProcess);
-	}
-	sb_reset(&sb);
+	sb_t dir = sb_from_c_string(view->session->path);
+	path_remove_filename(&dir);
+	BBServer_OpenDirInExplorer(sb_get(&dir));
+	sb_reset(&dir);
 }
 
 static void CheckboxCategoryVisiblity(view_t *view, u32 startIndex, u32 endIndex)

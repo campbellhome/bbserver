@@ -5,10 +5,13 @@
 #include "bb_array.h"
 #include "bb_colors.h"
 #include "bb_string.h"
+#include "bbserver_utils.h"
 #include "config.h"
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
+#include "message_queue.h"
+#include "path_utils.h"
 #include "recorded_session.h"
 #include "recordings.h"
 #include "ui_view.h"
@@ -182,8 +185,6 @@ static void UIRecordings_HandlePopupMenu(recording_tab_t tab, grouped_recording_
 		}
 	}
 
-	// #todo: open containing folder?
-
 	if(deletableCount) {
 		const char *label = (totalCount > deletableCount) ? va("Delete %u/%u recordings", deletableCount, totalCount) : deletableCount == 1 ? "Delete recording" : va("Delete %u recordings", deletableCount);
 		if(ImGui::Selectable(label)) {
@@ -191,7 +192,21 @@ static void UIRecordings_HandlePopupMenu(recording_tab_t tab, grouped_recording_
 		}
 	}
 
-	if(!openableCount && !deletableCount) {
+	if(totalCount == 1 && e && e->recording) {
+		if(ImGui::Selectable("Open containing folder")) {
+			sb_t dir = sb_from_c_string(e->recording->path);
+			path_remove_filename(&dir);
+			BBServer_OpenDirInExplorer(sb_get(&dir));
+			sb_reset(&dir);
+		}
+		if(e->recording->active) {
+			if(e->recording->outgoingMqId != mq_invalid_id()) {
+				if(ImGui::Selectable("Stop recording")) {
+					mq_queue(e->recording->outgoingMqId, kBBPacketType_StopRecording, "stop");
+				}
+			}
+		}
+	} else if(!openableCount && !deletableCount) {
 		Text("(No actions)");
 	}
 }

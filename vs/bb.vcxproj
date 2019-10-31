@@ -93,6 +93,7 @@
     <ClInclude Include="..\src\bbserver_asserts.h" />
     <ClInclude Include="..\src\bbserver_fileopendialog.h" />
     <ClInclude Include="..\src\bbserver_update.h" />
+    <ClInclude Include="..\src\bbserver_utils.h" />
     <ClInclude Include="..\src\bb_json_generated.h" />
     <ClInclude Include="..\src\bb_structs_generated.h" />
     <ClInclude Include="..\src\config.h" />
@@ -126,6 +127,7 @@
     <ClCompile Include="..\src\bbserver_fileopendialog.cpp" />
     <ClCompile Include="..\src\bbserver_main.cpp" />
     <ClCompile Include="..\src\bbserver_update.cpp" />
+    <ClCompile Include="..\src\bbserver_utils.c" />
     <ClCompile Include="..\src\bb_json_generated.c" />
     <ClCompile Include="..\src\bb_structs_generated.c" />
     <ClCompile Include="..\src\config.c" />

@@ -189,6 +189,8 @@ bb_thread_return_t recorder_thread(void *args)
 						if(outgoingMessage->command == kBBPacketType_ConsoleCommand) {
 							valid = true;
 							bb_strncpy(outgoing.packet.consoleCommand.text, outgoingMessage->text, sizeof(decoded.packet.consoleCommand.text));
+						} else if(outgoingMessage->command == kBBPacketType_StopRecording) {
+							bbcon_disconnect(con);
 						}
 						if(valid) {
 							outgoing.type = outgoingMessage->command;
