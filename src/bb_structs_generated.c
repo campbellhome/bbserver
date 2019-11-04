@@ -17,6 +17,7 @@
 #include "sb.h"
 #include "sdict.h"
 #include "site_config.h"
+#include "tags.h"
 #include "uuid_config.h"
 #include "uuid_rfc4122/sysdep.h"
 #include "view.h"
@@ -456,6 +457,181 @@ site_config_t site_config_clone(const site_config_t *src)
 	return dst;
 }
 
+void sbsHashEntry_reset_from_loc(const char *file, int line, sbsHashEntry *val)
+{
+	if(val) {
+		sb_reset_from_loc(file, line, &val->key);
+		sbs_reset_from_loc(file, line, &val->values);
+	}
+}
+sbsHashEntry sbsHashEntry_clone_from_loc(const char *file, int line, const sbsHashEntry *src)
+{
+	sbsHashEntry dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.key = sb_clone_from_loc(file, line, &src->key);
+		dst.values = sbs_clone_from_loc(file, line, &src->values);
+	}
+	return dst;
+}
+
+void tag_reset_from_loc(const char *file, int line, tag_t *val)
+{
+	if(val) {
+		sb_reset_from_loc(file, line, &val->name);
+		sbs_reset_from_loc(file, line, &val->categories);
+	}
+}
+tag_t tag_clone_from_loc(const char *file, int line, const tag_t *src)
+{
+	tag_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.name = sb_clone_from_loc(file, line, &src->name);
+		dst.categories = sbs_clone_from_loc(file, line, &src->categories);
+	}
+	return dst;
+}
+
+void tags_reset_from_loc(const char *file, int line, tags_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			tag_reset_from_loc(file, line, val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+tags_t tags_clone_from_loc(const char *file, int line, const tags_t *src)
+{
+	tags_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = tag_clone_from_loc(file, line, src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void tags_config_reset(tags_config_t *val)
+{
+	if(val) {
+		tags_reset(&val->tags);
+	}
+}
+tags_config_t tags_config_clone(const tags_config_t *src)
+{
+	tags_config_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.tags = tags_clone(&src->tags);
+	}
+	return dst;
+}
+
+void sbsHashChain_reset_from_loc(const char *file, int line, sbsHashChain *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			sbsHashEntry_reset_from_loc(file, line, val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+sbsHashChain sbsHashChain_clone_from_loc(const char *file, int line, const sbsHashChain *src)
+{
+	sbsHashChain dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = sbsHashEntry_clone_from_loc(file, line, src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void sbsHashTable_reset_from_loc(const char *file, int line, sbsHashTable *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			sbsHashChain_reset_from_loc(file, line, val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+sbsHashTable sbsHashTable_clone_from_loc(const char *file, int line, const sbsHashTable *src)
+{
+	sbsHashTable dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = sbsHashChain_clone_from_loc(file, line, src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void tagCategory_reset_from_loc(const char *file, int line, tagCategory_t *val)
+{
+	if(val) {
+		sb_reset_from_loc(file, line, &val->name);
+		sbs_reset_from_loc(file, line, &val->tags);
+	}
+}
+tagCategory_t tagCategory_clone_from_loc(const char *file, int line, const tagCategory_t *src)
+{
+	tagCategory_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.name = sb_clone_from_loc(file, line, &src->name);
+		dst.tags = sbs_clone_from_loc(file, line, &src->tags);
+	}
+	return dst;
+}
+
+void tagCategories_reset_from_loc(const char *file, int line, tagCategories_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			tagCategory_reset_from_loc(file, line, val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+tagCategories_t tagCategories_clone_from_loc(const char *file, int line, const tagCategories_t *src)
+{
+	tagCategories_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = tagCategory_clone_from_loc(file, line, src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void tagData_reset(tagData_t *val)
+{
+	if(val) {
+		sbsHashTable_reset(&val->tagTable);
+		sbsHashTable_reset(&val->categoryTable);
+		tags_reset(&val->tags);
+		tagCategories_reset(&val->categories);
+	}
+}
+tagData_t tagData_clone(const tagData_t *src)
+{
+	tagData_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.tagTable = sbsHashTable_clone(&src->tagTable);
+		dst.categoryTable = sbsHashTable_clone(&src->categoryTable);
+		dst.tags = tags_clone(&src->tags);
+		dst.categories = tagCategories_clone(&src->categories);
+	}
+	return dst;
+}
+
 void uuidState_reset(uuidState_t *val)
 {
 	if(val) {
@@ -768,4 +944,116 @@ view_config_t view_config_clone(const view_config_t *src)
 		}
 	}
 	return dst;
+}
+
+u64 sbsHashEntry_hash(const sbsHashEntry *entry)
+{
+	return strsimplehash(sb_get(&entry->key));
+}
+
+int sbsHashEntry_compare(const sbsHashEntry *a, const sbsHashEntry *b)
+{
+	return strcmp(sb_get(&a->key), sb_get(&b->key));
+}
+
+sbsHashEntry *sbsHashTable_find_internal(sbsHashTable *table, const sbsHashEntry *entry, u64 hashValue)
+{
+	BB_ASSERT_MSG(table->count, "need to initialize hash table count");
+	u32 chainIndex = hashValue % table->count;
+	sbsHashChain *chain = table->data + chainIndex;
+	for(u32 i = 0; i < chain->count; ++i) {
+		sbsHashEntry *existing = chain->data + i;
+		if(!sbsHashEntry_compare(existing, entry)) {
+			return existing;
+		}
+	}
+	return NULL;
+}
+
+sbsHashEntry *sbsHashTable_insert_internal(sbsHashTable *table, const sbsHashEntry *entry, u64 hashValue)
+{
+	BB_ASSERT_MSG(table->count, "need to initialize hash table count");
+	sbsHashEntry *result = sbsHashTable_find_internal(table, entry, hashValue);
+	if(!result) {
+		u32 chainIndex = hashValue % table->count;
+		sbsHashChain *chain = table->data + chainIndex;
+		result = bba_add_noclear(*chain, 1);
+		if(result != NULL) {
+			*result = sbsHashEntry_clone(entry);
+		}
+	}
+	
+	return result;
+}
+
+sbsHashEntry *sbsHashTable_insertmulti_internal(sbsHashTable *table, const sbsHashEntry *entry, u64 hashValue)
+{
+	u32 chainIndex = hashValue % table->count;
+	sbsHashChain *chain = table->data + chainIndex;
+	sbsHashEntry *result = bba_add_noclear(*chain, 1);
+	if(result != NULL) {
+		*result = sbsHashEntry_clone(entry);
+	}
+	
+	return result;
+}
+
+sbsHashEntry *sbsHashTable_find(sbsHashTable *table, const char *name)
+{
+	if(!name) {
+		name = "";
+	}
+	sbsHashEntry entry = { BB_EMPTY_INITIALIZER };
+	entry.key = sb_from_c_string_no_alloc(name);
+	u64 hashValue = sbsHashEntry_hash(&entry);
+	return sbsHashTable_find_internal(table, &entry, hashValue);
+}
+
+sbsHashEntry *sbsHashTable_insert(sbsHashTable *table, const sbsHashEntry *entry)
+{
+	u64 hashValue = sbsHashEntry_hash(entry);
+	return sbsHashTable_insert_internal(table, entry, hashValue);
+}
+
+sbsHashEntry *sbsHashTable_insertmulti(sbsHashTable *table, const sbsHashEntry *entry)
+{
+	u64 hashValue = sbsHashEntry_hash(entry);
+	return sbsHashTable_insertmulti_internal(table, entry, hashValue);
+}
+
+void sbsHashTable_remove(sbsHashTable *table, const char *name)
+{
+	sbsHashEntry entry = { BB_EMPTY_INITIALIZER };
+	entry.key = sb_from_c_string_no_alloc(name);
+	u64 hashValue = sbsHashEntry_hash(&entry);
+
+	u32 chainIndex = hashValue % table->count;
+	sbsHashChain *chain = table->data + chainIndex;
+	for(u32 i = 0; i < chain->count; ++i) {
+		sbsHashEntry *existing = chain->data + i;
+		if(!sbsHashEntry_compare(existing, &entry)) {
+			sbsHashEntry_reset(existing);
+			bba_erase(*chain, i);
+			return;
+		}
+	}
+}
+
+void sbsHashTable_removemulti(sbsHashTable *table, const char *name)
+{
+	sbsHashEntry entry = { BB_EMPTY_INITIALIZER };
+	entry.key = sb_from_c_string_no_alloc(name);
+	u64 hashValue = sbsHashEntry_hash(&entry);
+
+	u32 chainIndex = hashValue % table->count;
+	sbsHashChain *chain = table->data + chainIndex;
+	for(u32 i = 0; i < chain->count;) {
+		sbsHashEntry *existing = chain->data + i;
+		if(sbsHashEntry_compare(existing, &entry)) {
+			++i;
+		} else {
+			sbsHashEntry_reset(existing);
+			bba_erase(*chain, i);
+		}
+	}
 }

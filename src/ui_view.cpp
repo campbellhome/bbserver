@@ -33,6 +33,8 @@ BB_WARNING_PUSH(4820)
 BB_WARNING_POP
 
 #include "parson/parson.h"
+#include "ui_loglevel_colorizer.h"
+#include "ui_tags.h"
 
 typedef struct gathered_views_s {
 	u32 count;
@@ -180,40 +182,6 @@ static inline void ClearViewTail(view_t *view, const char *reason)
 		BB_LOG("Debug", "Disabled tail for '%s' - %s\n", view->session->appInfo.packet.appInfo.applicationName, reason);
 	}
 }
-
-static ImVec4 GetTextColorForLogLevel(u32 logLevel) // bb_log_level_e, but u32 in packet
-{
-	switch(logLevel) {
-	case kBBLogLevel_Error:
-		return MakeColor(kStyleColor_LogLevel_Error);
-	case kBBLogLevel_Warning:
-		return MakeColor(kStyleColor_LogLevel_Warning);
-	case kBBLogLevel_Fatal:
-		return MakeColor(kStyleColor_LogLevel_Fatal);
-	case kBBLogLevel_Display:
-		return MakeColor(kStyleColor_LogLevel_Display);
-	case kBBLogLevel_Verbose:
-		return MakeColor(kStyleColor_LogLevel_Verbose);
-	case kBBLogLevel_VeryVerbose:
-		return MakeColor(kStyleColor_LogLevel_VeryVerbose);
-	case kBBLogLevel_Log:
-	default:
-		return MakeColor(kStyleColor_LogLevel_Log);
-	}
-}
-
-class WarningErrorColorizer
-{
-public:
-	WarningErrorColorizer(bb_log_level_e logLevel)
-	{
-		ImGui::PushStyleColor(ImGuiCol_Text, GetTextColorForLogLevel(logLevel));
-	}
-	~WarningErrorColorizer()
-	{
-		ImGui::PopStyleColor();
-	}
-};
 
 static SYSTEMTIME SystemTimeFromDecoded(recorded_session_t *session, bb_decoded_packet_t *decoded)
 {
@@ -631,7 +599,7 @@ static void CheckboxFavoriteCategoryVisiblity(view_t *view, b32 favorites)
 static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel)
 {
 	if(count || logLevel == kBBLogLevel_Log) {
-		WarningErrorColorizer colorizer(logLevel);
+		LogLevelColorizer colorizer(logLevel);
 		Text(fmt, count);
 	}
 }
@@ -706,27 +674,6 @@ static void PIEInstanceToolTip(recorded_pieInstance_t *p, u32 pieInstance)
 	}
 }
 
-bb_log_level_e GetLogLevelBasedOnCounts(const u32 logCount[/*kBBLogLevel_Count*/])
-{
-	bb_log_level_e result = kBBLogLevel_VeryVerbose;
-	if(logCount[kBBLogLevel_Fatal]) {
-		result = kBBLogLevel_Fatal;
-	} else if(logCount[kBBLogLevel_Error]) {
-		result = kBBLogLevel_Error;
-	} else if(logCount[kBBLogLevel_Warning]) {
-		result = kBBLogLevel_Warning;
-	} else if(logCount[kBBLogLevel_Display]) {
-		result = kBBLogLevel_Display;
-	} else if(logCount[kBBLogLevel_Log]) {
-		result = kBBLogLevel_Log;
-	} else if(logCount[kBBLogLevel_Verbose]) {
-		result = kBBLogLevel_Verbose;
-	} else if(logCount[kBBLogLevel_VeryVerbose]) {
-		result = kBBLogLevel_VeryVerbose;
-	}
-	return result;
-}
-
 void CategoryPopup(u32 startIndex, u32 endIndex, view_categories_t *viewCategories, const char *categoryName)
 {
 	view_category_t *viewCategory = viewCategories->data + startIndex;
@@ -784,7 +731,7 @@ u32 UIRecordedView_CategoryTreeNode(view_t *view, u32 startIndex, b32 favorites,
 		CheckboxCategoryVisiblity(view, startIndex, endIndex);
 		ImGui::SameLine();
 		{
-			WarningErrorColorizer colorizer(GetLogLevelBasedOnCounts(category->logCountIncludingChildren));
+			LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(category->logCountIncludingChildren));
 			if(ImGui::TreeNodeEx(va("%s###Category%u", categoryName, startIndex), DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &viewCategory->selected)) {
 				ImGui::TreePop();
 			}
@@ -797,7 +744,7 @@ u32 UIRecordedView_CategoryTreeNode(view_t *view, u32 startIndex, b32 favorites,
 		CheckboxCategoryVisiblity(view, startIndex, endIndex);
 		ImGui::SameLine();
 		{
-			WarningErrorColorizer colorizer(GetLogLevelBasedOnCounts(category->logCountIncludingChildren));
+			LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(category->logCountIncludingChildren));
 			node_open = ImGui::TreeNodeEx(categoryName, node_flags, &viewCategory->selected, (void *)(intptr_t)startIndex);
 		}
 		CategoryPopup(startIndex, endIndex, viewCategories, categoryName);
@@ -879,7 +826,7 @@ void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
 	CheckboxThreadVisiblity(view, startIndex);
 	ImGui::SameLine();
 	{
-		WarningErrorColorizer colorizer(GetLogLevelBasedOnCounts(t->logCount));
+		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(t->logCount));
 		if(ImGui::TreeNodeEx(va("%s###Thread%u", threadName, startIndex),
 		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vt->selected)) {
 			ImGui::TreePop();
@@ -925,7 +872,7 @@ void UIRecordedView_FileTreeNode(view_t *view, u32 startIndex)
 	CheckboxFileVisiblity(view, startIndex);
 	ImGui::SameLine();
 	{
-		WarningErrorColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount));
+		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount));
 		if(ImGui::TreeNodeEx(va("%s###File%u", fileName, startIndex),
 		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
 			ImGui::TreePop();
@@ -970,7 +917,7 @@ void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
 	CheckboxPIEInstanceVisiblity(view, startIndex);
 	ImGui::SameLine();
 	{
-		WarningErrorColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount));
+		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount));
 		if(ImGui::TreeNodeEx((startIndex) ? va("%u##PIEInstance%u", startIndex, startIndex) : "-",
 		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
 			ImGui::TreePop();
@@ -1228,7 +1175,7 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 	recorded_log_t *sessionLog = session->logs.data[logIndex];
 	bb_decoded_packet_t *decoded = &sessionLog->packet;
 	recorded_category_t *category = recorded_session_find_category(session, decoded->packet.logText.categoryId);
-	WarningErrorColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
+	LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
 
 	configColorUsage colorUsage = g_config.logColorUsage;
 	ImColor fgColor = MakeColor((styleColor_e)kBBColor_Default);
@@ -1475,6 +1422,7 @@ static float UIRecordedView_LogHeader(view_t *view)
 static const char *s_selectorNames[] = {
 	"Categories",
 	"All Categories",
+	"Tags",
 	"Threads",
 	"Files",
 	"PIE Instances",
@@ -1718,6 +1666,8 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 					}
 					ImGui::TreePop();
 				}
+			} else if(view->config.selector == kViewSelector_Tags) {
+				UITags_Update(view);
 			} else if(view->config.selector == kViewSelector_Threads) {
 				CheckboxAllThreadVisiblity(view);
 				ImGui::SameLine();

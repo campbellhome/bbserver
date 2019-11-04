@@ -112,9 +112,12 @@
     <ClInclude Include="..\src\recordings_config.h" />
     <ClInclude Include="..\src\site_config.h" />
     <ClInclude Include="..\src\system_tray.h" />
+    <ClInclude Include="..\src\tags.h" />
     <ClInclude Include="..\src\theme_config.h" />
     <ClInclude Include="..\src\ui_config.h" />
+    <ClInclude Include="..\src\ui_loglevel_colorizer.h" />
     <ClInclude Include="..\src\ui_recordings.h" />
+    <ClInclude Include="..\src\ui_tags.h" />
     <ClInclude Include="..\src\ui_view.h" />
     <ClInclude Include="..\src\ui_view_console_command.h" />
     <ClInclude Include="..\src\uuid_config.h" />
@@ -146,9 +149,12 @@
     <ClCompile Include="..\src\recordings_config.c" />
     <ClCompile Include="..\src\site_config.c" />
     <ClCompile Include="..\src\system_tray.c" />
+    <ClCompile Include="..\src\tags.c" />
     <ClCompile Include="..\src\theme_config.c" />
     <ClCompile Include="..\src\ui_config.cpp" />
+    <ClCompile Include="..\src\ui_loglevel_colorizer.cpp" />
     <ClCompile Include="..\src\ui_recordings.cpp" />
+    <ClCompile Include="..\src\ui_tags.cpp" />
     <ClCompile Include="..\src\ui_view.cpp" />
     <ClCompile Include="..\src\ui_view_console_command.cpp" />
     <ClCompile Include="..\src\uuid_config.c" />

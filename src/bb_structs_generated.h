@@ -13,6 +13,58 @@
 extern "C" {
 #endif
 
+struct sb_s;
+struct sbs_s;
+struct sdictEntry_s;
+struct sdict_s;
+struct uuid_node_s;
+struct fontConfig_s;
+struct fontConfigs_s;
+struct tagPOINT;
+struct tagRECT;
+struct tagWINDOWPLACEMENT;
+struct configWhitelistEntry_s;
+struct configWhitelist_s;
+struct openTargetEntry_s;
+struct openTargetList_s;
+struct pathFixupEntry_s;
+struct pathFixupList_s;
+struct tag_tooltipConfig;
+struct tag_sizeConfig;
+struct config_s;
+struct message_queue_message_s;
+struct message_queue_messages_s;
+struct _FILETIME;
+struct new_recording_s;
+struct recordings_tab_config_s;
+struct recordings_config_s;
+struct updateConfig_s;
+struct site_config_s;
+struct sbsHashEntry;
+struct tag_s;
+struct tags_s;
+struct tags_config_s;
+struct sbsHashChain;
+struct sbsHashTable;
+struct tagCategory_s;
+struct tagCategories_s;
+struct tagData_s;
+struct uuidState_s;
+struct view_pieInstance_s;
+struct view_pieInstances_s;
+struct view_config_thread_s;
+struct view_config_threads_s;
+struct view_config_file_s;
+struct view_config_files_s;
+struct view_config_category_s;
+struct view_config_categories_s;
+struct view_config_column_s;
+struct view_config_columns_s;
+struct view_console_history_entry_t;
+struct view_console_entries_t;
+struct view_console_history_t;
+struct view_config_s;
+
 typedef struct sb_s sb_t;
 typedef struct sbs_s sbs_t;
 typedef struct sdictEntry_s sdictEntry_t;
@@ -40,6 +92,15 @@ typedef struct recordings_tab_config_s recordings_tab_config_t;
 typedef struct recordings_config_s recordings_config_t;
 typedef struct updateConfig_s updateConfig_t;
 typedef struct site_config_s site_config_t;
+typedef struct sbsHashEntry sbsHashEntry;
+typedef struct tag_s tag_t;
+typedef struct tags_s tags_t;
+typedef struct tags_config_s tags_config_t;
+typedef struct sbsHashChain sbsHashChain;
+typedef struct sbsHashTable sbsHashTable;
+typedef struct tagCategory_s tagCategory_t;
+typedef struct tagCategories_s tagCategories_t;
+typedef struct tagData_s tagData_t;
 typedef struct uuidState_s uuidState_t;
 typedef struct view_pieInstance_s view_pieInstance_t;
 typedef struct view_pieInstances_s view_pieInstances_t;
@@ -83,6 +144,15 @@ void recordings_tab_config_reset(recordings_tab_config_t *val);
 void recordings_config_reset(recordings_config_t *val);
 void updateConfig_reset(updateConfig_t *val);
 void site_config_reset(site_config_t *val);
+void sbsHashEntry_reset_from_loc(const char *file, int line, sbsHashEntry *val);
+void tag_reset_from_loc(const char *file, int line, tag_t *val);
+void tags_reset_from_loc(const char *file, int line, tags_t *val);
+void tags_config_reset(tags_config_t *val);
+void sbsHashChain_reset_from_loc(const char *file, int line, sbsHashChain *val);
+void sbsHashTable_reset_from_loc(const char *file, int line, sbsHashTable *val);
+void tagCategory_reset_from_loc(const char *file, int line, tagCategory_t *val);
+void tagCategories_reset_from_loc(const char *file, int line, tagCategories_t *val);
+void tagData_reset(tagData_t *val);
 void uuidState_reset(uuidState_t *val);
 void view_pieInstance_reset(view_pieInstance_t *val);
 void view_pieInstances_reset(view_pieInstances_t *val);
@@ -99,48 +169,159 @@ void view_console_history_entries_reset(view_console_history_entries_t *val);
 void view_console_history_reset(view_console_history_t *val);
 void view_config_reset(view_config_t *val);
 
+#if !defined(__cplusplus) || defined(DECLARE_sb_clone)
 sb_t sb_clone_from_loc(const char *file, int line, const sb_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sbs_clone)
 sbs_t sbs_clone_from_loc(const char *file, int line, const sbs_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sdictEntry_clone)
 sdictEntry_t sdictEntry_clone(const sdictEntry_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sdict_clone)
 sdict_t sdict_clone(const sdict_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_uuid_node_clone)
 uuid_node_t uuid_node_clone(const uuid_node_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_fontConfig_clone)
 fontConfig_t fontConfig_clone(const fontConfig_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_fontConfigs_clone)
 fontConfigs_t fontConfigs_clone(const fontConfigs_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_POINT_clone)
 POINT POINT_clone(const POINT *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_RECT_clone)
 RECT RECT_clone(const RECT *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_WINDOWPLACEMENT_clone)
 WINDOWPLACEMENT WINDOWPLACEMENT_clone(const WINDOWPLACEMENT *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_configWhitelistEntry_clone)
 configWhitelistEntry_t configWhitelistEntry_clone(const configWhitelistEntry_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_configWhitelist_clone)
 configWhitelist_t configWhitelist_clone(const configWhitelist_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_openTargetEntry_clone)
 openTargetEntry_t openTargetEntry_clone(const openTargetEntry_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_openTargetList_clone)
 openTargetList_t openTargetList_clone(const openTargetList_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_pathFixupEntry_clone)
 pathFixupEntry_t pathFixupEntry_clone(const pathFixupEntry_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_pathFixupList_clone)
 pathFixupList_t pathFixupList_clone(const pathFixupList_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tooltipConfig_clone)
 tooltipConfig tooltipConfig_clone(const tooltipConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sizeConfig_clone)
 sizeConfig sizeConfig_clone(const sizeConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_config_clone)
 config_t config_clone(const config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_message_queue_message_clone)
 message_queue_message_t message_queue_message_clone(const message_queue_message_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_message_queue_messages_clone)
 message_queue_messages_t message_queue_messages_clone(const message_queue_messages_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_FILETIME_clone)
 FILETIME FILETIME_clone(const FILETIME *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_new_recording_clone)
 new_recording_t new_recording_clone(const new_recording_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_recordings_tab_config_clone)
 recordings_tab_config_t recordings_tab_config_clone(const recordings_tab_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_recordings_config_clone)
 recordings_config_t recordings_config_clone(const recordings_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_updateConfig_clone)
 updateConfig_t updateConfig_clone(const updateConfig_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_site_config_clone)
 site_config_t site_config_clone(const site_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sbsHashEntry_clone)
+sbsHashEntry sbsHashEntry_clone_from_loc(const char *file, int line, const sbsHashEntry *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tag_clone)
+tag_t tag_clone_from_loc(const char *file, int line, const tag_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tags_clone)
+tags_t tags_clone_from_loc(const char *file, int line, const tags_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tags_config_clone)
+tags_config_t tags_config_clone(const tags_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sbsHashChain_clone)
+sbsHashChain sbsHashChain_clone_from_loc(const char *file, int line, const sbsHashChain *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sbsHashTable_clone)
+sbsHashTable sbsHashTable_clone_from_loc(const char *file, int line, const sbsHashTable *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tagCategory_clone)
+tagCategory_t tagCategory_clone_from_loc(const char *file, int line, const tagCategory_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tagCategories_clone)
+tagCategories_t tagCategories_clone_from_loc(const char *file, int line, const tagCategories_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_tagData_clone)
+tagData_t tagData_clone(const tagData_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_uuidState_clone)
 uuidState_t uuidState_clone(const uuidState_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_pieInstance_clone)
 view_pieInstance_t view_pieInstance_clone(const view_pieInstance_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_pieInstances_clone)
 view_pieInstances_t view_pieInstances_clone(const view_pieInstances_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_thread_clone)
 view_config_thread_t view_config_thread_clone(const view_config_thread_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_threads_clone)
 view_config_threads_t view_config_threads_clone(const view_config_threads_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_file_clone)
 view_config_file_t view_config_file_clone(const view_config_file_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_files_clone)
 view_config_files_t view_config_files_clone(const view_config_files_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_category_clone)
 view_config_category_t view_config_category_clone(const view_config_category_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_categories_clone)
 view_config_categories_t view_config_categories_clone(const view_config_categories_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_column_clone)
 view_config_column_t view_config_column_clone(const view_config_column_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_columns_clone)
 view_config_columns_t view_config_columns_clone(const view_config_columns_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_console_history_entry_clone)
 view_console_history_entry_t view_console_history_entry_clone(const view_console_history_entry_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_console_history_entries_clone)
 view_console_history_entries_t view_console_history_entries_clone(const view_console_history_entries_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_console_history_clone)
 view_console_history_t view_console_history_clone(const view_console_history_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_clone)
 view_config_t view_config_clone(const view_config_t *src);
+#endif
 
 #if defined(__cplusplus)
 } // extern "C"
@@ -152,6 +333,27 @@ view_config_t view_config_clone(const view_config_t *src);
 #if !defined(sbs_reset)
 #define sbs_reset(var) sbs_reset_from_loc(__FILE__, __LINE__, var);
 #endif
+#if !defined(sbsHashEntry_reset)
+#define sbsHashEntry_reset(var) sbsHashEntry_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(tag_reset)
+#define tag_reset(var) tag_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(tags_reset)
+#define tags_reset(var) tags_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(sbsHashChain_reset)
+#define sbsHashChain_reset(var) sbsHashChain_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(sbsHashTable_reset)
+#define sbsHashTable_reset(var) sbsHashTable_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(tagCategory_reset)
+#define tagCategory_reset(var) tagCategory_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(tagCategories_reset)
+#define tagCategories_reset(var) tagCategories_reset_from_loc(__FILE__, __LINE__, var);
+#endif
 
 #if !defined(sb_clone)
 #define sb_clone(var) sb_clone_from_loc(__FILE__, __LINE__, var);
@@ -159,3 +361,35 @@ view_config_t view_config_clone(const view_config_t *src);
 #if !defined(sbs_clone)
 #define sbs_clone(var) sbs_clone_from_loc(__FILE__, __LINE__, var);
 #endif
+#if !defined(sbsHashEntry_clone)
+#define sbsHashEntry_clone(var) sbsHashEntry_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(tag_clone)
+#define tag_clone(var) tag_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(tags_clone)
+#define tags_clone(var) tags_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(sbsHashChain_clone)
+#define sbsHashChain_clone(var) sbsHashChain_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(sbsHashTable_clone)
+#define sbsHashTable_clone(var) sbsHashTable_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(tagCategory_clone)
+#define tagCategory_clone(var) tagCategory_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(tagCategories_clone)
+#define tagCategories_clone(var) tagCategories_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+
+u64 sbsHashEntry_hash(const sbsHashEntry *entry);
+int sbsHashEntry_compare(const sbsHashEntry *a, const sbsHashEntry *b);
+sbsHashEntry *sbsHashTable_find(sbsHashTable *table, const char *name);
+sbsHashEntry *sbsHashTable_insert(sbsHashTable *table, const sbsHashEntry *entry);
+sbsHashEntry *sbsHashTable_insertmulti(sbsHashTable *table, const sbsHashEntry *entry);
+sbsHashEntry *sbsHashTable_find_internal(sbsHashTable *table, const sbsHashEntry *entry, u64 hashValue);
+sbsHashEntry *sbsHashTable_insert_internal(sbsHashTable *table, const sbsHashEntry *entry, u64 hashValue);
+sbsHashEntry *sbsHashTable_insertmulti_internal(sbsHashTable *table, const sbsHashEntry *entry, u64 hashValue);
+void sbsHashTable_remove(sbsHashTable *table, const char *name);
+void sbsHashTable_removemulti(sbsHashTable *table, const char *name);

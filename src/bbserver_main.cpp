@@ -29,6 +29,7 @@
 #include "recordings.h"
 #include "site_config.h"
 #include "system_tray.h"
+#include "tags.h"
 #include "tasks.h"
 #include "theme_config.h"
 #include "ui_config.h"
@@ -41,6 +42,7 @@
 
 #include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
+#include "ui_tags.h"
 
 #define COPYDATA_MAGIC 0x1234567890abcdefu
 static char s_imguiPath[kBBSize_MaxPath];
@@ -92,6 +94,7 @@ static b32 BBServer_Init(void)
 	BBServer_InitAsserts(s_bbLogPath);
 
 	config_read(&g_config);
+	tags_init();
 
 	s_updateData.appName = "bb";
 	s_updateData.exeName = "bb.exe";
@@ -149,6 +152,7 @@ static void BBServer_Shutdown(void)
 	mb_shutdown();
 	tasks_shutdown();
 	devkit_autodetect_shutdown();
+	UITags_Shutdown();
 	UIConfig_Reset();
 	UIRecordedView_Shutdown();
 	recordings_shutdown();
@@ -166,6 +170,7 @@ static void BBServer_Shutdown(void)
 		config_write(&g_config);
 	}
 	config_reset(&g_config);
+	tags_shutdown();
 	site_config_shutdown();
 	bbnet_shutdown();
 	message_queue_message_t message;

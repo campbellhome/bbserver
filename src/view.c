@@ -111,6 +111,7 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	view->lastVisibleSessionIndexStart = ~0U;
 	view->visibleLogs.lastClickIndex = ~0U;
 	view->consoleHistory.pos = ~0U;
+	view->lastCategoryClickIndex = ~0U;
 
 	view->config.showSelectorTarget = false;
 	view->config.showVeryVerbose = view->config.showVerbose = false;

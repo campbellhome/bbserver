@@ -100,6 +100,7 @@ typedef struct view_persistent_logs_s {
 AUTOJSON AUTODEFAULT(kViewSelector_Categories) typedef enum view_config_selector_e {
 	kViewSelector_Categories,
 	kViewSelector_AllCategories,
+	kViewSelector_Tags,
 	kViewSelector_Threads,
 	kViewSelector_Files,
 	kViewSelector_PIEInstances,
@@ -261,6 +262,7 @@ typedef struct view_s {
 	u32 lastVisibleSessionIndexEnd;
 	u32 lastVisibleSelectedSessionIndexStart;
 	u32 lastVisibleSelectedSessionIndexEnd;
+	u32 lastCategoryClickIndex;
 	float categoriesWidth;
 	float combinedColumnsWidth;
 	float scrollWidth;
@@ -284,7 +286,7 @@ typedef struct view_s {
 	b8 tiled;
 	b8 beingDragged;
 	b8 visibleLogsAdded;
-	u8 pad[6];
+	u8 pad[2];
 } view_t;
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);

@@ -17,6 +17,7 @@
 #include "sb.h"
 #include "sdict.h"
 #include "site_config.h"
+#include "tags.h"
 #include "uuid_config.h"
 #include "uuid_rfc4122/sysdep.h"
 #include "view.h"
@@ -341,6 +342,62 @@ site_config_t json_deserialize_site_config_t(JSON_Value *src)
 			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
 				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
 			}
+		}
+	}
+	return dst;
+}
+
+sbsHashEntry json_deserialize_sbsHashEntry(JSON_Value *src)
+{
+	sbsHashEntry dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.key = json_deserialize_sb_t(json_object_get_value(obj, "key"));
+			dst.values = json_deserialize_sbs_t(json_object_get_value(obj, "values"));
+		}
+	}
+	return dst;
+}
+
+tag_t json_deserialize_tag_t(JSON_Value *src)
+{
+	tag_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.name = json_deserialize_sb_t(json_object_get_value(obj, "name"));
+			dst.categories = json_deserialize_sbs_t(json_object_get_value(obj, "categories"));
+		}
+	}
+	return dst;
+}
+
+tags_t json_deserialize_tags_t(JSON_Value *src)
+{
+	tags_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Array *arr = json_value_get_array(src);
+		if(arr) {
+			for(u32 i = 0; i < json_array_get_count(arr); ++i) {
+				bba_push(dst, json_deserialize_tag_t(json_array_get_value(arr, i)));
+			}
+		}
+	}
+	return dst;
+}
+
+tags_config_t json_deserialize_tags_config_t(JSON_Value *src)
+{
+	tags_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.tags = json_deserialize_tags_t(json_object_get_value(obj, "tags"));
 		}
 	}
 	return dst;
@@ -875,6 +932,53 @@ JSON_Value *json_serialize_site_config_t(const site_config_t *src)
 	return val;
 }
 
+JSON_Value *json_serialize_sbsHashEntry(const sbsHashEntry *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "key", json_serialize_sb_t(&src->key));
+		json_object_set_value(obj, "values", json_serialize_sbs_t(&src->values));
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_tag_t(const tag_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "name", json_serialize_sb_t(&src->name));
+		json_object_set_value(obj, "categories", json_serialize_sbs_t(&src->categories));
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_tags_t(const tags_t *src)
+{
+	JSON_Value *val = json_value_init_array();
+	JSON_Array *arr = json_value_get_array(val);
+	if(arr) {
+		for(u32 i = 0; i < src->count; ++i) {
+			JSON_Value *child = json_serialize_tag_t(src->data + i);
+			if(child) {
+				json_array_append_value(arr, child);
+			}
+		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_tags_config_t(const tags_config_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "tags", json_serialize_tags_t(&src->tags));
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_uuidState_t(const uuidState_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -1181,6 +1285,7 @@ view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src)
 		if(str) {
 			if(!strcmp(str, "kViewSelector_Categories")) { dst = kViewSelector_Categories; }
 			if(!strcmp(str, "kViewSelector_AllCategories")) { dst = kViewSelector_AllCategories; }
+			if(!strcmp(str, "kViewSelector_Tags")) { dst = kViewSelector_Tags; }
 			if(!strcmp(str, "kViewSelector_Threads")) { dst = kViewSelector_Threads; }
 			if(!strcmp(str, "kViewSelector_Files")) { dst = kViewSelector_Files; }
 			if(!strcmp(str, "kViewSelector_PIEInstances")) { dst = kViewSelector_PIEInstances; }
@@ -1262,6 +1367,7 @@ JSON_Value *json_serialize_view_config_selector_t(const view_config_selector_t s
 	switch(src) {
 		case kViewSelector_Categories: str = "kViewSelector_Categories"; break;
 		case kViewSelector_AllCategories: str = "kViewSelector_AllCategories"; break;
+		case kViewSelector_Tags: str = "kViewSelector_Tags"; break;
 		case kViewSelector_Threads: str = "kViewSelector_Threads"; break;
 		case kViewSelector_Files: str = "kViewSelector_Files"; break;
 		case kViewSelector_PIEInstances: str = "kViewSelector_PIEInstances"; break;
