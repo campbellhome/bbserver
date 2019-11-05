@@ -9,6 +9,7 @@
 #include "ui_loglevel_colorizer.h"
 #include "va.h"
 #include "view.h"
+#include "wrap_imgui_internal.h"
 
 static sb_t s_newTagName;
 static sb_t s_categoryTagNames = { BB_EMPTY_INITIALIZER };
@@ -317,11 +318,17 @@ void UITags_Update(view_t *view)
 	ImGuiTreeNodeFlags tagNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
 	                                  ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 0.0f));
 	if(ImGui::CollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
 		for(u32 tagIndex = 0; tagIndex < g_tags.tags.count; ++tagIndex) {
 			tag_t *tag = g_tags.tags.data + tagIndex;
 			const char *tagName = sb_get(&tag->name);
 			bool bTagSelected = false;
+
+			bool tempSelected = false;
+			ImGui::Checkbox("", &tempSelected);
+			ImGui::SameLine();
+			ImGui::BeginGroup();
 
 			bool open = ImGui::TreeNodeEx(tagName, tagNodeFlags | (bTagSelected ? ImGuiTreeNodeFlags_Selected : 0));
 
@@ -333,24 +340,57 @@ void UITags_Update(view_t *view)
 			if(open) {
 				for(u32 categoryIndex = 0; categoryIndex < tag->categories.count; ++categoryIndex) {
 					sb_t *category = tag->categories.data + categoryIndex;
+
+					ImGui::Checkbox("", &tempSelected);
+					ImGui::SameLine();
+
 					ImGui::Selectable(sb_get(category));
 				}
 				ImGui::TreePop();
 			}
+
+			ImGui::EndGroup();
 		}
 	}
 
 	if(ImGui::CollapsingHeader("Categories", ImGuiTreeNodeFlags_DefaultOpen)) {
+		view_categories_t *viewCategories = &view->categories;
+		if(view->categories.count) {
+			u32 checkedCount = 0;
+			u32 uncheckedCount = 0;
+			for(u32 index = 0; index < viewCategories->count; ++index) {
+				view_category_t *category = viewCategories->data + index;
+				if(category->visible) {
+					++checkedCount;
+				} else {
+					++uncheckedCount;
+				}
+			}
+			ImGui::PushID(-1);
+			bool allChecked = uncheckedCount == 0;
+			if(checkedCount && uncheckedCount) {
+				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
+			}
+			if(ImGui::Checkbox("", &allChecked)) {
+				view_set_all_category_visibility(view, allChecked);
+			}
+			if(checkedCount && uncheckedCount) {
+				ImGui::PopItemFlag();
+			}
+			ImGui::SameLine();
+			ImGui::TextUnformatted("All Categories");
+			ImGui::PopID();
+		}
 		for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->session->categories.count; ++viewCategoryIndex) {
 			recorded_categories_t *recordedCategories = &view->session->categories;
-			view_categories_t *viewCategories = &view->categories;
 
 			recorded_category_t *recordedCategory = recordedCategories->data + viewCategoryIndex;
 			view_category_t *viewCategory = viewCategories->data + viewCategoryIndex;
 
 			bool checked = viewCategory->visible != 0;
 			ImGui::PushID((int)viewCategoryIndex);
-			if(ImGui::Checkbox("", &checked)) {
+			bool activated = ImGui::Checkbox("", &checked);
+			if(activated) {
 				if(!viewCategory->selected) {
 					UITags_Category_ClearSelection(view);
 					UITags_Category_AddSelection(view, viewCategoryIndex);
@@ -384,4 +424,6 @@ void UITags_Update(view_t *view)
 			UITags_CategoryPopup(view, viewCategoryIndex);
 		}
 	}
+
+	ImGui::PopStyleVar();
 }
