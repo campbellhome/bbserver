@@ -420,12 +420,14 @@ void UITags_Update(view_t *view)
 							}
 						}
 					}
-					//bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
-					//ImGui::SameLine();
-
-					//ImGui::Checkbox("", visible);
 					ImGui::SameLine();
-					//LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(recordedCategory->logCount));
+					bb_log_level_e logLevel = kBBLogLevel_VeryVerbose;
+					if(viewCategory) {
+						u32 viewCategoryIndex = (u32)(viewCategory - view->categories.data);
+						recorded_category_t *recordedCategory = view->session->categories.data + viewCategoryIndex;
+						logLevel = GetLogLevelBasedOnCounts(recordedCategory->logCount);
+					}
+					LogLevelColorizer colorizer(logLevel);
 					ImGui::Selectable(categoryName, selected);
 					ImGui::PopID();
 				}
