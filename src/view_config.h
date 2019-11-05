@@ -5,6 +5,10 @@
 
 #include "config.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 typedef struct view_s view_t;
 typedef struct view_category_s view_category_t;
 typedef struct view_thread_s view_thread_t;
@@ -24,3 +28,7 @@ view_config_thread_t *view_find_config_thread(view_t *view, const char *name);
 
 void view_apply_config_file(view_config_file_t *ct, view_file_t *vt);
 view_config_file_t *view_find_config_file(view_t *view, const char *name);
+
+#if defined(__cplusplus)
+}
+#endif

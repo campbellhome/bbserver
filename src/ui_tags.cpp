@@ -9,6 +9,7 @@
 #include "ui_loglevel_colorizer.h"
 #include "va.h"
 #include "view.h"
+#include "view_config.h"
 #include "wrap_imgui_internal.h"
 
 static sb_t s_newTagName;
@@ -313,6 +314,36 @@ static void UITags_Category_SetSelectedVisibility(view_t *view, b32 visible)
 	}
 }
 
+static void UITags_CountCategoryVisibility(view_t *view, tag_t *tag, u32 *visibleCount, u32 *hiddenCount)
+{
+	u32 numVisible = 0;
+	u32 numHidden = 0;
+	for(u32 categoryIndex = 0; categoryIndex < tag->categories.count; ++categoryIndex) {
+		sb_t *category = tag->categories.data + categoryIndex;
+		const char *categoryName = sb_get(category);
+		view_category_t *viewCategory = view_find_category_by_name(view, categoryName);
+		view_config_category_t *configCategory = view_find_config_category(view, categoryName);
+
+		if(viewCategory) {
+			if(viewCategory->visible) {
+				++numVisible;
+			} else {
+				++numHidden;
+			}
+		} else if(configCategory) {
+			if(configCategory->visible) {
+				++numVisible;
+			} else {
+				++numHidden;
+			}
+		} else {
+			continue;
+		}
+	}
+	*visibleCount = numVisible;
+	*hiddenCount = numHidden;
+}
+
 void UITags_Update(view_t *view)
 {
 	ImGuiTreeNodeFlags tagNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
@@ -325,8 +356,18 @@ void UITags_Update(view_t *view)
 			const char *tagName = sb_get(&tag->name);
 			bool bTagSelected = false;
 
-			bool tempSelected = false;
-			ImGui::Checkbox("", &tempSelected);
+			u32 numVisible = 0;
+			u32 numHidden = 0;
+			UITags_CountCategoryVisibility(view, tag, &numVisible, &numHidden);
+
+			bool allChecked = numHidden == 0;
+			if(numVisible && numHidden) {
+				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
+			}
+			b32 bSetVisibility = ImGui::Checkbox("", &allChecked);
+			if(numVisible && numHidden) {
+				ImGui::PopItemFlag();
+			}
 			ImGui::SameLine();
 			ImGui::BeginGroup();
 
@@ -340,11 +381,53 @@ void UITags_Update(view_t *view)
 			if(open) {
 				for(u32 categoryIndex = 0; categoryIndex < tag->categories.count; ++categoryIndex) {
 					sb_t *category = tag->categories.data + categoryIndex;
+					const char *categoryName = sb_get(category);
 
-					ImGui::Checkbox("", &tempSelected);
+					view_category_t *viewCategory = view_find_category_by_name(view, categoryName);
+					view_config_category_t *configCategory = view_find_config_category(view, categoryName);
+
+					b32 *visible = NULL;
+					b32 *selected = NULL;
+					if(viewCategory) {
+						visible = &viewCategory->visible;
+						selected = &viewCategory->selected;
+					} else if(configCategory) {
+						visible = &configCategory->visible;
+						selected = &configCategory->selected;
+					} else {
+						continue;
+					}
+
+					if(bSetVisibility) {
+						*visible = allChecked;
+						view->visibleLogsDirty = true;
+					}
+
+					bool checked = *visible != 0;
+					ImGui::PushID((int)categoryIndex);
+					bool activated = ImGui::Checkbox("", &checked);
+					if(activated) {
+						if(!*selected) {
+							UITags_Category_ClearSelection(view);
+							viewCategory->selected = true;
+							view->lastCategoryClickIndex = ~0U;
+						}
+						view->visibleLogsDirty = true;
+						for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->categories.count; ++viewCategoryIndex) {
+							view_category_t *vc = view->categories.data + viewCategoryIndex;
+							if(vc->selected) {
+								vc->visible = checked;
+							}
+						}
+					}
+					//bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
+					//ImGui::SameLine();
+
+					//ImGui::Checkbox("", visible);
 					ImGui::SameLine();
-
-					ImGui::Selectable(sb_get(category));
+					//LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(recordedCategory->logCount));
+					ImGui::Selectable(categoryName, selected);
+					ImGui::PopID();
 				}
 				ImGui::TreePop();
 			}

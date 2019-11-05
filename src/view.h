@@ -302,6 +302,7 @@ void view_add_pieInstance(view_t *view, u32 pieInstance);
 void view_add_log(view_t *view, recorded_log_t *log);
 void view_update_visible_logs(view_t *view);
 void view_set_thread_name(view_t *view, u64 id, const char *name);
+view_category_t *view_find_category_by_name(view_t *view, const char* categoryName);
 void view_set_all_category_visibility(view_t *view, b8 visible);
 void view_set_favorite_category_visibility(view_t *view, b32 favorite, b8 visible);
 void view_set_all_thread_visibility(view_t *view, b8 visible);
