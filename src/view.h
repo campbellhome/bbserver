@@ -185,8 +185,8 @@ AUTOJSON typedef struct view_config_s {
 	b32 showErrors;
 	b32 showFatal;
 	b32 showSelectorTarget;
-	b32 newNonFavoriteColumnVisibility;
-	b32 newFavoriteColumnVisibility;
+	b32 newNonFavoriteCategoryVisibility;
+	b32 newFavoriteCategoryVisibility;
 	b32 newThreadVisibility;
 	b32 newFileVisibility;
 	b32 filterActive;

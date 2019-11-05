@@ -932,8 +932,8 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.showErrors = src->showErrors;
 		dst.showFatal = src->showFatal;
 		dst.showSelectorTarget = src->showSelectorTarget;
-		dst.newNonFavoriteColumnVisibility = src->newNonFavoriteColumnVisibility;
-		dst.newFavoriteColumnVisibility = src->newFavoriteColumnVisibility;
+		dst.newNonFavoriteCategoryVisibility = src->newNonFavoriteCategoryVisibility;
+		dst.newFavoriteCategoryVisibility = src->newFavoriteCategoryVisibility;
 		dst.newThreadVisibility = src->newThreadVisibility;
 		dst.newFileVisibility = src->newFileVisibility;
 		dst.filterActive = src->filterActive;

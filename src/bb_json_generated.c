@@ -637,8 +637,8 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.showErrors = json_object_get_boolean_safe(obj, "showErrors");
 			dst.showFatal = json_object_get_boolean_safe(obj, "showFatal");
 			dst.showSelectorTarget = json_object_get_boolean_safe(obj, "showSelectorTarget");
-			dst.newNonFavoriteColumnVisibility = json_object_get_boolean_safe(obj, "newNonFavoriteColumnVisibility");
-			dst.newFavoriteColumnVisibility = json_object_get_boolean_safe(obj, "newFavoriteColumnVisibility");
+			dst.newNonFavoriteCategoryVisibility = json_object_get_boolean_safe(obj, "newNonFavoriteCategoryVisibility");
+			dst.newFavoriteCategoryVisibility = json_object_get_boolean_safe(obj, "newFavoriteCategoryVisibility");
 			dst.newThreadVisibility = json_object_get_boolean_safe(obj, "newThreadVisibility");
 			dst.newFileVisibility = json_object_get_boolean_safe(obj, "newFileVisibility");
 			dst.filterActive = json_object_get_boolean_safe(obj, "filterActive");
@@ -1187,8 +1187,8 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_boolean(obj, "showErrors", src->showErrors);
 		json_object_set_boolean(obj, "showFatal", src->showFatal);
 		json_object_set_boolean(obj, "showSelectorTarget", src->showSelectorTarget);
-		json_object_set_boolean(obj, "newNonFavoriteColumnVisibility", src->newNonFavoriteColumnVisibility);
-		json_object_set_boolean(obj, "newFavoriteColumnVisibility", src->newFavoriteColumnVisibility);
+		json_object_set_boolean(obj, "newNonFavoriteCategoryVisibility", src->newNonFavoriteCategoryVisibility);
+		json_object_set_boolean(obj, "newFavoriteCategoryVisibility", src->newFavoriteCategoryVisibility);
 		json_object_set_boolean(obj, "newThreadVisibility", src->newThreadVisibility);
 		json_object_set_boolean(obj, "newFileVisibility", src->newFileVisibility);
 		json_object_set_boolean(obj, "filterActive", src->filterActive);

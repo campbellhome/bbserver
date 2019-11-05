@@ -116,8 +116,8 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	view->config.showSelectorTarget = false;
 	view->config.showVeryVerbose = view->config.showVerbose = false;
 	view->config.showLogs = view->config.showDisplay = view->config.showWarnings = view->config.showErrors = view->config.showFatal = true;
-	view->config.newNonFavoriteColumnVisibility = true;
-	view->config.newFavoriteColumnVisibility = true;
+	view->config.newNonFavoriteCategoryVisibility = true;
+	view->config.newFavoriteCategoryVisibility = true;
 	view->config.newThreadVisibility = true;
 	view->config.newFileVisibility = true;
 
@@ -238,13 +238,13 @@ void view_add_category(view_t *view, recorded_category_t *category)
 		if(cc) {
 			view_apply_config_category(view, cc, c);
 			if(c->favorite && view->changedFavoriteColumnVisibility) {
-				c->visible = view->config.newFavoriteColumnVisibility;
+				c->visible = view->config.newFavoriteCategoryVisibility;
 			} else if(!c->favorite && view->changedNonFavoriteColumnVisibility) {
-				c->visible = view->config.newNonFavoriteColumnVisibility;
+				c->visible = view->config.newNonFavoriteCategoryVisibility;
 			}
 		} else {
 			//BB_LOG("Config::Category", "%s skipped apply for missing '%s' during add", view->session->applicationFilename, c->categoryName);
-			c->visible = view->config.newNonFavoriteColumnVisibility;
+			c->visible = view->config.newNonFavoriteCategoryVisibility;
 		}
 		qsort(view->categories.data, view->categories.count, sizeof(view->categories.data[0]), ViewCategoryCompare);
 	}
@@ -685,8 +685,8 @@ void view_set_all_category_visibility(view_t *view, b8 visible)
 	       visible ? "Checked" : "Unchecked",
 	       view->session->appInfo.packet.appInfo.applicationName);
 	view->visibleLogsDirty = true;
-	view->config.newNonFavoriteColumnVisibility = visible;
-	view->config.newFavoriteColumnVisibility = visible;
+	view->config.newNonFavoriteCategoryVisibility = visible;
+	view->config.newFavoriteCategoryVisibility = visible;
 	for(i = 0; i < view->categories.count; ++i) {
 		view_category_t *c = view->categories.data + i;
 		c->visible = visible;
@@ -819,10 +819,10 @@ void view_set_favorite_category_visibility(view_t *view, b32 favorite, b8 visibl
 	       view->session->appInfo.packet.appInfo.applicationName);
 	view->visibleLogsDirty = true;
 	if(favorite) {
-		view->config.newFavoriteColumnVisibility = visible;
+		view->config.newFavoriteCategoryVisibility = visible;
 		view->changedFavoriteColumnVisibility = true;
 	} else {
-		view->config.newNonFavoriteColumnVisibility = visible;
+		view->config.newNonFavoriteCategoryVisibility = visible;
 		view->changedNonFavoriteColumnVisibility = true;
 	}
 
