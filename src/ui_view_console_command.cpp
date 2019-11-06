@@ -70,7 +70,7 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiTextEditCallbackData *Callba
 
 static void UIRecordedView_Console_Dispatch(view_t *view)
 {
-	if(view->session->outgoingMqId != mq_invalid_id()) {
+	if(view->session->outgoingMqId != mq_invalid_id() && (view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0) {
 		const char *command = sb_get(&view->consoleInput);
 		if(mq_queue(view->session->outgoingMqId, kBBPacketType_ConsoleCommand, "%s", command)) {
 			view->consoleHistory.pos = ~0U;

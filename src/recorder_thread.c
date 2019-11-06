@@ -173,7 +173,7 @@ bb_thread_return_t recorder_thread(void *args)
 		recording.path = sb_from_c_string(path);
 		recording.openView = false;
 		recording.recordingType = kRecordingType_Normal;
-		recording.mqId = mq_invalid_id();
+		recording.mqId = mq_acquire();
 		recording.platform = kBBPlatform_Unknown;
 		GetSystemTimeAsFileTime(&recording.filetime);
 		while(!*data->shutdownRequest) {
@@ -222,9 +222,6 @@ bb_thread_return_t recorder_thread(void *args)
 							if(decoded.type == kBBPacketType_AppInfo_v1 ||
 							   ((decoded.packet.appInfo.initFlags & kBBInitFlag_NoOpenView) == 0)) {
 								recording.openView = true;
-							}
-							if((decoded.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0) {
-								recording.mqId = mq_acquire();
 							}
 							recording.platform = decoded.packet.appInfo.platform;
 							to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(recording));
