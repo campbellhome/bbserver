@@ -15,6 +15,8 @@ typedef struct recorded_log_s recorded_log_t;
 typedef struct recorded_thread_s recorded_thread_t;
 typedef struct recorded_filename_s recorded_filename_t;
 typedef struct bb_decoded_packet_s bb_decoded_packet_t;
+typedef struct tag_s tag_t;
+typedef struct view_s view_t;
 
 typedef struct view_category_s {
 	char categoryName[kBBSize_Category];
@@ -142,6 +144,22 @@ AUTOJSON typedef struct view_config_categories_s {
 	u32 allocated;
 	view_config_category_t *data;
 } view_config_categories_t;
+
+typedef struct collected_view_categories_s {
+	u32 count;
+	u32 allocated;
+	view_category_t **data;
+} collected_view_categories_t;
+typedef struct collected_view_config_categories_s {
+	u32 count;
+	u32 allocated;
+	view_config_category_t **data;
+} collected_view_config_categories_t;
+typedef struct view_category_collection_s {
+	view_t *view;
+	collected_view_categories_t viewCategories;
+	collected_view_config_categories_t configCategories;
+} view_category_collection_t;
 
 AUTOJSON typedef struct view_config_column_s {
 	sb_t name;
@@ -305,6 +323,10 @@ void view_add_log(view_t *view, recorded_log_t *log);
 void view_update_visible_logs(view_t *view);
 void view_set_thread_name(view_t *view, u64 id, const char *name);
 view_category_t *view_find_category_by_name(view_t *view, const char *categoryName);
+void view_collect_categories(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag);
+void view_set_category_collection_visiblity(view_category_collection_t *categoryCollection, b32 visible);
+void view_set_category_collection_selection(view_category_collection_t *categoryCollection, b32 selected);
+void view_set_category_collection_disabled(view_category_collection_t *categoryCollection, b32 disabled);
 void view_set_all_category_visibility(view_t *view, b8 visible);
 void view_set_favorite_category_visibility(view_t *view, b32 favorite, b8 visible);
 void view_set_all_thread_visibility(view_t *view, b8 visible);

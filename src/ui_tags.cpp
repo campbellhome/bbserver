@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "ui_tags.h"
+#include "bb_array.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
 #include "recorded_session.h"
@@ -13,12 +14,18 @@
 #include "wrap_imgui_internal.h"
 
 static sb_t s_newTagName;
-static sb_t s_categoryTagNames = { BB_EMPTY_INITIALIZER };
+static sb_t s_categoryTagNames;
+static view_category_collection_t s_matching;
+static view_category_collection_t s_unmatching;
 
 void UITags_Shutdown()
 {
 	sb_reset(&s_newTagName);
 	sb_reset(&s_categoryTagNames);
+	bba_free(s_matching.viewCategories);
+	bba_free(s_matching.configCategories);
+	bba_free(s_unmatching.viewCategories);
+	bba_free(s_unmatching.configCategories);
 }
 
 static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel)
@@ -57,196 +64,58 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 {
 	const char *tagName = sb_get(&tag->name);
 	if(ImGui::BeginPopupContextItem(va("TagPopup%s", tagName))) {
+		view_collect_categories(view, &s_matching, &s_unmatching, tag);
+
 		if(!tag->categories.count) {
 			// TODO: menu to remove tag
 		}
+
 		if(ImGui::MenuItem("Show tag")) {
-			view_categories_t *viewCategories = &view->categories;
-			for(u32 i = 0; i < viewCategories->count; ++i) {
-				view_category_t *viewCategory = viewCategories->data + i;
-				const char *categoryName = viewCategory->categoryName;
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					if(!viewCategory->visible) {
-						view->visibleLogsDirty = true;
-						viewCategory->visible = true;
-					}
-				}
-			}
-			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-				view_config_category_t *configCategory = view->config.configCategories.data + i;
-				const char *categoryName = sb_get(&configCategory->name);
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					configCategory->visible = true;
-				}
-			}
+			view_set_category_collection_visiblity(&s_matching, true);
 		}
 		if(ImGui::MenuItem("Show only tag")) {
-			view_categories_t *viewCategories = &view->categories;
-			for(u32 i = 0; i < viewCategories->count; ++i) {
-				view_category_t *viewCategory = viewCategories->data + i;
-				const char *categoryName = viewCategory->categoryName;
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					if(!viewCategory->visible) {
-						view->visibleLogsDirty = true;
-						viewCategory->visible = true;
-					}
-				} else {
-					if(viewCategory->visible) {
-						view->visibleLogsDirty = true;
-						viewCategory->visible = false;
-					}
-				}
-			}
-			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-				view_config_category_t *configCategory = view->config.configCategories.data + i;
-				const char *categoryName = sb_get(&configCategory->name);
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					configCategory->visible = true;
-				} else {
-					configCategory->visible = false;
-				}
-			}
+			view_set_category_collection_visiblity(&s_matching, true);
+			view_set_category_collection_visiblity(&s_unmatching, false);
 		}
 		if(ImGui::MenuItem("Hide tag")) {
-			view_categories_t *viewCategories = &view->categories;
-			for(u32 i = 0; i < viewCategories->count; ++i) {
-				view_category_t *viewCategory = viewCategories->data + i;
-				const char *categoryName = viewCategory->categoryName;
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					if(viewCategory->visible) {
-						view->visibleLogsDirty = true;
-						viewCategory->visible = false;
-					}
-				}
-			}
-			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-				view_config_category_t *configCategory = view->config.configCategories.data + i;
-				const char *categoryName = sb_get(&configCategory->name);
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					configCategory->visible = false;
-				}
-			}
+			view_set_category_collection_visiblity(&s_matching, false);
 		}
 		if(ImGui::MenuItem("Select tag categories")) {
-			view->lastCategoryClickIndex = ~0U;
-			view_categories_t *viewCategories = &view->categories;
-			for(u32 i = 0; i < viewCategories->count; ++i) {
-				view_category_t *viewCategory = viewCategories->data + i;
-				const char *categoryName = viewCategory->categoryName;
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					viewCategory->selected = true;
-				}
-			}
-			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-				view_config_category_t *configCategory = view->config.configCategories.data + i;
-				const char *categoryName = sb_get(&configCategory->name);
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					configCategory->selected = true;
-				}
-			}
+			view_set_category_collection_selection(&s_matching, true);
 		}
 		if(ImGui::MenuItem("Select only tag categories")) {
-			view->lastCategoryClickIndex = ~0U;
-			view_categories_t *viewCategories = &view->categories;
-			for(u32 i = 0; i < viewCategories->count; ++i) {
-				view_category_t *viewCategory = viewCategories->data + i;
-				const char *categoryName = viewCategory->categoryName;
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					viewCategory->selected = true;
-				} else {
-					viewCategory->selected = false;
-				}
-			}
-			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-				view_config_category_t *configCategory = view->config.configCategories.data + i;
-				const char *categoryName = sb_get(&configCategory->name);
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					configCategory->selected = true;
-				} else {
-					configCategory->selected = false;
-				}
-			}
+			view_set_category_collection_selection(&s_matching, true);
+			view_set_category_collection_selection(&s_unmatching, false);
 		}
 		if(ImGui::MenuItem("Unselect tag categories")) {
-			view->lastCategoryClickIndex = ~0U;
-			view_categories_t *viewCategories = &view->categories;
-			for(u32 i = 0; i < viewCategories->count; ++i) {
-				view_category_t *viewCategory = viewCategories->data + i;
-				const char *categoryName = viewCategory->categoryName;
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					viewCategory->selected = false;
-				}
-			}
-			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-				view_config_category_t *configCategory = view->config.configCategories.data + i;
-				const char *categoryName = sb_get(&configCategory->name);
-				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-					configCategory->selected = false;
-				}
-			}
+			view_set_category_collection_selection(&s_matching, false);
 		}
 
 		bool allEnabled = true;
 		bool allDisabled = true;
-		for(u32 i = 0; i < view->categories.count; ++i) {
-			view_category_t *viewCategory = view->categories.data + i;
-			const char *categoryName = viewCategory->categoryName;
-			if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-				if(viewCategory->disabled) {
-					allEnabled = false;
-				} else {
-					allDisabled = false;
-				}
+		for(u32 i = 0; i < s_matching.viewCategories.count; ++i) {
+			if(s_matching.viewCategories.data[i]->disabled) {
+				allEnabled = false;
+			} else {
+				allDisabled = false;
 			}
 		}
-		for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-			view_config_category_t *configCategory = view->config.configCategories.data + i;
-			const char *categoryName = sb_get(&configCategory->name);
-			if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-				if(configCategory->disabled) {
-					allEnabled = false;
-				} else {
-					allDisabled = false;
-				}
+		for(u32 i = 0; i < s_matching.configCategories.count; ++i) {
+			if(s_matching.configCategories.data[i]->disabled) {
+				allEnabled = false;
+			} else {
+				allDisabled = false;
 			}
 		}
+
 		if(!allEnabled) {
 			if(ImGui::MenuItem("Enable tag")) {
-				for(u32 i = 0; i < view->categories.count; ++i) {
-					view_category_t *viewCategory = view->categories.data + i;
-					const char *categoryName = viewCategory->categoryName;
-					if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-						view->visibleLogsDirty = true;
-						viewCategory->disabled = false;
-					}
-				}
-				for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-					view_config_category_t *configCategory = view->config.configCategories.data + i;
-					const char *categoryName = sb_get(&configCategory->name);
-					if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-						configCategory->disabled = false;
-					}
-				}
+				view_set_category_collection_disabled(&s_matching, false);
 			}
 		}
 		if(!allDisabled) {
 			if(ImGui::MenuItem("Disable tag")) {
-				view_categories_t *viewCategories = &view->categories;
-				for(u32 i = 0; i < viewCategories->count; ++i) {
-					view_category_t *viewCategory = viewCategories->data + i;
-					const char *categoryName = viewCategory->categoryName;
-					if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-						view->visibleLogsDirty = true;
-						viewCategory->disabled = true;
-					}
-				}
-				for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-					view_config_category_t *configCategory = view->config.configCategories.data + i;
-					const char *categoryName = sb_get(&configCategory->name);
-					if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
-						configCategory->disabled = true;
-					}
-				}
+				view_set_category_collection_disabled(&s_matching, true);
 			}
 		}
 		ImGui::EndPopup();

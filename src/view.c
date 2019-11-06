@@ -8,6 +8,7 @@
 #include "imgui_core.h"
 #include "line_parser.h"
 #include "recorded_session.h"
+#include "tags.h"
 #include "view_config.h"
 #include <stdlib.h>
 
@@ -293,6 +294,93 @@ void view_set_thread_name(view_t *view, u64 id, const char *name)
 			}
 			view_sort_threads(view);
 			break;
+		}
+	}
+}
+
+void view_set_category_collection_visiblity(view_category_collection_t *categoryCollection, b32 visible)
+{
+	if(categoryCollection) {
+		for(u32 i = 0; i < categoryCollection->viewCategories.count; ++i) {
+			view_category_t *category = categoryCollection->viewCategories.data[i];
+			if(category->visible != visible) {
+				category->visible = visible;
+				categoryCollection->view->visibleLogsDirty = true;
+			}
+		}
+		for(u32 i = 0; i < categoryCollection->configCategories.count; ++i) {
+			view_config_category_t *category = categoryCollection->configCategories.data[i];
+			if(category->visible != visible) {
+				category->visible = visible;
+			}
+		}
+	}
+}
+
+void view_set_category_collection_selection(view_category_collection_t *categoryCollection, b32 selected)
+{
+	if(categoryCollection) {
+		for(u32 i = 0; i < categoryCollection->viewCategories.count; ++i) {
+			view_category_t *category = categoryCollection->viewCategories.data[i];
+			category->selected = selected;
+		}
+		for(u32 i = 0; i < categoryCollection->configCategories.count; ++i) {
+			view_config_category_t *category = categoryCollection->configCategories.data[i];
+			category->selected = selected;
+		}
+	}
+}
+
+void view_set_category_collection_disabled(view_category_collection_t *categoryCollection, b32 disabled)
+{
+	if(categoryCollection) {
+		for(u32 i = 0; i < categoryCollection->viewCategories.count; ++i) {
+			view_category_t *category = categoryCollection->viewCategories.data[i];
+			if(category->disabled != disabled) {
+				category->disabled = disabled;
+				categoryCollection->view->visibleLogsDirty = true;
+			}
+		}
+		for(u32 i = 0; i < categoryCollection->configCategories.count; ++i) {
+			view_config_category_t *category = categoryCollection->configCategories.data[i];
+			if(category->disabled != disabled) {
+				category->disabled = disabled;
+			}
+		}
+	}
+}
+
+void view_collect_categories(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag)
+{
+	if(matching) {
+		matching->view = view;
+		matching->viewCategories.count = 0;
+		matching->configCategories.count = 0;
+	}
+	if(unmatching) {
+		matching->view = view;
+		unmatching->viewCategories.count = 0;
+		unmatching->configCategories.count = 0;
+	}
+
+	for(u32 i = 0; i < view->categories.count; ++i) {
+		view_category_t *viewCategory = view->categories.data + i;
+		const char *categoryName = viewCategory->categoryName;
+		b32 bMatching = (!tag || sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName)));
+		if(bMatching && matching) {
+			bba_push(matching->viewCategories, viewCategory);
+		} else if(!bMatching && unmatching) {
+			bba_push(unmatching->viewCategories, viewCategory);
+		}
+	}
+	for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+		view_config_category_t *configCategory = view->config.configCategories.data + i;
+		const char *categoryName = sb_get(&configCategory->name);
+		b32 bMatching = (!tag || sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName)));
+		if(bMatching && matching) {
+			bba_push(matching->configCategories, configCategory);
+		} else if(!bMatching && unmatching) {
+			bba_push(unmatching->configCategories, configCategory);
 		}
 	}
 }
