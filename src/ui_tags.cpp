@@ -409,7 +409,7 @@ void UITags_Update(view_t *view)
 					if(activated) {
 						if(!*selected) {
 							UITags_Category_ClearSelection(view);
-							viewCategory->selected = true;
+							*selected = true;
 							view->lastCategoryClickIndex = ~0U;
 						}
 						view->visibleLogsDirty = true;
