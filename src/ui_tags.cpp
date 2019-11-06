@@ -153,6 +153,10 @@ static void UITags_Category_ClearSelection(view_t *view)
 		view_category_t *viewCategory = view->categories.data + i;
 		viewCategory->selected = false;
 	}
+	for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+		view_config_category_t *configCategory = view->config.configCategories.data + i;
+		configCategory->selected = false;
+	}
 	view->lastCategoryClickIndex = ~0U;
 }
 
@@ -417,6 +421,12 @@ void UITags_Update(view_t *view)
 						view->visibleLogsDirty = true;
 						for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->categories.count; ++viewCategoryIndex) {
 							view_category_t *vc = view->categories.data + viewCategoryIndex;
+							if(vc->selected) {
+								vc->visible = checked;
+							}
+						}
+						for(u32 configCategoryIndex = 0; configCategoryIndex < view->config.configCategories.count; ++configCategoryIndex) {
+							view_config_category_t *vc = view->config.configCategories.data + configCategoryIndex;
 							if(vc->selected) {
 								vc->visible = checked;
 							}
