@@ -72,6 +72,13 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 					}
 				}
 			}
+			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+				view_config_category_t *configCategory = view->config.configCategories.data + i;
+				const char *categoryName = sb_get(&configCategory->name);
+				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+					configCategory->visible = true;
+				}
+			}
 		}
 		if(ImGui::MenuItem("Show only tag")) {
 			view_categories_t *viewCategories = &view->categories;
@@ -90,6 +97,15 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 					}
 				}
 			}
+			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+				view_config_category_t *configCategory = view->config.configCategories.data + i;
+				const char *categoryName = sb_get(&configCategory->name);
+				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+					configCategory->visible = true;
+				} else {
+					configCategory->visible = false;
+				}
+			}
 		}
 		if(ImGui::MenuItem("Hide tag")) {
 			view_categories_t *viewCategories = &view->categories;
@@ -103,6 +119,13 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 					}
 				}
 			}
+			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+				view_config_category_t *configCategory = view->config.configCategories.data + i;
+				const char *categoryName = sb_get(&configCategory->name);
+				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+					configCategory->visible = false;
+				}
+			}
 		}
 		if(ImGui::MenuItem("Select tag categories")) {
 			view->lastCategoryClickIndex = ~0U;
@@ -112,6 +135,13 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 				const char *categoryName = viewCategory->categoryName;
 				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
 					viewCategory->selected = true;
+				}
+			}
+			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+				view_config_category_t *configCategory = view->config.configCategories.data + i;
+				const char *categoryName = sb_get(&configCategory->name);
+				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+					configCategory->selected = true;
 				}
 			}
 		}
@@ -127,6 +157,15 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 					viewCategory->selected = false;
 				}
 			}
+			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+				view_config_category_t *configCategory = view->config.configCategories.data + i;
+				const char *categoryName = sb_get(&configCategory->name);
+				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+					configCategory->selected = true;
+				} else {
+					configCategory->selected = false;
+				}
+			}
 		}
 		if(ImGui::MenuItem("Unselect tag categories")) {
 			view->lastCategoryClickIndex = ~0U;
@@ -138,10 +177,77 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 					viewCategory->selected = false;
 				}
 			}
+			for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+				view_config_category_t *configCategory = view->config.configCategories.data + i;
+				const char *categoryName = sb_get(&configCategory->name);
+				if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+					configCategory->selected = false;
+				}
+			}
 		}
-		if(ImGui::MenuItem("Enable tag (TODO)")) {
+
+		bool allEnabled = true;
+		bool allDisabled = true;
+		for(u32 i = 0; i < view->categories.count; ++i) {
+			view_category_t *viewCategory = view->categories.data + i;
+			const char *categoryName = viewCategory->categoryName;
+			if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+				if(viewCategory->disabled) {
+					allEnabled = false;
+				} else {
+					allDisabled = false;
+				}
+			}
 		}
-		if(ImGui::MenuItem("Disable tag (TODO)")) {
+		for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+			view_config_category_t *configCategory = view->config.configCategories.data + i;
+			const char *categoryName = sb_get(&configCategory->name);
+			if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+				if(configCategory->disabled) {
+					allEnabled = false;
+				} else {
+					allDisabled = false;
+				}
+			}
+		}
+		if(!allEnabled) {
+			if(ImGui::MenuItem("Enable tag")) {
+				for(u32 i = 0; i < view->categories.count; ++i) {
+					view_category_t *viewCategory = view->categories.data + i;
+					const char *categoryName = viewCategory->categoryName;
+					if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+						view->visibleLogsDirty = true;
+						viewCategory->disabled = false;
+					}
+				}
+				for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+					view_config_category_t *configCategory = view->config.configCategories.data + i;
+					const char *categoryName = sb_get(&configCategory->name);
+					if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+						configCategory->disabled = false;
+					}
+				}
+			}
+		}
+		if(!allDisabled) {
+			if(ImGui::MenuItem("Disable tag")) {
+				view_categories_t *viewCategories = &view->categories;
+				for(u32 i = 0; i < viewCategories->count; ++i) {
+					view_category_t *viewCategory = viewCategories->data + i;
+					const char *categoryName = viewCategory->categoryName;
+					if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+						view->visibleLogsDirty = true;
+						viewCategory->disabled = true;
+					}
+				}
+				for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+					view_config_category_t *configCategory = view->config.configCategories.data + i;
+					const char *categoryName = sb_get(&configCategory->name);
+					if(sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName))) {
+						configCategory->disabled = true;
+					}
+				}
+			}
 		}
 		ImGui::EndPopup();
 	}
@@ -305,6 +411,18 @@ static void UITags_CategoryPopup(view_t *view, u32 viewCategoryIndex)
 				ImGui::EndMenu();
 			}
 		}
+
+		if(viewCategory->disabled) {
+			if(ImGui::MenuItem("Enable")) {
+				viewCategory->disabled = false;
+				view->visibleLogsDirty = true;
+			}
+		} else {
+			if(ImGui::MenuItem("Disable")) {
+				viewCategory->disabled = true;
+				view->visibleLogsDirty = true;
+			}
+		}
 		ImGui::EndPopup();
 	}
 }
@@ -440,7 +558,15 @@ void UITags_Update(view_t *view)
 						logLevel = GetLogLevelBasedOnCounts(recordedCategory->logCount);
 					}
 					LogLevelColorizer colorizer(logLevel);
+					ImVec2 pos = ImGui::GetIconPosForText();
 					ImGui::Selectable(categoryName, selected);
+					b32 disabled = viewCategory ? viewCategory->disabled : configCategory ? configCategory->disabled : false;
+					if(disabled) {
+						ImVec4 color4 = GetTextColorForLogLevel(logLevel);
+						color4.w *= 0.8f;
+						ImColor color = ImGui::GetColorU32(color4);
+						ImGui::DrawStrikethrough(categoryName, color, pos);
+					}
 					ImGui::PopID();
 				}
 				ImGui::TreePop();
@@ -498,7 +624,15 @@ void UITags_Update(view_t *view)
 			ImGui::SameLine();
 			{
 				LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(recordedCategory->logCount));
-				if(ImGui::Selectable(viewCategory->categoryName, viewCategory->selected != 0)) {
+				ImVec2 pos = ImGui::GetIconPosForText();
+				activated = ImGui::Selectable(viewCategory->categoryName, viewCategory->selected != 0);
+				if(viewCategory->disabled) {
+					ImVec4 color4 = GetTextColorForLogLevel(GetLogLevelBasedOnCounts(recordedCategory->logCount));
+					color4.w *= 0.8f;
+					ImColor color = ImGui::GetColorU32(color4);
+					ImGui::DrawStrikethrough(viewCategory->categoryName, color, pos);
+				}
+				if(activated) {
 					UITags_Category_HandleClick(view, viewCategoryIndex);
 				}
 			}

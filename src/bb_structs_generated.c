@@ -780,6 +780,10 @@ view_config_category_t view_config_category_clone(const view_config_category_t *
 		dst.visible = src->visible;
 		dst.favorite = src->favorite;
 		dst.depth = src->depth;
+		dst.disabled = src->disabled;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
 	}
 	return dst;
 }

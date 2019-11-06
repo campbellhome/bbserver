@@ -520,6 +520,10 @@ view_config_category_t json_deserialize_view_config_category_t(JSON_Value *src)
 			dst.visible = json_object_get_boolean_safe(obj, "visible");
 			dst.favorite = json_object_get_boolean_safe(obj, "favorite");
 			dst.depth = (u32)json_object_get_number(obj, "depth");
+			dst.disabled = json_object_get_boolean_safe(obj, "disabled");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -1082,6 +1086,10 @@ JSON_Value *json_serialize_view_config_category_t(const view_config_category_t *
 		json_object_set_boolean(obj, "visible", src->visible);
 		json_object_set_boolean(obj, "favorite", src->favorite);
 		json_object_set_number(obj, "depth", src->depth);
+		json_object_set_boolean(obj, "disabled", src->disabled);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }

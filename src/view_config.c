@@ -149,6 +149,7 @@ void view_apply_config_category(view_t *view, view_config_category_t *cc, view_c
 		vc->visible = cc->visible;
 		vc->selected = cc->selected;
 		vc->favorite = cc->favorite;
+		vc->disabled = cc->disabled;
 		//BB_LOG("Config::Category", "%s apply for '%s'", view->session->applicationFilename, vc->categoryName);
 	}
 }
@@ -244,6 +245,7 @@ static void view_config_write_prep(view_t *view)
 			cc->selected = vc->selected;
 			cc->visible = vc->visible;
 			cc->favorite = vc->favorite;
+			cc->disabled = vc->disabled;
 		}
 	}
 	qsort(view->config.configCategories.data, view->config.configCategories.count, sizeof(view->config.configCategories.data[0]), ViewConfigCategoryCompare);

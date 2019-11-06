@@ -303,7 +303,7 @@ b32 view_category_visible(view_t *view, u32 categoryId)
 	for(categoryIndex = 0; categoryIndex < view->categories.count; ++categoryIndex) {
 		view_category_t *category = view->categories.data + categoryIndex;
 		if(category->id == categoryId) {
-			return category->visible;
+			return category->visible && !category->disabled;
 		}
 	}
 	return false;
