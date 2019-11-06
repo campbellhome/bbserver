@@ -234,6 +234,7 @@ static void UITags_SelectedCategories_AddTag(view_t *view, const char *tagName)
 			tag_add_category(tagName, viewCategory->categoryName);
 		}
 	}
+	tags_write();
 }
 
 static void UITags_SelectedCategories_RemoveTag(view_t *view, const char *tagName)
@@ -244,6 +245,7 @@ static void UITags_SelectedCategories_RemoveTag(view_t *view, const char *tagNam
 			tag_remove_category(tagName, viewCategory->categoryName);
 		}
 	}
+	tags_write();
 }
 
 static void UITags_CategoryPopup(view_t *view, u32 viewCategoryIndex)
