@@ -357,7 +357,9 @@ void UITags_Update(view_t *view)
 			if(numVisible && numHidden) {
 				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
+			ImGui::PushID((int)tagIndex);
 			b32 bSetVisibility = ImGui::Checkbox("", &allChecked);
+			ImGui::PopID();
 			if(numVisible && numHidden) {
 				ImGui::PopItemFlag();
 			}
