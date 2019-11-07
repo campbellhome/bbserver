@@ -358,7 +358,7 @@ void view_collect_categories(view_t *view, view_category_collection_t *matching,
 		matching->configCategories.count = 0;
 	}
 	if(unmatching) {
-		matching->view = view;
+		unmatching->view = view;
 		unmatching->viewCategories.count = 0;
 		unmatching->configCategories.count = 0;
 	}
