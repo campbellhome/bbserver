@@ -19,10 +19,9 @@
 
 static sb_t view_config_get_path(view_t *view, const char *appName)
 {
-	recording_t *recording = recordings_find_by_path(view->session->path);
 	const char *filename = view->session->applicationFilename;
 	sb_t s = appdata_get(appName);
-	if(recording && recording->recordingType == kRecordingType_ExternalFile) {
+	if(view->externalView) {
 		sb_va(&s, "\\bb_external_view_%s.json", filename);
 	} else {
 		sb_va(&s, "\\bb_view_%s.json", filename);
@@ -389,6 +388,8 @@ b32 view_config_write(view_t *view)
 b32 view_config_read(view_t *view)
 {
 	b32 ret = false;
+	recording_t *recording = recordings_find_by_path(view->session->path);
+	view->externalView = recording && recording->recordingType == kRecordingType_ExternalFile;
 	sb_t path = view_config_get_path(view, "bb");
 	JSON_Value *val = json_parse_file(sb_get(&path));
 	if(val) {
