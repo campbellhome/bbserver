@@ -350,7 +350,7 @@ void view_set_category_collection_disabled(view_category_collection_t *categoryC
 	}
 }
 
-void view_collect_categories(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag)
+void view_collect_categories_by_tag(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag)
 {
 	if(matching) {
 		matching->view = view;
@@ -377,6 +377,39 @@ void view_collect_categories(view_t *view, view_category_collection_t *matching,
 		view_config_category_t *configCategory = view->config.configCategories.data + i;
 		const char *categoryName = sb_get(&configCategory->name);
 		b32 bMatching = (!tag || sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName)));
+		if(bMatching && matching) {
+			bba_push(matching->configCategories, configCategory);
+		} else if(!bMatching && unmatching) {
+			bba_push(unmatching->configCategories, configCategory);
+		}
+	}
+}
+
+void view_collect_categories_by_selection(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching)
+{
+	if(matching) {
+		matching->view = view;
+		matching->viewCategories.count = 0;
+		matching->configCategories.count = 0;
+	}
+	if(unmatching) {
+		unmatching->view = view;
+		unmatching->viewCategories.count = 0;
+		unmatching->configCategories.count = 0;
+	}
+
+	for(u32 i = 0; i < view->categories.count; ++i) {
+		view_category_t *viewCategory = view->categories.data + i;
+		b32 bMatching = viewCategory->selected;
+		if(bMatching && matching) {
+			bba_push(matching->viewCategories, viewCategory);
+		} else if(!bMatching && unmatching) {
+			bba_push(unmatching->viewCategories, viewCategory);
+		}
+	}
+	for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+		view_config_category_t *configCategory = view->config.configCategories.data + i;
+		b32 bMatching = configCategory->selected;
 		if(bMatching && matching) {
 			bba_push(matching->configCategories, configCategory);
 		} else if(!bMatching && unmatching) {

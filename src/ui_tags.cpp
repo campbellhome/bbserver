@@ -281,13 +281,11 @@ static void UITags_CategoryPopup(view_t *view, u32 viewCategoryIndex)
 
 		if(viewCategory->disabled) {
 			if(ImGui::MenuItem("Enable")) {
-				viewCategory->disabled = false;
-				view->visibleLogsDirty = true;
+				view_set_category_collection_disabled(&s_matching, false);
 			}
 		} else {
 			if(ImGui::MenuItem("Disable")) {
-				viewCategory->disabled = true;
-				view->visibleLogsDirty = true;
+				view_set_category_collection_disabled(&s_matching, true);
 			}
 		}
 		ImGui::EndPopup();
@@ -347,7 +345,7 @@ void UITags_Update(view_t *view)
 			const char *tagName = sb_get(&tag->name);
 			bool bTagSelected = false;
 
-			view_collect_categories(view, &s_matching, &s_unmatching, tag);
+			view_collect_categories_by_tag(view, &s_matching, &s_unmatching, tag);
 
 			u32 numVisible = 0;
 			u32 numHidden = 0;
@@ -447,6 +445,8 @@ void UITags_Update(view_t *view)
 	if(ImGui::CollapsingHeader("Categories", ImGuiTreeNodeFlags_DefaultOpen)) {
 		view_categories_t *viewCategories = &view->categories;
 		if(view->categories.count) {
+			view_collect_categories_by_selection(view, &s_matching, &s_unmatching);
+
 			u32 checkedCount = 0;
 			u32 uncheckedCount = 0;
 			for(u32 index = 0; index < viewCategories->count; ++index) {
