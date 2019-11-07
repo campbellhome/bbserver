@@ -146,7 +146,7 @@ void view_apply_config_category(view_t *view, view_config_category_t *cc, view_c
 	for(i = startIndex; i < endIndex; ++i) {
 		vc = view->categories.data + i;
 		vc->visible = cc->visible;
-		vc->selected = cc->selected;
+		//vc->selected = cc->selected;
 		vc->favorite = cc->favorite;
 		vc->disabled = cc->disabled;
 		//BB_LOG("Config::Category", "%s apply for '%s'", view->session->applicationFilename, vc->categoryName);
@@ -183,7 +183,7 @@ static int ViewConfigThreadCompare(const void *_a, const void *_b)
 void view_apply_config_thread(view_config_thread_t *ct, view_thread_t *vt)
 {
 	vt->visible = ct->visible;
-	vt->selected = ct->selected;
+	//vt->selected = ct->selected;
 }
 
 view_config_file_t *view_find_config_file(view_t *view, const char *name)
@@ -216,7 +216,7 @@ static int ViewConfigFileCompare(const void *_a, const void *_b)
 void view_apply_config_file(view_config_file_t *ct, view_file_t *vt)
 {
 	vt->visible = ct->visible;
-	vt->selected = ct->selected;
+	//vt->selected = ct->selected;
 }
 
 static void view_config_update_category_depth(view_t *view)
