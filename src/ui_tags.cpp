@@ -60,12 +60,10 @@ static void UITags_CategoryToolTip(recorded_category_t *category)
 	}
 }
 
-static void UITags_TagPopup(tag_t *tag, view_t *view)
+static void UITags_TagPopup(tag_t *tag)
 {
 	const char *tagName = sb_get(&tag->name);
 	if(ImGui::BeginPopupContextItem(va("TagPopup%s", tagName))) {
-		view_collect_categories(view, &s_matching, &s_unmatching, tag);
-
 		if(!tag->categories.count) {
 			// TODO: menu to remove tag
 		}
@@ -349,6 +347,8 @@ void UITags_Update(view_t *view)
 			const char *tagName = sb_get(&tag->name);
 			bool bTagSelected = false;
 
+			view_collect_categories(view, &s_matching, &s_unmatching, tag);
+
 			u32 numVisible = 0;
 			u32 numHidden = 0;
 			UITags_CountCategoryVisibility(view, tag, &numVisible, &numHidden);
@@ -358,7 +358,9 @@ void UITags_Update(view_t *view)
 				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
 			ImGui::PushID((int)tagIndex);
-			b32 bSetVisibility = ImGui::Checkbox("", &allChecked);
+			if (ImGui::Checkbox("", &allChecked)) {
+				view_set_category_collection_visiblity(&s_matching, allChecked);
+			}
 			ImGui::PopID();
 			if(numVisible && numHidden) {
 				ImGui::PopItemFlag();
@@ -371,7 +373,7 @@ void UITags_Update(view_t *view)
 			if(ImGui::IsItemClicked()) {
 				//UIRecordings_HandleClick(tab, startEntry);
 			}
-			UITags_TagPopup(tag, view);
+			UITags_TagPopup(tag);
 
 			if(open) {
 				for(u32 categoryIndex = 0; categoryIndex < tag->categories.count; ++categoryIndex) {
@@ -391,11 +393,6 @@ void UITags_Update(view_t *view)
 						selected = &configCategory->selected;
 					} else {
 						continue;
-					}
-
-					if(bSetVisibility) {
-						*visible = allChecked;
-						view->visibleLogsDirty = true;
 					}
 
 					bool checked = *visible != 0;
