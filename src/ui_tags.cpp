@@ -340,6 +340,7 @@ void UITags_Update(view_t *view)
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 0.0f));
 	if(ImGui::CollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::PushID("TagsHeader");
 		for(u32 tagIndex = 0; tagIndex < g_tags.tags.count; ++tagIndex) {
 			tag_t *tag = g_tags.tags.data + tagIndex;
 			const char *tagName = sb_get(&tag->name);
@@ -356,7 +357,7 @@ void UITags_Update(view_t *view)
 				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
 			ImGui::PushID((int)tagIndex);
-			if (ImGui::Checkbox("", &allChecked)) {
+			if(ImGui::Checkbox("", &allChecked)) {
 				view_set_category_collection_visiblity(&s_matching, allChecked);
 			}
 			ImGui::PopID();
@@ -440,9 +441,11 @@ void UITags_Update(view_t *view)
 
 			ImGui::EndGroup();
 		}
+		ImGui::PopID();
 	}
 
 	if(ImGui::CollapsingHeader("Categories", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::PushID("CategoriesHeader");
 		view_categories_t *viewCategories = &view->categories;
 		if(view->categories.count) {
 			view_collect_categories_by_selection(view, &s_matching, &s_unmatching);
@@ -522,6 +525,7 @@ void UITags_Update(view_t *view)
 			UITags_CategoryToolTip(recordedCategory);
 			UITags_CategoryPopup(view, viewCategoryIndex);
 		}
+		ImGui::PopID();
 	}
 
 	ImGui::PopStyleVar();
