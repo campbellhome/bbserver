@@ -278,6 +278,8 @@ typedef struct view_s {
 	b32 open;
 	b32 initialized;
 	u32 viewId;
+	u32 lastSessionLogIndex;
+	u32 lastVisibleSessionLogIndex;
 	u32 lastVisibleSessionIndexStart;
 	u32 lastVisibleSessionIndexEnd;
 	u32 lastVisibleSelectedSessionIndexStart;

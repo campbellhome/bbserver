@@ -113,6 +113,8 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	view->visibleLogs.lastClickIndex = ~0U;
 	view->consoleHistory.pos = ~0U;
 	view->lastCategoryClickIndex = ~0U;
+	view->lastSessionLogIndex = ~0U;
+	view->lastVisibleSessionLogIndex = ~0U;
 
 	view->config.showSelectorTarget = false;
 	view->config.showVeryVerbose = view->config.showVerbose = false;
@@ -526,6 +528,98 @@ view_category_t *view_find_category(view_t *view, u32 categoryId)
 	return NULL;
 }
 
+typedef enum view_filter_comparison_e {
+	kViewFilterComparison_Equal,
+	kViewFilterComparison_GreaterEqual,
+	kViewFilterComparison_Greater,
+	kViewFilterComparison_LessThanEqual,
+	kViewFilterComparison_LessThan,
+	kViewFilterComparison_NotEqual,
+	kViewFilterComparison_Count
+} view_filter_comparison_t;
+
+static const char *s_view_filter_comparator[] = {
+	"==",
+	">=",
+	">",
+	"<=",
+	"<",
+	"!=",
+};
+BB_CTASSERT(BB_ARRAYSIZE(s_view_filter_comparator) == kViewFilterComparison_Count);
+
+static view_filter_comparison_t view_parse_filter_comparator(const char **token)
+{
+	for(u32 i = 0; i < kViewFilterComparison_Count; ++i) {
+		size_t len = strlen(s_view_filter_comparator[i]);
+		if(!strncmp(*token, s_view_filter_comparator[i], len)) {
+			*token += len;
+			return i;
+		}
+	}
+	return kViewFilterComparison_Count;
+}
+
+static inline b32 view_filter_compare_double(view_filter_comparison_t comp, double a, double b)
+{
+	switch(comp) {
+	case kViewFilterComparison_Equal: return a == b;
+	case kViewFilterComparison_GreaterEqual: return a >= b;
+	case kViewFilterComparison_Greater: return a > b;
+	case kViewFilterComparison_LessThanEqual: return a <= b;
+	case kViewFilterComparison_LessThan: return a < b;
+	case kViewFilterComparison_NotEqual: return a != b;
+	default: return false;
+	}
+}
+
+static b32 view_filter_abs_millis(view_t *view, recorded_log_t *log, view_filter_comparison_t comp, const char *token)
+{
+	recorded_session_t *session = view->session;
+	recorded_log_t *lastLog = view->lastSessionLogIndex < session->logs.count ? session->logs.data[view->lastSessionLogIndex] : NULL;
+	bb_decoded_packet_t *decoded = &log->packet;
+
+	double thresholdMillis = atof(token);
+	s64 prevElapsedTicks = (lastLog) ? (s64)lastLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : 0;
+	s64 elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
+	double deltaMillis = (elapsedTicks - prevElapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
+	return view_filter_compare_double(comp, deltaMillis, thresholdMillis);
+}
+
+static b32 view_filter_rel_millis(view_t *view, recorded_log_t *log, view_filter_comparison_t comp, const char *token)
+{
+	recorded_session_t *session = view->session;
+	recorded_log_t *lastLog = view->lastVisibleSessionLogIndex < session->logs.count ? session->logs.data[view->lastVisibleSessionLogIndex] : NULL;
+	bb_decoded_packet_t *decoded = &log->packet;
+
+	double thresholdMillis = atof(token);
+	s64 prevElapsedTicks = (lastLog) ? (s64)lastLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : 0;
+	s64 elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
+	double deltaMillis = (elapsedTicks - prevElapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
+	return view_filter_compare_double(comp, deltaMillis, thresholdMillis);
+}
+
+static b32 view_find_filter_token(view_t *view, recorded_log_t *log, const char *token)
+{
+	bb_decoded_packet_t *decoded = &log->packet;
+	const char *text = decoded->packet.logText.text;
+	if(!bb_strnicmp(token, "absms", 5)) {
+		const char *tmp = token + 5;
+		view_filter_comparison_t comp = view_parse_filter_comparator(&tmp);
+		if(comp != kViewFilterComparison_Count) {
+			return view_filter_abs_millis(view, log, comp, tmp);
+		}
+	}
+	if(!bb_strnicmp(token, "relms", 5)) {
+		const char *tmp = token + 5;
+		view_filter_comparison_t comp = view_parse_filter_comparator(&tmp);
+		if(comp != kViewFilterComparison_Count) {
+			return view_filter_abs_millis(view, log, comp, tmp);
+		}
+	}
+	return bb_stristr(text, token) != NULL;
+}
+
 static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 {
 	bb_decoded_packet_t *decoded = &log->packet;
@@ -577,7 +671,6 @@ static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 	if(!view_file_visible(view, fileId))
 		return false;
 	if(view->filter.count && view->config.filterActive) {
-		const char *text = decoded->packet.logText.text;
 		b32 ok = false;
 		u32 numRequired = 0;
 		u32 numProhibited = 0;
@@ -588,14 +681,13 @@ static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 			const char *s = view->filter.tokenBuffer + token->offset;
 			b32 required = *s == '+';
 			b32 prohibited = *s == '-';
-			b32 found;
 			numRequired += required;
 			numProhibited += prohibited;
 			numAllowed += (!required && !prohibited);
 			if(required || prohibited) {
 				++s;
 			}
-			found = bb_stristr(text, s) != NULL;
+			b32 found = view_find_filter_token(view, log, s);
 			if(found && prohibited || !found && required) {
 				return false;
 				break;
@@ -761,6 +853,8 @@ void view_update_visible_logs(view_t *view)
 	u32 lastClickIndex = view->visibleLogs.lastClickIndex;
 	memset(&view->visibleLogs, 0, sizeof(view->visibleLogs));
 	view->visibleLogs.lastClickIndex = lastClickIndex;
+	view->lastSessionLogIndex = ~0U;
+	view->lastVisibleSessionLogIndex = ~0U;
 	view_update_filter(view);
 	view_update_spans(view);
 	for(i = 0; i < session->logs.count; ++i) {
@@ -774,7 +868,9 @@ void view_update_visible_logs(view_t *view)
 				}
 			}
 			view_add_log_internal(view, log, persistentLogIndex);
+			view->lastVisibleSessionLogIndex = i;
 		}
+		view->lastSessionLogIndex = i;
 	}
 	i = j = 0;
 	while(i < oldLogs.count && j < view->visibleLogs.count) {
@@ -1030,8 +1126,10 @@ void view_add_log(view_t *view, recorded_log_t *log)
 	}
 	u32 visibleLogCount = view->visibleLogs.count;
 	view_add_log_internal(view, log, persistentLogIndex);
+	view->lastSessionLogIndex = log->sessionLogIndex;
 	if(visibleLogCount < view->visibleLogs.count) {
 		view->visibleLogsAdded = true;
+		view->lastVisibleSessionLogIndex = log->sessionLogIndex;
 	}
 }
 
