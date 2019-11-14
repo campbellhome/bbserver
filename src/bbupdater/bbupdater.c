@@ -33,7 +33,7 @@ int main(int argc, const char **argv)
 #else
 		sb_append(&logPath, "/bbupdater.bbox");
 #endif
-		path_mkdir(sb_get(&logPath));
+		path_mkdir(path_get_dir(sb_get(&logPath)));
 		path_resolve_inplace(&logPath);
 		bb_init_file(sb_get(&logPath));
 		sb_reset(&logPath);

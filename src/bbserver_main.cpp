@@ -55,7 +55,7 @@ static void BBServer_SetImguiPath(void)
 	sb_t path = appdata_get("bb");
 	sb_append(&path, "/imgui.ini");
 	path_resolve_inplace(&path);
-	path_mkdir(sb_get(&path));
+	path_mkdir(path_get_dir(sb_get(&path)));
 	bb_strncpy(s_imguiPath, sb_get(&path), sizeof(s_imguiPath));
 	sb_reset(&path);
 
