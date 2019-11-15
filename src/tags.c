@@ -116,6 +116,26 @@ tag_t *tag_find(const char *tagName)
 	return NULL;
 }
 
+void tag_remove(tag_t *tag)
+{
+	for(u32 i = 0; i < tag->categories.count; ++i) {
+		const char *categoryName = sb_get(tag->categories.data + i);
+		sbsHashTable_remove(&g_tags.categoryTable, categoryName);
+		tagCategory_t *category = tagCategory_find(categoryName);
+		if(category) {
+			u32 categoryIndex = (u32)(category - g_tags.categories.data);
+			tagCategory_reset(g_tags.categories.data + categoryIndex);
+			bba_erase(g_tags.categories, categoryIndex);
+		}
+	}
+
+	sbsHashTable_remove(&g_tags.tagTable, sb_get(&tag->name));
+
+	u32 tagIndex = (u32)(tag - g_tags.tags.data);
+	tag_reset(tag);
+	bba_erase(g_tags.tags, tagIndex);
+}
+
 static int tag_sort(const void *_a, const void *_b)
 {
 	const tag_t *a = (const tag_t *)_a;

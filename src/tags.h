@@ -66,6 +66,8 @@ void tags_write(void);
 void tags_shutdown(void);
 
 tag_t *tag_find(const char *tagName);
+void tag_remove(tag_t *tag);
+
 tagCategory_t *tagCategory_find(const char *categoryName);
 
 void tag_add_category(const char *tagName, const char *categoryName);

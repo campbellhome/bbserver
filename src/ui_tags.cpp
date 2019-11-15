@@ -65,7 +65,10 @@ static void UITags_TagPopup(tag_t *tag)
 	const char *tagName = sb_get(&tag->name);
 	if(ImGui::BeginPopupContextItem(va("TagPopup%s", tagName))) {
 		if(!tag->categories.count) {
-			// TODO: menu to remove tag
+			if(ImGui::MenuItem("Remove tag")) {
+				tag_remove(tag);
+				tags_write();
+			}
 		}
 
 		if(ImGui::MenuItem("Show tag")) {
