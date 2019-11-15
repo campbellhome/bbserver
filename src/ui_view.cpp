@@ -1437,13 +1437,33 @@ const char *GetSelectorName(view_config_selector_t selector)
 	}
 }
 
+static void PushExpandButtonColors(void)
+{
+	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_CheckMark));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetColorU32(ImGuiCol_FrameBg));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetColorU32(ImGuiCol_FrameBgHovered));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetColorU32(ImGuiCol_FrameBgActive));
+}
+
+static void PopExpandButtonColors(void)
+{
+	ImGui::PopStyleColor(4);
+}
+
 static void DrawViewToggles(view_t *view, const char *applicationName)
 {
+//#define ICON_EXPAND_LEFT "<"
+//#define ICON_EXPAND_RIGHT ">"
+#define ICON_EXPAND_LEFT ICON_FK_CHEVRON_LEFT
+#define ICON_EXPAND_RIGHT ICON_FK_CHEVRON_RIGHT
+
 	if(view->config.showSelectorTarget) {
-		if(Button("<##ShowSelectorLeft")) {
+		PushExpandButtonColors();
+		if(Button(ICON_EXPAND_LEFT "##ShowSelectorLeft")) {
 			view->config.showSelectorTarget = !view->config.showSelectorTarget;
 			BB_LOG("Debug", "Toggled showSelector for '%s'\n", applicationName);
 		}
+		PopExpandButtonColors();
 		SameLine();
 
 		if(Button(va("%s...##Selector", GetSelectorName(view->config.selector)))) {
@@ -1451,10 +1471,16 @@ static void DrawViewToggles(view_t *view, const char *applicationName)
 		}
 		SameLine(view->categoriesWidth);
 	}
-	if(Button(view->config.showSelectorTarget ? "<##ShowSelector" : ">##ShowSelector")) {
+	PushExpandButtonColors();
+	if(Button(view->config.showSelectorTarget ? ICON_EXPAND_LEFT "##ShowSelector" : ICON_EXPAND_RIGHT "##ShowSelector")) {
 		view->config.showSelectorTarget = !view->config.showSelectorTarget;
 		BB_LOG("Debug", "Toggled showSelector for '%s'\n", applicationName);
 	}
+	PopExpandButtonColors();
+
+#undef ICON_EXPAND_LEFT
+#undef ICON_EXPAND_RIGHT
+
 	if(BeginPopup("Selector")) {
 		for(u32 i = 0; i < kViewSelector_Count; ++i) {
 			view_config_selector_t selector = (view_config_selector_t)i;
