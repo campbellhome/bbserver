@@ -1440,6 +1440,12 @@ const char *GetSelectorName(view_config_selector_t selector)
 static void DrawViewToggles(view_t *view, const char *applicationName)
 {
 	if(view->config.showSelectorTarget) {
+		if(Button("<##ShowSelectorLeft")) {
+			view->config.showSelectorTarget = !view->config.showSelectorTarget;
+			BB_LOG("Debug", "Toggled showSelector for '%s'\n", applicationName);
+		}
+		SameLine();
+
 		if(Button(va("%s...##Selector", GetSelectorName(view->config.selector)))) {
 			OpenPopup("Selector");
 		}
