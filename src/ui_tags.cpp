@@ -60,7 +60,7 @@ static void UITags_CategoryToolTip(recorded_category_t *category)
 	}
 }
 
-static void UITags_TagPopup(tag_t *tag)
+static void UITags_TagPopup(tag_t *tag, view_t *view)
 {
 	const char *tagName = sb_get(&tag->name);
 	if(ImGui::BeginPopupContextItem(va("TagPopup%s", tagName))) {
@@ -118,6 +118,24 @@ static void UITags_TagPopup(tag_t *tag)
 			if(ImGui::MenuItem("Disable tag")) {
 				view_set_category_collection_disabled(&s_matching, true);
 			}
+		}
+		if(ImGui::MenuItem("Populate with visible categories")) {
+			while(tag->categories.count) {
+				tag_remove_category(tagName, sb_get(tag->categories.data));
+			}
+			for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->categories.count; ++viewCategoryIndex) {
+				view_category_t *vc = view->categories.data + viewCategoryIndex;
+				if(vc->visible) {
+					tag_add_category(tagName, vc->categoryName);
+				}
+			}
+			for(u32 configCategoryIndex = 0; configCategoryIndex < view->config.configCategories.count; ++configCategoryIndex) {
+				view_config_category_t *vc = view->config.configCategories.data + configCategoryIndex;
+				if(vc->visible) {
+					tag_add_category(tagName, sb_get(&vc->name));
+				}
+			}
+			tags_write();
 		}
 		ImGui::EndPopup();
 	}
@@ -379,7 +397,7 @@ void UITags_Update(view_t *view)
 			if(ImGui::IsItemClicked()) {
 				//UIRecordings_HandleClick(tab, startEntry);
 			}
-			UITags_TagPopup(tag);
+			UITags_TagPopup(tag, view);
 
 			if(open) {
 				for(u32 categoryIndex = 0; categoryIndex < tag->categories.count; ++categoryIndex) {
