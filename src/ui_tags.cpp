@@ -361,6 +361,10 @@ void UITags_Update(view_t *view)
 			}
 			ImGui::PushID((int)tagIndex);
 			if(ImGui::Checkbox("", &allChecked)) {
+				if(ImGui::GetIO().KeyCtrl) {
+					allChecked = true;
+					view_set_all_category_visibility(view, false);
+				}
 				view_set_category_collection_visiblity(&s_matching, allChecked);
 			}
 			ImGui::PopID();
