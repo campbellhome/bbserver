@@ -394,8 +394,9 @@ void UITags_Update(view_t *view)
 
 			bool open = ImGui::TreeNodeEx(tagName, tagNodeFlags | (bTagSelected ? ImGuiTreeNodeFlags_Selected : 0));
 
-			if(ImGui::IsItemClicked()) {
-				//UIRecordings_HandleClick(tab, startEntry);
+			if(ImGui::IsItemClicked() && ImGui::GetIO().KeyCtrl) {
+				view_set_all_category_visibility(view, false);
+				view_set_category_collection_visiblity(&s_matching, true);
 			}
 			UITags_TagPopup(tag, view);
 
