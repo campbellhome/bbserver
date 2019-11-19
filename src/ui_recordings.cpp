@@ -301,7 +301,7 @@ void UIRecordings_UpdateTab(recording_tab_t tab)
 	recordings_config_t *config = recordings_get_config();
 
 	bool scrollToBottom = false;
-	bool windowSelected = ImGui::IsWindowFocused();
+	bool windowSelected = ImGui::IsCurrentWindowNavWindowRoot();
 	grouped_recordings_t *groupedRecordings = grouped_recordings_get_all(tab);
 	//if(BeginMenuBar()) {
 	//	if(ImGui::BeginMenu("View")) {
