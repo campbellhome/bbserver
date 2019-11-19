@@ -9,6 +9,7 @@
 extern "C" {
 #endif
 
+typedef struct recorded_session_s recorded_session_t;
 typedef struct view_s view_t;
 typedef struct view_category_s view_category_t;
 typedef struct view_thread_s view_thread_t;
@@ -19,6 +20,7 @@ typedef struct view_config_file_s view_config_file_t;
 
 b32 view_config_write(view_t *view);
 b32 view_config_read(view_t *view);
+void view_config_add_categories_to_session(recorded_session_t *session);
 
 void view_apply_config_category(view_t *view, view_config_category_t *cc, view_category_t *vc);
 view_config_category_t *view_find_config_category(view_t *view, const char *name);

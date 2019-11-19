@@ -17,11 +17,11 @@
 #include "view.h"
 #include <stdlib.h>
 
-static sb_t view_config_get_path(view_t *view, const char *appName)
+static sb_t view_config_get_path(recorded_session_t *session, b32 bExternalView, const char *appName)
 {
-	const char *filename = view->session->applicationFilename;
+	const char *filename = session->applicationFilename;
 	sb_t s = appdata_get(appName);
-	if(view->externalView) {
+	if(bExternalView) {
 		sb_va(&s, "\\bb_external_view_%s.json", filename);
 	} else {
 		sb_va(&s, "\\bb_view_%s.json", filename);
@@ -364,7 +364,7 @@ static void view_config_read_fixup(view_t *view)
 
 b32 view_config_write(view_t *view)
 {
-	sb_t path = view_config_get_path(view, "bb");
+	sb_t path = view_config_get_path(view->session, view->externalView, "bb");
 	BB_LOG("view::config", "write config to %s", sb_get(&path));
 	view_config_write_prep(view);
 	b32 result = false;
@@ -390,7 +390,7 @@ b32 view_config_read(view_t *view)
 	b32 ret = false;
 	recording_t *recording = recordings_find_by_path(view->session->path);
 	view->externalView = recording && recording->recordingType == kRecordingType_ExternalFile;
-	sb_t path = view_config_get_path(view, "bb");
+	sb_t path = view_config_get_path(view->session, view->externalView, "bb");
 	JSON_Value *val = json_parse_file(sb_get(&path));
 	if(val) {
 		BB_LOG("view::config", "read config from %s", sb_get(&path));
@@ -404,4 +404,26 @@ b32 view_config_read(view_t *view)
 	view_config_read_fixup(view);
 	BB_LOG("view::config", "read config done");
 	return ret;
+}
+
+void view_config_add_categories_to_session(recorded_session_t *session)
+{
+	recording_t *recording = recordings_find_by_path(session->path);
+	b32 bExternalView = recording && recording->recordingType == kRecordingType_ExternalFile;
+	sb_t path = view_config_get_path(session, bExternalView, "bb");
+	JSON_Value *val = json_parse_file(sb_get(&path));
+	if(val) {
+		BB_LOG("view::config", "read config from %s for session categories", sb_get(&path));
+		view_config_t config = json_deserialize_view_config_t(val);
+		json_value_free(val);
+
+		for(u32 i = 0; i < config.configCategories.count; ++i) {
+			view_config_category_t *cc = config.configCategories.data + i;
+			const char *categoryName = sb_get(&cc->name);
+			recorded_session_add_config_category(session, categoryName);
+		}
+
+		view_config_reset(&config);
+	}
+	sb_reset(&path);
 }

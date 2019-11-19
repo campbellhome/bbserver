@@ -233,6 +233,8 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.updatePauseAfterFailedUpdate = json_object_get_boolean_safe(obj, "updatePauseAfterFailedUpdate");
 			dst.assertMessageBox = json_object_get_boolean_safe(obj, "assertMessageBox");
 			dst.showDebugMenu = json_object_get_boolean_safe(obj, "showDebugMenu");
+			dst.addConfigCategories = json_object_get_boolean_safe(obj, "addConfigCategories");
+			dst.showEmptyCategories = json_object_get_boolean_safe(obj, "showEmptyCategories");
 		}
 	}
 	return dst;
@@ -841,6 +843,8 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "updatePauseAfterFailedUpdate", src->updatePauseAfterFailedUpdate);
 		json_object_set_boolean(obj, "assertMessageBox", src->assertMessageBox);
 		json_object_set_boolean(obj, "showDebugMenu", src->showDebugMenu);
+		json_object_set_boolean(obj, "addConfigCategories", src->addConfigCategories);
+		json_object_set_boolean(obj, "showEmptyCategories", src->showEmptyCategories);
 	}
 	return val;
 }

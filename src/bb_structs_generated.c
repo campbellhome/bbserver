@@ -284,6 +284,8 @@ config_t config_clone(const config_t *src)
 		dst.updatePauseAfterFailedUpdate = src->updatePauseAfterFailedUpdate;
 		dst.assertMessageBox = src->assertMessageBox;
 		dst.showDebugMenu = src->showDebugMenu;
+		dst.addConfigCategories = src->addConfigCategories;
+		dst.showEmptyCategories = src->showEmptyCategories;
 	}
 	return dst;
 }

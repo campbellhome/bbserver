@@ -507,6 +507,12 @@ void UITags_Update(view_t *view)
 			recorded_category_t *recordedCategory = recordedCategories->data + viewCategoryIndex;
 			view_category_t *viewCategory = viewCategories->data + viewCategoryIndex;
 
+			if(recordedCategory->id == 0) {
+				if(!g_config.showEmptyCategories) {
+					continue;
+				}
+			}
+
 			bool checked = viewCategory->visible != 0;
 			ImGui::PushID((int)viewCategoryIndex);
 			bool activated = ImGui::Checkbox("", &checked);

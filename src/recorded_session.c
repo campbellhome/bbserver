@@ -236,9 +236,20 @@ void recorded_session_corrupt_messageBoxFunc(messageBox *mb, const char *action)
 	Imgui_Core_RequestShutDown();
 }
 
+static void recorded_session_init_appinfo(recorded_session_t *session, bb_decoded_packet_t *decoded)
+{
+	if(g_config.addConfigCategories) {
+		view_config_add_categories_to_session(session);
+	}
+	session->appInfo = *decoded;
+	for(u32 i = 0; i < session->views.count; ++i) {
+		view_t *view = session->views.data + i;
+		view_init_appinfo(view);
+	}
+}
+
 void recorded_session_update(recorded_session_t *session)
 {
-	u32 i;
 	u64 start = bb_current_time_ms();
 	bb_decoded_packet_t decoded;
 	while(recorded_session_consume(session, &decoded)) {
@@ -252,11 +263,7 @@ void recorded_session_update(recorded_session_t *session)
 		case kBBPacketType_AppInfo_v2:
 		case kBBPacketType_AppInfo_v3:
 		case kBBPacketType_AppInfo:
-			session->appInfo = decoded;
-			for(i = 0; i < session->views.count; ++i) {
-				view_t *view = session->views.data + i;
-				view_init_appinfo(view);
-			}
+			recorded_session_init_appinfo(session, &decoded);
 			break;
 		case kBBPacketType_CategoryId:
 			recorded_session_add_category(session, &decoded);
@@ -355,7 +362,13 @@ static u32 recorded_session_update_category_parent(recorded_session_t *session, 
 
 static void recorded_session_add_category(recorded_session_t *session, bb_decoded_packet_t *decoded)
 {
-	recorded_category_t *c = bba_add(session->categories, 1);
+	recorded_category_t *c = recorded_session_find_category_by_name(session, decoded->packet.categoryId.name);
+	if(c) {
+		c->id = decoded->packet.categoryId.id;
+		return;
+	}
+
+	c = bba_add(session->categories, 1);
 	if(c) {
 		u32 viewIndex;
 		u32 index = 0;
@@ -377,6 +390,28 @@ static void recorded_session_add_category(recorded_session_t *session, bb_decode
 			index = recorded_session_update_category_parent(session, index, session->categories.count);
 		}
 	}
+}
+
+void recorded_session_add_config_category(recorded_session_t *session, const char *categoryName)
+{
+	recorded_category_t *rc = recorded_session_find_category_by_name(session, categoryName);
+	if(!rc) {
+		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
+		bb_strncpy(decoded.packet.categoryId.name, categoryName, sizeof(decoded.packet.categoryId.name));
+		recorded_session_add_category(session, &decoded);
+	}
+}
+
+recorded_category_t *recorded_session_find_category_by_name(recorded_session_t *session, const char *categoryName)
+{
+	u32 categoryIndex;
+	for(categoryIndex = 0; categoryIndex < session->categories.count; ++categoryIndex) {
+		recorded_category_t *category = session->categories.data + categoryIndex;
+		if(!strcmp(category->categoryName, categoryName)) {
+			return category;
+		}
+	}
+	return NULL;
 }
 
 recorded_category_t *recorded_session_find_category(recorded_session_t *session, u32 categoryId)
