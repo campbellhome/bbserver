@@ -64,11 +64,13 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 {
 	const char *tagName = sb_get(&tag->name);
 	if(ImGui::BeginPopupContextItem(va("TagPopup%s", tagName))) {
-		if(!tag->categories.count) {
-			if(ImGui::MenuItem("Remove tag")) {
+		if(ImGui::BeginMenu("Remove tag...")) {
+			const char *menuText = tag->categories.count ? "Remove non-empty tag" : "Remove empty tag";
+			if(ImGui::MenuItem(menuText)) {
 				tag_remove(tag);
 				tags_write();
 			}
+			ImGui::EndMenu();
 		}
 
 		if(ImGui::MenuItem("Show tag")) {
@@ -119,7 +121,25 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 				view_set_category_collection_disabled(&s_matching, true);
 			}
 		}
-		if(ImGui::MenuItem("Populate with visible categories")) {
+		if(ImGui::MenuItem("Replace with selected categories")) {
+			while(tag->categories.count) {
+				tag_remove_category(tagName, sb_get(tag->categories.data));
+			}
+			for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->categories.count; ++viewCategoryIndex) {
+				view_category_t *vc = view->categories.data + viewCategoryIndex;
+				if(vc->selected) {
+					tag_add_category(tagName, vc->categoryName);
+				}
+			}
+			for(u32 configCategoryIndex = 0; configCategoryIndex < view->config.configCategories.count; ++configCategoryIndex) {
+				view_config_category_t *vc = view->config.configCategories.data + configCategoryIndex;
+				if(vc->selected) {
+					tag_add_category(tagName, sb_get(&vc->name));
+				}
+			}
+			tags_write();
+		}
+		if(ImGui::MenuItem("Replace with visible categories")) {
 			while(tag->categories.count) {
 				tag_remove_category(tagName, sb_get(tag->categories.data));
 			}
