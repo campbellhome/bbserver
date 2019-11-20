@@ -379,6 +379,9 @@ void UITags_Update(view_t *view)
 	ImGuiTreeNodeFlags tagNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
 	                                  ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
+	if(g_config.addConfigCategories) {
+		ImGui::Checkbox("Show empty categories", &g_config.showEmptyCategories);
+	}
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 0.0f));
 	if(ImGui::CollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::PushID("TagsHeader");
@@ -431,9 +434,13 @@ void UITags_Update(view_t *view)
 					b32 *visible = NULL;
 					b32 *selected = NULL;
 					if(viewCategory) {
-						visible = &viewCategory->visible;
-						selected = &viewCategory->selected;
-					} else if(configCategory) {
+						if(g_config.showEmptyCategories || viewCategory->id) {
+							visible = &viewCategory->visible;
+							selected = &viewCategory->selected;
+						} else {
+							continue;
+						}
+					} else if(configCategory && g_config.showEmptyCategories) {
 						visible = &configCategory->visible;
 						selected = &configCategory->selected;
 					} else {

@@ -367,6 +367,9 @@ void view_collect_categories_by_tag(view_t *view, view_category_collection_t *ma
 
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *viewCategory = view->categories.data + i;
+		if(!g_config.showEmptyCategories && !viewCategory->id) {
+			continue;
+		}
 		const char *categoryName = viewCategory->categoryName;
 		b32 bMatching = (!tag || sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName)));
 		if(bMatching && matching) {
@@ -375,14 +378,16 @@ void view_collect_categories_by_tag(view_t *view, view_category_collection_t *ma
 			bba_push(unmatching->viewCategories, viewCategory);
 		}
 	}
-	for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-		view_config_category_t *configCategory = view->config.configCategories.data + i;
-		const char *categoryName = sb_get(&configCategory->name);
-		b32 bMatching = (!tag || sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName)));
-		if(bMatching && matching) {
-			bba_push(matching->configCategories, configCategory);
-		} else if(!bMatching && unmatching) {
-			bba_push(unmatching->configCategories, configCategory);
+	if(g_config.showEmptyCategories) {
+		for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+			view_config_category_t *configCategory = view->config.configCategories.data + i;
+			const char *categoryName = sb_get(&configCategory->name);
+			b32 bMatching = (!tag || sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName)));
+			if(bMatching && matching) {
+				bba_push(matching->configCategories, configCategory);
+			} else if(!bMatching && unmatching) {
+				bba_push(unmatching->configCategories, configCategory);
+			}
 		}
 	}
 }
@@ -402,6 +407,9 @@ void view_collect_categories_by_selection(view_t *view, view_category_collection
 
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *viewCategory = view->categories.data + i;
+		if(!g_config.showEmptyCategories && !viewCategory->id) {
+			continue;
+		}
 		b32 bMatching = viewCategory->selected;
 		if(bMatching && matching) {
 			bba_push(matching->viewCategories, viewCategory);
@@ -409,13 +417,15 @@ void view_collect_categories_by_selection(view_t *view, view_category_collection
 			bba_push(unmatching->viewCategories, viewCategory);
 		}
 	}
-	for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-		view_config_category_t *configCategory = view->config.configCategories.data + i;
-		b32 bMatching = configCategory->selected;
-		if(bMatching && matching) {
-			bba_push(matching->configCategories, configCategory);
-		} else if(!bMatching && unmatching) {
-			bba_push(unmatching->configCategories, configCategory);
+	if(g_config.showEmptyCategories) {
+		for(u32 i = 0; i < view->config.configCategories.count; ++i) {
+			view_config_category_t *configCategory = view->config.configCategories.data + i;
+			b32 bMatching = configCategory->selected;
+			if(bMatching && matching) {
+				bba_push(matching->configCategories, configCategory);
+			} else if(!bMatching && unmatching) {
+				bba_push(unmatching->configCategories, configCategory);
+			}
 		}
 	}
 }
