@@ -1628,29 +1628,16 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		}
 
 		if(BeginMenuBar()) {
-			if(ImGui::BeginMenu("File")) {
-				if(ImGui::MenuItem("Save text")) {
-					UIRecordedView_SaveLog(view, false, kColumnSpacer_Tab);
-				}
-				if(ImGui::MenuItem("Save all columns")) {
-					UIRecordedView_SaveLog(view, true, kColumnSpacer_Spaces);
-				}
-				if(ImGui::MenuItem("Save all columns (Tab-separated)")) {
-					UIRecordedView_SaveLog(view, true, kColumnSpacer_Tab);
-				}
-				if(ImGui::MenuItem("Open containing folder")) {
-					UIRecordedView_OpenContainingFolder(view);
-				}
-				ImGui::EndMenu();
-			}
 			PushStyleColor(ImGuiCol_Text, recording && recording->active ? MakeColor(kStyleColor_ActiveSession) : MakeColor(kStyleColor_InactiveSession));
+			const char *menuText = "";
 			if(recording) {
 				const char *sep = strrchr(recording->path, '\\');
 				const char *filename = sep ? sep + 1 : recording->path;
-				Text("%s - %s", view->session->appInfo.packet.appInfo.applicationName, filename);
+				menuText = va("%s - %s", view->session->appInfo.packet.appInfo.applicationName, filename);
 			} else {
-				Text("%s", view->session->appInfo.packet.appInfo.applicationName);
+				menuText = va("%s", view->session->appInfo.packet.appInfo.applicationName);
 			}
+			bool bMenuOpen = ImGui::BeginMenu(menuText);
 			if(ImGui::IsItemHovered()) {
 				if(view->session->appInfo.packet.appInfo.platform == kBBPlatform_Unknown) {
 					SetTooltip("%s", view->session->path);
@@ -1659,6 +1646,21 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				}
 			}
 			PopStyleColor();
+			if(bMenuOpen) {
+				if(ImGui::MenuItem("Save text")) {
+					UIRecordedView_SaveLog(view, false, kColumnSpacer_Tab);
+				}
+				if(ImGui::MenuItem("Save all columns")) {
+					UIRecordedView_SaveLog(view, true, kColumnSpacer_Spaces);
+				}
+				if(ImGui::MenuItem("Save all columns (tab-separated)")) {
+					UIRecordedView_SaveLog(view, true, kColumnSpacer_Tab);
+				}
+				if(ImGui::MenuItem("Open containing folder")) {
+					UIRecordedView_OpenContainingFolder(view);
+				}
+				ImGui::EndMenu();
+			}
 			EndMenuBar();
 		}
 
