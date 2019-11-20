@@ -365,6 +365,9 @@ static void recorded_session_add_category(recorded_session_t *session, bb_decode
 	recorded_category_t *c = recorded_session_find_category_by_name(session, decoded->packet.categoryId.name);
 	if(c) {
 		c->id = decoded->packet.categoryId.id;
+		for(u32 viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
+			view_update_category_id(session->views.data + viewIndex, c);
+		}
 		return;
 	}
 

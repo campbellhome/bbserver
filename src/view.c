@@ -895,6 +895,16 @@ void view_update_visible_logs(view_t *view)
 	bba_free(oldLogs);
 }
 
+void view_update_category_id(view_t *view, recorded_category_t *category)
+{
+	for(u32 i = 0; i < view->categories.count; ++i) {
+		view_category_t *c = view->categories.data + i;
+		if(!strcmp(c->categoryName, category->categoryName)) {
+			c->id = category->id;
+		}
+	}
+}
+
 view_category_t *view_find_category_by_name(view_t *view, const char *categoryName)
 {
 	for(u32 i = 0; i < view->categories.count; ++i) {
