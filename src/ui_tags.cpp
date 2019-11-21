@@ -23,9 +23,7 @@ void UITags_Shutdown()
 	sb_reset(&s_newTagName);
 	sb_reset(&s_categoryTagNames);
 	bba_free(s_matching.viewCategories);
-	bba_free(s_matching.configCategories);
 	bba_free(s_unmatching.viewCategories);
-	bba_free(s_unmatching.configCategories);
 }
 
 static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel)
@@ -103,13 +101,6 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 				allDisabled = false;
 			}
 		}
-		for(u32 i = 0; i < s_matching.configCategories.count; ++i) {
-			if(s_matching.configCategories.data[i]->disabled) {
-				allEnabled = false;
-			} else {
-				allDisabled = false;
-			}
-		}
 
 		if(!allEnabled) {
 			if(ImGui::MenuItem("Enable tag")) {
@@ -127,14 +118,8 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 			}
 			for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->categories.count; ++viewCategoryIndex) {
 				view_category_t *vc = view->categories.data + viewCategoryIndex;
-				if(vc->selected) {
+				if(vc->selected && !view_category_treat_as_empty(vc)) {
 					tag_add_category(tagName, vc->categoryName);
-				}
-			}
-			for(u32 configCategoryIndex = 0; configCategoryIndex < view->config.configCategories.count; ++configCategoryIndex) {
-				view_config_category_t *vc = view->config.configCategories.data + configCategoryIndex;
-				if(vc->selected) {
-					tag_add_category(tagName, sb_get(&vc->name));
 				}
 			}
 			tags_write();
@@ -145,14 +130,8 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 			}
 			for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->categories.count; ++viewCategoryIndex) {
 				view_category_t *vc = view->categories.data + viewCategoryIndex;
-				if(vc->visible) {
+				if(vc->visible && !view_category_treat_as_empty(vc)) {
 					tag_add_category(tagName, vc->categoryName);
-				}
-			}
-			for(u32 configCategoryIndex = 0; configCategoryIndex < view->config.configCategories.count; ++configCategoryIndex) {
-				view_config_category_t *vc = view->config.configCategories.data + configCategoryIndex;
-				if(vc->visible) {
-					tag_add_category(tagName, sb_get(&vc->name));
 				}
 			}
 			tags_write();
@@ -166,10 +145,6 @@ static void UITags_Category_ClearSelection(view_t *view)
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *viewCategory = view->categories.data + i;
 		viewCategory->selected = false;
-	}
-	for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-		view_config_category_t *configCategory = view->config.configCategories.data + i;
-		configCategory->selected = false;
 	}
 	view->lastCategoryClickIndex = ~0U;
 }
@@ -207,7 +182,10 @@ static void UITags_Category_HandleClick(view_t *view, u32 viewCategoryIndex)
 				startIndex = tmp;
 			}
 			for(u32 i = startIndex; i <= endIndex; ++i) {
-				view->categories.data[i].selected = true;
+				view_category_t *viewCategory = view->categories.data + i;
+				if(!view_category_treat_as_empty(viewCategory)) {
+					viewCategory->selected = true;
+				}
 			}
 		} else {
 			UITags_Category_AddSelection(view, viewCategoryIndex);
@@ -352,16 +330,8 @@ static void UITags_CountCategoryVisibility(view_t *view, tag_t *tag, u32 *visibl
 		sb_t *category = tag->categories.data + categoryIndex;
 		const char *categoryName = sb_get(category);
 		view_category_t *viewCategory = view_find_category_by_name(view, categoryName);
-		view_config_category_t *configCategory = view_find_config_category(view, categoryName);
-
-		if(viewCategory) {
+		if(viewCategory && !view_category_treat_as_empty(viewCategory)) {
 			if(viewCategory->visible) {
-				++numVisible;
-			} else {
-				++numHidden;
-			}
-		} else if(configCategory) {
-			if(configCategory->visible) {
 				++numVisible;
 			} else {
 				++numHidden;
@@ -379,9 +349,7 @@ void UITags_Update(view_t *view)
 	ImGuiTreeNodeFlags tagNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
 	                                  ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-	if(g_config.addConfigCategories) {
-		ImGui::Checkbox("Show empty categories", &g_config.showEmptyCategories);
-	}
+	ImGui::Checkbox("Show unused categories", &g_config.showEmptyCategories);
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 0.0f));
 	if(ImGui::CollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::PushID("TagsHeader");
@@ -429,20 +397,11 @@ void UITags_Update(view_t *view)
 					const char *categoryName = sb_get(category);
 
 					view_category_t *viewCategory = view_find_category_by_name(view, categoryName);
-					view_config_category_t *configCategory = view_find_config_category(view, categoryName);
-
 					b32 *visible = NULL;
 					b32 *selected = NULL;
-					if(viewCategory) {
-						if(g_config.showEmptyCategories || viewCategory->id) {
-							visible = &viewCategory->visible;
-							selected = &viewCategory->selected;
-						} else {
-							continue;
-						}
-					} else if(configCategory && g_config.showEmptyCategories) {
-						visible = &configCategory->visible;
-						selected = &configCategory->selected;
+					if(viewCategory && !view_category_treat_as_empty(viewCategory)) {
+						visible = &viewCategory->visible;
+						selected = &viewCategory->selected;
 					} else {
 						continue;
 					}
@@ -463,25 +422,15 @@ void UITags_Update(view_t *view)
 								vc->visible = checked;
 							}
 						}
-						for(u32 configCategoryIndex = 0; configCategoryIndex < view->config.configCategories.count; ++configCategoryIndex) {
-							view_config_category_t *vc = view->config.configCategories.data + configCategoryIndex;
-							if(vc->selected) {
-								vc->visible = checked;
-							}
-						}
 					}
 					ImGui::SameLine();
-					bb_log_level_e logLevel = kBBLogLevel_VeryVerbose;
-					if(viewCategory) {
-						u32 viewCategoryIndex = (u32)(viewCategory - view->categories.data);
-						recorded_category_t *recordedCategory = view->session->categories.data + viewCategoryIndex;
-						logLevel = GetLogLevelBasedOnCounts(recordedCategory->logCount);
-					}
+					u32 viewCategoryIndex = (u32)(viewCategory - view->categories.data);
+					recorded_category_t *recordedCategory = view->session->categories.data + viewCategoryIndex;
+					bb_log_level_e logLevel = GetLogLevelBasedOnCounts(recordedCategory->logCount);
 					LogLevelColorizer colorizer(logLevel);
 					ImVec2 pos = ImGui::GetIconPosForText();
 					ImGui::Selectable(categoryName, selected);
-					b32 disabled = viewCategory ? viewCategory->disabled : configCategory ? configCategory->disabled : false;
-					if(disabled) {
+					if(viewCategory->disabled) {
 						ImVec4 color4 = GetTextColorForLogLevel(logLevel);
 						color4.w *= 0.8f;
 						ImColor color = ImGui::GetColorU32(color4);
@@ -533,11 +482,8 @@ void UITags_Update(view_t *view)
 
 			recorded_category_t *recordedCategory = recordedCategories->data + viewCategoryIndex;
 			view_category_t *viewCategory = viewCategories->data + viewCategoryIndex;
-
-			if(recordedCategory->id == 0) {
-				if(!g_config.showEmptyCategories) {
-					continue;
-				}
+			if(view_category_treat_as_empty(viewCategory)) {
+				continue;
 			}
 
 			bool checked = viewCategory->visible != 0;

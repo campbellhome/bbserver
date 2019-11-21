@@ -231,15 +231,13 @@ void view_reset_column_widths(view_t *view)
 	//BB_LOG("View::Columns", "%s reset column widths", view->session->appInfo.packet.appInfo.applicationName);
 }
 
-void view_add_category(view_t *view, recorded_category_t *category)
+void view_add_category(view_t *view, recorded_category_t *category, const view_config_category_t *configCategory)
 {
 	view_category_t *c = bba_add(view->categories, 1);
 	if(c) {
-		view_config_category_t *cc;
 		view_category_copy(c, category);
-		cc = view_find_config_category(view, category->categoryName);
-		if(cc) {
-			view_apply_config_category(view, cc, c);
+		if(configCategory) {
+			view_apply_config_category(view, configCategory, c);
 			if(c->favorite && view->changedFavoriteColumnVisibility) {
 				c->visible = view->config.newFavoriteCategoryVisibility;
 			} else if(!c->favorite && view->changedNonFavoriteColumnVisibility) {
@@ -310,12 +308,6 @@ void view_set_category_collection_visiblity(view_category_collection_t *category
 				categoryCollection->view->visibleLogsDirty = true;
 			}
 		}
-		for(u32 i = 0; i < categoryCollection->configCategories.count; ++i) {
-			view_config_category_t *category = categoryCollection->configCategories.data[i];
-			if(category->visible != visible) {
-				category->visible = visible;
-			}
-		}
 	}
 }
 
@@ -324,10 +316,6 @@ void view_set_category_collection_selection(view_category_collection_t *category
 	if(categoryCollection) {
 		for(u32 i = 0; i < categoryCollection->viewCategories.count; ++i) {
 			view_category_t *category = categoryCollection->viewCategories.data[i];
-			category->selected = selected;
-		}
-		for(u32 i = 0; i < categoryCollection->configCategories.count; ++i) {
-			view_config_category_t *category = categoryCollection->configCategories.data[i];
 			category->selected = selected;
 		}
 	}
@@ -343,12 +331,6 @@ void view_set_category_collection_disabled(view_category_collection_t *categoryC
 				categoryCollection->view->visibleLogsDirty = true;
 			}
 		}
-		for(u32 i = 0; i < categoryCollection->configCategories.count; ++i) {
-			view_config_category_t *category = categoryCollection->configCategories.data[i];
-			if(category->disabled != disabled) {
-				category->disabled = disabled;
-			}
-		}
 	}
 }
 
@@ -357,17 +339,15 @@ void view_collect_categories_by_tag(view_t *view, view_category_collection_t *ma
 	if(matching) {
 		matching->view = view;
 		matching->viewCategories.count = 0;
-		matching->configCategories.count = 0;
 	}
 	if(unmatching) {
 		unmatching->view = view;
 		unmatching->viewCategories.count = 0;
-		unmatching->configCategories.count = 0;
 	}
 
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *viewCategory = view->categories.data + i;
-		if(!g_config.showEmptyCategories && !viewCategory->id) {
+		if(view_category_treat_as_empty(viewCategory)) {
 			continue;
 		}
 		const char *categoryName = viewCategory->categoryName;
@@ -378,18 +358,11 @@ void view_collect_categories_by_tag(view_t *view, view_category_collection_t *ma
 			bba_push(unmatching->viewCategories, viewCategory);
 		}
 	}
-	if(g_config.showEmptyCategories) {
-		for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-			view_config_category_t *configCategory = view->config.configCategories.data + i;
-			const char *categoryName = sb_get(&configCategory->name);
-			b32 bMatching = (!tag || sbs_contains(&tag->categories, sb_from_c_string_no_alloc(categoryName)));
-			if(bMatching && matching) {
-				bba_push(matching->configCategories, configCategory);
-			} else if(!bMatching && unmatching) {
-				bba_push(unmatching->configCategories, configCategory);
-			}
-		}
-	}
+}
+
+b32 view_category_treat_as_empty(view_category_t *viewCategory)
+{
+	return !g_config.showEmptyCategories && !viewCategory->id;
 }
 
 void view_collect_categories_by_selection(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching)
@@ -397,17 +370,15 @@ void view_collect_categories_by_selection(view_t *view, view_category_collection
 	if(matching) {
 		matching->view = view;
 		matching->viewCategories.count = 0;
-		matching->configCategories.count = 0;
 	}
 	if(unmatching) {
 		unmatching->view = view;
 		unmatching->viewCategories.count = 0;
-		unmatching->configCategories.count = 0;
 	}
 
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *viewCategory = view->categories.data + i;
-		if(!g_config.showEmptyCategories && !viewCategory->id) {
+		if(view_category_treat_as_empty(viewCategory)) {
 			continue;
 		}
 		b32 bMatching = viewCategory->selected;
@@ -415,17 +386,6 @@ void view_collect_categories_by_selection(view_t *view, view_category_collection
 			bba_push(matching->viewCategories, viewCategory);
 		} else if(!bMatching && unmatching) {
 			bba_push(unmatching->viewCategories, viewCategory);
-		}
-	}
-	if(g_config.showEmptyCategories) {
-		for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-			view_config_category_t *configCategory = view->config.configCategories.data + i;
-			b32 bMatching = configCategory->selected;
-			if(bMatching && matching) {
-				bba_push(matching->configCategories, configCategory);
-			} else if(!bMatching && unmatching) {
-				bba_push(unmatching->configCategories, configCategory);
-			}
 		}
 	}
 }
@@ -939,10 +899,6 @@ void view_set_all_category_visibility(view_t *view, b8 visible)
 		view_category_t *c = view->categories.data + i;
 		c->visible = visible;
 	}
-	for(i = 0; i < view->config.configCategories.count; ++i) {
-		view_config_category_t *c = view->config.configCategories.data + i;
-		c->visible = visible;
-	}
 }
 
 static u32 view_set_favorite_category_visibility_recursive(view_t *view, u32 startIndex, b32 favorites, b8 visible, u32 inheritedFavoriteCount)
@@ -1027,38 +983,6 @@ u32 view_test_favorite_category_visibility_recursive(view_t *view, u32 startInde
 	return endIndex;
 }
 
-static u32 view_set_favorite_config_category_visibility(view_t *view, u32 startIndex, b32 favorites, b8 visible, u32 inheritedFavoriteCount)
-{
-	view_config_categories_t *categories = &view->config.configCategories;
-	view_config_category_t *category = categories->data + startIndex;
-	u32 favoriteCount = inheritedFavoriteCount + category->favorite ? 1u : 0u;
-	u32 endIndex = startIndex + 1;
-	while(endIndex < categories->count) {
-		view_config_category_t *subCategory = categories->data + endIndex;
-		if(subCategory->depth <= category->depth)
-			break;
-		favoriteCount += subCategory->favorite;
-		++endIndex;
-	}
-
-	if(favorites && !favoriteCount)
-		return endIndex;
-
-	if(!favorites && category->favorite)
-		return endIndex;
-
-	category->visible = visible;
-
-	if(startIndex + 1 != endIndex) {
-		u32 index = startIndex + 1;
-		while(index < endIndex) {
-			index = view_set_favorite_config_category_visibility(view, index, favorites, visible, favoriteCount);
-		}
-	}
-
-	return endIndex;
-}
-
 void view_set_favorite_category_visibility(view_t *view, b32 favorite, b8 visible)
 {
 	BB_LOG("Debug", "%s %sfavorite categories for '%s'\n",
@@ -1075,11 +999,6 @@ void view_set_favorite_category_visibility(view_t *view, b32 favorite, b8 visibl
 	}
 
 	u32 index = 0;
-	while(index < view->config.configCategories.count) {
-		index = view_set_favorite_config_category_visibility(view, index, favorite, visible, 0);
-	}
-
-	index = 0;
 	while(index < view->categories.count) {
 		index = view_set_favorite_category_visibility_recursive(view, index, favorite, visible, 0);
 	}

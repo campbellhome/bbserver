@@ -15,6 +15,7 @@ extern "C" {
 
 typedef struct span_s span_t;
 typedef struct view_s view_t;
+typedef struct view_config_category_s view_config_category_t;
 
 typedef struct session_message_queue_s {
 	volatile s64 readCursor;
@@ -129,7 +130,7 @@ void recorded_session_update(recorded_session_t *session);
 void recorded_session_auto_close(const char *applicationName);
 void recorded_session_auto_close_all(void);
 void recorded_session_recording_stopped(const char *path);
-void recorded_session_add_config_category(recorded_session_t *session, const char *categoryName);
+void recorded_session_add_config_category(recorded_session_t *session, const view_config_category_t *configCategory);
 recorded_session_t *recorded_session_find(const char *path);
 u32 recorded_session_count(void);
 recorded_session_t *recorded_session_get(u32 index);

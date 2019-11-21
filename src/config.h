@@ -119,8 +119,8 @@ AUTOJSON typedef struct config_s {
 	b32 updatePauseAfterFailedUpdate;
 	b32 assertMessageBox;
 	b32 showDebugMenu;
-	b32 addConfigCategories;
 	b32 showEmptyCategories;
+	u8 pad[4];
 } config_t;
 
 enum { kConfigVersion = 6 };

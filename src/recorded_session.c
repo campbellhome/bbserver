@@ -238,9 +238,7 @@ void recorded_session_corrupt_messageBoxFunc(messageBox *mb, const char *action)
 
 static void recorded_session_init_appinfo(recorded_session_t *session, bb_decoded_packet_t *decoded)
 {
-	if(g_config.addConfigCategories) {
-		view_config_add_categories_to_session(session);
-	}
+	view_config_add_categories_to_session(session);
 	session->appInfo = *decoded;
 	for(u32 i = 0; i < session->views.count; ++i) {
 		view_t *view = session->views.data + i;
@@ -360,6 +358,37 @@ static u32 recorded_session_update_category_parent(recorded_session_t *session, 
 	return endIndex;
 }
 
+static void recorded_session_add_category_from_config(recorded_session_t *session, const view_config_category_t *configCategory)
+{
+	const char *categoryName = sb_get(&configCategory->name);
+	recorded_category_t *c = recorded_session_find_category_by_name(session, categoryName);
+	if(c) {
+		return;
+	}
+
+	c = bba_add(session->categories, 1);
+	if(c) {
+		u32 viewIndex;
+		u32 index = 0;
+		const char *s;
+		bb_strncpy(c->categoryName, categoryName, sizeof(c->categoryName));
+		Fonts_CacheGlyphs(c->categoryName);
+		for(s = c->categoryName; *s; ++s) {
+			if(s[0] == ':' && s[1] == ':') {
+				++c->depth;
+				++s; // ::: only counts as 1 match
+			}
+		}
+		for(viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
+			view_add_category(session->views.data + viewIndex, c, configCategory);
+		}
+		qsort(session->categories.data, session->categories.count, sizeof(session->categories.data[0]), CategoryCompare);
+		while(index < session->categories.count) {
+			index = recorded_session_update_category_parent(session, index, session->categories.count);
+		}
+	}
+}
+
 static void recorded_session_add_category(recorded_session_t *session, bb_decoded_packet_t *decoded)
 {
 	recorded_category_t *c = recorded_session_find_category_by_name(session, decoded->packet.categoryId.name);
@@ -386,7 +415,7 @@ static void recorded_session_add_category(recorded_session_t *session, bb_decode
 			}
 		}
 		for(viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
-			view_add_category(session->views.data + viewIndex, c);
+			view_add_category(session->views.data + viewIndex, c, NULL);
 		}
 		qsort(session->categories.data, session->categories.count, sizeof(session->categories.data[0]), CategoryCompare);
 		while(index < session->categories.count) {
@@ -395,13 +424,14 @@ static void recorded_session_add_category(recorded_session_t *session, bb_decode
 	}
 }
 
-void recorded_session_add_config_category(recorded_session_t *session, const char *categoryName)
+void recorded_session_add_config_category(recorded_session_t *session, const view_config_category_t *configCategory)
 {
+	const char *categoryName = sb_get(&configCategory->name);
 	recorded_category_t *rc = recorded_session_find_category_by_name(session, categoryName);
 	if(!rc) {
 		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
 		bb_strncpy(decoded.packet.categoryId.name, categoryName, sizeof(decoded.packet.categoryId.name));
-		recorded_session_add_category(session, &decoded);
+		recorded_session_add_category_from_config(session, configCategory);
 	}
 }
 

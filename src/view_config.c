@@ -105,34 +105,13 @@ static b32 view_get_config_path(view_t *view, char *buffer, size_t bufferSize)
 	return true;
 }
 
-view_config_category_t *view_find_config_category(view_t *view, const char *name)
-{
-	u32 i;
-	for(i = 0; i < view->config.configCategories.count; ++i) {
-		view_config_category_t *c = view->config.configCategories.data + i;
-		if(!strcmp(sb_get(&c->name), name))
-			return c;
-	}
-	return NULL;
-}
-static view_config_category_t *view_find_or_add_config_category(view_t *view, const char *name)
-{
-	view_config_category_t *c = view_find_config_category(view, name);
-	if(!c) {
-		c = bba_add(view->config.configCategories, 1);
-		if(c) {
-			sb_append(&c->name, name);
-		}
-	}
-	return c;
-}
 static int ViewConfigCategoryCompare(const void *_a, const void *_b)
 {
 	const view_config_category_t *a = (const view_config_category_t *)_a;
 	const view_config_category_t *b = (const view_config_category_t *)_b;
 	return strcmp(sb_get(&a->name), sb_get(&b->name));
 }
-void view_apply_config_category(view_t *view, view_config_category_t *cc, view_category_t *vc)
+void view_apply_config_category(view_t *view, const view_config_category_t *cc, view_category_t *vc)
 {
 	u32 i;
 	u32 startIndex = (u32)(vc - view->categories.data);
@@ -237,10 +216,12 @@ static void view_config_write_prep(view_t *view)
 	view_console_history_reset(&view->config.consoleHistory);
 	view->config.consoleHistory = view_console_history_clone(&view->consoleHistory);
 
+	view_config_categories_reset(&view->config.configCategories);
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *vc = view->categories.data + i;
-		view_config_category_t *cc = view_find_or_add_config_category(view, vc->categoryName);
+		view_config_category_t *cc = bba_add(view->config.configCategories, 1);
 		if(cc) {
+			sb_append(&cc->name, vc->categoryName);
 			cc->selected = vc->selected;
 			cc->visible = vc->visible;
 			cc->favorite = vc->favorite;
@@ -400,6 +381,10 @@ b32 view_config_read(view_t *view)
 	}
 	sb_reset(&path);
 
+	if(view->config.version < 2) {
+		view->config.selector = kViewSelector_Tags;
+	}
+
 	view->config.version = kViewConfigVersion;
 	view_config_read_fixup(view);
 	BB_LOG("view::config", "read config done");
@@ -418,9 +403,7 @@ void view_config_add_categories_to_session(recorded_session_t *session)
 		json_value_free(val);
 
 		for(u32 i = 0; i < config.configCategories.count; ++i) {
-			view_config_category_t *cc = config.configCategories.data + i;
-			const char *categoryName = sb_get(&cc->name);
-			recorded_session_add_config_category(session, categoryName);
+			recorded_session_add_config_category(session, config.configCategories.data + i);
 		}
 
 		view_config_reset(&config);

@@ -233,8 +233,10 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.updatePauseAfterFailedUpdate = json_object_get_boolean_safe(obj, "updatePauseAfterFailedUpdate");
 			dst.assertMessageBox = json_object_get_boolean_safe(obj, "assertMessageBox");
 			dst.showDebugMenu = json_object_get_boolean_safe(obj, "showDebugMenu");
-			dst.addConfigCategories = json_object_get_boolean_safe(obj, "addConfigCategories");
 			dst.showEmptyCategories = json_object_get_boolean_safe(obj, "showEmptyCategories");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -843,8 +845,10 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "updatePauseAfterFailedUpdate", src->updatePauseAfterFailedUpdate);
 		json_object_set_boolean(obj, "assertMessageBox", src->assertMessageBox);
 		json_object_set_boolean(obj, "showDebugMenu", src->showDebugMenu);
-		json_object_set_boolean(obj, "addConfigCategories", src->addConfigCategories);
 		json_object_set_boolean(obj, "showEmptyCategories", src->showEmptyCategories);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }
@@ -1291,7 +1295,7 @@ recording_type_t json_deserialize_recording_type_t(JSON_Value *src)
 
 view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src)
 {
-	view_config_selector_t dst = kViewSelector_Categories;
+	view_config_selector_t dst = kViewSelector_Tags;
 	if(src) {
 		const char *str = json_value_get_string(src);
 		if(str) {

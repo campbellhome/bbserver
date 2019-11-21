@@ -99,7 +99,7 @@ typedef struct view_persistent_logs_s {
 	view_persistent_log_t *data;
 } view_persistent_logs_t;
 
-AUTOJSON AUTODEFAULT(kViewSelector_Categories) typedef enum view_config_selector_e {
+AUTOJSON AUTODEFAULT(kViewSelector_Tags) typedef enum view_config_selector_e {
 	kViewSelector_Categories,
 	kViewSelector_AllCategories,
 	kViewSelector_Tags,
@@ -150,15 +150,9 @@ typedef struct collected_view_categories_s {
 	u32 allocated;
 	view_category_t **data;
 } collected_view_categories_t;
-typedef struct collected_view_config_categories_s {
-	u32 count;
-	u32 allocated;
-	view_config_category_t **data;
-} collected_view_config_categories_t;
 typedef struct view_category_collection_s {
 	view_t *view;
 	collected_view_categories_t viewCategories;
-	collected_view_config_categories_t configCategories;
 } view_category_collection_t;
 
 AUTOJSON typedef struct view_config_column_s {
@@ -215,7 +209,7 @@ AUTOJSON typedef struct view_config_s {
 	u8 pad[4];
 } view_config_t;
 
-enum { kViewConfigVersion = 1 };
+enum { kViewConfigVersion = 2 };
 
 typedef struct view_filter_token_s {
 	u32 offset;
@@ -318,7 +312,7 @@ void view_reset(view_t *view);
 void view_restart(view_t *view);
 void view_reset_column_offsets(view_t *view);
 void view_reset_column_widths(view_t *view);
-void view_add_category(view_t *view, recorded_category_t *category);
+void view_add_category(view_t *view, recorded_category_t *category, const view_config_category_t* configCategory);
 void view_add_thread(view_t *view, recorded_thread_t *rt);
 void view_add_file(view_t *view, recorded_filename_t *rf);
 void view_add_pieInstance(view_t *view, u32 pieInstance);
@@ -327,6 +321,7 @@ void view_update_visible_logs(view_t *view);
 void view_update_category_id(view_t *view, recorded_category_t *category);
 void view_set_thread_name(view_t *view, u64 id, const char *name);
 view_category_t *view_find_category_by_name(view_t *view, const char *categoryName);
+b32 view_category_treat_as_empty(view_category_t* viewCategory);
 void view_collect_categories_by_tag(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag);
 void view_collect_categories_by_selection(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching);
 void view_set_category_collection_visiblity(view_category_collection_t *categoryCollection, b32 visible);
