@@ -364,7 +364,7 @@ void UITags_Update(view_t *view)
 			u32 numHidden = 0;
 			UITags_CountCategoryVisibility(view, tag, &numVisible, &numHidden);
 
-			bool allChecked = numHidden == 0;
+			bool allChecked = numVisible > 0 && numHidden == 0;
 			if(numVisible && numHidden) {
 				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
