@@ -17,6 +17,8 @@ static sb_t s_newTagName;
 static sb_t s_categoryTagNames;
 static view_category_collection_t s_matching;
 static view_category_collection_t s_unmatching;
+static view_category_collection_t s_matchingAll;
+static view_category_collection_t s_unmatchingAll;
 
 void UITags_Shutdown()
 {
@@ -24,6 +26,8 @@ void UITags_Shutdown()
 	sb_reset(&s_categoryTagNames);
 	bba_free(s_matching.viewCategories);
 	bba_free(s_unmatching.viewCategories);
+	bba_free(s_matchingAll.viewCategories);
+	bba_free(s_unmatchingAll.viewCategories);
 }
 
 static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel)
@@ -72,14 +76,14 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 		}
 
 		if(ImGui::MenuItem("Show tag")) {
-			view_set_category_collection_visiblity(&s_matching, true);
+			view_set_category_collection_visiblity(&s_matchingAll, true);
 		}
 		if(ImGui::MenuItem("Show only tag")) {
-			view_set_category_collection_visiblity(&s_matching, true);
-			view_set_category_collection_visiblity(&s_unmatching, false);
+			view_set_category_collection_visiblity(&s_matchingAll, true);
+			view_set_category_collection_visiblity(&s_unmatchingAll, false);
 		}
 		if(ImGui::MenuItem("Hide tag")) {
-			view_set_category_collection_visiblity(&s_matching, false);
+			view_set_category_collection_visiblity(&s_matchingAll, false);
 		}
 		if(ImGui::MenuItem("Select tag categories")) {
 			view_set_category_collection_selection(&s_matching, true);
@@ -358,7 +362,8 @@ void UITags_Update(view_t *view)
 			const char *tagName = sb_get(&tag->name);
 			bool bTagSelected = false;
 
-			view_collect_categories_by_tag(view, &s_matching, &s_unmatching, tag);
+			view_collect_categories_by_tag(view, &s_matching, &s_unmatching, tag, false);
+			view_collect_categories_by_tag(view, &s_matchingAll, &s_unmatchingAll, tag, true);
 
 			u32 numVisible = 0;
 			u32 numHidden = 0;
@@ -374,7 +379,7 @@ void UITags_Update(view_t *view)
 					allChecked = true;
 					view_set_all_category_visibility(view, false);
 				}
-				view_set_category_collection_visiblity(&s_matching, allChecked);
+				view_set_category_collection_visiblity(&s_matchingAll, allChecked);
 			}
 			ImGui::PopID();
 			if(numVisible && numHidden) {
@@ -393,7 +398,7 @@ void UITags_Update(view_t *view)
 
 			if(ImGui::IsItemClicked() && ImGui::GetIO().KeyCtrl) {
 				view_set_all_category_visibility(view, false);
-				view_set_category_collection_visiblity(&s_matching, true);
+				view_set_category_collection_visiblity(&s_matchingAll, true);
 			}
 			UITags_TagPopup(tag, view);
 

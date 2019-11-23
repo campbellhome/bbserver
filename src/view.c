@@ -334,7 +334,7 @@ void view_set_category_collection_disabled(view_category_collection_t *categoryC
 	}
 }
 
-void view_collect_categories_by_tag(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag)
+void view_collect_categories_by_tag(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag, b32 bIncludeHidden)
 {
 	if(matching) {
 		matching->view = view;
@@ -347,7 +347,7 @@ void view_collect_categories_by_tag(view_t *view, view_category_collection_t *ma
 
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *viewCategory = view->categories.data + i;
-		if(view_category_treat_as_empty(viewCategory)) {
+		if(!bIncludeHidden && view_category_treat_as_empty(viewCategory)) {
 			continue;
 		}
 		const char *categoryName = viewCategory->categoryName;

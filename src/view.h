@@ -322,7 +322,7 @@ void view_update_category_id(view_t *view, recorded_category_t *category);
 void view_set_thread_name(view_t *view, u64 id, const char *name);
 view_category_t *view_find_category_by_name(view_t *view, const char *categoryName);
 b32 view_category_treat_as_empty(view_category_t* viewCategory);
-void view_collect_categories_by_tag(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag);
+void view_collect_categories_by_tag(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag, b32 bIncludeHidden);
 void view_collect_categories_by_selection(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching);
 void view_set_category_collection_visiblity(view_category_collection_t *categoryCollection, b32 visible);
 void view_set_category_collection_selection(view_category_collection_t *categoryCollection, b32 selected);
