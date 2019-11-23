@@ -383,7 +383,13 @@ void UITags_Update(view_t *view)
 			ImGui::SameLine();
 			ImGui::BeginGroup();
 
+			if(!numVisible && !numHidden) {
+				ImGui::PushStyleColor(ImGuiCol_Text, GetTextColorForLogLevel(kBBLogLevel_Verbose));
+			}
 			bool open = ImGui::TreeNodeEx(tagName, tagNodeFlags | (bTagSelected ? ImGuiTreeNodeFlags_Selected : 0));
+			if(!numVisible && !numHidden) {
+				ImGui::PopStyleColor();
+			}
 
 			if(ImGui::IsItemClicked() && ImGui::GetIO().KeyCtrl) {
 				view_set_all_category_visibility(view, false);
