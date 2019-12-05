@@ -302,6 +302,12 @@ static void UITags_CategoryPopup(view_t *view, u32 viewCategoryIndex)
 			}
 		}
 
+		if(viewCategory->id == 0) {
+			if(ImGui::MenuItem("Remove Unreferenced Categories")) {
+				view_remove_unreferenced_categories(&s_matching);
+			}
+		}
+
 		if(viewCategory->disabled) {
 			if(ImGui::MenuItem("Enable")) {
 				view_set_category_collection_disabled(&s_matching, false);

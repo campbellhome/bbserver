@@ -219,6 +219,9 @@ static void view_config_write_prep(view_t *view)
 	view_config_categories_reset(&view->config.configCategories);
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *vc = view->categories.data + i;
+		if(vc->removed && vc->id == 0) {
+			continue;
+		}
 		view_config_category_t *cc = bba_add(view->config.configCategories, 1);
 		if(cc) {
 			sb_append(&cc->name, vc->categoryName);

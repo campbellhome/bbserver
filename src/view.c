@@ -334,6 +334,18 @@ void view_set_category_collection_disabled(view_category_collection_t *categoryC
 	}
 }
 
+void view_remove_unreferenced_categories(view_category_collection_t *categoryCollection)
+{
+	if(categoryCollection) {
+		for(u32 i = 0; i < categoryCollection->viewCategories.count; ++i) {
+			view_category_t *category = categoryCollection->viewCategories.data[i];
+			if(category->id == 0) {
+				category->removed = true;
+			}
+		}
+	}
+}
+
 void view_collect_categories_by_tag(view_t *view, view_category_collection_t *matching, view_category_collection_t *unmatching, tag_t *tag, b32 bIncludeHidden)
 {
 	if(matching) {
@@ -362,6 +374,9 @@ void view_collect_categories_by_tag(view_t *view, view_category_collection_t *ma
 
 b32 view_category_treat_as_empty(view_category_t *viewCategory)
 {
+	if(viewCategory->removed && viewCategory->id == 0) {
+		return true;
+	}
 	return !g_config.showEmptyCategories && !viewCategory->id;
 }
 
