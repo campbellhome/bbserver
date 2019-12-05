@@ -298,7 +298,7 @@ void UIConfig_Update(config_t *config)
 			InputFloat("Double-click seconds", &s_preferencesConfig.doubleClickSeconds);
 
 			Checkbox("Alternate row background colors", &s_preferencesConfig.alternateRowBackground);
-			SameLine(0.0f, 40.0f * g_config.dpiScale);
+			SameLine(0.0f, 40.0f * Imgui_Core_GetDpiScale());
 			int colorUsageIndex = s_preferencesConfig.logColorUsage;
 			if(ImGui::Combo("Log colors", &colorUsageIndex, g_colorUsageNames, BB_ARRAYSIZE(g_colorUsageNames))) {
 				if(colorUsageIndex >= 0 && colorUsageIndex < BB_ARRAYSIZE(g_colorUsageNames)) {
@@ -320,14 +320,14 @@ void UIConfig_Update(config_t *config)
 					UIConfig_ApplyColorscheme(&s_preferencesConfig);
 				}
 			}
-			ImGui::SameLine(0.0f, 40.0f * g_config.dpiScale);
+			ImGui::SameLine(0.0f, 40.0f * Imgui_Core_GetDpiScale());
 			ImGui::Checkbox("Log text shadows", &s_preferencesConfig.textShadows);
 			ImGui::Checkbox("DPI Aware", &s_preferencesConfig.dpiAware);
 			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
 				ImGui::SetTooltip("Requires restart.  Default font is not recommended if DPI Aware.");
 			}
 			ImGui::EndGroup();
-			ImGui::SameLine(0.0f, 20.0f * g_config.dpiScale);
+			ImGui::SameLine(0.0f, 20.0f * Imgui_Core_GetDpiScale());
 			ImGui::BeginGroup();
 			Checkbox("Tooltips", &s_preferencesConfig.tooltips.enabled);
 			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
@@ -362,8 +362,8 @@ void UIConfig_Update(config_t *config)
 		}
 		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Open Targets", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Columns(3, "opentargetscolumns");
-			SetColumnOffset(1, 155.0f * g_config.dpiScale);
-			SetColumnOffset(2, 480.0f * g_config.dpiScale);
+			SetColumnOffset(1, 155.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
 			Separator();
 			Text("Name");
 			NextColumn();
@@ -383,8 +383,8 @@ void UIConfig_Update(config_t *config)
 		}
 		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Path Fixups", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Columns(3, "pathfixupscolumns");
-			SetColumnOffset(1, 240.0f * g_config.dpiScale);
-			SetColumnOffset(2, 480.0f * g_config.dpiScale);
+			SetColumnOffset(1, 240.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
 			Separator();
 			Text("Original Path");
 			NextColumn();
@@ -404,10 +404,10 @@ void UIConfig_Update(config_t *config)
 		}
 		if(ImGui::CollapsingHeader("Whitelist", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Columns(5, "whitelistcolumns");
-			SetColumnOffset(1, 80.0f * g_config.dpiScale);
-			SetColumnOffset(2, 280.0f * g_config.dpiScale);
-			SetColumnOffset(3, 480.0f * g_config.dpiScale);
-			SetColumnOffset(4, 680.0f * g_config.dpiScale);
+			SetColumnOffset(1, 80.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(2, 280.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(3, 480.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(4, 680.0f * Imgui_Core_GetDpiScale());
 			Separator();
 			Text("Allow");
 			NextColumn();
@@ -448,7 +448,7 @@ void UIConfig_Update(config_t *config)
 				s_preferencesConfig.uiFontConfig.size = (u32)val;
 				Text("Path:");
 				SameLine();
-				PushItemWidth(300.0f * g_config.dpiScale);
+				PushItemWidth(300.0f * Imgui_Core_GetDpiScale());
 				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
 				InputText("##path", &s_preferencesConfig.uiFontConfig.path, kBBSize_MaxPath, flags);
 				Fonts_CacheGlyphs(sb_get(&s_preferencesConfig.uiFontConfig.path));
@@ -472,7 +472,7 @@ void UIConfig_Update(config_t *config)
 				s_preferencesConfig.logFontConfig.size = (u32)val;
 				Text("Path:");
 				SameLine();
-				PushItemWidth(300.0f * g_config.dpiScale);
+				PushItemWidth(300.0f * Imgui_Core_GetDpiScale());
 				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
 				InputText("##path", &s_preferencesConfig.logFontConfig.path, kBBSize_MaxPath, flags);
 				Fonts_CacheGlyphs(sb_get(&s_preferencesConfig.logFontConfig.path));

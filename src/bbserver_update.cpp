@@ -410,7 +410,7 @@ void BBServer_MainMenuBar(void)
 		ImGuiStyle &style = ImGui::GetStyle();
 		float checkWidth = style.FramePadding.x * 4 + style.ItemInnerSpacing.x + textSize.y;
 
-		float width = BB_MAX((textSize.x + checkWidth + 10) * g_config.dpiScale, UIRecordings_WidthWhenOpen());
+		float width = BB_MAX((textSize.x + checkWidth + 10) * Imgui_Core_GetDpiScale(), UIRecordings_WidthWhenOpen());
 		ImGui::SameLine(ImGui::GetWindowWidth() - width);
 		if(ImGui::Checkbox("Recordings", &recordings_get_config()->recordingsOpen)) {
 			BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
@@ -465,7 +465,7 @@ extern "C" void BBServer_Update(void)
 {
 	b32 bAppliedScrollbarSize = g_config.sizes.scrollbarSize > 0;
 	if(bAppliedScrollbarSize) {
-		ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, g_config.sizes.scrollbarSize * g_config.dpiScale);
+		ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, g_config.sizes.scrollbarSize * Imgui_Core_GetDpiScale());
 	}
 
 	devkit_autodetect_tick();

@@ -1270,7 +1270,7 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 
 			float windowX = ImGui::GetWindowPos().x;
 			float offset = view->columns[column].offset;
-			float width = view->columns[column].width * g_config.dpiScale;
+			float width = view->columns[column].width * Imgui_Core_GetDpiScale();
 
 			float x1 = floorf(0.5f + windowX + offset - 1.0f) - scrollX;
 			float x2 = floorf(0.5f + windowX + offset + width - 1.0f) - scrollX;
@@ -1838,7 +1838,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		}
 		bool filterFocused = ImGui::IsWindowFocused();
 
-		ImGui::SameLine(0, 20 * g_config.dpiScale);
+		ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
 		ImGui::TextUnformatted("Line Spans:");
 		ImGui::SameLine();
 		if(ImGui::Checkbox("###SpansActive", &view->spansActive)) {
@@ -1880,7 +1880,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			BuildLogLine(view, viewLog, false, &sb, kNoCRLF, kColumnSpacer_Tab, kJsonExpansion_Off);
 			if(sb.data) {
 				ImGui::PushItemWidth(-1.0f);
-				ImGui::SameLine(0, 20 * g_config.dpiScale);
+				ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
 				ImGui::InputText("###SelectedHack", sb.data, sb.allocated, ImGuiInputTextFlags_ReadOnly);
 				if(IsItemActive() && Imgui_Core_HasFocus()) {
 					Imgui_Core_RequestRender();
@@ -2184,8 +2184,8 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 	s_gathered_views.count = 0;
 	UIRecordedView_GatherViews(s_gathered_views);
 
-	if(s_lastDpiScale != g_config.dpiScale) {
-		s_lastDpiScale = g_config.dpiScale;
+	if(s_lastDpiScale != Imgui_Core_GetDpiScale()) {
+		s_lastDpiScale = Imgui_Core_GetDpiScale();
 		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
 			view_t *view = s_gathered_views.data[viewIndex];
 			view_reset_column_widths(view);

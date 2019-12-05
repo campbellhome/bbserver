@@ -127,7 +127,7 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	for(i = 0; i < kColumn_Count; ++i) {
 		view_column_t *column = view->columns + i;
 		*column = s_column_defaults[i];
-		column->width *= g_config.dpiScale;
+		column->width *= Imgui_Core_GetDpiScale();
 		column->offset = 0.0f;
 	}
 
@@ -225,7 +225,7 @@ void view_reset_column_widths(view_t *view)
 	int i;
 	for(i = 0; i < kColumn_Count; ++i) {
 		view_column_t *column = view->columns + i;
-		column->width = s_column_defaults[i].width * g_config.dpiScale;
+		column->width = s_column_defaults[i].width * Imgui_Core_GetDpiScale();
 		column->offset = 0.0f;
 	}
 	//BB_LOG("View::Columns", "%s reset column widths", view->session->appInfo.packet.appInfo.applicationName);
