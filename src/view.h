@@ -4,6 +4,7 @@
 #pragma once
 
 #include "config.h"
+#include "message_box.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -260,6 +261,7 @@ typedef struct view_column_s {
 typedef struct view_s {
 	view_config_t config;
 	recorded_session_t *session;
+	messageBoxes messageboxes;
 	view_threads_t threads;
 	view_files_t files;
 	view_categories_t categories;

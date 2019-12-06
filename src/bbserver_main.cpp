@@ -149,7 +149,7 @@ static void BBServer_Shutdown(void)
 	mq_pre_shutdown();
 	Update_Shutdown();
 	Style_ResetConfig();
-	mb_shutdown();
+	mb_shutdown(nullptr);
 	tasks_shutdown();
 	devkit_autodetect_shutdown();
 	UITags_Shutdown();

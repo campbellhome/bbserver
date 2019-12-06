@@ -229,13 +229,6 @@ static int CategoryCompare(const void *_a, const void *_b)
 	return strcmp(a->categoryName, b->categoryName);
 }
 
-void recorded_session_corrupt_messageBoxFunc(messageBox *mb, const char *action)
-{
-	BB_UNUSED(mb);
-	BB_UNUSED(action);
-	Imgui_Core_RequestShutDown();
-}
-
 static void recorded_session_init_appinfo(recorded_session_t *session, bb_decoded_packet_t *decoded)
 {
 	view_config_add_categories_to_session(session);
@@ -298,14 +291,16 @@ void recorded_session_update(recorded_session_t *session)
 	}
 	if(session->failedToDeserialize && !session->shownDeserializationMessageBox) {
 		session->shownDeserializationMessageBox = true;
+
 		messageBox mb = { BB_EMPTY_INITIALIZER };
-		if(!session->logs.count) {
-			mb.callback = recorded_session_corrupt_messageBoxFunc;
-		}
-		sdict_add_raw(&mb.data, "title", "Data Corruption");
+		sdict_add_raw(&mb.data, "title", u8"\uf06a Data Corruption");
 		sdict_add_raw(&mb.data, "text", va("Failed to deserialize %s", session->path));
 		sdict_add_raw(&mb.data, "button1", "Ok");
-		mb_queue(mb);
+
+		for(u32 i = 0; i < session->views.count; ++i) {
+			view_t *view = session->views.data + i;
+			mb_queue(mb, &view->messageboxes);
+		}
 	}
 }
 

@@ -191,6 +191,7 @@ void view_reset(view_t *view)
 	view_config_reset(&view->config);
 	sb_reset(&view->consoleInput);
 	view_console_history_reset(&view->consoleHistory);
+	mb_shutdown(&view->messageboxes);
 }
 
 void view_restart(view_t *view)

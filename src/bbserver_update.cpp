@@ -280,7 +280,7 @@ void BBServer_MainMenuBar(void)
 					sdict_add_raw(&mb.data, "title", "Test Message Box");
 					sdict_add_raw(&mb.data, "text", "Test message box text\nNothing to see here...");
 					sdict_add_raw(&mb.data, "button1", "Ok");
-					mb_queue(mb);
+					mb_queue(mb, nullptr);
 				}
 				if(ImGui::MenuItem("DEBUG Reload style colors")) {
 					Style_ReadConfig(Imgui_Core_GetColorScheme());

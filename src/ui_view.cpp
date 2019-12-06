@@ -1566,6 +1566,87 @@ static char *UIRecordedView_GetViewId(view_t *view)
 static inline ImVec2 operator+(const ImVec2 &lhs, const ImVec2 &rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
 static inline ImVec2 operator-(const ImVec2 &lhs, const ImVec2 &rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
 
+static void UIRecordedView_MessageBoxUpdate(view_t *view)
+{
+	messageBoxes *boxes = &view->messageboxes;
+	messageBox *mb = mb_get_active(boxes);
+	if(!mb)
+		return;
+
+	b32 bRemove = false;
+
+	ImVec2 region = ImGui::GetContentRegionAvail();
+	ImVec2 windowPos = ImGui::GetWindowPos();
+	ImVec2 cursorPos = ImGui::GetCursorPos();
+	ImVec2 size = region;
+	size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
+	ImVec2 start = windowPos + cursorPos;
+	ImVec2 end = start + size;
+	ImDrawList *DrawList = ImGui::GetWindowDrawList();
+	DrawList->AddRectFilled(start, end, 0xffffffff);
+
+	ImDrawVert *bottomLeft = &DrawList->VtxBuffer.back();
+	ImDrawVert *bottomRight = bottomLeft - 1;
+	ImDrawVert *topRight = bottomLeft - 2;
+	ImDrawVert *topLeft = bottomLeft - 3;
+
+	ImGui::BeginGroup();
+	ImGui::Spacing();
+	sdict_t *sd = &mb->data;
+	const char *title = sdict_find(&mb->data, "title");
+	if(title) {
+		ImGui::AlignFirstTextHeightToWidgets();
+		ImGui::Text(" [ %s ] ", title);
+		ImGui::SameLine();
+	}
+
+	const char *text = sdict_find(&mb->data, "text");
+	if(text) {
+		ImGui::TextWrapped(" %s ", text);
+		ImGui::SameLine();
+	}
+
+	ImVec2 curPos = ImGui::GetWindowPos() + ImGui::GetCursorPos();
+	if(curPos.x - start.x >= region.x - 120 * Imgui_Core_GetDpiScale()) {
+		ImGui::NewLine();
+	}
+
+	u32 buttonIndex = 0;
+	const char *button;
+	while((button = sdict_find(sd, va("button%u", ++buttonIndex))) != nullptr) {
+		if(buttonIndex > 1) {
+			ImGui::SameLine();
+		}
+		if(ImGui::Button(button, ImVec2(120 * Imgui_Core_GetDpiScale(), 0.0f))) {
+			if(mb->callback) {
+				mb->callback(mb, button);
+			}
+			bRemove = true;
+			break;
+		}
+	};
+
+	ImGui::Spacing();
+	ImGui::EndGroup();
+
+	// colors are ABGR
+	u32 color = 0x006491be;
+	u32 leftAlpha = 0x88000000;
+	u32 rightAlpha = 0x22000000;
+	bottomLeft->col = color | leftAlpha;
+	bottomRight->col = color | rightAlpha;
+	topRight->col = color | rightAlpha;
+	topLeft->col = color | leftAlpha;
+
+	float endY = ImGui::GetWindowPos().y + ImGui::GetCursorPos().y - ImGui::GetStyle().ItemSpacing.y;
+	bottomLeft->pos.y = endY;
+	bottomRight->pos.y = endY;
+
+	if(bRemove) {
+		mb_remove_active(boxes);
+	}
+}
+
 static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 {
 	recorded_session_t *session = view->session;
@@ -1659,10 +1740,21 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				if(ImGui::MenuItem("Open containing folder")) {
 					UIRecordedView_OpenContainingFolder(view);
 				}
+				if(g_config.showDebugMenu) {
+					if(ImGui::MenuItem("Test message box")) {
+						messageBox mb = { BB_EMPTY_INITIALIZER };
+						sdict_add_raw(&mb.data, "title", u8"\uf06a Data Corruption");
+						sdict_add_raw(&mb.data, "text", va("Failed to deserialize %s", session->path));
+						sdict_add_raw(&mb.data, "button1", "Ok");
+						mb_queue(mb, &view->messageboxes);
+					}
+				}
 				ImGui::EndMenu();
 			}
 			EndMenuBar();
 		}
+
+		UIRecordedView_MessageBoxUpdate(view);
 
 		//Separator();
 
