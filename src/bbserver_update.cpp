@@ -281,7 +281,7 @@ void BBServer_MainMenuBar(void)
 					sdict_add_raw(&mb.data, "title", "Test Message Box");
 					sdict_add_raw(&mb.data, "text", "Test message box text\nNothing to see here...");
 					sdict_add_raw(&mb.data, "button1", "Ok");
-					mb_queue(mb, &g_messageboxes);
+					mb_queue(mb, nullptr);
 				}
 				if(ImGui::MenuItem("DEBUG Reload style colors")) {
 					Style_ReadConfig(Imgui_Core_GetColorScheme());
@@ -504,7 +504,7 @@ extern "C" void BBServer_Update(void)
 	Update_Tick();
 	UIConfig_Update(&g_config);
 	UIRecordings_Update(g_config.autoTileViews != 0);
-	messageBox *mb = mb_get_active(&g_messageboxes);
+	messageBox *mb = mb_get_active(nullptr);
 	if(mb) {
 		ImVec2 viewportPos(0.0f, 0.0f);
 		ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
@@ -524,7 +524,7 @@ extern "C" void BBServer_Update(void)
 		int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		if(ImGui::Begin("##g_messageboxes", (bool *)nullptr, windowFlags)) {
-			g_messageboxHeight = UIBlackboxMessageBox_Update(&g_messageboxes);
+			g_messageboxHeight = UIBlackboxMessageBox_Update(nullptr);
 			if(g_messageboxHeight > 0.0f) {
 				ImGuiStyle &style = ImGui::GetStyle();
 				g_messageboxHeight += style.WindowBorderSize * 2;

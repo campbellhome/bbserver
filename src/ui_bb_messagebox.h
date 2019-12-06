@@ -8,7 +8,6 @@ extern "C" {
 #endif
 
 typedef struct tag_messageBoxes messageBoxes;
-extern messageBoxes g_messageboxes;
 extern float g_messageboxHeight;
 
 #if defined(__cplusplus)
