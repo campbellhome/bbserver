@@ -114,6 +114,7 @@
     <ClInclude Include="..\src\system_tray.h" />
     <ClInclude Include="..\src\tags.h" />
     <ClInclude Include="..\src\theme_config.h" />
+    <ClInclude Include="..\src\ui_bb_messagebox.h" />
     <ClInclude Include="..\src\ui_config.h" />
     <ClInclude Include="..\src\ui_loglevel_colorizer.h" />
     <ClInclude Include="..\src\ui_recordings.h" />
@@ -151,6 +152,7 @@
     <ClCompile Include="..\src\system_tray.c" />
     <ClCompile Include="..\src\tags.c" />
     <ClCompile Include="..\src\theme_config.c" />
+    <ClCompile Include="..\src\ui_bb_messagebox.cpp" />
     <ClCompile Include="..\src\ui_config.cpp" />
     <ClCompile Include="..\src\ui_loglevel_colorizer.cpp" />
     <ClCompile Include="..\src\ui_recordings.cpp" />

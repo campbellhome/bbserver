@@ -32,7 +32,9 @@
 #include "tags.h"
 #include "tasks.h"
 #include "theme_config.h"
+#include "ui_bb_messagebox.h"
 #include "ui_config.h"
+#include "ui_tags.h"
 #include "ui_view.h"
 #include "uuid_config.h"
 #include "uuid_rfc4122/uuid.h"
@@ -42,7 +44,6 @@
 
 #include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
-#include "ui_tags.h"
 
 #define COPYDATA_MAGIC 0x1234567890abcdefu
 static char s_imguiPath[kBBSize_MaxPath];
@@ -149,6 +150,7 @@ static void BBServer_Shutdown(void)
 	mq_pre_shutdown();
 	Update_Shutdown();
 	Style_ResetConfig();
+	mb_shutdown(&g_messageboxes);
 	mb_shutdown(nullptr);
 	tasks_shutdown();
 	devkit_autodetect_shutdown();

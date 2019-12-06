@@ -23,6 +23,7 @@
 #include "recordings.h"
 #include "tasks.h"
 #include "theme_config.h"
+#include "ui_bb_messagebox.h"
 #include "ui_config.h"
 #include "ui_recordings.h"
 #include "ui_view.h"
@@ -280,7 +281,7 @@ void BBServer_MainMenuBar(void)
 					sdict_add_raw(&mb.data, "title", "Test Message Box");
 					sdict_add_raw(&mb.data, "text", "Test message box text\nNothing to see here...");
 					sdict_add_raw(&mb.data, "button1", "Ok");
-					mb_queue(mb, nullptr);
+					mb_queue(mb, &g_messageboxes);
 				}
 				if(ImGui::MenuItem("DEBUG Reload style colors")) {
 					Style_ReadConfig(Imgui_Core_GetColorScheme());
@@ -503,6 +504,40 @@ extern "C" void BBServer_Update(void)
 	Update_Tick();
 	UIConfig_Update(&g_config);
 	UIRecordings_Update(g_config.autoTileViews != 0);
+	messageBox *mb = mb_get_active(&g_messageboxes);
+	if(mb) {
+		ImVec2 viewportPos(0.0f, 0.0f);
+		ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
+		if(viewport) {
+			viewportPos.x += viewport->Pos.x;
+			viewportPos.y += viewport->Pos.y;
+		}
+
+		float startY = ImGui::GetFrameHeight();
+		ImGuiIO &io = ImGui::GetIO();
+		float screenWidth = io.DisplaySize.x - UIRecordings_Width();
+		ImVec2 windowSize(screenWidth - 1, 0.0f);
+		ImGuiCond positioningCond = ImGuiCond_Always;
+		ImGui::SetNextWindowSize(windowSize, positioningCond);
+		ImGui::SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + startY), positioningCond);
+
+		int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		if(ImGui::Begin("##g_messageboxes", (bool *)nullptr, windowFlags)) {
+			g_messageboxHeight = UIBlackboxMessageBox_Update(&g_messageboxes);
+			if(g_messageboxHeight > 0.0f) {
+				ImGuiStyle &style = ImGui::GetStyle();
+				g_messageboxHeight += style.WindowBorderSize * 2;
+				g_messageboxHeight += style.WindowPadding.y * 2;
+			}
+		} else {
+			g_messageboxHeight = 0.0f;
+		}
+		ImGui::End();
+		ImGui::PopStyleVar(); // ImGuiStyleVar_WindowRounding
+	} else {
+		g_messageboxHeight = 0.0f;
+	}
 	UIRecordedView_UpdateAll(g_config.autoTileViews != 0);
 	UISystemTray_Update();
 
