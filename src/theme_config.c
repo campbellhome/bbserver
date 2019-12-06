@@ -67,6 +67,8 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeNormal,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeHovered,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeActive,
+			{ 190, 145, 100, 136 }, // kStyleColor_MessageBoxBackground0,
+			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
 	{ "Light",
@@ -120,6 +122,8 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeNormal,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeHovered,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeActive,
+			{ 190, 145, 100, 136 }, // kStyleColor_MessageBoxBackground0,
+			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
 	{ "Classic",
@@ -173,6 +177,8 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeNormal,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeHovered,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeActive,
+			{ 190, 145, 100, 136 }, // kStyleColor_MessageBoxBackground0,
+			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
 	{ "Visual Studio Dark",
@@ -226,6 +232,8 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeNormal,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeHovered,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeActive,
+			{ 190, 145, 100, 136 }, // kStyleColor_MessageBoxBackground0,
+			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
 	{ "Windows",
@@ -279,6 +287,8 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeNormal,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeHovered,
 			{   0,   0,   0,   0 }, // kStyleColor_ResizeActive,
+			{ 190, 145, 100, 136 }, // kStyleColor_MessageBoxBackground0,
+			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
 };

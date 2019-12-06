@@ -1630,13 +1630,12 @@ static void UIRecordedView_MessageBoxUpdate(view_t *view)
 	ImGui::EndGroup();
 
 	// colors are ABGR
-	u32 color = 0x006491be;
-	u32 leftAlpha = 0x88000000;
-	u32 rightAlpha = 0x22000000;
-	bottomLeft->col = color | leftAlpha;
-	bottomRight->col = color | rightAlpha;
-	topRight->col = color | rightAlpha;
-	topLeft->col = color | leftAlpha;
+	u32 colorLeft = ImColor(MakeColor(kStyleColor_MessageBoxBackground0));
+	u32 colorRight = ImColor(MakeColor(kStyleColor_MessageBoxBackground1));
+	bottomLeft->col = colorLeft;
+	bottomRight->col = colorRight;
+	topRight->col = colorRight;
+	topLeft->col = colorLeft;
 
 	float endY = ImGui::GetWindowPos().y + ImGui::GetCursorPos().y - ImGui::GetStyle().ItemSpacing.y;
 	bottomLeft->pos.y = endY;

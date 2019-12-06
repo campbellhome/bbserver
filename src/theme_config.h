@@ -80,6 +80,8 @@ typedef enum tag_styleColor_e {
 	kStyleColor_ResizeNormal,
 	kStyleColor_ResizeHovered,
 	kStyleColor_ResizeActive,
+	kStyleColor_MessageBoxBackground0,
+	kStyleColor_MessageBoxBackground1,
 	kStyleColor_Count
 } styleColor_e;
 
