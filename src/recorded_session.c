@@ -297,9 +297,13 @@ void recorded_session_update(recorded_session_t *session)
 		sdict_add_raw(&mb.data, "text", va("Failed to deserialize %s", session->path));
 		sdict_add_raw(&mb.data, "button1", "Ok");
 
-		for(u32 i = 0; i < session->views.count; ++i) {
-			view_t *view = session->views.data + i;
-			mb_queue(mb, &view->messageboxes);
+		if(session->views.count) {
+			for(u32 i = 0; i < session->views.count; ++i) {
+				view_t *view = session->views.data + i;
+				mb_queue(mb, &view->messageboxes);
+			}
+		} else {
+			mb_queue(mb, NULL);
 		}
 	}
 }
