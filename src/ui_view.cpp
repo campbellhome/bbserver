@@ -20,7 +20,10 @@
 #include "sb.h"
 #include "time_utils.h"
 #include "ui_config.h"
+#include "ui_loglevel_colorizer.h"
+#include "ui_message_box.h"
 #include "ui_recordings.h"
+#include "ui_tags.h"
 #include "va.h"
 #include "view.h"
 #include "wrap_imgui.h"
@@ -33,9 +36,8 @@ BB_WARNING_PUSH(4820)
 BB_WARNING_POP
 
 #include "parson/parson.h"
-#include "ui_loglevel_colorizer.h"
-#include "ui_tags.h"
-#include "ui_bb_messagebox.h"
+
+extern float g_messageboxHeight;
 
 typedef struct gathered_views_s {
 	u32 count;
@@ -1674,7 +1676,9 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			EndMenuBar();
 		}
 
-		UIBlackboxMessageBox_Update(&view->messageboxes);
+		view->messageboxes.bgColor[0] = ImColor(MakeColor(kStyleColor_MessageBoxBackground0));
+		view->messageboxes.bgColor[1] = ImColor(MakeColor(kStyleColor_MessageBoxBackground1));
+		UIMessageBox_Update(&view->messageboxes);
 
 		//Separator();
 

@@ -32,7 +32,6 @@
 #include "tags.h"
 #include "tasks.h"
 #include "theme_config.h"
-#include "ui_bb_messagebox.h"
 #include "ui_config.h"
 #include "ui_message_box.h"
 #include "ui_tags.h"
@@ -120,7 +119,7 @@ static b32 BBServer_Init(void)
 	Style_Init();
 	Imgui_Core_SetColorScheme(sb_get(&g_config.colorscheme));
 	FileOpenDialog_Init();
-	UIMessageBox_EnableUpdate(false);
+	mb_get_queue()->manualUpdate = true;
 	if(bbnet_init()) {
 		if(discovery_thread_init() != 0) {
 			new_recording_t recording;

@@ -23,8 +23,8 @@
 #include "recordings.h"
 #include "tasks.h"
 #include "theme_config.h"
-#include "ui_bb_messagebox.h"
 #include "ui_config.h"
+#include "ui_message_box.h"
 #include "ui_recordings.h"
 #include "ui_view.h"
 #include "va.h"
@@ -33,6 +33,8 @@
 
 extern s64 g_imgui_allocatedCount;
 extern s64 g_imgui_allocatedBytes;
+
+float g_messageboxHeight;
 
 static bool s_showSystemTrayPopup;
 extern "C" int UISystemTray_Open(void)
@@ -524,7 +526,10 @@ extern "C" void BBServer_Update(void)
 		int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		if(ImGui::Begin("##g_messageboxes", (bool *)nullptr, windowFlags)) {
-			g_messageboxHeight = UIBlackboxMessageBox_Update(nullptr);
+			messageBoxes *boxes = mb_get_queue();
+			boxes->bgColor[0] = ImColor(MakeColor(kStyleColor_MessageBoxBackground0));
+			boxes->bgColor[1] = ImColor(MakeColor(kStyleColor_MessageBoxBackground1));
+			g_messageboxHeight = UIMessageBox_Update(boxes);
 			if(g_messageboxHeight > 0.0f) {
 				ImGuiStyle &style = ImGui::GetStyle();
 				g_messageboxHeight += style.WindowBorderSize * 2;
