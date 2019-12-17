@@ -167,6 +167,7 @@ bb_thread_return_t recorder_thread(void *args)
 		b32 sentRecordingStart = false;
 		b32 dirty = false;
 		u64 lastFlush = bb_current_time_ms();
+		u64 lastKeepalive = bb_current_time_ms();
 		new_recording_t recording;
 		recording.applicationName = sb_from_c_string(data->applicationName);
 		recording.applicationFilename = sb_from_c_string(applicationName);
@@ -203,6 +204,18 @@ bb_thread_return_t recorder_thread(void *args)
 					}
 				}
 
+#define KEEPALIVE_INTERVAL_MS 3 * 24 * 60 * 60 * 1000
+				u64 now = bb_current_time_ms();
+				if(now > lastKeepalive + KEEPALIVE_INTERVAL_MS) {
+					lastKeepalive = now;
+					if(recording.platform == kBBPlatform_Durango) {
+						bb_decoded_packet_t outgoing;
+						memset(&outgoing, 0, sizeof(outgoing));
+						outgoing.type = kBBPacketType_UserToClient;
+						bbcon_try_send(con, &outgoing);
+					}
+				}
+
 				bbcon_tick(con);
 				while(bbcon_decodePacket(con, &decoded)) {
 					// #TODO: return buffer, not decoded packets...
@@ -231,7 +244,6 @@ bb_thread_return_t recorder_thread(void *args)
 					}
 				}
 				if(dirty) {
-					u64 now = bb_current_time_ms();
 					if(now - lastFlush > 100) {
 						fflush(fp);
 						lastFlush = now;
