@@ -227,6 +227,7 @@ bb_thread_return_t recorder_thread(void *args)
 						buf[1] = (u8)(serializedLen & 0xFF);
 						fwrite(buf, serializedLen, 1, fp);
 					}
+					lastKeepalive = now;
 					if(bbpacket_is_app_info_type(decoded.type)) {
 						fflush(fp);
 						lastFlush = bb_current_time_ms();
