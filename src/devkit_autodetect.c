@@ -233,7 +233,9 @@ static void task_orbis_info_statechanged(task *t)
 				b32 bAdd = (bDefault || bConnected) && !bInUse;
 				BB_LOG("Devkit", "Orbis Game Addr: %s (added:%d default:%d connected:%d inuse:%d)",
 				       gameAddr.data, bAdd, bDefault, bConnected, bInUse);
-				devkit_autodetect_add(span_from_string(gameAddr.data), bb_platform_name(kBBPlatform_Orbis), sb_get(&devkitName));
+				if(bAdd) {
+					devkit_autodetect_add(span_from_string(gameAddr.data), bb_platform_name(kBBPlatform_Orbis), sb_get(&devkitName));
+				}
 			}
 			sb_reset(&devkitName);
 			sb_reset(&gameAddr);
