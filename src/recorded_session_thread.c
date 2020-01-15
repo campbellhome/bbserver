@@ -220,7 +220,7 @@ bb_thread_return_t recorded_session_read_thread(void *args)
 	BB_LOG("Recorder::Read::Start", "starting read from %s\n", session->path);
 
 	const char *ext = strrchr(filename, '.');
-	if(ext && bb_stricmp(ext, ".bbox")) {
+	if(!ext || bb_stricmp(ext, ".bbox")) {
 		recorded_session_read_log(session, filename);
 	} else {
 		fp = bb_file_open_for_read(session->path);

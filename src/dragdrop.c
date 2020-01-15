@@ -73,7 +73,10 @@ void DragDrop_ProcessPath(const char *path)
 				} else {
 					BB_WARNING("DragDrop", "Failed to find application info for %s", path);
 				}
-			} else if(ext && strlen(ext) > 1) {
+			} else {
+				if(!ext || strlen(ext) <= 1) {
+					ext = ".unknown";
+				}
 				char applicationFilename[kBBSize_ApplicationName];
 				new_recording_t cmdlineRecording = { BB_EMPTY_INITIALIZER };
 				GetSystemTimeAsFileTime(&cmdlineRecording.filetime);
