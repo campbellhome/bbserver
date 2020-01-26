@@ -24,8 +24,9 @@ AUTOJSON typedef struct site_config_s {
 	updateConfig_t updates;
 	sb_t bugAssignee;
 	sb_t bugProject;
+	b32 autodetectDevkits;
 	u16 bugPort;
-	u8 pad[6];
+	u8 pad[2];
 } site_config_t;
 
 extern site_config_t g_site_config;

@@ -15,6 +15,7 @@
 #include "line_parser.h"
 #include "process_task.h"
 #include "sb.h"
+#include "site_config.h"
 #include "span.h"
 #include "tokenize.h"
 #include "va.h"
@@ -120,6 +121,8 @@ b32 config_read(config_t *config)
 				}
 			}
 			if(numDots != 3 || !validChars) {
+				bRemove = true;
+			} else if(!g_site_config.autodetectDevkits) {
 				bRemove = true;
 			}
 		}

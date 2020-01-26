@@ -6,6 +6,7 @@
 #include "message_queue.h"
 #include "recorder_thread.h"
 
+#include "appdata.h"
 #include "bb.h"
 #include "bb_array.h"
 #include "bb_discovery_client.h"
@@ -16,6 +17,7 @@
 #include "bb_string.h"
 #include "bb_thread.h"
 #include "bb_time.h"
+#include "parson/parson.h"
 #include <stdlib.h>
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
@@ -31,6 +33,7 @@ typedef struct
 	bb_server_connection_data_t con[64];
 	bb_critical_section whitelist_cs;
 	bb_thread_handle_t thread_id;
+	sbs_t deviceCodes;
 	b32 shutdownRequest;
 	u8 pad[4];
 } discovery_data_t;
@@ -45,8 +48,22 @@ static void discovery_init(discovery_data_t *host)
 
 static void discovery_shutdown(discovery_data_t *host)
 {
+	sbs_reset(&host->deviceCodes);
 	bba_free(host->whitelist);
 	bb_critical_section_shutdown(&host->whitelist_cs);
+}
+
+static void discovery_read_deviceCodes(discovery_data_t *host)
+{
+	sb_t path = appdata_get("bb");
+	sb_append(&path, "\\bb_device_codes.json");
+	JSON_Value *val = json_parse_file(sb_get(&path));
+	if(val) {
+		sbs_reset(&host->deviceCodes);
+		host->deviceCodes = json_deserialize_sbs_t(val);
+		json_value_free(val);
+	}
+	sb_reset(&path);
 }
 
 static resolved_whitelist_entry_t *find_whitelist_match(discovery_data_t *host, struct sockaddr_in *sin,
@@ -88,17 +105,39 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t *host,
 			switch(decoded->type) {
 			case kBBDiscoveryPacketType_RequestDiscovery:
 			case kBBDiscoveryPacketType_RequestDiscovery_v1:
+			case kBBDiscoveryPacketType_RequestDiscovery_v2:
 				*delay = entry->delay;
 				result = kBBDiscoveryPacketType_AnnouncePresence;
 				break;
 			case kBBDiscoveryPacketType_RequestReservation:
 			case kBBDiscoveryPacketType_RequestReservation_v1:
+			case kBBDiscoveryPacketType_RequestReservation_v2:
 				result = kBBDiscoveryPacketType_ReservationAccept;
 				break;
 			default:
 				break;
 			}
 		}
+
+		if(result == kBBDiscoveryPacketType_Invalid && decoded->packet.request.deviceCode[0] != '\0') {
+			discovery_read_deviceCodes(host); // TODO: throttle re-read
+			for(u32 i = 0; i < host->deviceCodes.count; ++i) {
+				const char *deviceCode = sb_get(host->deviceCodes.data + i);
+				if(!strcmp(deviceCode, decoded->packet.request.deviceCode)) {
+					switch(decoded->type) {
+					case kBBDiscoveryPacketType_RequestDiscovery:
+						result = kBBDiscoveryPacketType_AnnouncePresence;
+						break;
+					case kBBDiscoveryPacketType_RequestReservation:
+						result = kBBDiscoveryPacketType_ReservationAccept;
+						break;
+					default:
+						break;
+					}
+				}
+			}
+		}
+
 		BB_LOG("Discovery::Response",
 		       "Request %s from %s @ %s: response %s\n",
 		       bb_discovery_packet_name(decoded->type), applicationName, ip,
@@ -218,6 +257,7 @@ int discovery_thread_init(void)
 {
 	memset(&s_discovery_data, 0, sizeof(s_discovery_data));
 	discovery_init(&s_discovery_data);
+	discovery_read_deviceCodes(&s_discovery_data);
 	s_discovery_data.thread_id = bbthread_create(discovery_thread_func, &s_discovery_data);
 	return s_discovery_data.thread_id != 0;
 }

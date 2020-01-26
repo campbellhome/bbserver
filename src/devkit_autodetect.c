@@ -13,6 +13,7 @@
 #include "file_utils.h"
 #include "process_task.h"
 #include "sb.h"
+#include "site_config.h"
 #include "system_error_utils.h"
 #include "tasks.h"
 #include "tokenize.h"
@@ -404,6 +405,9 @@ static void task_devkit_autodetect_group_statechanged(task *t)
 void devkit_autodetect_tick(void)
 {
 	if(s_devkitAutodetectActive || s_lastDevkitAutodetectMillis && bb_current_time_ms() < s_lastDevkitAutodetectMillis + kDevkitAutodetectIntervalMillis)
+		return;
+
+	if(!g_site_config.autodetectDevkits)
 		return;
 
 	BB_TRACE(kBBLogLevel_Verbose, "Devkit", "Devkit autodetect BEGIN");
