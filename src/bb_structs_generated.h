@@ -32,6 +32,7 @@ struct pathFixupList_s;
 struct tag_tooltipConfig;
 struct tag_sizeConfig;
 struct config_s;
+struct deviceCodes_s;
 struct message_queue_message_s;
 struct message_queue_messages_s;
 struct _FILETIME;
@@ -84,6 +85,7 @@ typedef struct pathFixupList_s pathFixupList_t;
 typedef struct tag_tooltipConfig tooltipConfig;
 typedef struct tag_sizeConfig sizeConfig;
 typedef struct config_s config_t;
+typedef struct deviceCodes_s deviceCodes_t;
 typedef struct message_queue_message_s message_queue_message_t;
 typedef struct message_queue_messages_s message_queue_messages_t;
 typedef struct _FILETIME FILETIME;
@@ -136,6 +138,7 @@ void pathFixupList_reset(pathFixupList_t *val);
 void tooltipConfig_reset(tooltipConfig *val);
 void sizeConfig_reset(sizeConfig *val);
 void config_reset(config_t *val);
+void deviceCodes_reset(deviceCodes_t *val);
 void message_queue_message_reset(message_queue_message_t *val);
 void message_queue_messages_reset(message_queue_messages_t *val);
 void FILETIME_reset(FILETIME *val);
@@ -225,6 +228,9 @@ sizeConfig sizeConfig_clone(const sizeConfig *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_config_clone)
 config_t config_clone(const config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_deviceCodes_clone)
+deviceCodes_t deviceCodes_clone(const deviceCodes_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_message_queue_message_clone)
 message_queue_message_t message_queue_message_clone(const message_queue_message_t *src);

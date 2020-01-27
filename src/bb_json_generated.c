@@ -11,6 +11,7 @@
 #include "va.h"
 
 #include "config.h"
+#include "device_codes.h"
 #include "fonts.h"
 #include "message_queue.h"
 #include "recordings.h"
@@ -237,6 +238,19 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
 				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
 			}
+		}
+	}
+	return dst;
+}
+
+deviceCodes_t json_deserialize_deviceCodes_t(JSON_Value *src)
+{
+	deviceCodes_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.deviceCodes = json_deserialize_sbs_t(json_object_get_value(obj, "deviceCodes"));
 		}
 	}
 	return dst;
@@ -850,6 +864,16 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
 			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
 		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_deviceCodes_t(const deviceCodes_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "deviceCodes", json_serialize_sbs_t(&src->deviceCodes));
 	}
 	return val;
 }

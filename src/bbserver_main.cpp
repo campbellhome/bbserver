@@ -16,6 +16,7 @@
 #include "common.h"
 #include "config.h"
 #include "crt_leak_check.h"
+#include "device_codes.h"
 #include "devkit_autodetect.h"
 #include "discovery_thread.h"
 #include "dragdrop.h"
@@ -303,6 +304,10 @@ LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, 
 	}
 	if(msg == WM_DROPFILES) {
 		return DragDrop_OnDropFiles(wParam);
+	}
+	LRESULT ret = deviceCodes_HandleWindowMessage(hWnd, msg, wParam, lParam);
+	if(ret) {
+		return ret;
 	}
 	return 0;
 }

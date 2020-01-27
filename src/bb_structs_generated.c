@@ -11,6 +11,7 @@
 #include "va.h"
 
 #include "config.h"
+#include "device_codes.h"
 #include "fonts.h"
 #include "message_queue.h"
 #include "recordings.h"
@@ -288,6 +289,21 @@ config_t config_clone(const config_t *src)
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
 			dst.pad[i] = src->pad[i];
 		}
+	}
+	return dst;
+}
+
+void deviceCodes_reset(deviceCodes_t *val)
+{
+	if(val) {
+		sbs_reset(&val->deviceCodes);
+	}
+}
+deviceCodes_t deviceCodes_clone(const deviceCodes_t *src)
+{
+	deviceCodes_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.deviceCodes = sbs_clone(&src->deviceCodes);
 	}
 	return dst;
 }

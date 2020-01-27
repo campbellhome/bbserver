@@ -98,6 +98,7 @@
     <ClInclude Include="..\src\bb_structs_generated.h" />
     <ClInclude Include="..\src\config.h" />
     <ClInclude Include="..\src\config_whitelist_push.h" />
+    <ClInclude Include="..\src\device_codes.h" />
     <ClInclude Include="..\src\devkit_autodetect.h" />
     <ClInclude Include="..\src\discovery_thread.h" />
     <ClInclude Include="..\src\dragdrop.h" />
@@ -135,6 +136,7 @@
     <ClCompile Include="..\src\bb_structs_generated.c" />
     <ClCompile Include="..\src\config.c" />
     <ClCompile Include="..\src\config_whitelist_push.c" />
+    <ClCompile Include="..\src\device_codes.c" />
     <ClCompile Include="..\src\devkit_autodetect.c" />
     <ClCompile Include="..\src\discovery_thread.c" />
     <ClCompile Include="..\src\dragdrop.c" />
