@@ -4,6 +4,7 @@
 #include "ui_config.h"
 #include "bb_array.h"
 #include "bb_string.h"
+#include "device_codes.h"
 #include "fonts.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"
@@ -13,6 +14,7 @@
 #include "ui_recordings.h"
 
 static config_t s_preferencesConfig;
+static sb_t s_tmpStr;
 bool s_preferencesValid;
 bool s_preferencesOpen;
 bool s_preferencesAdvanced;
@@ -239,6 +241,7 @@ void UIConfig_Reset()
 		config_reset(&s_preferencesConfig);
 		s_preferencesValid = false;
 		s_preferencesOpen = false;
+		sb_reset(&s_tmpStr);
 	}
 }
 
@@ -402,7 +405,18 @@ void UIConfig_Update(config_t *config)
 				bba_add(s_preferencesConfig.pathFixups, 1);
 			}
 		}
-		if(ImGui::CollapsingHeader("Whitelist", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if(ImGui::CollapsingHeader("Allowed Connections", ImGuiTreeNodeFlags_DefaultOpen)) {
+			sb_clear(&s_tmpStr);
+			const sbs_t *deviceCodes = deviceCodes_lock();
+			sb_va(&s_tmpStr, "%u Device Codes:", deviceCodes->count);
+			for(u32 i = 0; i < deviceCodes->count; ++i) {
+				if(i) {
+					sb_append(&s_tmpStr, ",");
+				}
+				sb_va(&s_tmpStr, " %s", sb_get(deviceCodes->data + i));
+			}
+			deviceCodes_unlock();
+			TextUnformatted(sb_get(&s_tmpStr));
 			Columns(5, "whitelistcolumns");
 			SetColumnOffset(1, 80.0f * Imgui_Core_GetDpiScale());
 			SetColumnOffset(2, 280.0f * Imgui_Core_GetDpiScale());
