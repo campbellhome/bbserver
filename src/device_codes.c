@@ -4,6 +4,7 @@
 #include "device_codes.h"
 #include "appdata.h"
 #include "bb_criticalsection.h"
+#include "bb_json_generated.h"
 #include "parson/parson.h"
 
 static deviceCodes_t g_deviceCodes;
@@ -43,7 +44,7 @@ static void deviceCodes_reload(void)
 	JSON_Value *val = json_parse_file(sb_get(&path));
 	if(val) {
 		sbs_reset(&g_deviceCodes.deviceCodes);
-		g_deviceCodes.deviceCodes = json_deserialize_sbs_t(val);
+		g_deviceCodes = json_deserialize_deviceCodes_t(val);
 		json_value_free(val);
 	}
 	sb_reset(&path);
