@@ -152,6 +152,7 @@ tag_t *tag_find_or_add(const char *tagName)
 			tag->name = sb_from_c_string(tagName);
 		}
 		qsort(g_tags.tags.data, g_tags.tags.count, sizeof(g_tags.tags.data[0]), tag_sort);
+		tag = tag_find(tagName);
 	}
 	return tag;
 }
