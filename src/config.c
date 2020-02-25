@@ -85,8 +85,6 @@ b32 config_read(config_t *config)
 	}
 	if(config->version <= 1) {
 		config->tooltips.enabled = true;
-		config->tooltips.overText = true;
-		config->tooltips.overMisc = true;
 		config->tooltips.onlyOverSelected = false;
 		config->tooltips.delay = 0.3f;
 	}
@@ -102,6 +100,10 @@ b32 config_read(config_t *config)
 	if(config->version <= 5) {
 		config->sizes.resizeBarSize = 0;
 		config->sizes.scrollbarSize = 0;
+	}
+	if(config->version <= 6) {
+		config->tooltips.overText = false;
+		config->tooltips.overMisc = true;
 	}
 	config->version = kConfigVersion;
 

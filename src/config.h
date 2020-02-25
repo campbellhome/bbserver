@@ -123,7 +123,7 @@ AUTOJSON typedef struct config_s {
 	u8 pad[4];
 } config_t;
 
-enum { kConfigVersion = 6 };
+enum { kConfigVersion = 7 };
 
 extern config_t g_config;
 
