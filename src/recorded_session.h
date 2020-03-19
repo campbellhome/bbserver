@@ -124,6 +124,7 @@ typedef struct recorded_session_s {
 	session_message_queue_t *incoming;
 } recorded_session_t;
 
+void recorded_session_shutdown(void);
 void recorded_session_open(const char *path, const char *applicationFilename, b8 autoClose, b32 recordingActive, u32 outgoingMqId);
 void recorded_session_close(recorded_session_t *session);
 void recorded_session_update(recorded_session_t *session);

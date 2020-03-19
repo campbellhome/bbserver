@@ -31,6 +31,8 @@ static void recorded_session_add_fileid(recorded_session_t *session, bb_decoded_
 static recorded_thread_t *recorded_session_find_or_add_thread(recorded_session_t *session, bb_decoded_packet_t *decoded);
 static recorded_pieInstance_t *recorded_session_find_or_add_pieInstance(recorded_session_t *session, u32 pieInstance);
 
+static sb_t s_reconstructedLogText;
+
 typedef struct recorded_sessions_s {
 	u32 count;
 	u32 allocated;
@@ -44,6 +46,21 @@ static void recorded_logs_reset(recorded_logs_t *logs)
 		free(logs->data[i]);
 	}
 	bba_free(*logs);
+}
+
+void recorded_session_shutdown(void)
+{
+	recorded_session_t *session;
+	while((session = recorded_session_get(0)) != NULL) {
+		while(session->views.count) {
+			u32 viewIndex = session->views.count - 1;
+			view_t *view = session->views.data + viewIndex;
+			view_reset(view);
+			bba_erase(session->views, viewIndex);
+		}
+		recorded_session_close(session);
+	}
+	sb_reset(&s_reconstructedLogText);
 }
 
 void recorded_session_open(const char *path, const char *applicationFilename, b8 autoClose, b32 recordingActive, u32 outgoingMqId)
@@ -473,8 +490,18 @@ static void recorded_session_add_partial_log(recorded_session_t *session, bb_dec
 
 static void recorded_session_add_log(recorded_session_t *session, bb_decoded_packet_t *decoded, recorded_thread_t *t)
 {
+	sb_clear(&s_reconstructedLogText);
+	for(u32 i = 0; i < session->partialLogs.count; ++i) {
+		const bb_decoded_packet_t *partial = session->partialLogs.data + i;
+		if(partial->header.threadId == decoded->header.threadId) {
+			sb_append(&s_reconstructedLogText, partial->packet.logText.text);
+		}
+	}
+	sb_append(&s_reconstructedLogText, decoded->packet.logText.text);
+	const char *text = sb_get(&s_reconstructedLogText);
+
 	u32 numLines = 0;
-	span_t linesCursor = span_from_string(decoded->packet.logText.text);
+	span_t linesCursor = span_from_string(text);
 	for(span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor)) {
 		++numLines;
 	}
@@ -511,15 +538,8 @@ static void recorded_session_add_log(recorded_session_t *session, bb_decoded_pac
 	}
 	plog = bba_add(session->logs, 1);
 	if(plog) {
-		char *text = decoded->packet.logText.text;
 		size_t textLen = strlen(text);
-		for(u32 i = 0; i < session->partialLogs.count; ++i) {
-			const bb_decoded_packet_t *partial = session->partialLogs.data + i;
-			if(partial->header.threadId == decoded->header.threadId) {
-				textLen += strlen(partial->packet.logText.text);
-			}
-		}
-		size_t preTextSize = (u8 *)text - (u8 *)decoded;
+		size_t preTextSize = (u8 *)decoded->packet.logText.text - (u8 *)decoded;
 		size_t decodedSize = preTextSize + textLen + 1;
 		size_t logSize = decodedSize + offsetof(recorded_log_t, packet);
 		*plog = malloc(logSize);
@@ -529,19 +549,7 @@ static void recorded_session_add_log(recorded_session_t *session, bb_decoded_pac
 			log->sessionLogIndex = session->logs.count - 1;
 			log->numLines = numLines;
 			memcpy(&log->packet, decoded, preTextSize);
-			char *textPos = log->packet.packet.logText.text;
-			for(u32 i = 0; i < session->partialLogs.count; ++i) {
-				const bb_decoded_packet_t *partial = session->partialLogs.data + i;
-				if(partial->header.threadId == decoded->header.threadId) {
-					size_t partialLen = strlen(partial->packet.logText.text);
-					memcpy(textPos, partial->packet.logText.text, partialLen);
-					textPos += partialLen;
-				}
-			}
-			size_t mainLen = strlen(decoded->packet.logText.text);
-			memcpy(textPos, decoded->packet.logText.text, mainLen);
-			textPos += mainLen;
-			*textPos = '\0';
+			bb_strncpy(log->packet.packet.logText.text, text, textLen + 1);
 			for(u32 i = 0; i < session->views.count; ++i) {
 				view_add_log(session->views.data + i, log);
 			}

@@ -160,15 +160,7 @@ static void BBServer_Shutdown(void)
 	UIRecordedView_Shutdown();
 	recordings_shutdown();
 	discovery_thread_shutdown();
-	while(recorded_session_t *session = recorded_session_get(0)) {
-		while(session->views.count) {
-			u32 viewIndex = session->views.count - 1;
-			view_t *view = session->views.data + viewIndex;
-			view_reset(view);
-			bba_erase(session->views, viewIndex);
-		}
-		recorded_session_close(session);
-	}
+	recorded_session_shutdown();
 	if(g_config.version != 0) {
 		config_write(&g_config);
 	}
