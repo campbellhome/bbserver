@@ -66,7 +66,7 @@ static bbassert_action_e App_AssertHandler(const char *condition, const char *me
 			if(callstack.count > 1) {
 				sb_va(&target, "%s\\Callstack.txt", sb_get(&report->dir));
 				bb_file_handle_t fp = bb_file_open_for_write(sb_get(&target));
-				if(fp) {
+				if(fp != BB_INVALID_FILE_HANDLE) {
 					bb_file_write(fp, callstack.data, callstack.count - 1);
 					bb_file_close(fp);
 				}
@@ -169,7 +169,7 @@ static void App_ExceptionHandler(EXCEPTION_POINTERS *pExPtrs)
 		if(callstack.count > 1) {
 			sb_va(&target, "%s\\Callstack.txt", sb_get(&report->dir));
 			bb_file_handle_t fp = bb_file_open_for_write(sb_get(&target));
-			if(fp) {
+			if(fp != BB_INVALID_FILE_HANDLE) {
 				bb_file_write(fp, callstack.data, callstack.count - 1);
 				bb_file_close(fp);
 			}

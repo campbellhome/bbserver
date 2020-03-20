@@ -96,13 +96,13 @@ static void recorded_session_queue_log_appinfo(recorded_session_t *session, cons
 static void recorded_session_read_log(recorded_session_t *session, const char *filename)
 {
 	bb_file_handle_t fp = bb_file_open_for_read(session->path);
-	if(fp) {
+	if(fp != BB_INVALID_FILE_HANDLE) {
 		recorded_session_queue_log_appinfo(session, filename);
 
 		u32 recvCursor = 0;
 		u32 decodeCursor = 0;
 		u32 fileSize = 0;
-		while(fp && session->threadDesiredActive && !session->failedToDeserialize) {
+		while(fp != BB_INVALID_FILE_HANDLE && session->threadDesiredActive && !session->failedToDeserialize) {
 			b32 done = false;
 			u32 bytesRead = bb_file_read(fp, session->recvBuffer + recvCursor, sizeof(session->recvBuffer) - recvCursor);
 			if(bytesRead) {
@@ -193,7 +193,7 @@ static void recorded_session_read_log(recorded_session_t *session, const char *f
 			}
 		}
 
-		if(fp) {
+		if(fp != BB_INVALID_FILE_HANDLE) {
 			bb_file_close(fp);
 		}
 	}
@@ -224,11 +224,11 @@ bb_thread_return_t recorded_session_read_thread(void *args)
 		recorded_session_read_log(session, filename);
 	} else {
 		fp = bb_file_open_for_read(session->path);
-		if(fp) {
+		if(fp != BB_INVALID_FILE_HANDLE) {
 			u32 recvCursor = 0;
 			u32 decodeCursor = 0;
 			u32 fileSize = 0;
-			while(fp && session->threadDesiredActive && !session->failedToDeserialize) {
+			while(fp != BB_INVALID_FILE_HANDLE && session->threadDesiredActive && !session->failedToDeserialize) {
 				b32 done = false;
 				u32 bytesRead = bb_file_read(fp, session->recvBuffer + recvCursor, sizeof(session->recvBuffer) - recvCursor);
 				if(bytesRead) {
@@ -299,7 +299,7 @@ bb_thread_return_t recorded_session_read_thread(void *args)
 				}
 			}
 
-			if(fp) {
+			if(fp != BB_INVALID_FILE_HANDLE) {
 				bb_file_close(fp);
 			}
 		}
