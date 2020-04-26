@@ -1589,7 +1589,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 	if(Begin(viewId, viewOpen, windowFlags)) {
 		const recording_t *recording = recordings_find_by_path(session->path);
 		bool hasFocus = ImGui::IsWindowFocused() ||
-		                ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsRootWindowFocused();
+		                ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootWindow);
 
 		ImGuiViewport *WindowViewport = ImGui::GetWindowViewport();
 		ImGuiViewport *MainViewport = ImGui::GetMainViewport();
@@ -1975,7 +1975,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		if(view->scrollWidth > 0.0f) {
 			ImVec2 region = ImGui::GetWindowContentRegionMax();
 			if(region.x < view->scrollWidth) {
-				SetNextWindowContentWidth(view->scrollWidth);
+				SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
 			}
 		}
 		int horizScrollingFlags = 0;
@@ -1994,7 +1994,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		if(view->scrollWidth > 0.0f) {
 			ImVec2 region = ImGui::GetWindowContentRegionMax();
 			if(region.x < view->scrollWidth) {
-				SetNextWindowContentWidth(view->scrollWidth);
+				SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
 			}
 		}
 		verticalScrollDir_e scrollDir = kVerticalScroll_None;
@@ -2108,7 +2108,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		if(view->scrollWidth > 0.0f) {
 			ImVec2 region = ImGui::GetWindowContentRegionMax();
 			if(region.x < view->scrollWidth) {
-				SetNextWindowContentWidth(view->scrollWidth);
+				SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
 			}
 		}
 		if(BeginChild("horizscrollbar", ImVec2(ImGui::GetContentRegionAvailWidth() - ImGui::GetStyle().ScrollbarSize, ImGui::GetFrameHeight()),
