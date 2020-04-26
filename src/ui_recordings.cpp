@@ -409,7 +409,7 @@ void UIRecordings_UpdateTab(recording_tab_t tab)
 		}
 
 		if(scrollToBottom) {
-			ImGui::SetScrollHere();
+			ImGui::SetScrollHereY();
 		}
 	}
 	ImGui::EndChild();

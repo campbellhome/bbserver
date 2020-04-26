@@ -1414,9 +1414,9 @@ static float UIRecordedView_LogHeader(view_t *view)
 
 	float startOffset = GetCursorPosX();
 	s_textColumnCursorPosX = startOffset;
-	ImGui::Button("###Text", kButton_ColumnHeaderNoSort, ImVec2(ImGui::GetContentRegionAvailWidth(), 0.0f));
+	ImGui::Button("###Text", kButton_ColumnHeaderNoSort, ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
 	const float itemPad = GetStyle().ItemSpacing.x;
-	DrawColumnHeaderText(startOffset + GetStyle().ItemInnerSpacing.x, ImGui::GetContentRegionAvailWidth() - itemPad, "Text", nullptr, "CategoriesContextMenu");
+	DrawColumnHeaderText(startOffset + GetStyle().ItemInnerSpacing.x, ImGui::GetContentRegionAvail().x - itemPad, "Text", nullptr, "CategoriesContextMenu");
 	UIRecordedView_ColumnContextMenu(view, "CategoriesContextMenu");
 
 	return textOffset;
@@ -2111,7 +2111,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
 			}
 		}
-		if(BeginChild("horizscrollbar", ImVec2(ImGui::GetContentRegionAvailWidth() - ImGui::GetStyle().ScrollbarSize, ImGui::GetFrameHeight()),
+		if(BeginChild("horizscrollbar", ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ScrollbarSize, ImGui::GetFrameHeight()),
 		              false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar)) {
 			view->prevScrollX = GetScrollX();
 		}

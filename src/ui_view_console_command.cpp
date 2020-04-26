@@ -21,7 +21,7 @@
 
 extern "C" void view_console_history_entry_reset(view_console_history_entry_t *val);
 
-static int UIRecordedView_ConsoleInputCallback(ImGuiTextEditCallbackData *CallbackData)
+static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData *CallbackData)
 {
 	view_t *view = (view_t *)CallbackData->UserData;
 	switch(CallbackData->EventFlag) {
@@ -109,7 +109,7 @@ void UIRecordedView_Console(view_t *view, bool bHasFocus)
 			ImGui::SetKeyboardFocusHere();
 		}
 		view->consoleRequestActive = false;
-		ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		if(ImGui::InputText("###ConsoleInput", &view->consoleInput, sizeof(bb_packet_text_t), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter, &UIRecordedView_ConsoleInputCallback, view)) {
 			UIRecordedView_Console_Dispatch(view);
 		}
