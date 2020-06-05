@@ -50,6 +50,9 @@ struct sbsHashTable;
 struct tagCategory_s;
 struct tagCategories_s;
 struct tagData_s;
+struct color_config_s;
+struct colors_config_s;
+struct theme_config_s;
 struct uuidState_s;
 struct view_pieInstance_s;
 struct view_pieInstances_s;
@@ -103,6 +106,9 @@ typedef struct sbsHashTable sbsHashTable;
 typedef struct tagCategory_s tagCategory_t;
 typedef struct tagCategories_s tagCategories_t;
 typedef struct tagData_s tagData_t;
+typedef struct color_config_s color_config_t;
+typedef struct colors_config_s colors_config_t;
+typedef struct theme_config_s theme_config_t;
 typedef struct uuidState_s uuidState_t;
 typedef struct view_pieInstance_s view_pieInstance_t;
 typedef struct view_pieInstances_s view_pieInstances_t;
@@ -156,6 +162,9 @@ void sbsHashTable_reset_from_loc(const char *file, int line, sbsHashTable *val);
 void tagCategory_reset_from_loc(const char *file, int line, tagCategory_t *val);
 void tagCategories_reset_from_loc(const char *file, int line, tagCategories_t *val);
 void tagData_reset(tagData_t *val);
+void color_config_reset(color_config_t *val);
+void colors_config_reset(colors_config_t *val);
+void theme_config_reset(theme_config_t *val);
 void uuidState_reset(uuidState_t *val);
 void view_pieInstance_reset(view_pieInstance_t *val);
 void view_pieInstances_reset(view_pieInstances_t *val);
@@ -282,6 +291,15 @@ tagCategories_t tagCategories_clone_from_loc(const char *file, int line, const t
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_tagData_clone)
 tagData_t tagData_clone(const tagData_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_color_config_clone)
+color_config_t color_config_clone(const color_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_colors_config_clone)
+colors_config_t colors_config_clone(const colors_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_theme_config_clone)
+theme_config_t theme_config_clone(const theme_config_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_uuidState_clone)
 uuidState_t uuidState_clone(const uuidState_t *src);

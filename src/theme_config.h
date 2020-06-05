@@ -30,7 +30,7 @@ typedef struct tag_styleConfig {
 	styleColors colors;
 } styleConfig;
 
-typedef enum tag_styleColor_e {
+AUTOJSON typedef enum tag_styleColor_e {
 	kStyleColor_kBBColor_Default,
 	kStyleColor_kBBColor_Evergreen_Black,
 	kStyleColor_kBBColor_Evergreen_Red,
@@ -84,6 +84,24 @@ typedef enum tag_styleColor_e {
 	kStyleColor_MessageBoxBackground1,
 	kStyleColor_Count
 } styleColor_e;
+
+AUTOJSON typedef struct color_config_s {
+	styleColor_e colorName;
+	u8 r;
+	u8 g;
+	u8 b;
+	u8 a;
+} color_config_t;
+
+AUTOJSON typedef struct colors_config_s {
+	u32 count;
+	u32 allocated;
+	color_config_t *data;
+} colors_config_t;
+
+AUTOJSON typedef struct theme_config_s {
+	colors_config_t colors;
+} theme_config_t;
 
 typedef struct tag_resolvedStyle {
 	styleColor colors[kStyleColor_Count];

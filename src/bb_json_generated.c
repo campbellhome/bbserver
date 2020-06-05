@@ -19,6 +19,7 @@
 #include "sdict.h"
 #include "site_config.h"
 #include "tags.h"
+#include "theme_config.h"
 #include "uuid_config.h"
 #include "uuid_rfc4122/sysdep.h"
 #include "view.h"
@@ -417,6 +418,51 @@ tags_config_t json_deserialize_tags_config_t(JSON_Value *src)
 		JSON_Object *obj = json_value_get_object(src);
 		if(obj) {
 			dst.tags = json_deserialize_tags_t(json_object_get_value(obj, "tags"));
+		}
+	}
+	return dst;
+}
+
+color_config_t json_deserialize_color_config_t(JSON_Value *src)
+{
+	color_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.colorName = json_deserialize_styleColor_e(json_object_get_value(obj, "colorName"));
+			dst.r = (u8)json_object_get_number(obj, "r");
+			dst.g = (u8)json_object_get_number(obj, "g");
+			dst.b = (u8)json_object_get_number(obj, "b");
+			dst.a = (u8)json_object_get_number(obj, "a");
+		}
+	}
+	return dst;
+}
+
+colors_config_t json_deserialize_colors_config_t(JSON_Value *src)
+{
+	colors_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Array *arr = json_value_get_array(src);
+		if(arr) {
+			for(u32 i = 0; i < json_array_get_count(arr); ++i) {
+				bba_push(dst, json_deserialize_color_config_t(json_array_get_value(arr, i)));
+			}
+		}
+	}
+	return dst;
+}
+
+theme_config_t json_deserialize_theme_config_t(JSON_Value *src)
+{
+	theme_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.colors = json_deserialize_colors_config_t(json_object_get_value(obj, "colors"));
 		}
 	}
 	return dst;
@@ -1017,6 +1063,45 @@ JSON_Value *json_serialize_tags_config_t(const tags_config_t *src)
 	return val;
 }
 
+JSON_Value *json_serialize_color_config_t(const color_config_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "colorName", json_serialize_styleColor_e(src->colorName));
+		json_object_set_number(obj, "r", src->r);
+		json_object_set_number(obj, "g", src->g);
+		json_object_set_number(obj, "b", src->b);
+		json_object_set_number(obj, "a", src->a);
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_colors_config_t(const colors_config_t *src)
+{
+	JSON_Value *val = json_value_init_array();
+	JSON_Array *arr = json_value_get_array(val);
+	if(arr) {
+		for(u32 i = 0; i < src->count; ++i) {
+			JSON_Value *child = json_serialize_color_config_t(src->data + i);
+			if(child) {
+				json_array_append_value(arr, child);
+			}
+		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_theme_config_t(const theme_config_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "colors", json_serialize_colors_config_t(&src->colors));
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_uuidState_t(const uuidState_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -1319,6 +1404,69 @@ recording_type_t json_deserialize_recording_type_t(JSON_Value *src)
 	return dst;
 }
 
+styleColor_e json_deserialize_styleColor_e(JSON_Value *src)
+{
+	styleColor_e dst = kStyleColor_Count;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kStyleColor_kBBColor_Default")) { dst = kStyleColor_kBBColor_Default; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Black")) { dst = kStyleColor_kBBColor_Evergreen_Black; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Red")) { dst = kStyleColor_kBBColor_Evergreen_Red; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Green")) { dst = kStyleColor_kBBColor_Evergreen_Green; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Yellow")) { dst = kStyleColor_kBBColor_Evergreen_Yellow; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Blue")) { dst = kStyleColor_kBBColor_Evergreen_Blue; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Cyan")) { dst = kStyleColor_kBBColor_Evergreen_Cyan; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Pink")) { dst = kStyleColor_kBBColor_Evergreen_Pink; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_White")) { dst = kStyleColor_kBBColor_Evergreen_White; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_LightBlue")) { dst = kStyleColor_kBBColor_Evergreen_LightBlue; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Orange")) { dst = kStyleColor_kBBColor_Evergreen_Orange; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_LightBlueAlt")) { dst = kStyleColor_kBBColor_Evergreen_LightBlueAlt; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_OrangeAlt")) { dst = kStyleColor_kBBColor_Evergreen_OrangeAlt; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_MediumBlue")) { dst = kStyleColor_kBBColor_Evergreen_MediumBlue; }
+			if(!strcmp(str, "kStyleColor_kBBColor_Evergreen_Amber")) { dst = kStyleColor_kBBColor_Evergreen_Amber; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_Black")) { dst = kStyleColor_kBBColor_UE4_Black; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_DarkRed")) { dst = kStyleColor_kBBColor_UE4_DarkRed; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_DarkGreen")) { dst = kStyleColor_kBBColor_UE4_DarkGreen; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_DarkBlue")) { dst = kStyleColor_kBBColor_UE4_DarkBlue; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_DarkYellow")) { dst = kStyleColor_kBBColor_UE4_DarkYellow; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_DarkCyan")) { dst = kStyleColor_kBBColor_UE4_DarkCyan; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_DarkPurple")) { dst = kStyleColor_kBBColor_UE4_DarkPurple; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_DarkWhite")) { dst = kStyleColor_kBBColor_UE4_DarkWhite; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_Red")) { dst = kStyleColor_kBBColor_UE4_Red; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_Green")) { dst = kStyleColor_kBBColor_UE4_Green; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_Blue")) { dst = kStyleColor_kBBColor_UE4_Blue; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_Yellow")) { dst = kStyleColor_kBBColor_UE4_Yellow; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_Cyan")) { dst = kStyleColor_kBBColor_UE4_Cyan; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_Purple")) { dst = kStyleColor_kBBColor_UE4_Purple; }
+			if(!strcmp(str, "kStyleColor_kBBColor_UE4_White")) { dst = kStyleColor_kBBColor_UE4_White; }
+			if(!strcmp(str, "kStyleColor_ActiveSession")) { dst = kStyleColor_ActiveSession; }
+			if(!strcmp(str, "kStyleColor_InactiveSession")) { dst = kStyleColor_InactiveSession; }
+			if(!strcmp(str, "kStyleColor_LogLevel_VeryVerbose")) { dst = kStyleColor_LogLevel_VeryVerbose; }
+			if(!strcmp(str, "kStyleColor_LogLevel_Verbose")) { dst = kStyleColor_LogLevel_Verbose; }
+			if(!strcmp(str, "kStyleColor_LogLevel_Log")) { dst = kStyleColor_LogLevel_Log; }
+			if(!strcmp(str, "kStyleColor_LogLevel_Display")) { dst = kStyleColor_LogLevel_Display; }
+			if(!strcmp(str, "kStyleColor_LogLevel_Warning")) { dst = kStyleColor_LogLevel_Warning; }
+			if(!strcmp(str, "kStyleColor_LogLevel_Error")) { dst = kStyleColor_LogLevel_Error; }
+			if(!strcmp(str, "kStyleColor_LogLevel_Fatal")) { dst = kStyleColor_LogLevel_Fatal; }
+			if(!strcmp(str, "kStyleColor_Multiline")) { dst = kStyleColor_Multiline; }
+			if(!strcmp(str, "kStyleColor_LogBackground_Normal")) { dst = kStyleColor_LogBackground_Normal; }
+			if(!strcmp(str, "kStyleColor_LogBackground_NormalAlternate0")) { dst = kStyleColor_LogBackground_NormalAlternate0; }
+			if(!strcmp(str, "kStyleColor_LogBackground_NormalAlternate1")) { dst = kStyleColor_LogBackground_NormalAlternate1; }
+			if(!strcmp(str, "kStyleColor_LogBackground_Bookmarked")) { dst = kStyleColor_LogBackground_Bookmarked; }
+			if(!strcmp(str, "kStyleColor_LogBackground_BookmarkedAlternate0")) { dst = kStyleColor_LogBackground_BookmarkedAlternate0; }
+			if(!strcmp(str, "kStyleColor_LogBackground_BookmarkedAlternate1")) { dst = kStyleColor_LogBackground_BookmarkedAlternate1; }
+			if(!strcmp(str, "kStyleColor_ResizeNormal")) { dst = kStyleColor_ResizeNormal; }
+			if(!strcmp(str, "kStyleColor_ResizeHovered")) { dst = kStyleColor_ResizeHovered; }
+			if(!strcmp(str, "kStyleColor_ResizeActive")) { dst = kStyleColor_ResizeActive; }
+			if(!strcmp(str, "kStyleColor_MessageBoxBackground0")) { dst = kStyleColor_MessageBoxBackground0; }
+			if(!strcmp(str, "kStyleColor_MessageBoxBackground1")) { dst = kStyleColor_MessageBoxBackground1; }
+			if(!strcmp(str, "kStyleColor_Count")) { dst = kStyleColor_Count; }
+		}
+	}
+	return dst;
+}
+
 view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src)
 {
 	view_config_selector_t dst = kViewSelector_Tags;
@@ -1398,6 +1546,67 @@ JSON_Value *json_serialize_recording_type_t(const recording_type_t src)
 		case kRecordingType_MainLog: str = "kRecordingType_MainLog"; break;
 		case kRecordingType_ExternalFile: str = "kRecordingType_ExternalFile"; break;
 		case kRecordingType_Count: str = "kRecordingType_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
+JSON_Value *json_serialize_styleColor_e(const styleColor_e src)
+{
+	const char *str = "";
+	switch(src) {
+		case kStyleColor_kBBColor_Default: str = "kStyleColor_kBBColor_Default"; break;
+		case kStyleColor_kBBColor_Evergreen_Black: str = "kStyleColor_kBBColor_Evergreen_Black"; break;
+		case kStyleColor_kBBColor_Evergreen_Red: str = "kStyleColor_kBBColor_Evergreen_Red"; break;
+		case kStyleColor_kBBColor_Evergreen_Green: str = "kStyleColor_kBBColor_Evergreen_Green"; break;
+		case kStyleColor_kBBColor_Evergreen_Yellow: str = "kStyleColor_kBBColor_Evergreen_Yellow"; break;
+		case kStyleColor_kBBColor_Evergreen_Blue: str = "kStyleColor_kBBColor_Evergreen_Blue"; break;
+		case kStyleColor_kBBColor_Evergreen_Cyan: str = "kStyleColor_kBBColor_Evergreen_Cyan"; break;
+		case kStyleColor_kBBColor_Evergreen_Pink: str = "kStyleColor_kBBColor_Evergreen_Pink"; break;
+		case kStyleColor_kBBColor_Evergreen_White: str = "kStyleColor_kBBColor_Evergreen_White"; break;
+		case kStyleColor_kBBColor_Evergreen_LightBlue: str = "kStyleColor_kBBColor_Evergreen_LightBlue"; break;
+		case kStyleColor_kBBColor_Evergreen_Orange: str = "kStyleColor_kBBColor_Evergreen_Orange"; break;
+		case kStyleColor_kBBColor_Evergreen_LightBlueAlt: str = "kStyleColor_kBBColor_Evergreen_LightBlueAlt"; break;
+		case kStyleColor_kBBColor_Evergreen_OrangeAlt: str = "kStyleColor_kBBColor_Evergreen_OrangeAlt"; break;
+		case kStyleColor_kBBColor_Evergreen_MediumBlue: str = "kStyleColor_kBBColor_Evergreen_MediumBlue"; break;
+		case kStyleColor_kBBColor_Evergreen_Amber: str = "kStyleColor_kBBColor_Evergreen_Amber"; break;
+		case kStyleColor_kBBColor_UE4_Black: str = "kStyleColor_kBBColor_UE4_Black"; break;
+		case kStyleColor_kBBColor_UE4_DarkRed: str = "kStyleColor_kBBColor_UE4_DarkRed"; break;
+		case kStyleColor_kBBColor_UE4_DarkGreen: str = "kStyleColor_kBBColor_UE4_DarkGreen"; break;
+		case kStyleColor_kBBColor_UE4_DarkBlue: str = "kStyleColor_kBBColor_UE4_DarkBlue"; break;
+		case kStyleColor_kBBColor_UE4_DarkYellow: str = "kStyleColor_kBBColor_UE4_DarkYellow"; break;
+		case kStyleColor_kBBColor_UE4_DarkCyan: str = "kStyleColor_kBBColor_UE4_DarkCyan"; break;
+		case kStyleColor_kBBColor_UE4_DarkPurple: str = "kStyleColor_kBBColor_UE4_DarkPurple"; break;
+		case kStyleColor_kBBColor_UE4_DarkWhite: str = "kStyleColor_kBBColor_UE4_DarkWhite"; break;
+		case kStyleColor_kBBColor_UE4_Red: str = "kStyleColor_kBBColor_UE4_Red"; break;
+		case kStyleColor_kBBColor_UE4_Green: str = "kStyleColor_kBBColor_UE4_Green"; break;
+		case kStyleColor_kBBColor_UE4_Blue: str = "kStyleColor_kBBColor_UE4_Blue"; break;
+		case kStyleColor_kBBColor_UE4_Yellow: str = "kStyleColor_kBBColor_UE4_Yellow"; break;
+		case kStyleColor_kBBColor_UE4_Cyan: str = "kStyleColor_kBBColor_UE4_Cyan"; break;
+		case kStyleColor_kBBColor_UE4_Purple: str = "kStyleColor_kBBColor_UE4_Purple"; break;
+		case kStyleColor_kBBColor_UE4_White: str = "kStyleColor_kBBColor_UE4_White"; break;
+		case kStyleColor_ActiveSession: str = "kStyleColor_ActiveSession"; break;
+		case kStyleColor_InactiveSession: str = "kStyleColor_InactiveSession"; break;
+		case kStyleColor_LogLevel_VeryVerbose: str = "kStyleColor_LogLevel_VeryVerbose"; break;
+		case kStyleColor_LogLevel_Verbose: str = "kStyleColor_LogLevel_Verbose"; break;
+		case kStyleColor_LogLevel_Log: str = "kStyleColor_LogLevel_Log"; break;
+		case kStyleColor_LogLevel_Display: str = "kStyleColor_LogLevel_Display"; break;
+		case kStyleColor_LogLevel_Warning: str = "kStyleColor_LogLevel_Warning"; break;
+		case kStyleColor_LogLevel_Error: str = "kStyleColor_LogLevel_Error"; break;
+		case kStyleColor_LogLevel_Fatal: str = "kStyleColor_LogLevel_Fatal"; break;
+		case kStyleColor_Multiline: str = "kStyleColor_Multiline"; break;
+		case kStyleColor_LogBackground_Normal: str = "kStyleColor_LogBackground_Normal"; break;
+		case kStyleColor_LogBackground_NormalAlternate0: str = "kStyleColor_LogBackground_NormalAlternate0"; break;
+		case kStyleColor_LogBackground_NormalAlternate1: str = "kStyleColor_LogBackground_NormalAlternate1"; break;
+		case kStyleColor_LogBackground_Bookmarked: str = "kStyleColor_LogBackground_Bookmarked"; break;
+		case kStyleColor_LogBackground_BookmarkedAlternate0: str = "kStyleColor_LogBackground_BookmarkedAlternate0"; break;
+		case kStyleColor_LogBackground_BookmarkedAlternate1: str = "kStyleColor_LogBackground_BookmarkedAlternate1"; break;
+		case kStyleColor_ResizeNormal: str = "kStyleColor_ResizeNormal"; break;
+		case kStyleColor_ResizeHovered: str = "kStyleColor_ResizeHovered"; break;
+		case kStyleColor_ResizeActive: str = "kStyleColor_ResizeActive"; break;
+		case kStyleColor_MessageBoxBackground0: str = "kStyleColor_MessageBoxBackground0"; break;
+		case kStyleColor_MessageBoxBackground1: str = "kStyleColor_MessageBoxBackground1"; break;
+		case kStyleColor_Count: str = "kStyleColor_Count"; break;
 	}
 	JSON_Value *val = json_value_init_string(str);
 	return val;

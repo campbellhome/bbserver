@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "theme_config.h"
+#include "appdata.h"
 #include "bb_json_generated.h"
 #include "bb_string.h"
 #include "bb_structs_generated.h"
@@ -11,12 +12,13 @@ resolvedStyle g_styleConfig;
 
 typedef struct tag_defaultStyle {
 	const char *name;
+	const char *filename;
 	resolvedStyle colors;
 } defaultStyle;
 
 // clang-format off
 const defaultStyle s_defaultStyleConfigs[] = {
-	{ "ImGui Dark",
+	{ "ImGui Dark", "bb_theme_imgui_dark.json",
 		{ {
 			{ 180, 180, 180, 255 }, // kStyleColor_kBBColor_Default,
 			{  61,  61,  61, 255 }, // kStyleColor_kBBColor_Evergreen_Black,
@@ -71,7 +73,7 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
-	{ "Light",
+	{ "Light", "bb_theme_light.json",
 		{ {
 			{ 180, 180, 180, 255 }, // kStyleColor_kBBColor_Default,
 			{  61,  61,  61, 255 }, // kStyleColor_kBBColor_Evergreen_Black,
@@ -126,7 +128,7 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
-	{ "Classic",
+	{ "Classic", "bb_theme_classic.json",
 		{ {
 			{ 180, 180, 180, 255 }, // kStyleColor_kBBColor_Default,
 			{  61,  61,  61, 255 }, // kStyleColor_kBBColor_Evergreen_Black,
@@ -181,7 +183,7 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
-	{ "Visual Studio Dark",
+	{ "Visual Studio Dark", "bb_theme_visual_studio_dark.json",
 		{ {
 			{ 180, 180, 180, 255 }, // kStyleColor_kBBColor_Default,
 			{  61,  61,  61, 255 }, // kStyleColor_kBBColor_Evergreen_Black,
@@ -236,7 +238,7 @@ const defaultStyle s_defaultStyleConfigs[] = {
 			{ 190, 145, 100,  34 }, // kStyleColor_MessageBoxBackground1,
 		} }
 	},
-	{ "Windows",
+	{ "Windows", "bb_theme_imgui_dark.json",
 		{ {
 			{ 180, 180, 180, 255 }, // kStyleColor_kBBColor_Default,
 			{  61,  61,  61, 255 }, // kStyleColor_kBBColor_Evergreen_Black,
@@ -294,6 +296,28 @@ const defaultStyle s_defaultStyleConfigs[] = {
 };
 // clang-format on
 
+static void Style_ReadConfigJson(const char *filename)
+{
+	sb_t path = appdata_get("bb");
+	sb_va(&path, "\\%s", filename);
+	JSON_Value *val = json_parse_file(sb_get(&path));
+	if(val) {
+		theme_config_t themeConfig = json_deserialize_theme_config_t(val);
+		for(u32 colorFileIndex = 0; colorFileIndex < themeConfig.colors.count; ++colorFileIndex) {
+			const color_config_t *colorConfig = themeConfig.colors.data + colorFileIndex;
+			if(colorConfig->colorName >= 0 && colorConfig->colorName < kStyleColor_Count) {
+				g_styleConfig.colors[colorConfig->colorName].r = colorConfig->r;
+				g_styleConfig.colors[colorConfig->colorName].g = colorConfig->g;
+				g_styleConfig.colors[colorConfig->colorName].b = colorConfig->b;
+				g_styleConfig.colors[colorConfig->colorName].a = colorConfig->a;
+			}
+		}
+		json_value_free(val);
+		theme_config_reset(&themeConfig);
+	}
+	sb_reset(&path);
+}
+
 b32 Style_ReadConfig(const char *colorscheme)
 {
 	Style_ResetConfig();
@@ -302,6 +326,7 @@ b32 Style_ReadConfig(const char *colorscheme)
 	for(u32 i = 0; i < BB_ARRAYSIZE(s_defaultStyleConfigs); ++i) {
 		if(!bb_stricmp(colorscheme, s_defaultStyleConfigs[i].name)) {
 			g_styleConfig = s_defaultStyleConfigs[i].colors;
+			Style_ReadConfigJson(s_defaultStyleConfigs[i].filename);
 			ret = true;
 			break;
 		}

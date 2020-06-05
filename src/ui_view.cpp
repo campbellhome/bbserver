@@ -1196,18 +1196,18 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 	if(viewLog->bookmarked) {
 		if(g_config.alternateRowBackground) {
 			targetBgColor = (viewLog->viewLogIndex % 2)
-			                    ? ImColor(0.0f, 1.0f, 0.0f, 0.15f)
-			                    : ImColor(0.0f, 0.8f, 0.0f, 0.15f);
+			                    ? MakeBackgroundTintColor(kStyleColor_LogBackground_BookmarkedAlternate0, ImColor(0.0f, 1.0f, 0.0f, 0.15f))
+			                    : MakeBackgroundTintColor(kStyleColor_LogBackground_BookmarkedAlternate1, ImColor(0.0f, 0.8f, 0.0f, 0.15f));
 		} else {
-			targetBgColor = ImColor(0.0f, 1.0f, 0.0f, 0.15f);
+			targetBgColor = MakeBackgroundTintColor(kStyleColor_LogBackground_Bookmarked, ImColor(0.0f, 1.0f, 0.0f, 0.15f));
 		}
 	} else {
 		if(g_config.alternateRowBackground) {
 			targetBgColor = (viewLog->viewLogIndex % 2)
-			                    ? ImColor(1.0f, 1.0f, 1.0f, 0.025f)
-			                    : ImColor(0.0f, 0.0f, 0.0f, 0.025f);
+			                    ? MakeBackgroundTintColor(kStyleColor_LogBackground_NormalAlternate0, ImColor(1.0f, 1.0f, 1.0f, 0.025f))
+			                    : MakeBackgroundTintColor(kStyleColor_LogBackground_NormalAlternate1, ImColor(0.0f, 0.0f, 0.0f, 0.025f));
 		} else {
-			targetBgColor = ImColor(0.0f, 0.0f, 0.0f, 0.0f);
+			targetBgColor = MakeBackgroundTintColor(kStyleColor_LogBackground_Normal, ImColor(0.0f, 0.0f, 0.0f, 0.0f));
 		}
 	}
 	ImVec4 bgColor = (decoded->packet.logText.colors.bg == kBBColor_Default ||
