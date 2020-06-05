@@ -293,10 +293,11 @@ void UIConfig_Update(config_t *config)
 	float UIRecordings_Width();
 	float startY = ImGui::GetFrameHeight();
 	ImGuiIO &io = ImGui::GetIO();
-	SetNextWindowSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), io.DisplaySize.y - startY), ImGuiCond_Always);
-	SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + startY), ImGuiCond_Always);
-
-	if(Begin("Config", &s_preferencesOpen, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
+	SetNextWindowSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), io.DisplaySize.y - startY), ImGuiCond_FirstUseEver);
+	SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + startY), ImGuiCond_FirstUseEver);
+	SetNextWindowContentSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), 0.f));
+	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_HorizontalScrollbar;
+	if(Begin("Config", &s_preferencesOpen, windowFlags)) {
 		if(ImGui::CollapsingHeader("Interface", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::BeginGroup();
 			Checkbox("Auto-tile views", &s_preferencesConfig.autoTileViews);
@@ -366,90 +367,6 @@ void UIConfig_Update(config_t *config)
 				ImGui::SetTooltip("Resize bar width/height (0 for default)");
 			}
 		}
-		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Open Targets", ImGuiTreeNodeFlags_DefaultOpen)) {
-			Columns(3, "opentargetscolumns");
-			SetColumnOffset(1, 155.0f * Imgui_Core_GetDpiScale());
-			SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
-			Separator();
-			Text("Name");
-			NextColumn();
-			Text("Command Line");
-			NextColumn();
-			Text("Move");
-			NextColumn();
-			Separator();
-			for(u32 i = 0; i < s_preferencesConfig.openTargets.count; ++i) {
-				Preferences_OpenTargetEntry(i, s_preferencesConfig.openTargets);
-			}
-			Columns(1);
-			Separator();
-			if(Button("Add Entry###Add OpenTarget")) {
-				bba_add(s_preferencesConfig.openTargets, 1);
-			}
-		}
-		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Path Fixups", ImGuiTreeNodeFlags_DefaultOpen)) {
-			Columns(3, "pathfixupscolumns");
-			SetColumnOffset(1, 240.0f * Imgui_Core_GetDpiScale());
-			SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
-			Separator();
-			Text("Original Path");
-			NextColumn();
-			Text("Local Path");
-			NextColumn();
-			Text("Move");
-			NextColumn();
-			Separator();
-			for(u32 i = 0; i < s_preferencesConfig.pathFixups.count; ++i) {
-				Preferences_PathFixupEntry(i, s_preferencesConfig.pathFixups);
-			}
-			Columns(1);
-			Separator();
-			if(Button("Add Entry###Add PathFixup")) {
-				bba_add(s_preferencesConfig.pathFixups, 1);
-			}
-		}
-		if(ImGui::CollapsingHeader("Allowed Connections", ImGuiTreeNodeFlags_DefaultOpen)) {
-			sb_clear(&s_tmpStr);
-			const sbs_t *deviceCodes = deviceCodes_lock();
-			sb_va(&s_tmpStr, "%u Device Codes:", deviceCodes->count);
-			for(u32 i = 0; i < deviceCodes->count; ++i) {
-				if(i) {
-					sb_append(&s_tmpStr, ",");
-				}
-				sb_va(&s_tmpStr, " %s", sb_get(deviceCodes->data + i));
-			}
-			deviceCodes_unlock();
-			TextUnformatted(sb_get(&s_tmpStr));
-			Columns(5, "whitelistcolumns");
-			SetColumnOffset(1, 80.0f * Imgui_Core_GetDpiScale());
-			SetColumnOffset(2, 280.0f * Imgui_Core_GetDpiScale());
-			SetColumnOffset(3, 480.0f * Imgui_Core_GetDpiScale());
-			SetColumnOffset(4, 680.0f * Imgui_Core_GetDpiScale());
-			Separator();
-			Text("Allow");
-			NextColumn();
-			Text("Address");
-			NextColumn();
-			Text("Application Name");
-			NextColumn();
-			Text("Comment");
-			NextColumn();
-			Text("Move");
-			NextColumn();
-			Separator();
-			for(u32 i = 0; i < s_preferencesConfig.whitelist.count; ++i) {
-				Preferences_WhitelistEntry(i, s_preferencesConfig.whitelist);
-			}
-			Columns(1);
-			Separator();
-			if(Button("Add Entry###Add Whitelist")) {
-				configWhitelistEntry_t *entry = bba_add(s_preferencesConfig.whitelist, 1);
-				if(entry) {
-					entry->allow = true;
-					sb_append(&entry->addressPlusMask, "localhost");
-				}
-			}
-		}
 		ImFont *uiFont = ImGui::GetFont();
 		ImVec2 fontSizeDim = uiFont->CalcTextSizeA(uiFont->FontSize, FLT_MAX, 0.0f, "100 _+__-_ size");
 		if(ImGui::CollapsingHeader("Font", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -500,6 +417,90 @@ void UIConfig_Update(config_t *config)
 			}
 			PopID();
 			EndGroup();
+		}
+		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Open Targets", ImGuiTreeNodeFlags_DefaultOpen)) {
+			Columns(3, "opentargetscolumns");
+			SetColumnOffset(1, 155.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
+			Separator();
+			Text("Name");
+			NextColumn();
+			Text("Command Line");
+			NextColumn();
+			Text("Move");
+			NextColumn();
+			Separator();
+			for(u32 i = 0; i < s_preferencesConfig.openTargets.count; ++i) {
+				Preferences_OpenTargetEntry(i, s_preferencesConfig.openTargets);
+			}
+			Columns(1);
+			Separator();
+			if(Button("Add Entry###Add OpenTarget")) {
+				bba_add(s_preferencesConfig.openTargets, 1);
+			}
+		}
+		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Path Fixups", ImGuiTreeNodeFlags_DefaultOpen)) {
+			Columns(3, "pathfixupscolumns");
+			SetColumnOffset(1, 240.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
+			Separator();
+			Text("Original Path");
+			NextColumn();
+			Text("Local Path");
+			NextColumn();
+			Text("Move");
+			NextColumn();
+			Separator();
+			for(u32 i = 0; i < s_preferencesConfig.pathFixups.count; ++i) {
+				Preferences_PathFixupEntry(i, s_preferencesConfig.pathFixups);
+			}
+			Columns(1);
+			Separator();
+			if(Button("Add Entry###Add PathFixup")) {
+				bba_add(s_preferencesConfig.pathFixups, 1);
+			}
+		}
+		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Allowed Connections", ImGuiTreeNodeFlags_DefaultOpen)) {
+			sb_clear(&s_tmpStr);
+			const sbs_t *deviceCodes = deviceCodes_lock();
+			sb_va(&s_tmpStr, "%u Device Codes:", deviceCodes->count);
+			for(u32 i = 0; i < deviceCodes->count; ++i) {
+				if(i) {
+					sb_append(&s_tmpStr, ",");
+				}
+				sb_va(&s_tmpStr, " %s", sb_get(deviceCodes->data + i));
+			}
+			deviceCodes_unlock();
+			TextUnformatted(sb_get(&s_tmpStr));
+			Columns(5, "whitelistcolumns");
+			SetColumnOffset(1, 80.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(2, 280.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(3, 480.0f * Imgui_Core_GetDpiScale());
+			SetColumnOffset(4, 680.0f * Imgui_Core_GetDpiScale());
+			Separator();
+			Text("Allow");
+			NextColumn();
+			Text("Address");
+			NextColumn();
+			Text("Application Name");
+			NextColumn();
+			Text("Comment");
+			NextColumn();
+			Text("Move");
+			NextColumn();
+			Separator();
+			for(u32 i = 0; i < s_preferencesConfig.whitelist.count; ++i) {
+				Preferences_WhitelistEntry(i, s_preferencesConfig.whitelist);
+			}
+			Columns(1);
+			Separator();
+			if(Button("Add Entry###Add Whitelist")) {
+				configWhitelistEntry_t *entry = bba_add(s_preferencesConfig.whitelist, 1);
+				if(entry) {
+					entry->allow = true;
+					sb_append(&entry->addressPlusMask, "localhost");
+				}
+			}
 		}
 		if(ImGui::CollapsingHeader("Miscellaneous", ImGuiTreeNodeFlags_DefaultOpen)) {
 			int val = (int)s_preferencesConfig.autoDeleteAfterDays;

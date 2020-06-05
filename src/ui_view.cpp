@@ -1586,7 +1586,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 	const char *applicationName = session->appInfo.packet.appInfo.applicationName;
 	char *viewId = UIRecordedView_GetViewId(view);
 	bool initializedLogColumns = false;
-	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBringToFrontOnFocus;
 	b32 roundingPushed = false;
 	if(autoTileViews) {
 		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -2273,59 +2273,57 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 		}
 	}
 
-	if(!UIConfig_IsOpen()) {
-		if(autoTileViews) {
-			ImVec2 viewportPos(0.0f, 0.0f);
-			ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
-			if(viewport) {
-				viewportPos.x += viewport->Pos.x;
-				viewportPos.y += viewport->Pos.y;
+	if(autoTileViews) {
+		ImVec2 viewportPos(0.0f, 0.0f);
+		ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
+		if(viewport) {
+			viewportPos.x += viewport->Pos.x;
+			viewportPos.y += viewport->Pos.y;
+		}
+
+		float startY = ImGui::GetFrameHeight() + g_messageboxHeight;
+		ImGuiIO &io = ImGui::GetIO();
+		float screenWidth = io.DisplaySize.x - UIRecordings_Width();
+		float screenHeight = io.DisplaySize.y - startY;
+
+		int tiledCount = 0;
+		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+			view_t *view = *(s_gathered_views.data + viewIndex);
+			if(view->tiled) {
+				++tiledCount;
 			}
+		}
 
-			float startY = ImGui::GetFrameHeight() + g_messageboxHeight;
-			ImGuiIO &io = ImGui::GetIO();
-			float screenWidth = io.DisplaySize.x - UIRecordings_Width();
-			float screenHeight = io.DisplaySize.y - startY;
-
-			int tiledCount = 0;
-			for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
-				view_t *view = *(s_gathered_views.data + viewIndex);
-				if(view->tiled) {
-					++tiledCount;
+		int cols = (int)ceil(sqrt((double)tiledCount));
+		cols = (cols < 1) ? 1 : cols;
+		int rows = (int)ceil(tiledCount / (float)cols);
+		rows = (rows < 1) ? 1 : rows;
+		if(screenHeight > screenWidth) {
+			int tmp = cols;
+			cols = rows;
+			rows = tmp;
+		}
+		ImVec2 windowSpacing(screenWidth / cols, screenHeight / rows);
+		ImVec2 windowSize(windowSpacing.x - 1, windowSpacing.y - 1);
+		int row = 0;
+		int col = 0;
+		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+			view_t *view = *(s_gathered_views.data + viewIndex);
+			ImGuiCond positioningCond = (view->tiled) ? ImGuiCond_Always : ImGuiCond_Once;
+			SetNextWindowSize(windowSize, positioningCond);
+			SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * col, viewportPos.y + startY + windowSpacing.y * row), positioningCond);
+			UIRecordedView_Update(view, autoTileViews);
+			if(view->tiled) {
+				++col;
+				if(col == cols) {
+					col = 0;
+					++row;
 				}
 			}
-
-			int cols = (int)ceil(sqrt((double)tiledCount));
-			cols = (cols < 1) ? 1 : cols;
-			int rows = (int)ceil(tiledCount / (float)cols);
-			rows = (rows < 1) ? 1 : rows;
-			if(screenHeight > screenWidth) {
-				int tmp = cols;
-				cols = rows;
-				rows = tmp;
-			}
-			ImVec2 windowSpacing(screenWidth / cols, screenHeight / rows);
-			ImVec2 windowSize(windowSpacing.x - 1, windowSpacing.y - 1);
-			int row = 0;
-			int col = 0;
-			for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
-				view_t *view = *(s_gathered_views.data + viewIndex);
-				ImGuiCond positioningCond = (view->tiled) ? ImGuiCond_Always : ImGuiCond_Once;
-				SetNextWindowSize(windowSize, positioningCond);
-				SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * col, viewportPos.y + startY + windowSpacing.y * row), positioningCond);
-				UIRecordedView_Update(view, autoTileViews);
-				if(view->tiled) {
-					++col;
-					if(col == cols) {
-						col = 0;
-						++row;
-					}
-				}
-			}
-		} else {
-			for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
-				UIRecordedView_Update(*(s_gathered_views.data + viewIndex), autoTileViews);
-			}
+		}
+	} else {
+		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+			UIRecordedView_Update(*(s_gathered_views.data + viewIndex), autoTileViews);
 		}
 	}
 
