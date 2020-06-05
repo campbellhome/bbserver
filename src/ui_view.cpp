@@ -26,7 +26,9 @@
 #include "ui_tags.h"
 #include "va.h"
 #include "view.h"
+#include "view_config.h"
 #include "wrap_imgui.h"
+#include "wrap_imgui_internal.h"
 
 BB_WARNING_PUSH(4820)
 #include "span.h"
@@ -1566,8 +1568,17 @@ static char *UIRecordedView_GetViewId(view_t *view)
 	return va("%s##View_%s_%u", applicationName, filename, view->viewId);
 }
 
-static inline ImVec2 operator+(const ImVec2 &lhs, const ImVec2 &rhs) { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
-static inline ImVec2 operator-(const ImVec2 &lhs, const ImVec2 &rhs) { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
+static void view_close_and_write_config(view_t *view)
+{
+	if(view->open) {
+		view->open = false;
+		if(view_config_write(view)) {
+			BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
+		} else {
+			BB_ERROR("View", "%s failed to write config\n", view->session->appInfo.packet.appInfo.applicationName);
+		}
+	}
+}
 
 static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 {
@@ -1587,6 +1598,59 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 
 	bool *viewOpen = (bool *)&view->open;
 	if(Begin(viewId, viewOpen, windowFlags)) {
+		ImGui::PushID(viewId);
+
+		// Middle-click to close view
+		ImGuiWindow *window = ImGui::GetCurrentContext()->CurrentWindow;
+		if(!window->SkipItems) {
+			if(IsMouseReleased(ImGuiMouseButton_Middle)) {
+				if(IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup)) {
+					view_close_and_write_config(view);
+				}
+			}
+		}
+
+		if(ImGui::BeginPopupContextItem("ViewContext")) {
+			if(ImGui::Selectable("Close this view")) {
+				view_close_and_write_config(view);
+			}
+			if(ImGui::Selectable("Close all views")) {
+				for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+					view_t *otherView = *(s_gathered_views.data + viewIndex);
+					view_close_and_write_config(otherView);
+				}
+			}
+			if(ImGui::Selectable("Close all but this view")) {
+				for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+					view_t *otherView = *(s_gathered_views.data + viewIndex);
+					if(otherView != view) {
+						view_close_and_write_config(otherView);
+					}
+				}
+			}
+			if(ImGui::Selectable("Close all inactive views")) {
+				for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+					view_t *otherView = *(s_gathered_views.data + viewIndex);
+					const recording_t *recording = recordings_find_by_path(otherView->session->path);
+					if(!recording || !recording->active) {
+						view_close_and_write_config(otherView);
+					}
+				}
+			}
+			if(ImGui::Selectable("Close all inactive auto-close views")) {
+				for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+					view_t *otherView = *(s_gathered_views.data + viewIndex);
+					if(otherView->autoClose) {
+						const recording_t *recording = recordings_find_by_path(otherView->session->path);
+						if(!recording || !recording->active) {
+							view_close_and_write_config(otherView);
+						}
+					}
+				}
+			}
+			ImGui::EndPopup();
+		}
+
 		const recording_t *recording = recordings_find_by_path(session->path);
 		bool hasFocus = ImGui::IsWindowFocused() ||
 		                ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootWindow);
@@ -2122,6 +2186,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		EndChild(); // scrollingParent
 
 		UIRecordedView_Console(view, hasFocus);
+		ImGui::PopID();
 	}
 	End();
 	if(roundingPushed) {
