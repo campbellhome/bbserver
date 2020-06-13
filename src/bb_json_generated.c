@@ -435,6 +435,10 @@ color_config_t json_deserialize_color_config_t(JSON_Value *src)
 			dst.g = (u8)json_object_get_number(obj, "g");
 			dst.b = (u8)json_object_get_number(obj, "b");
 			dst.a = (u8)json_object_get_number(obj, "a");
+			dst.bTextShadows = json_object_get_boolean_safe(obj, "bTextShadows");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -1073,6 +1077,10 @@ JSON_Value *json_serialize_color_config_t(const color_config_t *src)
 		json_object_set_number(obj, "g", src->g);
 		json_object_set_number(obj, "b", src->b);
 		json_object_set_number(obj, "a", src->a);
+		json_object_set_boolean(obj, "bTextShadows", src->bTextShadows);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }

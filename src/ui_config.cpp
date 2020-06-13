@@ -250,7 +250,6 @@ bool UIConfig_IsOpen()
 	return s_preferencesOpen;
 }
 
-static bool s_colorschemeWantsShadow[] = { true, false, true, true, false };
 static const char *s_colorschemes[] = {
 	"ImGui Dark",
 	"Light",
@@ -258,7 +257,6 @@ static const char *s_colorschemes[] = {
 	"Visual Studio Dark",
 	"Windows",
 };
-BB_CTASSERT(BB_ARRAYSIZE(s_colorschemeWantsShadow) == BB_ARRAYSIZE(s_colorschemes));
 
 void UIConfig_ApplyColorscheme(config_t *config)
 {
@@ -324,7 +322,6 @@ void UIConfig_Update(config_t *config)
 					sb_reset(&s_preferencesConfig.colorscheme);
 					sb_append(&s_preferencesConfig.colorscheme, s_colorschemes[colorschemeIndex]);
 					UIConfig_ApplyColorscheme(&s_preferencesConfig);
-					s_preferencesConfig.textShadows = s_colorschemeWantsShadow[colorschemeIndex];
 				}
 			}
 			ImGui::SameLine(0.0f, 40.0f * Imgui_Core_GetDpiScale());

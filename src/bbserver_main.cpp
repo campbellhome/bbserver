@@ -244,7 +244,7 @@ static void SetRegistryDefaultValue(HKEY hkey, const char *subkey, const char *v
 {
 	LONG result = RegSetValueA(hkey, subkey, REG_SZ, value, 0);
 	if(result == ERROR_SUCCESS) {
-		BB_LOG("Registry", "RegSetValueA %s (Default) = %s", subkey, value);
+		_BB_LOG_INTERNAL(kBBLogLevel_Display, "Registry", "RegSetValueA %s (Default) = %s", subkey, value);
 	} else {
 		BB_ERROR("Registry", "failed to RegSetValueA %s (Default) = %s", subkey, value);
 	}

@@ -3,7 +3,7 @@
 
 #include "ui_loglevel_colorizer.h"
 #include "bb_colors.h"
-#include "theme_config.h"
+#include "imgui_text_shadows.h"
 #include "wrap_imgui.h"
 
 bb_log_level_e GetLogLevelBasedOnCounts(const u32 logCount[/*kBBLogLevel_Count*/])
@@ -27,33 +27,43 @@ bb_log_level_e GetLogLevelBasedOnCounts(const u32 logCount[/*kBBLogLevel_Count*/
 	return result;
 }
 
-ImVec4 GetTextColorForLogLevel(u32 logLevel) // bb_log_level_e, but u32 in packet
+styleColor_e GetStyleColorForLogLevel(bb_log_level_e logLevel)
 {
 	switch(logLevel) {
 	case kBBLogLevel_Error:
-		return MakeColor(kStyleColor_LogLevel_Error);
+		return kStyleColor_LogLevel_Error;
 	case kBBLogLevel_Warning:
-		return MakeColor(kStyleColor_LogLevel_Warning);
+		return kStyleColor_LogLevel_Warning;
 	case kBBLogLevel_Fatal:
-		return MakeColor(kStyleColor_LogLevel_Fatal);
+		return kStyleColor_LogLevel_Fatal;
 	case kBBLogLevel_Display:
-		return MakeColor(kStyleColor_LogLevel_Display);
+		return kStyleColor_LogLevel_Display;
 	case kBBLogLevel_Verbose:
-		return MakeColor(kStyleColor_LogLevel_Verbose);
+		return kStyleColor_LogLevel_Verbose;
 	case kBBLogLevel_VeryVerbose:
-		return MakeColor(kStyleColor_LogLevel_VeryVerbose);
+		return kStyleColor_LogLevel_VeryVerbose;
 	case kBBLogLevel_Log:
+	case kBBLogLevel_SetColor:
+	case kBBLogLevel_Count:
 	default:
-		return MakeColor(kStyleColor_LogLevel_Log);
+		return kStyleColor_LogLevel_Log;
 	}
+}
+
+ImVec4 GetTextColorForLogLevel(u32 logLevel) // bb_log_level_e, but u32 in packet
+{
+	return MakeColor(GetStyleColorForLogLevel((bb_log_level_e)logLevel));
 }
 
 LogLevelColorizer::LogLevelColorizer(bb_log_level_e logLevel)
 {
-	ImGui::PushStyleColor(ImGuiCol_Text, GetTextColorForLogLevel(logLevel));
+	const styleColor_e styleColor = GetStyleColorForLogLevel(logLevel);
+	ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(styleColor));
+	bTextShadows = PushTextShadows(styleColor);
 }
 
 LogLevelColorizer::~LogLevelColorizer()
 {
+	PopTextShadows(bTextShadows);
 	ImGui::PopStyleColor();
 }

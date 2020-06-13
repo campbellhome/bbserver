@@ -7,6 +7,7 @@
 #include "bb_string.h"
 #include "bbserver_utils.h"
 #include "config.h"
+#include "imgui_text_shadows.h"
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
@@ -262,7 +263,9 @@ static void UIRecordings_Recording(recording_tab_t tab, grouped_recording_entry_
 	}
 
 	PushID((int)recording->id);
-	PushStyleColor(ImGuiCol_Text, recording->active ? MakeColor(kStyleColor_ActiveSession) : MakeColor(kStyleColor_InactiveSession));
+	const styleColor_e styleColor = recording->active ? kStyleColor_ActiveSession : kStyleColor_InactiveSession;
+	PushStyleColor(ImGuiCol_Text, MakeColor(styleColor));
+	bool oldShadow = PushTextShadows(styleColor);
 	const char *label = nullptr;
 	if(config->tabs[tab].showDate && config->tabs[tab].showTime) {
 		label = va("%s %s: %s###Selectable", dateBuffer, timeBuffer, recording->applicationName);
@@ -273,6 +276,7 @@ static void UIRecordings_Recording(recording_tab_t tab, grouped_recording_entry_
 	} else {
 		label = va("%s###Selectable", recording->applicationName);
 	}
+	TextShadow(label, false, true);
 	if(Selectable(label, e->selected != 0, ImGuiSelectableFlags_AllowDoubleClick)) {
 		if(ImGui::IsMouseDoubleClicked(0)) {
 			recorded_session_open(recording->path, recording->applicationFilename, false, recording->active, recording->outgoingMqId);
@@ -281,6 +285,7 @@ static void UIRecordings_Recording(recording_tab_t tab, grouped_recording_entry_
 			UIRecordings_HandleClick(tab, e);
 		}
 	}
+	PopTextShadows(oldShadow);
 	PopStyleColor();
 	if(IsTooltipActive()) {
 		if(recording->platform == kBBPlatform_Unknown) {

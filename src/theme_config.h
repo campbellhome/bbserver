@@ -18,6 +18,8 @@ typedef struct tag_styleColor {
 	s32 g;
 	s32 b;
 	s32 a;
+	b32 bTextShadows;
+	u8 pad[4];
 } styleColor;
 
 typedef struct tag_styleColors {
@@ -91,6 +93,8 @@ AUTOJSON typedef struct color_config_s {
 	u8 g;
 	u8 b;
 	u8 a;
+	b32 bTextShadows;
+	u8 pad[4];
 } color_config_t;
 
 AUTOJSON typedef struct colors_config_s {

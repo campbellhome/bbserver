@@ -668,6 +668,10 @@ color_config_t color_config_clone(const color_config_t *src)
 		dst.g = src->g;
 		dst.b = src->b;
 		dst.a = src->a;
+		dst.bTextShadows = src->bTextShadows;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
 	}
 	return dst;
 }

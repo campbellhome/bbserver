@@ -37,6 +37,7 @@ BB_WARNING_PUSH(4820)
 #include <math.h>
 BB_WARNING_POP
 
+#include "imgui_text_shadows.h"
 #include "parson/parson.h"
 
 extern float g_messageboxHeight;
@@ -937,19 +938,19 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 		BeginTooltip();
 		PushUIFont();
 		if(session->appInfo.type >= kBBPacketType_AppInfo_v3) {
-			Text("Timestamp: %s %s", DateFromDecoded(session, decoded), TimeFromDecoded(session, decoded));
+			TextShadowed(va("Timestamp: %s %s", DateFromDecoded(session, decoded), TimeFromDecoded(session, decoded)));
 		} else {
-			Text("Timestamp: %" PRIu64, decoded->header.timestamp);
+			TextShadowed(va("Timestamp: %" PRIu64, decoded->header.timestamp));
 		}
-		Text("Category: %s", category->categoryName);
-		Text("Verbosity: %s", decoded->packet.logText.level < kBBLogLevel_Count ? logLevelNames[decoded->packet.logText.level] : "(unknown)");
+		TextShadowed(va("Category: %s", category->categoryName));
+		TextShadowed(va("Verbosity: %s", decoded->packet.logText.level < kBBLogLevel_Count ? logLevelNames[decoded->packet.logText.level] : "(unknown)"));
 		if(decoded->header.line) {
-			Text("Source: %s:%u", GetSessionFilePath(session, decoded->header.fileId), decoded->header.line);
+			TextShadowed(va("Source: %s:%u", GetSessionFilePath(session, decoded->header.fileId), decoded->header.line));
 		} else {
-			Text("Source: %s", GetSessionFilePath(session, decoded->header.fileId));
+			TextShadowed(va("Source: %s", GetSessionFilePath(session, decoded->header.fileId)));
 		}
-		Text("Thread: %s", GetSessionThreadName(session, decoded->header.threadId));
-		Text("PIE Instance: %u", decoded->packet.logText.pieInstance);
+		TextShadowed(va("Thread: %s", GetSessionThreadName(session, decoded->header.threadId)));
+		TextShadowed(va("PIE Instance: %u", decoded->packet.logText.pieInstance));
 		Separator();
 		PopUIFont();
 		span_t cursor = span_from_string(decoded->packet.logText.text);
@@ -970,7 +971,11 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 			}
 			if(!bJson) {
 				PushTextWrapPos(600.0f);
-				TextWrapped("%s", sb_get(&stripped));
+				if(Imgui_Core_GetTextShadows()) {
+					TextWrappedShadowed(va("%s", sb_get(&stripped)));
+				} else {
+					TextWrapped("%s", sb_get(&stripped));
+				}
 				PopTextWrapPos();
 			}
 		}
@@ -984,7 +989,9 @@ typedef struct colored_text_s {
 	const char *next;
 	int len;
 	ImColor color;
+	styleColor_e styleColor;
 	b32 blink;
+	u8 pad[4];
 } colored_text_t;
 
 static colored_text_t UIRecordedView_GetColoredTextInternal(colored_text_t prev)
@@ -996,6 +1003,7 @@ static colored_text_t UIRecordedView_GetColoredTextInternal(colored_text_t prev)
 	if(!start || !*start) {
 		return ret;
 	}
+	ret.styleColor = prev.styleColor;
 	ret.color = prev.color;
 	ret.blink = prev.blink;
 
@@ -1003,7 +1011,8 @@ static colored_text_t UIRecordedView_GetColoredTextInternal(colored_text_t prev)
 		int colorIndex = marker[1] - kFirstColorKey;
 		ret.start = start + 2;
 		ret.next = marker + 2;
-		ret.color = MakeColor((styleColor_e)(colorIndex + kColorKeyOffset));
+		ret.styleColor = (styleColor_e)(colorIndex + kColorKeyOffset);
+		ret.color = MakeColor(ret.styleColor);
 		marker += 2;
 	} else if(*marker == '^' && marker[1] == 'F') {
 		ret.start = start + 2;
@@ -1182,16 +1191,7 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 	recorded_category_t *category = recorded_session_find_category(session, decoded->packet.logText.categoryId);
 	LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
 
-	configColorUsage colorUsage = g_config.logColorUsage;
-	ImColor fgColor = MakeColor((styleColor_e)kBBColor_Default);
-	if(colorUsage != kConfigColors_None) {
-		fgColor = MakeColor((styleColor_e)(decoded->packet.logText.colors.fg));
-		if(colorUsage == kConfigColors_BgAsFg) {
-			if(decoded->packet.logText.colors.bg != kBBColor_Default) {
-				fgColor = MakeColor((styleColor_e)(decoded->packet.logText.colors.bg));
-			}
-		}
-	}
+	const configColorUsage colorUsage = g_config.logColorUsage;
 	ImColor targetBgColor;
 	if(viewLog->bookmarked) {
 		if(g_config.alternateRowBackground) {
@@ -1265,8 +1265,10 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 	}
 
 	float scrollX = ImGui::GetScrollX();
+	bool oldShadows = false;
 	if(viewLog->subLine != 0) {
 		ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_Multiline));
+		oldShadows = PushTextShadows(kStyleColor_Multiline);
 	}
 	for(i = 0; i < kColumn_Count; ++i) {
 		view_column_e column = (view_column_e)i;
@@ -1285,6 +1287,7 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 		}
 	}
 	if(viewLog->subLine != 0) {
+		PopTextShadows(oldShadows);
 		ImGui::PopStyleColor();
 	}
 
@@ -1294,14 +1297,24 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 	span_t subLineSpan = tokenizeNthLine(span_from_string(decoded->packet.logText.text), viewLog->subLine);
 
 	bool first = true;
+
 	colored_text_t span = { BB_EMPTY_INITIALIZER };
+	if(colorUsage != kConfigColors_None) {
+		span.styleColor = (styleColor_e)(decoded->packet.logText.colors.fg);
+		if(colorUsage == kConfigColors_BgAsFg) {
+			if(decoded->packet.logText.colors.bg != kBBColor_Default) {
+				span.styleColor = (styleColor_e)(decoded->packet.logText.colors.bg);
+			}
+		}
+	}
 	if(decoded->packet.logText.colors.fg == kBBColor_Default ||
 	   decoded->packet.logText.level == kBBLogLevel_Warning ||
 	   decoded->packet.logText.level == kBBLogLevel_Error ||
 	   decoded->packet.logText.level == kBBLogLevel_Fatal) {
-		fgColor = GetTextColorForLogLevel(decoded->packet.logText.level);
+		span.styleColor = GetStyleColorForLogLevel((bb_log_level_e)decoded->packet.logText.level);
 	}
-	span.color = fgColor;
+	span.color = MakeColor(span.styleColor);
+	const ImColor fgColor = span.color;
 
 	if(viewLog->subLine && subLineSpan.start) {
 		colored_text_t other = { BB_EMPTY_INITIALIZER };
@@ -1342,9 +1355,15 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 				color.Value.w *= scale;
 				Imgui_Core_RequestRender();
 			}
+			if(g_config.logColorUsage != kConfigColors_None) {
+				oldShadows = PushTextShadows(span.styleColor);
+			}
 			ImGui::PushStyleColor(ImGuiCol_Text, color);
 			TextShadowed(va("%.*s", span.len, span.start));
 			ImGui::PopStyleColor();
+			if(g_config.logColorUsage != kConfigColors_None) {
+				PopTextShadows(oldShadows);
+			}
 			bNeedText = false;
 		}
 	} while(span.next);

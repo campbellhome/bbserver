@@ -3,6 +3,7 @@
 
 #include "ui_tags.h"
 #include "bb_array.h"
+#include "imgui_text_shadows.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
 #include "recorded_session.h"
@@ -34,7 +35,8 @@ static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel
 {
 	if(count || logLevel == kBBLogLevel_Log) {
 		LogLevelColorizer colorizer(logLevel);
-		ImGui::Text(fmt, count);
+		ScopedTextShadows shadows(logLevel);
+		ImGui::TextShadowed(va(fmt, count));
 	}
 }
 
@@ -445,7 +447,9 @@ void UITags_Update(view_t *view)
 					recorded_category_t *recordedCategory = view->session->categories.data + viewCategoryIndex;
 					bb_log_level_e logLevel = GetLogLevelBasedOnCounts(recordedCategory->logCount);
 					LogLevelColorizer colorizer(logLevel);
+					ScopedTextShadows shadows(logLevel);
 					ImVec2 pos = ImGui::GetIconPosForText();
+					ImGui::TextShadow(categoryName);
 					ImGui::Selectable(categoryName, selected);
 					if(viewCategory->disabled) {
 						ImVec4 color4 = GetTextColorForLogLevel(logLevel);
@@ -516,8 +520,11 @@ void UITags_Update(view_t *view)
 			bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
 			ImGui::SameLine();
 			{
-				LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(recordedCategory->logCount));
+				bb_log_level_e logLevel = GetLogLevelBasedOnCounts(recordedCategory->logCount);
+				LogLevelColorizer colorizer(logLevel);
+				ScopedTextShadows shadows(logLevel);
 				ImVec2 pos = ImGui::GetIconPosForText();
+				ImGui::TextShadow(viewCategory->categoryName);
 				activated = ImGui::Selectable(viewCategory->categoryName, viewCategory->selected != 0);
 				if(viewCategory->disabled) {
 					ImVec4 color4 = GetTextColorForLogLevel(GetLogLevelBasedOnCounts(recordedCategory->logCount));
