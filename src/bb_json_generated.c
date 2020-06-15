@@ -1469,6 +1469,7 @@ styleColor_e json_deserialize_styleColor_e(JSON_Value *src)
 			if(!strcmp(str, "kStyleColor_ResizeActive")) { dst = kStyleColor_ResizeActive; }
 			if(!strcmp(str, "kStyleColor_MessageBoxBackground0")) { dst = kStyleColor_MessageBoxBackground0; }
 			if(!strcmp(str, "kStyleColor_MessageBoxBackground1")) { dst = kStyleColor_MessageBoxBackground1; }
+			if(!strcmp(str, "kStyleColor_TextShadow")) { dst = kStyleColor_TextShadow; }
 			if(!strcmp(str, "kStyleColor_Count")) { dst = kStyleColor_Count; }
 		}
 	}
@@ -1614,6 +1615,7 @@ JSON_Value *json_serialize_styleColor_e(const styleColor_e src)
 		case kStyleColor_ResizeActive: str = "kStyleColor_ResizeActive"; break;
 		case kStyleColor_MessageBoxBackground0: str = "kStyleColor_MessageBoxBackground0"; break;
 		case kStyleColor_MessageBoxBackground1: str = "kStyleColor_MessageBoxBackground1"; break;
+		case kStyleColor_TextShadow: str = "kStyleColor_TextShadow"; break;
 		case kStyleColor_Count: str = "kStyleColor_Count"; break;
 	}
 	JSON_Value *val = json_value_init_string(str);

@@ -84,6 +84,7 @@ AUTOJSON typedef enum tag_styleColor_e {
 	kStyleColor_ResizeActive,
 	kStyleColor_MessageBoxBackground0,
 	kStyleColor_MessageBoxBackground1,
+	kStyleColor_TextShadow,
 	kStyleColor_Count
 } styleColor_e;
 

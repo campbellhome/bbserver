@@ -963,14 +963,20 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 					char *json = json_serialize_to_string_pretty(val);
 					if(json) {
 						bJson = true;
-						TextUnformatted(json);
+						PushTextWrapPos(1800.0f);
+						if(Imgui_Core_GetTextShadows()) {
+							TextWrappedShadowed(va("%s", json));
+						} else {
+							TextWrapped("%s", json);
+						}
+						PopTextWrapPos();
 						json_free_serialized_string(json);
 					}
 					json_value_free(val);
 				}
 			}
 			if(!bJson) {
-				PushTextWrapPos(600.0f);
+				PushTextWrapPos(1200.0f);
 				if(Imgui_Core_GetTextShadows()) {
 					TextWrappedShadowed(va("%s", sb_get(&stripped)));
 				} else {
