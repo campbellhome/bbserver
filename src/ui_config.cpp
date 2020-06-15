@@ -3,6 +3,7 @@
 
 #include "ui_config.h"
 #include "bb_array.h"
+#include "bb_colors.h"
 #include "bb_string.h"
 #include "device_codes.h"
 #include "fonts.h"
@@ -266,7 +267,7 @@ void UIConfig_ApplyColorscheme(config_t *config)
 	const char *colorscheme = sb_get(&config->colorscheme);
 	Style_Apply(colorscheme);
 	Style_ReadConfig(colorscheme);
-	ImGui::SetTextShadowColor(kStyleColor_TextShadow);
+	ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 }
 
 static const char *g_colorUsageNames[] = {
@@ -534,7 +535,7 @@ void UIConfig_Update(config_t *config)
 			Imgui_Core_QueueUpdateDpiDependentResources();
 			Style_Apply(Imgui_Core_GetColorScheme());
 			Style_ReadConfig(Imgui_Core_GetColorScheme());
-			ImGui::SetTextShadowColor(kStyleColor_TextShadow);
+			ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 		}
 	}
 	End();

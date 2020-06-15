@@ -4,6 +4,7 @@
 #include "app_update.h"
 #include "appdata.h"
 #include "bb_array.h"
+#include "bb_colors.h"
 #include "bb_common.h"
 #include "bb_log.h"
 #include "bb_sockets.h"
@@ -399,7 +400,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 						Fonts_AddFont(g_config.uiFontConfig);
 						Fonts_AddFont(g_config.logFontConfig);
 						Style_ReadConfig(Imgui_Core_GetColorScheme());
-						ImGui::SetTextShadowColor(kStyleColor_TextShadow);
+						ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 						Imgui_Core_SetUserWndProc(&BBServer_HandleWindowMessage);
 						if(cmdline_find("-hide") > 0) {
 							Imgui_Core_HideWindow();

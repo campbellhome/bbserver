@@ -287,7 +287,7 @@ void BBServer_MainMenuBar(void)
 				}
 				if(ImGui::MenuItem("DEBUG Reload style colors")) {
 					Style_ReadConfig(Imgui_Core_GetColorScheme());
-					ImGui::SetTextShadowColor(kStyleColor_TextShadow);
+					ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 				}
 				if(ImGui::BeginMenu("Color schemes")) {
 					const char *colorscheme = Imgui_Core_GetColorScheme();
@@ -296,7 +296,7 @@ void BBServer_MainMenuBar(void)
 						if(ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected)) {
 							Imgui_Core_SetColorScheme(s_colorschemes[i]);
 							Style_ReadConfig(Imgui_Core_GetColorScheme());
-							ImGui::SetTextShadowColor(kStyleColor_TextShadow);
+							ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 						}
 					}
 					ImGui::EndMenu();
