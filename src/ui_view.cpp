@@ -923,13 +923,15 @@ void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
 	CheckboxPIEInstanceVisiblity(view, startIndex);
 	ImGui::SameLine();
 	{
-		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount));
+		LogLevelColorizer colorizer(rf ? GetLogLevelBasedOnCounts(rf->logCount) : kBBLogLevel_VeryVerbose);
 		if(ImGui::TreeNodeEx((startIndex) ? va("%u##PIEInstance%u", startIndex, startIndex) : "-",
 		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
 			ImGui::TreePop();
 		}
 	}
-	PIEInstanceToolTip(rf, startIndex);
+	if(rf) {
+		PIEInstanceToolTip(rf, startIndex);
+	}
 }
 
 static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *category, recorded_session_t *session)
