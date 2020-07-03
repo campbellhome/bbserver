@@ -168,6 +168,7 @@ void recordings_sort(recording_tab_t tab)
 	case kRecordingSort_Application:
 		qsort(s_recordings[tab].data, s_recordings[tab].count, sizeof(s_recordings[tab].data[0]), recordings_compare_application);
 		break;
+	case kRecordingSort_Count:
 	default:
 		BB_ASSERT(0);
 		break;
@@ -201,6 +202,7 @@ void recordings_sort(recording_tab_t tab)
 			}
 		}
 		break;
+	case kRecordingSort_Count:
 	default:
 		BB_ASSERT(0);
 	}

@@ -88,6 +88,7 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t *host,
 		char ip[32];
 		bb_format_ip(ip, sizeof(ip), addr);
 		if(entry && entry->allow) {
+			BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBDiscoveryPacketType_Invalid' in switch of enum 'bb_discovery_packet_type_e' is not explicitly handled by a case label
 			switch(decoded->type) {
 			case kBBDiscoveryPacketType_RequestDiscovery:
 			case kBBDiscoveryPacketType_RequestDiscovery_v1:
@@ -103,6 +104,7 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t *host,
 			default:
 				break;
 			}
+			BB_WARNING_POP;
 		}
 
 		if(result == kBBDiscoveryPacketType_Invalid && decoded->packet.request.deviceCode[0] != '\0') {
@@ -110,6 +112,7 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t *host,
 			for(u32 i = 0; i < deviceCodes->count; ++i) {
 				const char *deviceCode = sb_get(deviceCodes->data + i);
 				if(!strcmp(deviceCode, decoded->packet.request.deviceCode)) {
+					BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBDiscoveryPacketType_Invalid' in switch of enum 'bb_discovery_packet_type_e' is not explicitly handled by a case label
 					switch(decoded->type) {
 					case kBBDiscoveryPacketType_RequestDiscovery:
 						result = kBBDiscoveryPacketType_AnnouncePresence;
@@ -120,6 +123,7 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t *host,
 					default:
 						break;
 					}
+					BB_WARNING_POP;
 				}
 			}
 			deviceCodes_unlock();

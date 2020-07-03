@@ -555,6 +555,7 @@ static inline b32 view_filter_compare_double(view_filter_comparison_t comp, doub
 	case kViewFilterComparison_LessThanEqual: return a <= b;
 	case kViewFilterComparison_LessThan: return a < b;
 	case kViewFilterComparison_NotEqual: return a != b;
+	case kViewFilterComparison_Count:
 	default: return false;
 	}
 }

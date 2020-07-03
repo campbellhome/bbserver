@@ -280,6 +280,7 @@ void recorded_session_update(recorded_session_t *session)
 			recorded_session_add_partial_log(session, &decoded);
 			break;
 		case kBBPacketType_LogText_v1:
+		case kBBPacketType_LogText_v2:
 		case kBBPacketType_LogText:
 			recorded_session_add_log(session, &decoded, t);
 			break;
@@ -294,6 +295,12 @@ void recorded_session_update(recorded_session_t *session)
 				t->endTime = decoded.header.timestamp;
 			}
 			break;
+		case kBBPacketType_Invalid:
+		case kBBPacketType_FrameEnd:
+		case kBBPacketType_UserToServer:
+		case kBBPacketType_ConsoleCommand:
+		case kBBPacketType_UserToClient:
+		case kBBPacketType_StopRecording:
 		default:
 			break;
 		}
@@ -630,6 +637,7 @@ static recorded_thread_t *recorded_session_find_or_add_thread(recorded_session_t
 	for(i = 0; i < session->threads.count; ++i) {
 		t = session->threads.data + i;
 		if(t->id == threadId) {
+			BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBDiscoveryPacketType_Invalid' in switch of enum 'bb_discovery_packet_type_e' is not explicitly handled by a case label
 			switch(decoded->type) {
 			case kBBPacketType_ThreadStart:
 				bb_strncpy(t->threadName, decoded->packet.threadStart.text, sizeof(t->threadName));
@@ -651,6 +659,7 @@ static recorded_thread_t *recorded_session_find_or_add_thread(recorded_session_t
 				break;
 			default: break;
 			}
+			BB_WARNING_POP;
 			return t;
 		}
 	}
@@ -658,6 +667,7 @@ static recorded_thread_t *recorded_session_find_or_add_thread(recorded_session_t
 	if(t) {
 		t->id = threadId;
 		t->startTime = decoded->header.timestamp;
+		BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBDiscoveryPacketType_Invalid' in switch of enum 'bb_discovery_packet_type_e' is not explicitly handled by a case label
 		switch(decoded->type) {
 		case kBBPacketType_ThreadStart:
 			bb_strncpy(t->threadName, decoded->packet.threadStart.text, sizeof(t->threadName));
@@ -671,6 +681,7 @@ static recorded_thread_t *recorded_session_find_or_add_thread(recorded_session_t
 			bb_strncpy(t->threadName, va("thread_%" PRIu64, threadId), sizeof(t->threadName));
 			break;
 		}
+		BB_WARNING_POP;
 		for(i = 0; i < session->views.count; ++i) {
 			view_add_thread(session->views.data + i, t);
 		}

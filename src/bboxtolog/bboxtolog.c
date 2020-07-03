@@ -155,6 +155,8 @@ static s32 get_verbosity_sort(bb_log_level_e verbosity)
 	case kBBLogLevel_Warning: return 5;
 	case kBBLogLevel_Error: return 6;
 	case kBBLogLevel_Fatal: return 7;
+	case kBBLogLevel_SetColor:
+	case kBBLogLevel_Count:
 	default: return 0;
 	}
 }
@@ -363,6 +365,7 @@ int main(int argc, char **argv)
 						g_initialTimestamp = decoded.packet.appInfo.initialTimestamp;
 						g_millisPerTick = decoded.packet.appInfo.millisPerTick;
 					} else {
+						BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBPacketType_Invalid' in switch of enum 'bb_packet_type_e' is not explicitly handled by a case label
 						switch(decoded.type) {
 						case kBBPacketType_CategoryId: {
 							category_t *c = bba_add(g_categories, 1);
@@ -394,6 +397,7 @@ int main(int argc, char **argv)
 						default:
 							break;
 						}
+						BB_WARNING_POP;
 					}
 				} else {
 					fprintf(stderr, "Failed to decode packet from %s\n", source);

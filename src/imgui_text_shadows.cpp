@@ -10,8 +10,8 @@
 
 bool PushTextShadows(styleColor_e styleColor)
 {
-	const bool ret = Imgui_Core_GetTextShadows();
-	const bool bShadows = g_styleConfig.colors[styleColor].bTextShadows;
+	const bool ret = Imgui_Core_GetTextShadows() != 0;
+	const bool bShadows = g_styleConfig.colors[styleColor].bTextShadows != 0;
 	Imgui_Core_SetTextShadows(g_config.textShadows && bShadows);
 	return ret;
 }

@@ -19,7 +19,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <OutDir>..\bin\$(PlatformToolset)\bb\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
