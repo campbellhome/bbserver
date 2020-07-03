@@ -3,6 +3,8 @@
 
 #include "ui_loglevel_colorizer.h"
 #include "bb_colors.h"
+#include "bb_string.h"
+#include "imgui_core.h"
 #include "imgui_text_shadows.h"
 #include "wrap_imgui.h"
 
@@ -55,9 +57,16 @@ ImVec4 GetTextColorForLogLevel(u32 logLevel) // bb_log_level_e, but u32 in packe
 	return MakeColor(GetStyleColorForLogLevel((bb_log_level_e)logLevel));
 }
 
-LogLevelColorizer::LogLevelColorizer(bb_log_level_e logLevel)
+LogLevelColorizer::LogLevelColorizer(bb_log_level_e logLevel, bool bCanShadow)
 {
-	const styleColor_e styleColor = GetStyleColorForLogLevel(logLevel);
+	styleColor_e styleColor = GetStyleColorForLogLevel(logLevel);
+	if(!bCanShadow) {
+		const bool bRequireShadows = g_styleConfig.colors[styleColor].bTextShadows != 0;
+		if(!bb_stricmp(Imgui_Core_GetColorScheme(), "Light")) {
+			styleColor = GetStyleColorForLogLevel(kBBLogLevel_Log);
+		}
+	}
+
 	ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(styleColor));
 	bTextShadows = PushTextShadows(styleColor);
 }

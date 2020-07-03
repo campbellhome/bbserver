@@ -611,7 +611,8 @@ static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel
 {
 	if(count || logLevel == kBBLogLevel_Log) {
 		LogLevelColorizer colorizer(logLevel);
-		Text(fmt, count);
+		ScopedTextShadows shadows(logLevel);
+		ImGui::TextShadowed(va(fmt, count));
 	}
 }
 
@@ -841,7 +842,7 @@ void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
 	CheckboxThreadVisiblity(view, startIndex);
 	ImGui::SameLine();
 	{
-		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(t->logCount));
+		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(t->logCount), false);
 		if(ImGui::TreeNodeEx(va("%s###Thread%u", threadName, startIndex),
 		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vt->selected)) {
 			ImGui::TreePop();
@@ -887,7 +888,7 @@ void UIRecordedView_FileTreeNode(view_t *view, u32 startIndex)
 	CheckboxFileVisiblity(view, startIndex);
 	ImGui::SameLine();
 	{
-		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount));
+		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount), false);
 		if(ImGui::TreeNodeEx(va("%s###File%u", fileName, startIndex),
 		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
 			ImGui::TreePop();
@@ -933,7 +934,7 @@ void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
 		CheckboxPIEInstanceVisiblity(view, startIndex);
 		ImGui::SameLine();
 		{
-			LogLevelColorizer colorizer(rf ? GetLogLevelBasedOnCounts(rf->logCount) : kBBLogLevel_VeryVerbose);
+			LogLevelColorizer colorizer(rf ? GetLogLevelBasedOnCounts(rf->logCount) : kBBLogLevel_VeryVerbose, false);
 			if(ImGui::TreeNodeEx((vf->primary != 0) ? "-" : va("%d##PIEInstance%u", vf->pieInstance, startIndex),
 			                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
 				ImGui::TreePop();

@@ -16,6 +16,6 @@ class LogLevelColorizer
 	bool bTextShadows = false;
 
 public:
-	LogLevelColorizer(bb_log_level_e logLevel);
+	LogLevelColorizer(bb_log_level_e logLevel, bool bCanShadow = true);
 	~LogLevelColorizer();
 };
