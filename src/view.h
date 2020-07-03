@@ -64,6 +64,8 @@ typedef struct view_files_s {
 AUTOJSON typedef struct view_pieInstance_s {
 	b32 selected;
 	b32 visible;
+	s32 pieInstance;
+	b32 primary;
 } view_pieInstance_t;
 AUTOJSON typedef struct view_pieInstances_s {
 	u32 count;
@@ -319,7 +321,8 @@ void view_reset_column_widths(view_t *view);
 void view_add_category(view_t *view, recorded_category_t *category, const view_config_category_t *configCategory);
 void view_add_thread(view_t *view, recorded_thread_t *rt);
 void view_add_file(view_t *view, recorded_filename_t *rf);
-void view_add_pieInstance(view_t *view, u32 pieInstance);
+void view_add_pieInstance(view_t *view, s32 pieInstance);
+view_pieInstance_t *view_find_pieInstance(view_t *view, s32 pieInstance);
 void view_add_log(view_t *view, recorded_log_t *log);
 void view_update_visible_logs(view_t *view);
 void view_update_category_id(view_t *view, recorded_category_t *category);

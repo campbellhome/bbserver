@@ -161,8 +161,8 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	}
 	view->visibleLogsAdded = true;
 
-	for(i = 0; i <= session->pieInstances.count; ++i) {
-		view_add_pieInstance(view, i);
+	for(i = 0; i < session->pieInstances.count; ++i) {
+		view_add_pieInstance(view, session->pieInstances.data[i].pieInstance);
 	}
 }
 
@@ -491,15 +491,40 @@ b32 view_file_visible(view_t *view, u64 fileId)
 	return false;
 }
 
-void view_add_pieInstance(view_t *view, u32 pieInstance)
+static int view_pieInstance_sort(const void *_a, const void *_b)
 {
-	if(view->pieInstances.count <= pieInstance) {
-		u32 start = view->pieInstances.count;
-		bba_add(view->pieInstances, pieInstance - view->pieInstances.count + 1);
-		for(u32 i = start; i < view->pieInstances.count; ++i) {
-			view->pieInstances.data[i].visible = true;
+	const view_pieInstance_t *a = (const view_pieInstance_t *)_a;
+	const view_pieInstance_t *b = (const view_pieInstance_t *)_b;
+	return a->pieInstance > b->pieInstance;
+}
+
+void view_add_pieInstance(view_t *view, s32 pieInstance)
+{
+	for(u32 i = 0; i < view->pieInstances.count; ++i) {
+		view_pieInstance_t *viewPieInstance = view->pieInstances.data + i;
+		if(viewPieInstance->pieInstance == pieInstance) {
+			return;
 		}
 	}
+
+	view_pieInstance_t *viewPieInstance = bba_add(view->pieInstances, 1);
+	if(viewPieInstance) {
+		viewPieInstance->visible = true;
+		viewPieInstance->pieInstance = pieInstance;
+		viewPieInstance->primary = view->pieInstances.count == 1;
+		qsort(view->pieInstances.data, view->pieInstances.count, sizeof(view->pieInstances.data[0]), view_pieInstance_sort);
+	}
+}
+
+view_pieInstance_t *view_find_pieInstance(view_t *view, s32 pieInstance)
+{
+	for(u32 i = 0; i < view->pieInstances.count; ++i) {
+		view_pieInstance_t *viewPieInstance = view->pieInstances.data + i;
+		if(viewPieInstance->pieInstance == pieInstance) {
+			return viewPieInstance;
+		}
+	}
+	return NULL;
 }
 
 view_category_t *view_find_category(view_t *view, u32 categoryId)
@@ -614,7 +639,7 @@ static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 	u32 categoryId;
 	u64 threadId;
 	u64 fileId;
-	u32 pieInstance = decoded->packet.logText.pieInstance;
+	s32 pieInstance = decoded->packet.logText.pieInstance;
 	b32 levelVisible = false;
 	switch(level) {
 	case kBBLogLevel_VeryVerbose:
@@ -646,7 +671,7 @@ static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 	}
 	if(!levelVisible)
 		return false;
-	if(pieInstance >= view->pieInstances.count || !view->pieInstances.data[pieInstance].visible)
+	if(!view_find_pieInstance(view, pieInstance))
 		return false;
 	threadId = decoded->header.threadId;
 	if(!view_thread_visible(view, threadId))

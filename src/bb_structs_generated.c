@@ -742,6 +742,8 @@ view_pieInstance_t view_pieInstance_clone(const view_pieInstance_t *src)
 	if(src) {
 		dst.selected = src->selected;
 		dst.visible = src->visible;
+		dst.pieInstance = src->pieInstance;
+		dst.primary = src->primary;
 	}
 	return dst;
 }

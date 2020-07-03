@@ -90,6 +90,8 @@ typedef struct recorded_threads_s {
 
 typedef struct recorded_pieInstance_s {
 	u32 logCount[kBBLogLevel_Count];
+	s32 pieInstance;
+	u8 pad[4];
 } recorded_pieInstance_t;
 
 typedef struct recorded_pieInstances_s {
@@ -139,7 +141,7 @@ recorded_category_t *recorded_session_find_category_by_name(recorded_session_t *
 recorded_category_t *recorded_session_find_category(recorded_session_t *session, u32 categoryId);
 recorded_filename_t *recorded_session_find_filename(recorded_session_t *session, u32 fileId);
 recorded_thread_t *recorded_session_find_thread(recorded_session_t *session, u64 threadId);
-recorded_pieInstance_t *recorded_session_find_pieInstance(recorded_session_t *session, u32 pieInstance);
+recorded_pieInstance_t *recorded_session_find_pieInstance(recorded_session_t *session, s32 pieInstance);
 
 #if defined(__cplusplus)
 }

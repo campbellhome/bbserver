@@ -288,7 +288,12 @@ static const char *BuildLogColumnText(view_t *view, view_log_t *viewLog, view_co
 		category = recorded_session_find_category(session, decoded->packet.logText.categoryId);
 		return va("%s", category ? GetCategoryLeafName(category) : "");
 	case kColumn_PIEInstance:
-		return (decoded->packet.logText.pieInstance > 0) ? va("%u", decoded->packet.logText.pieInstance) : "";
+		if(view_pieInstance_t *pieInstance = view_find_pieInstance(view, decoded->packet.logText.pieInstance)) {
+			return (pieInstance->primary) ? "" : va("%d", pieInstance->pieInstance);
+	
+		} else {
+			return "";
+		}
 	case kColumn_Count:
 	default:
 		BB_ASSERT(false);
@@ -664,11 +669,15 @@ static void FileToolTip(recorded_filename_t *f)
 	}
 }
 
-static void PIEInstanceToolTip(recorded_pieInstance_t *p, u32 pieInstance)
+static void PIEInstanceToolTip(recorded_pieInstance_t *p, b32 bPrimary)
 {
 	if(IsTooltipActive()) {
 		BeginTooltip();
-		Text("PIEInstance %u", pieInstance);
+		if(bPrimary != 0) {
+			Text("PIEInstance -");
+		} else {
+			Text("PIEInstance %d", p->pieInstance);
+		}
 		TooltipLevelText("Self VeryVerbose: %u", p->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
 		TooltipLevelText("Self Verbose: %u", p->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
 		TooltipLevelText("Self Logs: %u", p->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
@@ -919,18 +928,20 @@ static void CheckboxAllPIEInstanceVisiblity(view_t *view)
 void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
 {
 	view_pieInstance_t *vf = view->pieInstances.data + startIndex;
-	recorded_pieInstance_t *rf = recorded_session_find_pieInstance(view->session, startIndex);
-	CheckboxPIEInstanceVisiblity(view, startIndex);
-	ImGui::SameLine();
-	{
-		LogLevelColorizer colorizer(rf ? GetLogLevelBasedOnCounts(rf->logCount) : kBBLogLevel_VeryVerbose);
-		if(ImGui::TreeNodeEx((startIndex) ? va("%u##PIEInstance%u", startIndex, startIndex) : "-",
-		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
-			ImGui::TreePop();
+	if(vf) {
+		recorded_pieInstance_t *rf = recorded_session_find_pieInstance(view->session, vf->pieInstance);
+		CheckboxPIEInstanceVisiblity(view, startIndex);
+		ImGui::SameLine();
+		{
+			LogLevelColorizer colorizer(rf ? GetLogLevelBasedOnCounts(rf->logCount) : kBBLogLevel_VeryVerbose);
+			if(ImGui::TreeNodeEx((vf->primary != 0) ? "-" : va("%d##PIEInstance%u", vf->pieInstance, startIndex),
+			                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
+				ImGui::TreePop();
+			}
 		}
-	}
-	if(rf) {
-		PIEInstanceToolTip(rf, startIndex);
+		if(rf) {
+			PIEInstanceToolTip(rf, vf->primary);
+		}
 	}
 }
 

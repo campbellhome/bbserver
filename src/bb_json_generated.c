@@ -497,6 +497,8 @@ view_pieInstance_t json_deserialize_view_pieInstance_t(JSON_Value *src)
 		if(obj) {
 			dst.selected = json_object_get_boolean_safe(obj, "selected");
 			dst.visible = json_object_get_boolean_safe(obj, "visible");
+			dst.pieInstance = (s32)json_object_get_number(obj, "pieInstance");
+			dst.primary = json_object_get_boolean_safe(obj, "primary");
 		}
 	}
 	return dst;
@@ -1130,6 +1132,8 @@ JSON_Value *json_serialize_view_pieInstance_t(const view_pieInstance_t *src)
 	if(obj) {
 		json_object_set_boolean(obj, "selected", src->selected);
 		json_object_set_boolean(obj, "visible", src->visible);
+		json_object_set_number(obj, "pieInstance", src->pieInstance);
+		json_object_set_boolean(obj, "primary", src->primary);
 	}
 	return val;
 }

@@ -29,7 +29,7 @@ static void recorded_session_add_partial_log(recorded_session_t *session, bb_dec
 static void recorded_session_add_log(recorded_session_t *session, bb_decoded_packet_t *decoded, recorded_thread_t *t);
 static void recorded_session_add_fileid(recorded_session_t *session, bb_decoded_packet_t *decoded);
 static recorded_thread_t *recorded_session_find_or_add_thread(recorded_session_t *session, bb_decoded_packet_t *decoded);
-static recorded_pieInstance_t *recorded_session_find_or_add_pieInstance(recorded_session_t *session, u32 pieInstance);
+static recorded_pieInstance_t *recorded_session_find_or_add_pieInstance(recorded_session_t *session, s32 pieInstance);
 
 static sb_t s_reconstructedLogText;
 
@@ -690,24 +690,32 @@ static recorded_thread_t *recorded_session_find_or_add_thread(recorded_session_t
 	return t;
 }
 
-recorded_pieInstance_t *recorded_session_find_pieInstance(recorded_session_t *session, u32 pieInstance)
+recorded_pieInstance_t *recorded_session_find_pieInstance(recorded_session_t *session, s32 pieInstance)
 {
-	if(session->pieInstances.count > pieInstance) {
-		return session->pieInstances.data + pieInstance;
+	for(u32 i = 0; i < session->pieInstances.count; ++i) {
+		recorded_pieInstance_t *sessionPieInstance = session->pieInstances.data + i;
+		if(sessionPieInstance->pieInstance == pieInstance) {
+			return sessionPieInstance;
+		}
 	}
 	return NULL;
 }
 
-static recorded_pieInstance_t *recorded_session_find_or_add_pieInstance(recorded_session_t *session, u32 pieInstance)
+static recorded_pieInstance_t *recorded_session_find_or_add_pieInstance(recorded_session_t *session, s32 pieInstance)
 {
-	if(session->pieInstances.count <= pieInstance) {
-		bba_add(session->pieInstances, pieInstance - session->pieInstances.count + 1);
-		for(u32 viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
-			view_add_pieInstance(session->views.data + viewIndex, pieInstance);
+	for(u32 i = 0; i < session->pieInstances.count; ++i) {
+		recorded_pieInstance_t *sessionPieInstance = session->pieInstances.data + i;
+		if(sessionPieInstance->pieInstance == pieInstance) {
+			return sessionPieInstance;
 		}
 	}
-	if(session->pieInstances.count > pieInstance) {
-		return session->pieInstances.data + pieInstance;
+
+	recorded_pieInstance_t *sessionPieInstance = bba_add(session->pieInstances, 1);
+	if(sessionPieInstance) {
+		sessionPieInstance->pieInstance = pieInstance;
 	}
-	return NULL;
+	for(u32 viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
+		view_add_pieInstance(session->views.data + viewIndex, pieInstance);
+	}
+	return sessionPieInstance;
 }
