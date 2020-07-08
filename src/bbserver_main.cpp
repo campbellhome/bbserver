@@ -95,9 +95,13 @@ static b32 BBServer_Init(void)
 	BB_LOG("Startup", "Arguments: %s", cmdline_get_full());
 	bbthread_set_name("main");
 
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Registering assert handler");
 	BBServer_InitAsserts(s_bbLogPath);
 
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Reading config");
 	config_read(&g_config);
+
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Reading tags");
 	tags_init();
 
 	s_updateData.appName = "bb";
@@ -110,20 +114,30 @@ static b32 BBServer_Init(void)
 	s_updateData.pauseAfterFailure = g_config.updatePauseAfterFailedUpdate;
 	s_updateData.updateCheckMs = g_site_config.updates.updateCheckMs;
 	s_updateData.showUpdateManagement = g_config.updateManagement;
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing updates");
 	if(!Update_Init(&s_updateData)) {
 		return false;
 	}
 
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing process system");
 	process_init();
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing task system");
 	tasks_startup();
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing message queue");
 	mq_init();
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Validating config");
 	config_validate_whitelist(&g_config.whitelist);
 	config_validate_open_targets(&g_config.openTargets);
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing styles");
 	Style_Init();
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing color scheme");
 	Imgui_Core_SetColorScheme(sb_get(&g_config.colorscheme));
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing file open dialog");
 	FileOpenDialog_Init();
 	mb_get_queue()->manualUpdate = true;
+	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing network");
 	if(bbnet_init()) {
+		_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing discovery thread");
 		if(discovery_thread_init() != 0) {
 			new_recording_t recording;
 			config_push_whitelist(&g_config.whitelist);
@@ -142,6 +156,7 @@ static b32 BBServer_Init(void)
 			to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(recording));
 			new_recording_reset(&recording);
 
+			_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing recordings");
 			recordings_init();
 			return true;
 		}

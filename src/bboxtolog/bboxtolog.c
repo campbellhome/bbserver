@@ -294,7 +294,7 @@ int main(int argc, char **argv)
 		return usage();
 
 	if(g_follow && g_program == kProgram_bboxtolog)
-		return usage;
+		return usage();
 
 	if(g_program == kProgram_bbtail) {
 		g_inTailCatchup = true;
