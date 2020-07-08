@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "bb.h" // pull in stdint.h warning suppression for VS 2019 16.4 when compiling .c files
 #include "parson/parson.h"
 
 #if defined(__cplusplus)
