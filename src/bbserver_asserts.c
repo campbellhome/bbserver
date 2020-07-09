@@ -190,7 +190,7 @@ void BBServer_InitAsserts(const char *logPath)
 	BB_UNUSED(logPath);
 #if BB_USING(FEATURE_CALLSTACKS)
 	s_logPath = logPath;
-	callstack_init();
+	callstack_init(cmdline_find("-symbolserver") >= 0);
 	if(sb_len(&g_site_config.bugProject)) {
 		bug_reporter_init(sb_get(&g_site_config.bugProject), sb_get(&g_site_config.bugAssignee));
 	}
