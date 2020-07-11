@@ -946,7 +946,7 @@ void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
 	}
 }
 
-static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *category, recorded_session_t *session)
+static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *category, recorded_session_t *session, view_t *view)
 {
 	if(IsTooltipActive()) {
 		BeginTooltip();
@@ -964,7 +964,11 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 			TextShadowed(va("Source: %s", GetSessionFilePath(session, decoded->header.fileId)));
 		}
 		TextShadowed(va("Thread: %s", GetSessionThreadName(session, decoded->header.threadId)));
-		TextShadowed(va("PIE Instance: %u", decoded->packet.logText.pieInstance));
+		if(view_pieInstance_t *pieInstance = view_find_pieInstance(view, decoded->packet.logText.pieInstance)) {
+			if(!pieInstance->primary) {
+				TextShadowed(va("PIE Instance: %d", decoded->packet.logText.pieInstance));
+			}
+		}
 		Separator();
 		PopUIFont();
 		span_t cursor = span_from_string(decoded->packet.logText.text);
@@ -1267,11 +1271,11 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 	if(!g_config.tooltips.onlyOverSelected || viewLog->selected) {
 		if(ImGui::GetMousePos().x >= ImGui::GetWindowPos().x + s_textColumnCursorPosX - ImGui::GetScrollX()) {
 			if(g_config.tooltips.overText) {
-				SetLogTooltip(decoded, category, session);
+				SetLogTooltip(decoded, category, session, view);
 			}
 		} else {
 			if(g_config.tooltips.overMisc) {
-				SetLogTooltip(decoded, category, session);
+				SetLogTooltip(decoded, category, session, view);
 			}
 		}
 	}
