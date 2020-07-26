@@ -115,6 +115,7 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	view->lastCategoryClickIndex = ~0U;
 	view->lastSessionLogIndex = ~0U;
 	view->lastVisibleSessionLogIndex = ~0U;
+	view->redockCount = 2;
 
 	view->config.showSelectorTarget = false;
 	view->config.showVeryVerbose = view->config.showVerbose = false;

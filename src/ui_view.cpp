@@ -290,7 +290,7 @@ static const char *BuildLogColumnText(view_t *view, view_log_t *viewLog, view_co
 	case kColumn_PIEInstance:
 		if(view_pieInstance_t *pieInstance = view_find_pieInstance(view, decoded->packet.logText.pieInstance)) {
 			return (pieInstance->primary) ? "" : va("%d", pieInstance->pieInstance);
-	
+
 		} else {
 			return "";
 		}
@@ -1602,13 +1602,13 @@ static void DrawViewToggles(view_t *view, const char *applicationName)
 	}
 }
 
-static char *UIRecordedView_GetViewId(view_t *view)
+static char *UIRecordedView_GetViewId(view_t *view, bool autoTileViews)
 {
 	recorded_session_t *session = view->session;
 	const char *applicationName = session->appInfo.packet.appInfo.applicationName;
 	char *slash = strrchr(session->path, '\\');
 	char *filename = (slash) ? slash + 1 : session->path;
-	return va("%s##View_%s_%u", applicationName, filename, view->viewId);
+	return va("%s##View_%s_%u_%d", applicationName, filename, view->viewId, autoTileViews);
 }
 
 static void view_close_and_write_config(view_t *view)
@@ -1627,7 +1627,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 {
 	recorded_session_t *session = view->session;
 	const char *applicationName = session->appInfo.packet.appInfo.applicationName;
-	char *viewId = UIRecordedView_GetViewId(view);
+	char *viewId = UIRecordedView_GetViewId(view, autoTileViews);
 	bool initializedLogColumns = false;
 	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBringToFrontOnFocus;
 	b32 roundingPushed = false;
@@ -1689,6 +1689,15 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 							view_close_and_write_config(otherView);
 						}
 					}
+				}
+			}
+			if(ImGui::Selectable("Re-dock this view")) {
+				view->redockCount = 1;
+			}
+			if(ImGui::Selectable("Re-dock all views")) {
+				for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+					view_t *otherView = *(s_gathered_views.data + viewIndex);
+					otherView->redockCount = 1;
 				}
 			}
 			ImGui::EndPopup();
@@ -2316,18 +2325,19 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 		}
 	}
 
-	if(autoTileViews) {
-		ImVec2 viewportPos(0.0f, 0.0f);
-		ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
-		if(viewport) {
-			viewportPos.x += viewport->Pos.x;
-			viewportPos.y += viewport->Pos.y;
-		}
+	ImVec2 viewportPos(0.0f, 0.0f);
+	ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
+	if(viewport) {
+		viewportPos.x += viewport->Pos.x;
+		viewportPos.y += viewport->Pos.y;
+	}
 
-		float startY = ImGui::GetFrameHeight() + g_messageboxHeight;
-		ImGuiIO &io = ImGui::GetIO();
-		float screenWidth = io.DisplaySize.x - UIRecordings_Width();
-		float screenHeight = io.DisplaySize.y - startY;
+	float startY = ImGui::GetFrameHeight() + g_messageboxHeight;
+	ImGuiIO &io = ImGui::GetIO();
+	float screenWidth = io.DisplaySize.x - UIRecordings_Width();
+	float screenHeight = io.DisplaySize.y - startY;
+
+	if(autoTileViews) {
 
 		int tiledCount = 0;
 		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
@@ -2364,10 +2374,33 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 				}
 			}
 		}
-	} else {
-		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
-			UIRecordedView_Update(*(s_gathered_views.data + viewIndex), autoTileViews);
+	} else if(s_gathered_views.count) {
+		ImVec2 windowSpacing(screenWidth, screenHeight);
+		ImVec2 windowSize(windowSpacing.x - 1, windowSpacing.y - 1);
+
+		SetNextWindowSize(windowSize, ImGuiCond_Always);
+		SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + startY), ImGuiCond_Always);
+		int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus;
+		windowFlags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+		bool bOpen = true;
+		if(Begin("MainDockWindow", &bOpen, windowFlags)) {
+			ImGuiID MainDockSpaceId = ImGui::GetID("MainDockSpace");
+			ImGui::DockSpace(MainDockSpaceId);
+
+			for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
+				view_t *view = *(s_gathered_views.data + viewIndex);
+				bool redock = view->redockCount > 0;
+				if(view->redockCount > 0) {
+					--view->redockCount;
+					Imgui_Core_RequestRender();
+				}
+				SetNextWindowDockID(MainDockSpaceId, redock ? ImGuiCond_Always : ImGuiCond_Appearing);
+				SetNextWindowSize(windowSize, ImGuiCond_Once);
+				SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + startY), ImGuiCond_Once);
+				UIRecordedView_Update(*(s_gathered_views.data + viewIndex), autoTileViews);
+			}
 		}
+		End();
 	}
 
 	UIRecordedView_RemoveClosedViews();

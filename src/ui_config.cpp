@@ -293,12 +293,12 @@ void UIConfig_Update(config_t *config)
 	float UIRecordings_Width();
 	float startY = ImGui::GetFrameHeight();
 	ImGuiIO &io = ImGui::GetIO();
-	SetNextWindowSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), io.DisplaySize.y - startY), ImGuiCond_FirstUseEver);
-	SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + startY), ImGuiCond_FirstUseEver);
-	SetNextWindowContentSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), 0.f));
+	SetNextWindowSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), io.DisplaySize.y - startY), ImGuiCond_Appearing);
+	SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + startY), ImGuiCond_Appearing);
 	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_HorizontalScrollbar;
 	if(Begin("Config", &s_preferencesOpen, windowFlags)) {
 		if(ImGui::CollapsingHeader("Interface", ImGuiTreeNodeFlags_DefaultOpen)) {
+			PushItemWidth(200 * Imgui_Core_GetDpiScale());
 			ImGui::BeginGroup();
 			Checkbox("Auto-tile views", &s_preferencesConfig.autoTileViews);
 			InputFloat("Double-click seconds", &s_preferencesConfig.doubleClickSeconds);
@@ -333,7 +333,9 @@ void UIConfig_Update(config_t *config)
 				ImGui::SetTooltip("Requires restart.  Default font is not recommended if DPI Aware.");
 			}
 			ImGui::EndGroup();
+			PopItemWidth();
 			ImGui::SameLine(0.0f, 20.0f * Imgui_Core_GetDpiScale());
+			PushItemWidth(200 * Imgui_Core_GetDpiScale());
 			ImGui::BeginGroup();
 			Checkbox("Tooltips", &s_preferencesConfig.tooltips.enabled);
 			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
@@ -356,6 +358,8 @@ void UIConfig_Update(config_t *config)
 				ImGui::SetTooltip("Delay before showing tooltips");
 			}
 			ImGui::EndGroup();
+			PopItemWidth();
+			PushItemWidth(400 * Imgui_Core_GetDpiScale());
 			ImGui::SliderInt("Scrollbar Size", &s_preferencesConfig.sizes.scrollbarSize, 0, 20);
 			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
 				ImGui::SetTooltip("Scrollbar width/height (0 for default)");
@@ -365,6 +369,7 @@ void UIConfig_Update(config_t *config)
 			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
 				ImGui::SetTooltip("Resize bar width/height (0 for default)");
 			}
+			PopItemWidth();
 		}
 		ImFont *uiFont = ImGui::GetFont();
 		ImVec2 fontSizeDim = uiFont->CalcTextSizeA(uiFont->FontSize, FLT_MAX, 0.0f, "100 _+__-_ size");
@@ -505,7 +510,9 @@ void UIConfig_Update(config_t *config)
 			int val = (int)s_preferencesConfig.autoDeleteAfterDays;
 			ImGui::Text("Auto-delete old sessions after");
 			SameLine();
+			PushItemWidth(100 * Imgui_Core_GetDpiScale());
 			InputInt("days (0 disables)", &val, 1, 10);
+			PopItemWidth();
 			val = BB_CLAMP(val, 0, 9999);
 			s_preferencesConfig.autoDeleteAfterDays = (u32)val;
 			Checkbox("Auto-close all applications instead of just the one starting up", &s_preferencesConfig.autoCloseAll);
@@ -514,7 +521,10 @@ void UIConfig_Update(config_t *config)
 			Checkbox("Show advanced config", &s_preferencesAdvanced);
 		}
 		Separator();
-		if(Button("Ok")) {
+		bool ok = Button("Ok");
+		SameLine();
+		bool apply = Button("Apply");
+		if(ok || apply) {
 			WINDOWPLACEMENT wp = config->wp;
 			config_t tmp = *config;
 			*config = s_preferencesConfig;
@@ -528,6 +538,9 @@ void UIConfig_Update(config_t *config)
 			Fonts_AddFont(config->logFontConfig);
 			Imgui_Core_SetColorScheme(sb_get(&config->colorscheme));
 			Imgui_Core_SetTextShadows(g_config.textShadows);
+			if(apply) {
+				UIConfig_Open(config);
+			}
 		}
 		SameLine();
 		if(Button("Cancel")) {

@@ -309,7 +309,7 @@ typedef struct view_s {
 	b8 beingDragged;
 	b8 visibleLogsAdded;
 	b8 externalView;
-	u8 pad[1];
+	s8 redockCount;
 } view_t;
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);

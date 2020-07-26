@@ -432,6 +432,7 @@ void UIRecordings_Update(bool autoTileViews)
 	if(!config->recordingsOpen)
 		return;
 
+	autoTileViews = true;
 	if(autoTileViews) {
 		ImVec2 viewportPos(0.0f, 0.0f);
 		ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
