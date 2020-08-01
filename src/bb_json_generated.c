@@ -589,12 +589,8 @@ view_config_category_t json_deserialize_view_config_category_t(JSON_Value *src)
 			dst.name = json_deserialize_sb_t(json_object_get_value(obj, "name"));
 			dst.selected = json_object_get_boolean_safe(obj, "selected");
 			dst.visible = json_object_get_boolean_safe(obj, "visible");
-			dst.favorite = json_object_get_boolean_safe(obj, "favorite");
 			dst.depth = (u32)json_object_get_number(obj, "depth");
 			dst.disabled = json_object_get_boolean_safe(obj, "disabled");
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
-				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
-			}
 		}
 	}
 	return dst;
@@ -713,15 +709,11 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.showFatal = json_object_get_boolean_safe(obj, "showFatal");
 			dst.showSelectorTarget = json_object_get_boolean_safe(obj, "showSelectorTarget");
 			dst.newNonFavoriteCategoryVisibility = json_object_get_boolean_safe(obj, "newNonFavoriteCategoryVisibility");
-			dst.newFavoriteCategoryVisibility = json_object_get_boolean_safe(obj, "newFavoriteCategoryVisibility");
 			dst.newThreadVisibility = json_object_get_boolean_safe(obj, "newThreadVisibility");
 			dst.newFileVisibility = json_object_get_boolean_safe(obj, "newFileVisibility");
 			dst.filterActive = json_object_get_boolean_safe(obj, "filterActive");
 			dst.version = (u32)json_object_get_number(obj, "version");
 			dst.selector = json_deserialize_view_config_selector_t(json_object_get_value(obj, "selector"));
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
-				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
-			}
 		}
 	}
 	return dst;
@@ -1215,12 +1207,8 @@ JSON_Value *json_serialize_view_config_category_t(const view_config_category_t *
 		json_object_set_value(obj, "name", json_serialize_sb_t(&src->name));
 		json_object_set_boolean(obj, "selected", src->selected);
 		json_object_set_boolean(obj, "visible", src->visible);
-		json_object_set_boolean(obj, "favorite", src->favorite);
 		json_object_set_number(obj, "depth", src->depth);
 		json_object_set_boolean(obj, "disabled", src->disabled);
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
-		}
 	}
 	return val;
 }
@@ -1327,15 +1315,11 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_boolean(obj, "showFatal", src->showFatal);
 		json_object_set_boolean(obj, "showSelectorTarget", src->showSelectorTarget);
 		json_object_set_boolean(obj, "newNonFavoriteCategoryVisibility", src->newNonFavoriteCategoryVisibility);
-		json_object_set_boolean(obj, "newFavoriteCategoryVisibility", src->newFavoriteCategoryVisibility);
 		json_object_set_boolean(obj, "newThreadVisibility", src->newThreadVisibility);
 		json_object_set_boolean(obj, "newFileVisibility", src->newFileVisibility);
 		json_object_set_boolean(obj, "filterActive", src->filterActive);
 		json_object_set_number(obj, "version", src->version);
 		json_object_set_value(obj, "selector", json_serialize_view_config_selector_t(src->selector));
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
-		}
 	}
 	return val;
 }
@@ -1482,13 +1466,11 @@ styleColor_e json_deserialize_styleColor_e(JSON_Value *src)
 
 view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src)
 {
-	view_config_selector_t dst = kViewSelector_Tags;
+	view_config_selector_t dst = kViewSelector_Categories;
 	if(src) {
 		const char *str = json_value_get_string(src);
 		if(str) {
 			if(!strcmp(str, "kViewSelector_Categories")) { dst = kViewSelector_Categories; }
-			if(!strcmp(str, "kViewSelector_AllCategories")) { dst = kViewSelector_AllCategories; }
-			if(!strcmp(str, "kViewSelector_Tags")) { dst = kViewSelector_Tags; }
 			if(!strcmp(str, "kViewSelector_Threads")) { dst = kViewSelector_Threads; }
 			if(!strcmp(str, "kViewSelector_Files")) { dst = kViewSelector_Files; }
 			if(!strcmp(str, "kViewSelector_PIEInstances")) { dst = kViewSelector_PIEInstances; }
@@ -1631,8 +1613,6 @@ JSON_Value *json_serialize_view_config_selector_t(const view_config_selector_t s
 	const char *str = "";
 	switch(src) {
 		case kViewSelector_Categories: str = "kViewSelector_Categories"; break;
-		case kViewSelector_AllCategories: str = "kViewSelector_AllCategories"; break;
-		case kViewSelector_Tags: str = "kViewSelector_Tags"; break;
 		case kViewSelector_Threads: str = "kViewSelector_Threads"; break;
 		case kViewSelector_Files: str = "kViewSelector_Files"; break;
 		case kViewSelector_PIEInstances: str = "kViewSelector_PIEInstances"; break;

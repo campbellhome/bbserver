@@ -22,7 +22,7 @@ b32 view_config_write(view_t *view);
 b32 view_config_read(view_t *view);
 void view_config_add_categories_to_session(recorded_session_t *session);
 
-void view_apply_config_category(view_t *view, const view_config_category_t *cc, view_category_t *vc);
+void view_apply_config_category(const view_config_category_t *cc, view_category_t *vc);
 
 void view_apply_config_thread(view_config_thread_t *ct, view_thread_t *vt);
 view_config_thread_t *view_find_config_thread(view_t *view, const char *name);

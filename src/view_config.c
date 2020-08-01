@@ -111,25 +111,12 @@ static int ViewConfigCategoryCompare(const void *_a, const void *_b)
 	const view_config_category_t *b = (const view_config_category_t *)_b;
 	return strcmp(sb_get(&a->name), sb_get(&b->name));
 }
-void view_apply_config_category(view_t *view, const view_config_category_t *cc, view_category_t *vc)
+void view_apply_config_category(const view_config_category_t *cc, view_category_t *vc)
 {
-	u32 i;
-	u32 startIndex = (u32)(vc - view->categories.data);
-	u32 endIndex = startIndex + 1;
-	while(endIndex < view->categories.count) {
-		view_category_t *subCategory = view->categories.data + endIndex;
-		if(subCategory->depth <= vc->depth)
-			break;
-		++endIndex;
-	}
-	for(i = startIndex; i < endIndex; ++i) {
-		vc = view->categories.data + i;
-		vc->visible = cc->visible;
-		//vc->selected = cc->selected;
-		vc->favorite = cc->favorite;
-		vc->disabled = cc->disabled;
-		//BB_LOG("Config::Category", "%s apply for '%s'", view->session->applicationFilename, vc->categoryName);
-	}
+	vc->visible = cc->visible;
+	//vc->selected = cc->selected;
+	vc->disabled = cc->disabled;
+	//BB_LOG("Config::Category", "%s apply for '%s'", view->session->applicationFilename, vc->categoryName);
 }
 
 view_config_thread_t *view_find_config_thread(view_t *view, const char *name)
@@ -227,7 +214,6 @@ static void view_config_write_prep(view_t *view)
 			sb_append(&cc->name, vc->categoryName);
 			cc->selected = vc->selected;
 			cc->visible = vc->visible;
-			cc->favorite = vc->favorite;
 			cc->disabled = vc->disabled;
 		}
 	}
@@ -326,7 +312,7 @@ static void view_config_read_fixup(view_t *view)
 			view_config_category_t *cc = view->config.configCategories.data + cci;
 			if(!strcmp(vc->categoryName, sb_get(&cc->name))) {
 				BB_LOG("view::config", "read fixup apply configCategory %s", vc->categoryName);
-				view_apply_config_category(view, cc, vc);
+				view_apply_config_category(cc, vc);
 				break;
 			}
 		}
@@ -383,10 +369,6 @@ b32 view_config_read(view_t *view)
 		ret = true;
 	}
 	sb_reset(&path);
-
-	if(view->config.version < 2) {
-		view->config.selector = kViewSelector_Tags;
-	}
 
 	view->config.version = kViewConfigVersion;
 	view_config_read_fixup(view);

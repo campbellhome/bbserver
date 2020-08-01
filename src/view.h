@@ -22,10 +22,8 @@ typedef struct view_s view_t;
 typedef struct view_category_s {
 	char categoryName[kBBSize_Category];
 	u32 id;
-	u32 depth;
 	b32 selected;
 	b32 visible;
-	b32 favorite;
 	b32 disabled;
 	b32 removed;
 	u8 pad[4];
@@ -104,10 +102,8 @@ typedef struct view_persistent_logs_s {
 	view_persistent_log_t *data;
 } view_persistent_logs_t;
 
-AUTOJSON AUTODEFAULT(kViewSelector_Tags) typedef enum view_config_selector_e {
+AUTOJSON AUTODEFAULT(kViewSelector_Categories) typedef enum view_config_selector_e {
 	kViewSelector_Categories,
-	kViewSelector_AllCategories,
-	kViewSelector_Tags,
 	kViewSelector_Threads,
 	kViewSelector_Files,
 	kViewSelector_PIEInstances,
@@ -139,10 +135,8 @@ AUTOJSON typedef struct view_config_category_s {
 	sb_t name;
 	b32 selected;
 	b32 visible;
-	b32 favorite;
 	u32 depth;
 	b32 disabled;
-	u8 pad[4];
 } view_config_category_t;
 AUTOJSON typedef struct view_config_categories_s {
 	u32 count;
@@ -205,13 +199,11 @@ AUTOJSON typedef struct view_config_s {
 	b32 showFatal;
 	b32 showSelectorTarget;
 	b32 newNonFavoriteCategoryVisibility;
-	b32 newFavoriteCategoryVisibility;
 	b32 newThreadVisibility;
 	b32 newFileVisibility;
 	b32 filterActive;
 	u32 version;
 	view_config_selector_t selector;
-	u8 pad[4];
 } view_config_t;
 
 enum { kViewConfigVersion = 2 };
@@ -304,12 +296,12 @@ typedef struct view_s {
 	b8 consoleInputActive;
 	b8 spansActive;
 	b8 changedNonFavoriteColumnVisibility;
-	b8 changedFavoriteColumnVisibility;
 	b8 tiled;
 	b8 beingDragged;
 	b8 visibleLogsAdded;
 	b8 externalView;
 	s8 redockCount;
+	u8 pad[1];
 } view_t;
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);
@@ -336,14 +328,12 @@ void view_set_category_collection_selection(view_category_collection_t *category
 void view_set_category_collection_disabled(view_category_collection_t *categoryCollection, b32 disabled);
 void view_remove_unreferenced_categories(view_category_collection_t *categoryCollection);
 void view_set_all_category_visibility(view_t *view, b8 visible);
-void view_set_favorite_category_visibility(view_t *view, b32 favorite, b8 visible);
 void view_set_all_thread_visibility(view_t *view, b8 visible);
 void view_set_all_file_visibility(view_t *view, b8 visible);
 void view_set_all_pieinstance_visibility(view_t *view, b8 visible);
 void view_remove_all_bookmarks(view_t *view);
 void view_toggle_bookmarks_for_selection(view_t *view);
 void view_advance_to_next_bookmark(view_t *view, b32 forward);
-u32 view_test_favorite_category_visibility_recursive(view_t *view, u32 startIndex, b32 favorites, u32 *visibleCount, u32 *hiddenCount, u32 inheritedFavoriteCount);
 
 #if defined(__cplusplus)
 }

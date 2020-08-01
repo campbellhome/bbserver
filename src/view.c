@@ -78,10 +78,8 @@ static void view_category_copy(view_category_t *c, recorded_category_t *category
 {
 	memcpy(c->categoryName, category->categoryName, sizeof(c->categoryName));
 	c->id = category->id;
-	c->depth = category->depth;
 	c->selected = false;
 	c->visible = true;
-	c->favorite = false;
 }
 
 static int ViewCategoryCompare(const void *_a, const void *_b)
@@ -121,7 +119,6 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	view->config.showVeryVerbose = view->config.showVerbose = false;
 	view->config.showLogs = view->config.showDisplay = view->config.showWarnings = view->config.showErrors = view->config.showFatal = true;
 	view->config.newNonFavoriteCategoryVisibility = true;
-	view->config.newFavoriteCategoryVisibility = true;
 	view->config.newThreadVisibility = true;
 	view->config.newFileVisibility = true;
 
@@ -239,10 +236,8 @@ void view_add_category(view_t *view, recorded_category_t *category, const view_c
 	if(c) {
 		view_category_copy(c, category);
 		if(configCategory) {
-			view_apply_config_category(view, configCategory, c);
-			if(c->favorite && view->changedFavoriteColumnVisibility) {
-				c->visible = view->config.newFavoriteCategoryVisibility;
-			} else if(!c->favorite && view->changedNonFavoriteColumnVisibility) {
+			view_apply_config_category(configCategory, c);
+			if(view->changedNonFavoriteColumnVisibility) {
 				c->visible = view->config.newNonFavoriteCategoryVisibility;
 			}
 		} else {
@@ -937,113 +932,9 @@ void view_set_all_category_visibility(view_t *view, b8 visible)
 	       view->session->appInfo.packet.appInfo.applicationName);
 	view->visibleLogsDirty = true;
 	view->config.newNonFavoriteCategoryVisibility = visible;
-	view->config.newFavoriteCategoryVisibility = visible;
 	for(i = 0; i < view->categories.count; ++i) {
 		view_category_t *c = view->categories.data + i;
 		c->visible = visible;
-	}
-}
-
-static u32 view_set_favorite_category_visibility_recursive(view_t *view, u32 startIndex, b32 favorites, b8 visible, u32 inheritedFavoriteCount)
-{
-	recorded_categories_t *categories = &view->session->categories;
-	view_categories_t *viewCategories = &view->categories;
-
-	recorded_category_t *category = categories->data + startIndex;
-	view_category_t *viewCategory = viewCategories->data + startIndex;
-
-	u32 favoriteCount = inheritedFavoriteCount + viewCategory->favorite ? 1u : 0u;
-
-	u32 endIndex = startIndex + 1;
-	while(endIndex < categories->count) {
-		recorded_category_t *subCategory = categories->data + endIndex;
-		if(subCategory->depth <= category->depth)
-			break;
-		view_category_t *viewSubCategory = viewCategories->data + endIndex;
-		favoriteCount += viewSubCategory->favorite;
-		++endIndex;
-	}
-
-	if(favorites && !favoriteCount)
-		return endIndex;
-
-	if(!favorites && viewCategory->favorite)
-		return endIndex;
-
-	viewCategory->visible = visible;
-
-	if(startIndex + 1 != endIndex) {
-		u32 index = startIndex + 1;
-		while(index < endIndex) {
-			index = view_set_favorite_category_visibility_recursive(view, index, favorites, visible, favoriteCount);
-		}
-	}
-
-	return endIndex;
-}
-
-u32 view_test_favorite_category_visibility_recursive(view_t *view, u32 startIndex, b32 favorites, u32 *visibleCount, u32 *hiddenCount, u32 inheritedFavoriteCount)
-{
-	recorded_categories_t *categories = &view->session->categories;
-	view_categories_t *viewCategories = &view->categories;
-
-	recorded_category_t *category = categories->data + startIndex;
-	view_category_t *viewCategory = viewCategories->data + startIndex;
-
-	u32 favoriteCount = inheritedFavoriteCount + viewCategory->favorite ? 1u : 0u;
-
-	u32 endIndex = startIndex + 1;
-	while(endIndex < categories->count) {
-		recorded_category_t *subCategory = categories->data + endIndex;
-		if(subCategory->depth <= category->depth)
-			break;
-		view_category_t *viewSubCategory = viewCategories->data + endIndex;
-		favoriteCount += viewSubCategory->favorite;
-		++endIndex;
-	}
-
-	if(favorites && !favoriteCount)
-		return endIndex;
-
-	if(!favorites && viewCategory->favorite)
-		return endIndex;
-
-	if(viewCategory->visible && visibleCount) {
-		++*visibleCount;
-	}
-
-	if(!viewCategory->visible && hiddenCount) {
-		++*hiddenCount;
-	}
-
-	if(startIndex + 1 != endIndex) {
-		u32 index = startIndex + 1;
-		while(index < endIndex) {
-			index = view_test_favorite_category_visibility_recursive(view, index, favorites, visibleCount, hiddenCount, favoriteCount);
-		}
-	}
-
-	return endIndex;
-}
-
-void view_set_favorite_category_visibility(view_t *view, b32 favorite, b8 visible)
-{
-	BB_LOG("Debug", "%s %sfavorite categories for '%s'\n",
-	       visible ? "Checked" : "Unchecked",
-	       favorite ? "" : "non-",
-	       view->session->appInfo.packet.appInfo.applicationName);
-	view->visibleLogsDirty = true;
-	if(favorite) {
-		view->config.newFavoriteCategoryVisibility = visible;
-		view->changedFavoriteColumnVisibility = true;
-	} else {
-		view->config.newNonFavoriteCategoryVisibility = visible;
-		view->changedNonFavoriteColumnVisibility = true;
-	}
-
-	u32 index = 0;
-	while(index < view->categories.count) {
-		index = view_set_favorite_category_visibility_recursive(view, index, favorite, visible, 0);
 	}
 }
 

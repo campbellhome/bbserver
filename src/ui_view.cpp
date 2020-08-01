@@ -556,86 +556,12 @@ static void UIRecordedView_OpenContainingFolder(view_t *view)
 	sb_reset(&dir);
 }
 
-static void CheckboxCategoryVisiblity(view_t *view, u32 startIndex, u32 endIndex)
-{
-	view_categories_t *categories = &view->categories;
-	view_category_t *category = categories->data + startIndex;
-	bool checked = category->visible != 0;
-	PushID((int)startIndex);
-	if(Checkbox("", &checked)) {
-		view->visibleLogsDirty = true;
-		for(u32 i = startIndex; i < endIndex; ++i) {
-			category = categories->data + i;
-			category->visible = checked;
-		}
-	}
-	PopID();
-}
-
-void CheckboxAllCategoryVisiblity(view_t *view)
-{
-	view_categories_t *categories = &view->categories;
-	bool allChecked = true;
-	for(u32 index = 0; index < categories->count; ++index) {
-		view_category_t *category = categories->data + index;
-		if(!category->visible) {
-			allChecked = false;
-			break;
-		}
-	}
-	PushID(-1);
-	if(Checkbox("", &allChecked)) {
-		view_set_all_category_visibility(view, allChecked);
-	}
-	PopID();
-}
-
-static void CheckboxFavoriteCategoryVisiblity(view_t *view, b32 favorites)
-{
-	u32 visibleCount = 0;
-	u32 hiddenCount = 0;
-	u32 index = 0;
-	while(index < view->categories.count) {
-		index = view_test_favorite_category_visibility_recursive(view, index, favorites, &visibleCount, &hiddenCount, 0);
-	}
-
-	bool allChecked = hiddenCount == 0;
-	PushID(-5 - favorites);
-	if(Checkbox("", &allChecked)) {
-		view_set_favorite_category_visibility(view, favorites, allChecked);
-	}
-	PopID();
-}
-
 static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel)
 {
 	if(count || logLevel == kBBLogLevel_Log) {
 		LogLevelColorizer colorizer(logLevel);
 		ScopedTextShadows shadows(logLevel);
 		ImGui::TextShadowed(va(fmt, count));
-	}
-}
-
-static void CategoryToolTip(recorded_category_t *category)
-{
-	if(IsTooltipActive()) {
-		BeginTooltip();
-		TooltipLevelText("Self VeryVerbose: %u", category->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
-		TooltipLevelText("Self Verbose: %u", category->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
-		TooltipLevelText("Self Logs: %u", category->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
-		TooltipLevelText("Self Display: %u", category->logCount[kBBLogLevel_Display], kBBLogLevel_Display);
-		TooltipLevelText("Self Warnings: %u", category->logCount[kBBLogLevel_Warning], kBBLogLevel_Warning);
-		TooltipLevelText("Self Errors: %u", category->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
-		TooltipLevelText("Self Fatals: %u", category->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
-		Separator();
-		TooltipLevelText("Child VeryVerbose: %u", category->logCountIncludingChildren[kBBLogLevel_VeryVerbose] - category->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
-		TooltipLevelText("Child Verbose: %u", category->logCountIncludingChildren[kBBLogLevel_Verbose] - category->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
-		TooltipLevelText("Child Logs: %u", category->logCountIncludingChildren[kBBLogLevel_Log] - category->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
-		TooltipLevelText("Child Display: %u", category->logCountIncludingChildren[kBBLogLevel_Display] - category->logCount[kBBLogLevel_Display], kBBLogLevel_Display);
-		TooltipLevelText("Child Warnings: %u", category->logCountIncludingChildren[kBBLogLevel_Warning] - category->logCount[kBBLogLevel_Warning], kBBLogLevel_Warning);
-		TooltipLevelText("Child Errors: %u", category->logCountIncludingChildren[kBBLogLevel_Error] - category->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
-		TooltipLevelText("Child Fatals: %u", category->logCountIncludingChildren[kBBLogLevel_Fatal] - category->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
-		EndTooltip();
 	}
 }
 
@@ -687,117 +613,6 @@ static void PIEInstanceToolTip(recorded_pieInstance_t *p, b32 bPrimary)
 		TooltipLevelText("Self Errors: %u", p->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
 		TooltipLevelText("Self Fatals: %u", p->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
 		EndTooltip();
-	}
-}
-
-void CategoryPopup(u32 startIndex, u32 endIndex, view_categories_t *viewCategories, const char *categoryName)
-{
-	view_category_t *viewCategory = viewCategories->data + startIndex;
-	if(ImGui::BeginPopupContextItem(va("%sContextMenu", categoryName))) {
-		if(viewCategory->favorite) {
-			if(ImGui::Selectable("Unfavorite")) {
-				for(u32 index = startIndex; index < endIndex; ++index) {
-					viewCategories->data[index].favorite = false;
-				}
-			}
-		} else {
-			if(ImGui::Selectable("Favorite")) {
-				for(u32 index = startIndex; index < endIndex; ++index) {
-					viewCategories->data[index].favorite = true;
-				}
-			}
-		}
-		ImGui::EndPopup();
-	}
-}
-
-u32 UIRecordedView_CategoryTreeNode(view_t *view, u32 startIndex, b32 favorites, b32 nonFavorites, u32 inheritedFavoriteCount)
-{
-	recorded_categories_t *categories = &view->session->categories;
-	view_categories_t *viewCategories = &view->categories;
-
-	recorded_category_t *category = categories->data + startIndex;
-	view_category_t *viewCategory = viewCategories->data + startIndex;
-
-	u32 favoriteCount = inheritedFavoriteCount + viewCategory->favorite ? 1u : 0u;
-
-	u32 endIndex = startIndex + 1;
-	while(endIndex < categories->count) {
-		recorded_category_t *subCategory = categories->data + endIndex;
-		if(subCategory->depth <= category->depth)
-			break;
-		view_category_t *viewSubCategory = viewCategories->data + endIndex;
-		favoriteCount += viewSubCategory->favorite;
-		++endIndex;
-	}
-
-	if(!nonFavorites && !favoriteCount)
-		return endIndex;
-
-	if(!favorites && viewCategory->favorite)
-		return endIndex;
-
-	const ImGuiTreeNodeFlags CategoryNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
-	                                             ImGuiTreeNodeFlags_OpenOnDoubleClick |
-	                                             ImGuiTreeNodeFlags_DefaultOpen;
-	ImGuiTreeNodeFlags node_flags = CategoryNodeFlags | (viewCategory->selected ? ImGuiTreeNodeFlags_Selected : 0);
-
-	const char *categoryName = GetCategoryLeafName(category);
-	if(startIndex + 1 == endIndex) {
-		CheckboxCategoryVisiblity(view, startIndex, endIndex);
-		ImGui::SameLine();
-		{
-			LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(category->logCountIncludingChildren));
-			if(ImGui::TreeNodeEx(va("%s###Category%u", categoryName, startIndex), DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &viewCategory->selected)) {
-				ImGui::TreePop();
-			}
-		}
-		CategoryPopup(startIndex, endIndex, viewCategories, categoryName);
-		CategoryToolTip(category);
-		return endIndex;
-	} else {
-		bool node_open = false;
-		CheckboxCategoryVisiblity(view, startIndex, endIndex);
-		ImGui::SameLine();
-		{
-			LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(category->logCountIncludingChildren));
-			node_open = ImGui::TreeNodeEx(categoryName, node_flags, &viewCategory->selected, (void *)(intptr_t)startIndex);
-		}
-		CategoryPopup(startIndex, endIndex, viewCategories, categoryName);
-		CategoryToolTip(category);
-		if(node_open) {
-			u32 index = startIndex + 1;
-			while(index < endIndex) {
-				index = UIRecordedView_CategoryTreeNode(view, index, favorites, nonFavorites, favoriteCount);
-			}
-			ImGui::TreePop();
-			return endIndex;
-		}
-	}
-	return endIndex;
-}
-
-void UIRecordedView_FavoritesTreeNode(view_t *view, b32 favorites)
-{
-	CheckboxFavoriteCategoryVisiblity(view, favorites);
-	ImGui::SameLine();
-	const char *nodeName = favorites ? "Favorites" : "Non-Favorites";
-	if(ImGui::TreeNodeEx(nodeName, DefaultOpenTreeNodeFlags)) {
-		if(ImGui::BeginPopupContextItem(va("%sContextMenu", nodeName))) {
-			if(ImGui::Selectable("Check All")) {
-				view_set_favorite_category_visibility(view, favorites, true);
-			}
-			if(ImGui::Selectable("Uncheck All")) {
-				view_set_favorite_category_visibility(view, favorites, false);
-			}
-			ImGui::EndPopup();
-		}
-
-		u32 index = 0;
-		while(index < view->session->categories.count) {
-			index = UIRecordedView_CategoryTreeNode(view, index, favorites, !favorites, 0);
-		}
-		ImGui::TreePop();
 	}
 }
 
@@ -1469,8 +1284,6 @@ static float UIRecordedView_LogHeader(view_t *view)
 
 static const char *s_selectorNames[] = {
 	"Categories",
-	"All Categories",
-	"Tags",
 	"Threads",
 	"Files",
 	"PIE Instances",
@@ -1811,28 +1624,6 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 
 			Separator();
 			if(view->config.selector == kViewSelector_Categories) {
-				UIRecordedView_FavoritesTreeNode(view, true);
-				UIRecordedView_FavoritesTreeNode(view, false);
-			} else if(view->config.selector == kViewSelector_AllCategories) {
-				CheckboxAllCategoryVisiblity(view);
-				ImGui::SameLine();
-				if(ImGui::TreeNodeEx("All Categories", DefaultOpenTreeNodeFlags)) {
-					if(ImGui::BeginPopupContextItem("AllCategoriesContextMenu")) {
-						if(ImGui::Selectable("Check All")) {
-							view_set_all_category_visibility(view, true);
-						}
-						if(ImGui::Selectable("Uncheck All")) {
-							view_set_all_category_visibility(view, false);
-						}
-						ImGui::EndPopup();
-					}
-					u32 index = 0;
-					while(index < view->session->categories.count) {
-						index = UIRecordedView_CategoryTreeNode(view, index, true, true, 0);
-					}
-					ImGui::TreePop();
-				}
-			} else if(view->config.selector == kViewSelector_Tags) {
 				UITags_Update(view);
 			} else if(view->config.selector == kViewSelector_Threads) {
 				CheckboxAllThreadVisiblity(view);

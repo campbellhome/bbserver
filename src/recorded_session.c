@@ -358,29 +358,6 @@ recorded_session_t *recorded_session_get(u32 index)
 	}
 }
 
-static u32 recorded_session_update_category_parent(recorded_session_t *session, u32 startIndex, u32 parentIndex)
-{
-	u32 endIndex = startIndex + 1;
-	recorded_categories_t *categories = &session->categories;
-	recorded_category_t *category = categories->data + startIndex;
-	category->parentIndex = parentIndex;
-
-	while(endIndex < categories->count) {
-		recorded_category_t *subCategory = categories->data + endIndex;
-		if(subCategory->depth <= category->depth)
-			break;
-		++endIndex;
-	}
-
-	if(startIndex + 1 != endIndex) {
-		u32 index = startIndex + 1;
-		while(index < endIndex) {
-			index = recorded_session_update_category_parent(session, index, startIndex);
-		}
-	}
-	return endIndex;
-}
-
 static void recorded_session_add_category_from_config(recorded_session_t *session, const view_config_category_t *configCategory)
 {
 	const char *categoryName = sb_get(&configCategory->name);
@@ -391,24 +368,12 @@ static void recorded_session_add_category_from_config(recorded_session_t *sessio
 
 	c = bba_add(session->categories, 1);
 	if(c) {
-		u32 viewIndex;
-		u32 index = 0;
-		const char *s;
 		bb_strncpy(c->categoryName, categoryName, sizeof(c->categoryName));
 		Fonts_CacheGlyphs(c->categoryName);
-		for(s = c->categoryName; *s; ++s) {
-			if(s[0] == ':' && s[1] == ':') {
-				++c->depth;
-				++s; // ::: only counts as 1 match
-			}
-		}
-		for(viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
+		for(u32 viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
 			view_add_category(session->views.data + viewIndex, c, configCategory);
 		}
 		qsort(session->categories.data, session->categories.count, sizeof(session->categories.data[0]), CategoryCompare);
-		while(index < session->categories.count) {
-			index = recorded_session_update_category_parent(session, index, session->categories.count);
-		}
 	}
 }
 
@@ -425,25 +390,13 @@ static void recorded_session_add_category(recorded_session_t *session, bb_decode
 
 	c = bba_add(session->categories, 1);
 	if(c) {
-		u32 viewIndex;
-		u32 index = 0;
-		const char *s;
 		c->id = decoded->packet.categoryId.id;
 		bb_strncpy(c->categoryName, decoded->packet.categoryId.name, sizeof(c->categoryName));
 		Fonts_CacheGlyphs(c->categoryName);
-		for(s = c->categoryName; *s; ++s) {
-			if(s[0] == ':' && s[1] == ':') {
-				++c->depth;
-				++s; // ::: only counts as 1 match
-			}
-		}
-		for(viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
+		for(u32 viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
 			view_add_category(session->views.data + viewIndex, c, NULL);
 		}
 		qsort(session->categories.data, session->categories.count, sizeof(session->categories.data[0]), CategoryCompare);
-		while(index < session->categories.count) {
-			index = recorded_session_update_category_parent(session, index, session->categories.count);
-		}
 	}
 }
 
@@ -522,14 +475,7 @@ static void recorded_session_add_log(recorded_session_t *session, bb_decoded_pac
 	recorded_category_t *category = recorded_session_find_category(session, categoryId);
 	if(category) {
 		if(decoded->packet.logText.level < kBBLogLevel_Count) {
-			u32 parentIndex = category->parentIndex;
 			++category->logCount[decoded->packet.logText.level];
-			++category->logCountIncludingChildren[decoded->packet.logText.level];
-			while(parentIndex < session->categories.count) {
-				recorded_category_t *parent = session->categories.data + parentIndex;
-				++parent->logCountIncludingChildren[decoded->packet.logText.level];
-				parentIndex = parent->parentIndex;
-			}
 		}
 	}
 	if(decoded->packet.logText.level < kBBLogLevel_Count) {

@@ -861,12 +861,8 @@ view_config_category_t view_config_category_clone(const view_config_category_t *
 		dst.name = sb_clone(&src->name);
 		dst.selected = src->selected;
 		dst.visible = src->visible;
-		dst.favorite = src->favorite;
 		dst.depth = src->depth;
 		dst.disabled = src->disabled;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
 	}
 	return dst;
 }
@@ -1020,15 +1016,11 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.showFatal = src->showFatal;
 		dst.showSelectorTarget = src->showSelectorTarget;
 		dst.newNonFavoriteCategoryVisibility = src->newNonFavoriteCategoryVisibility;
-		dst.newFavoriteCategoryVisibility = src->newFavoriteCategoryVisibility;
 		dst.newThreadVisibility = src->newThreadVisibility;
 		dst.newFileVisibility = src->newFileVisibility;
 		dst.filterActive = src->filterActive;
 		dst.version = src->version;
 		dst.selector = src->selector;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
 	}
 	return dst;
 }

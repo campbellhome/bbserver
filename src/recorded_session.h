@@ -50,10 +50,7 @@ typedef struct partial_logs_s {
 typedef struct recorded_category_s {
 	char categoryName[kBBSize_Category];
 	u32 id;
-	u32 depth;
-	u32 parentIndex;
 	u32 logCount[kBBLogLevel_Count];
-	u32 logCountIncludingChildren[kBBLogLevel_Count];
 } recorded_category_t;
 
 typedef struct recorded_categories_s {
