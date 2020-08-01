@@ -24,6 +24,9 @@
 #include "ui_message_box.h"
 #include "ui_recordings.h"
 #include "ui_tags.h"
+#include "ui_view_files.h"
+#include "ui_view_pie_instances.h"
+#include "ui_view_threads.h"
 #include "va.h"
 #include "view.h"
 #include "view_config.h"
@@ -556,208 +559,12 @@ static void UIRecordedView_OpenContainingFolder(view_t *view)
 	sb_reset(&dir);
 }
 
-static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel)
+void UIRecordedView_TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel)
 {
 	if(count || logLevel == kBBLogLevel_Log) {
 		LogLevelColorizer colorizer(logLevel);
 		ScopedTextShadows shadows(logLevel);
 		ImGui::TextShadowed(va(fmt, count));
-	}
-}
-
-static void ThreadToolTip(recorded_thread_t *t)
-{
-	if(IsTooltipActive()) {
-		BeginTooltip();
-		TooltipLevelText("Self VeryVerbose: %u", t->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
-		TooltipLevelText("Self Verbose: %u", t->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
-		TooltipLevelText("Self Logs: %u", t->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
-		TooltipLevelText("Self Display: %u", t->logCount[kBBLogLevel_Display], kBBLogLevel_Display);
-		TooltipLevelText("Self Warnings: %u", t->logCount[kBBLogLevel_Warning], kBBLogLevel_Warning);
-		TooltipLevelText("Self Errors: %u", t->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
-		TooltipLevelText("Self Fatals: %u", t->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
-		EndTooltip();
-	}
-}
-
-static void FileToolTip(recorded_filename_t *f)
-{
-	if(IsTooltipActive()) {
-		BeginTooltip();
-		Text("%s", f->path);
-		TooltipLevelText("Self VeryVerbose: %u", f->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
-		TooltipLevelText("Self Verbose: %u", f->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
-		TooltipLevelText("Self Logs: %u", f->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
-		TooltipLevelText("Self Display: %u", f->logCount[kBBLogLevel_Display], kBBLogLevel_Display);
-		TooltipLevelText("Self Warnings: %u", f->logCount[kBBLogLevel_Warning], kBBLogLevel_Warning);
-		TooltipLevelText("Self Errors: %u", f->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
-		TooltipLevelText("Self Fatals: %u", f->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
-		EndTooltip();
-	}
-}
-
-static void PIEInstanceToolTip(recorded_pieInstance_t *p, b32 bPrimary)
-{
-	if(IsTooltipActive()) {
-		BeginTooltip();
-		if(bPrimary != 0) {
-			Text("PIEInstance -");
-		} else {
-			Text("PIEInstance %d", p->pieInstance);
-		}
-		TooltipLevelText("Self VeryVerbose: %u", p->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
-		TooltipLevelText("Self Verbose: %u", p->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
-		TooltipLevelText("Self Logs: %u", p->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
-		TooltipLevelText("Self Display: %u", p->logCount[kBBLogLevel_Display], kBBLogLevel_Display);
-		TooltipLevelText("Self Warnings: %u", p->logCount[kBBLogLevel_Warning], kBBLogLevel_Warning);
-		TooltipLevelText("Self Errors: %u", p->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
-		TooltipLevelText("Self Fatals: %u", p->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
-		EndTooltip();
-	}
-}
-
-static void CheckboxThreadVisiblity(view_t *view, u32 startIndex)
-{
-	view_threads_t *threads = &view->threads;
-	view_thread_t *t = threads->data + startIndex;
-	PushID((int)startIndex);
-	if(Checkbox("", &t->visible)) {
-		view->visibleLogsDirty = true;
-	}
-	PopID();
-}
-
-static void CheckboxAllThreadVisiblity(view_t *view)
-{
-	view_threads_t *threads = &view->threads;
-	bool allChecked = true;
-	for(u32 index = 0; index < threads->count; ++index) {
-		view_thread_t *t = threads->data + index;
-		if(!t->visible) {
-			allChecked = false;
-			break;
-		}
-	}
-	PushID(-1);
-	if(Checkbox("", &allChecked)) {
-		view_set_all_thread_visibility(view, allChecked);
-	}
-	PopID();
-}
-
-void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
-{
-	recorded_threads_t *threads = &view->session->threads;
-	view_threads_t *viewThreads = &view->threads;
-
-	recorded_thread_t *t = threads->data + startIndex;
-	view_thread_t *vt = viewThreads->data + startIndex;
-
-	const char *threadName = t->threadName;
-	CheckboxThreadVisiblity(view, startIndex);
-	ImGui::SameLine();
-	{
-		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(t->logCount), false);
-		if(ImGui::TreeNodeEx(va("%s###Thread%u", threadName, startIndex),
-		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vt->selected)) {
-			ImGui::TreePop();
-		}
-	}
-	ThreadToolTip(t);
-}
-
-static void CheckboxFileVisiblity(view_t *view, u32 startIndex)
-{
-	view_files_t *files = &view->files;
-	view_file_t *t = files->data + startIndex;
-	PushID((int)startIndex);
-	if(Checkbox("", &t->visible)) {
-		view->visibleLogsDirty = true;
-	}
-	PopID();
-}
-
-static void CheckboxAllFileVisiblity(view_t *view)
-{
-	view_files_t *files = &view->files;
-	bool allChecked = true;
-	for(u32 index = 0; index < files->count; ++index) {
-		view_file_t *t = files->data + index;
-		if(!t->visible) {
-			allChecked = false;
-			break;
-		}
-	}
-	PushID(-1);
-	if(Checkbox("", &allChecked)) {
-		view_set_all_file_visibility(view, allChecked);
-	}
-	PopID();
-}
-
-void UIRecordedView_FileTreeNode(view_t *view, u32 startIndex)
-{
-	view_file_t *vf = view->files.data + startIndex;
-	recorded_filename_t *rf = recorded_session_find_filename(view->session, vf->id);
-	const char *fileName = GetFilenameFromPath(vf->path);
-	CheckboxFileVisiblity(view, startIndex);
-	ImGui::SameLine();
-	{
-		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount), false);
-		if(ImGui::TreeNodeEx(va("%s###File%u", fileName, startIndex),
-		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
-			ImGui::TreePop();
-		}
-	}
-	FileToolTip(rf);
-}
-
-static void CheckboxPIEInstanceVisiblity(view_t *view, u32 startIndex)
-{
-	view_pieInstances_t *pieInstances = &view->pieInstances;
-	view_pieInstance_t *t = pieInstances->data + startIndex;
-	PushID((int)startIndex);
-	if(Checkbox("", &t->visible)) {
-		view->visibleLogsDirty = true;
-	}
-	PopID();
-}
-
-static void CheckboxAllPIEInstanceVisiblity(view_t *view)
-{
-	view_pieInstances_t *pieInstances = &view->pieInstances;
-	bool allChecked = true;
-	for(u32 index = 0; index < pieInstances->count; ++index) {
-		view_pieInstance_t *t = pieInstances->data + index;
-		if(!t->visible) {
-			allChecked = false;
-			break;
-		}
-	}
-	PushID(-1);
-	if(Checkbox("", &allChecked)) {
-		view_set_all_pieinstance_visibility(view, allChecked);
-	}
-	PopID();
-}
-
-void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
-{
-	view_pieInstance_t *vf = view->pieInstances.data + startIndex;
-	if(vf) {
-		recorded_pieInstance_t *rf = recorded_session_find_pieInstance(view->session, vf->pieInstance);
-		CheckboxPIEInstanceVisiblity(view, startIndex);
-		ImGui::SameLine();
-		{
-			LogLevelColorizer colorizer(rf ? GetLogLevelBasedOnCounts(rf->logCount) : kBBLogLevel_VeryVerbose, false);
-			if(ImGui::TreeNodeEx((vf->primary != 0) ? "-" : va("%d##PIEInstance%u", vf->pieInstance, startIndex),
-			                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
-				ImGui::TreePop();
-			}
-		}
-		if(rf) {
-			PIEInstanceToolTip(rf, vf->primary);
-		}
 	}
 }
 
@@ -1282,22 +1089,6 @@ static float UIRecordedView_LogHeader(view_t *view)
 	return textOffset;
 }
 
-static const char *s_selectorNames[] = {
-	"Categories",
-	"Threads",
-	"Files",
-	"PIE Instances",
-};
-BB_CTASSERT(BB_ARRAYSIZE(s_selectorNames) == kViewSelector_Count);
-const char *GetSelectorName(view_config_selector_t selector)
-{
-	if(selector < kViewSelector_Count) {
-		return s_selectorNames[selector];
-	} else {
-		return "<Unknown>";
-	}
-}
-
 static void PushExpandButtonColors(void)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_CheckMark));
@@ -1325,11 +1116,6 @@ static void DrawViewToggles(view_t *view, const char *applicationName)
 			BB_LOG("Debug", "Toggled showSelector for '%s'\n", applicationName);
 		}
 		PopExpandButtonColors();
-		SameLine();
-
-		if(Button(va("%s...##Selector", GetSelectorName(view->config.selector)))) {
-			OpenPopup("Selector");
-		}
 		SameLine(view->categoriesWidth);
 	}
 	PushExpandButtonColors();
@@ -1342,16 +1128,6 @@ static void DrawViewToggles(view_t *view, const char *applicationName)
 #undef ICON_EXPAND_LEFT
 #undef ICON_EXPAND_RIGHT
 
-	if(BeginPopup("Selector")) {
-		for(u32 i = 0; i < kViewSelector_Count; ++i) {
-			view_config_selector_t selector = (view_config_selector_t)i;
-			if(MenuItem(GetSelectorName(selector))) {
-				BB_LOG("Debug", "Selector set to %s for '%s'\n", GetSelectorName(selector), applicationName);
-				view->config.selector = selector;
-			}
-		}
-		EndPopup();
-	}
 	SameLine();
 	if(Checkbox("VeryVerbose", &view->config.showVeryVerbose)) {
 		view->visibleLogsDirty = true;
@@ -1623,63 +1399,10 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			categoriesChildFocused = ImGui::IsWindowFocused();
 
 			Separator();
-			if(view->config.selector == kViewSelector_Categories) {
-				UITags_Update(view);
-			} else if(view->config.selector == kViewSelector_Threads) {
-				CheckboxAllThreadVisiblity(view);
-				ImGui::SameLine();
-				if(ImGui::TreeNodeEx("Threads", DefaultOpenTreeNodeFlags)) {
-					if(ImGui::BeginPopupContextItem("ThreadsContextMenu")) {
-						if(ImGui::Selectable("Check All")) {
-							view_set_all_thread_visibility(view, true);
-						}
-						if(ImGui::Selectable("Uncheck All")) {
-							view_set_all_thread_visibility(view, false);
-						}
-						ImGui::EndPopup();
-					}
-					for(u32 index = 0; index < view->session->threads.count; ++index) {
-						UIRecordedView_ThreadTreeNode(view, index);
-					}
-					ImGui::TreePop();
-				}
-			} else if(view->config.selector == kViewSelector_Files) {
-				CheckboxAllFileVisiblity(view);
-				ImGui::SameLine();
-				if(ImGui::TreeNodeEx("Files", DefaultOpenTreeNodeFlags)) {
-					if(ImGui::BeginPopupContextItem("FilesContextMenu")) {
-						if(ImGui::Selectable("Check All")) {
-							view_set_all_file_visibility(view, true);
-						}
-						if(ImGui::Selectable("Uncheck All")) {
-							view_set_all_file_visibility(view, false);
-						}
-						ImGui::EndPopup();
-					}
-					for(u32 index = 0; index < view->files.count; ++index) {
-						UIRecordedView_FileTreeNode(view, index);
-					}
-					ImGui::TreePop();
-				}
-			} else if(view->config.selector == kViewSelector_PIEInstances) {
-				CheckboxAllPIEInstanceVisiblity(view);
-				ImGui::SameLine();
-				if(ImGui::TreeNodeEx("PIE Instances", DefaultOpenTreeNodeFlags)) {
-					if(ImGui::BeginPopupContextItem("PIEInstanceContextMenu")) {
-						if(ImGui::Selectable("Check All")) {
-							view_set_all_pieinstance_visibility(view, true);
-						}
-						if(ImGui::Selectable("Uncheck All")) {
-							view_set_all_pieinstance_visibility(view, false);
-						}
-						ImGui::EndPopup();
-					}
-					for(u32 index = 0; index < view->pieInstances.count; ++index) {
-						UIRecordedView_PIEInstanceTreeNode(view, index);
-					}
-					ImGui::TreePop();
-				}
-			}
+			UITags_Update(view);
+			UIViewThreads_Update(view);
+			UIViewFiles_Update(view);
+			UIViewPieInstances_Update(view);
 
 			ImGui::EndChild();
 

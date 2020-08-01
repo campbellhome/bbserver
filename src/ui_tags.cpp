@@ -9,6 +9,7 @@
 #include "recorded_session.h"
 #include "tags.h"
 #include "ui_loglevel_colorizer.h"
+#include "ui_view.h"
 #include "va.h"
 #include "view.h"
 #include "view_config.h"
@@ -31,15 +32,6 @@ void UITags_Shutdown()
 	bba_free(s_unmatchingAll.viewCategories);
 }
 
-static void TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel)
-{
-	if(count || logLevel == kBBLogLevel_Log) {
-		LogLevelColorizer colorizer(logLevel);
-		ScopedTextShadows shadows(logLevel);
-		ImGui::TextShadowed(va(fmt, count));
-	}
-}
-
 static void UITags_CategoryToolTip(recorded_category_t *category)
 {
 	if(ImGui::IsTooltipActive()) {
@@ -53,13 +45,13 @@ static void UITags_CategoryToolTip(recorded_category_t *category)
 			ImGui::Text("Tags: %s", sb_get(&s_categoryTagNames));
 			ImGui::Separator();
 		}
-		TooltipLevelText("VeryVerbose: %u", category->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
-		TooltipLevelText("Verbose: %u", category->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
-		TooltipLevelText("Logs: %u", category->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
-		TooltipLevelText("Display: %u", category->logCount[kBBLogLevel_Display], kBBLogLevel_Display);
-		TooltipLevelText("Warnings: %u", category->logCount[kBBLogLevel_Warning], kBBLogLevel_Warning);
-		TooltipLevelText("Errors: %u", category->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
-		TooltipLevelText("Fatal: %u", category->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
+		UIRecordedView_TooltipLevelText("VeryVerbose: %u", category->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
+		UIRecordedView_TooltipLevelText("Verbose: %u", category->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
+		UIRecordedView_TooltipLevelText("Logs: %u", category->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
+		UIRecordedView_TooltipLevelText("Display: %u", category->logCount[kBBLogLevel_Display], kBBLogLevel_Display);
+		UIRecordedView_TooltipLevelText("Warnings: %u", category->logCount[kBBLogLevel_Warning], kBBLogLevel_Warning);
+		UIRecordedView_TooltipLevelText("Errors: %u", category->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
+		UIRecordedView_TooltipLevelText("Fatal: %u", category->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
 		ImGui::EndTooltip();
 	}
 }

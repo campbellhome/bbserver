@@ -8,6 +8,7 @@
 
 void UIRecordedView_UpdateAll(bool autoTileViews);
 void UIRecordedView_Shutdown(void);
+void UIRecordedView_TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel);
 
 const char kColorKeyPrefix = '^';
 const char kFirstColorKey = '0';
