@@ -311,6 +311,7 @@ static void UITags_CategoryPopup(view_t *view, u32 viewCategoryIndex)
 				view_set_category_collection_disabled(&s_matching, true);
 			}
 		}
+
 		ImGui::EndPopup();
 	}
 }
@@ -353,7 +354,6 @@ void UITags_Update(view_t *view)
 	ImGuiTreeNodeFlags tagNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
 	                                  ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-	ImGui::Checkbox("Show unused categories", &g_config.showEmptyCategories);
 	if(ImGui::CollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::PushID("TagsHeader");
 		for(u32 tagIndex = 0; tagIndex < g_tags.tags.count; ++tagIndex) {
@@ -488,6 +488,19 @@ void UITags_Update(view_t *view)
 			ImGui::SameLine();
 			ImGui::TextUnformatted("All Categories");
 			ImGui::PopID();
+
+			if(ImGui::BeginPopupContextItem("AllCategoriesPopup")) {
+				if(g_config.showEmptyCategories) {
+					if(ImGui::MenuItem("Hide unused categories")) {
+						g_config.showEmptyCategories = false;
+					}
+				} else {
+					if(ImGui::MenuItem("Show unused categories")) {
+						g_config.showEmptyCategories = true;
+					}
+				}
+				ImGui::EndPopup();
+			}
 		}
 		for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->session->categories.count; ++viewCategoryIndex) {
 			recorded_categories_t *recordedCategories = &view->session->categories;
