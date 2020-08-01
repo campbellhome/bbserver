@@ -713,7 +713,9 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.newFileVisibility = json_object_get_boolean_safe(obj, "newFileVisibility");
 			dst.filterActive = json_object_get_boolean_safe(obj, "filterActive");
 			dst.version = (u32)json_object_get_number(obj, "version");
-			dst.selector = json_deserialize_view_config_selector_t(json_object_get_value(obj, "selector"));
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -1319,7 +1321,9 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_boolean(obj, "newFileVisibility", src->newFileVisibility);
 		json_object_set_boolean(obj, "filterActive", src->filterActive);
 		json_object_set_number(obj, "version", src->version);
-		json_object_set_value(obj, "selector", json_serialize_view_config_selector_t(src->selector));
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }
@@ -1464,22 +1468,6 @@ styleColor_e json_deserialize_styleColor_e(JSON_Value *src)
 	return dst;
 }
 
-view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src)
-{
-	view_config_selector_t dst = kViewSelector_Categories;
-	if(src) {
-		const char *str = json_value_get_string(src);
-		if(str) {
-			if(!strcmp(str, "kViewSelector_Categories")) { dst = kViewSelector_Categories; }
-			if(!strcmp(str, "kViewSelector_Threads")) { dst = kViewSelector_Threads; }
-			if(!strcmp(str, "kViewSelector_Files")) { dst = kViewSelector_Files; }
-			if(!strcmp(str, "kViewSelector_PIEInstances")) { dst = kViewSelector_PIEInstances; }
-			if(!strcmp(str, "kViewSelector_Count")) { dst = kViewSelector_Count; }
-		}
-	}
-	return dst;
-}
-
 //////////////////////////////////////////////////////////////////////////
 
 JSON_Value *json_serialize_configColorUsage(const configColorUsage src)
@@ -1603,20 +1591,6 @@ JSON_Value *json_serialize_styleColor_e(const styleColor_e src)
 		case kStyleColor_MessageBoxBackground1: str = "kStyleColor_MessageBoxBackground1"; break;
 		case kStyleColor_TextShadow: str = "kStyleColor_TextShadow"; break;
 		case kStyleColor_Count: str = "kStyleColor_Count"; break;
-	}
-	JSON_Value *val = json_value_init_string(str);
-	return val;
-}
-
-JSON_Value *json_serialize_view_config_selector_t(const view_config_selector_t src)
-{
-	const char *str = "";
-	switch(src) {
-		case kViewSelector_Categories: str = "kViewSelector_Categories"; break;
-		case kViewSelector_Threads: str = "kViewSelector_Threads"; break;
-		case kViewSelector_Files: str = "kViewSelector_Files"; break;
-		case kViewSelector_PIEInstances: str = "kViewSelector_PIEInstances"; break;
-		case kViewSelector_Count: str = "kViewSelector_Count"; break;
 	}
 	JSON_Value *val = json_value_init_string(str);
 	return val;

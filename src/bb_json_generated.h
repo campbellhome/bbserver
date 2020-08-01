@@ -132,7 +132,6 @@ typedef enum recording_sort_e recording_sort_t;
 typedef enum recording_group_e recording_group_t;
 typedef enum recording_type_e recording_type_t;
 typedef enum tag_styleColor_e styleColor_e;
-typedef enum view_config_selector_e view_config_selector_t;
 
 sb_t json_deserialize_sb_t(JSON_Value *src);
 sbs_t json_deserialize_sbs_t(JSON_Value *src);
@@ -239,7 +238,6 @@ recording_sort_t json_deserialize_recording_sort_t(JSON_Value *src);
 recording_group_t json_deserialize_recording_group_t(JSON_Value *src);
 recording_type_t json_deserialize_recording_type_t(JSON_Value *src);
 styleColor_e json_deserialize_styleColor_e(JSON_Value *src);
-view_config_selector_t json_deserialize_view_config_selector_t(JSON_Value *src);
 
 JSON_Value *json_serialize_configColorUsage(const configColorUsage src);
 JSON_Value *json_serialize_recording_tab_t(const recording_tab_t src);
@@ -247,7 +245,6 @@ JSON_Value *json_serialize_recording_sort_t(const recording_sort_t src);
 JSON_Value *json_serialize_recording_group_t(const recording_group_t src);
 JSON_Value *json_serialize_recording_type_t(const recording_type_t src);
 JSON_Value *json_serialize_styleColor_e(const styleColor_e src);
-JSON_Value *json_serialize_view_config_selector_t(const view_config_selector_t src);
 #if defined(__cplusplus)
 } // extern "C"
 #endif

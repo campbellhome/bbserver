@@ -102,13 +102,6 @@ typedef struct view_persistent_logs_s {
 	view_persistent_log_t *data;
 } view_persistent_logs_t;
 
-AUTOJSON AUTODEFAULT(kViewSelector_Categories) typedef enum view_config_selector_e {
-	kViewSelector_Categories,
-	kViewSelector_Threads,
-	kViewSelector_Files,
-	kViewSelector_PIEInstances,
-	kViewSelector_Count
-} view_config_selector_t;
 AUTOJSON typedef struct view_config_thread_s {
 	sb_t name;
 	b32 selected;
@@ -203,7 +196,7 @@ AUTOJSON typedef struct view_config_s {
 	b32 newFileVisibility;
 	b32 filterActive;
 	u32 version;
-	view_config_selector_t selector;
+	u8 pad[4];
 } view_config_t;
 
 enum { kViewConfigVersion = 2 };

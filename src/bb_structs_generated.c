@@ -1020,7 +1020,9 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.newFileVisibility = src->newFileVisibility;
 		dst.filterActive = src->filterActive;
 		dst.version = src->version;
-		dst.selector = src->selector;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
 	}
 	return dst;
 }
