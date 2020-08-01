@@ -667,7 +667,8 @@ static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 	}
 	if(!levelVisible)
 		return false;
-	if(!view_find_pieInstance(view, pieInstance))
+	view_pieInstance_t *viewPieInstance = view_find_pieInstance(view, pieInstance);
+	if(!viewPieInstance || !viewPieInstance->visible)
 		return false;
 	threadId = decoded->header.threadId;
 	if(!view_thread_visible(view, threadId))

@@ -354,7 +354,6 @@ void UITags_Update(view_t *view)
 	                                  ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
 	ImGui::Checkbox("Show unused categories", &g_config.showEmptyCategories);
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 0.0f));
 	if(ImGui::CollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::PushID("TagsHeader");
 		for(u32 tagIndex = 0; tagIndex < g_tags.tags.count; ++tagIndex) {
@@ -548,6 +547,4 @@ void UITags_Update(view_t *view)
 		}
 		ImGui::PopID();
 	}
-
-	ImGui::PopStyleVar();
 }

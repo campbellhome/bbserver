@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "ui_view_files.h"
+#include "imgui_text_shadows.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
 #include "recorded_session.h"
@@ -26,24 +27,6 @@ static void CheckboxFileVisiblity(view_t *view, u32 startIndex)
 	PopID();
 }
 
-static void CheckboxAllFileVisiblity(view_t *view)
-{
-	view_files_t *files = &view->files;
-	bool allChecked = true;
-	for(u32 index = 0; index < files->count; ++index) {
-		view_file_t *t = files->data + index;
-		if(!t->visible) {
-			allChecked = false;
-			break;
-		}
-	}
-	PushID(-1);
-	if(Checkbox("", &allChecked)) {
-		view_set_all_file_visibility(view, allChecked);
-	}
-	PopID();
-}
-
 static const char *GetFilenameFromPath(const char *path)
 {
 	const char *sep = strrchr(path, '/');
@@ -61,13 +44,16 @@ void UIRecordedView_FileTreeNode(view_t *view, u32 startIndex)
 	recorded_filename_t *rf = recorded_session_find_filename(view->session, vf->id);
 	const char *fileName = GetFilenameFromPath(vf->path);
 	CheckboxFileVisiblity(view, startIndex);
+
 	ImGui::SameLine();
-	{
-		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(rf->logCount), false);
-		if(ImGui::TreeNodeEx(va("%s###File%u", fileName, startIndex),
-		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
-			ImGui::TreePop();
-		}
+
+	bb_log_level_e logLevel = GetLogLevelBasedOnCounts(rf->logCount);
+	LogLevelColorizer colorizer(logLevel);
+	ScopedTextShadows shadows(logLevel);
+	ImVec2 pos = ImGui::GetIconPosForText();
+	ImGui::TextShadow(fileName);
+	if(ImGui::Selectable(fileName, vf->selected != 0)) {
+		// handle click
 	}
 
 	if(IsTooltipActive()) {
@@ -86,21 +72,40 @@ void UIRecordedView_FileTreeNode(view_t *view, u32 startIndex)
 
 void UIViewFiles_Update(view_t *view)
 {
-	CheckboxAllFileVisiblity(view);
-	ImGui::SameLine();
-	if(ImGui::TreeNodeEx("Files", DefaultOpenTreeNodeFlags)) {
-		if(ImGui::BeginPopupContextItem("FilesContextMenu")) {
-			if(ImGui::Selectable("Check All")) {
-				view_set_all_file_visibility(view, true);
+	if(view->files.count > 1) {
+		if(ImGui::CollapsingHeader("Files", ImGuiTreeNodeFlags_None)) {
+			ImGui::PushID("FilesHeader");
+
+			u32 checkedCount = 0;
+			u32 uncheckedCount = 0;
+			for(u32 index = 0; index < view->files.count; ++index) {
+				view_file_t *vf = view->files.data + index;
+				if(vf->visible) {
+					++checkedCount;
+				} else {
+					++uncheckedCount;
+				}
 			}
-			if(ImGui::Selectable("Uncheck All")) {
-				view_set_all_file_visibility(view, false);
+
+			ImGui::PushID(-1);
+			bool allChecked = uncheckedCount == 0;
+			if(checkedCount && uncheckedCount) {
+				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
-			ImGui::EndPopup();
+			if(ImGui::Checkbox("", &allChecked)) {
+				view_set_all_file_visibility(view, allChecked);
+			}
+			if(checkedCount && uncheckedCount) {
+				ImGui::PopItemFlag();
+			}
+			ImGui::SameLine();
+			ImGui::TextUnformatted("All Files");
+			ImGui::PopID();
+
+			for(u32 index = 0; index < view->files.count; ++index) {
+				UIRecordedView_FileTreeNode(view, index);
+			}
+			ImGui::PopID();
 		}
-		for(u32 index = 0; index < view->files.count; ++index) {
-			UIRecordedView_FileTreeNode(view, index);
-		}
-		ImGui::TreePop();
 	}
 }

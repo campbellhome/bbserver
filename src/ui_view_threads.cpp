@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "ui_view_threads.h"
+#include "imgui_text_shadows.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
 #include "recorded_session.h"
@@ -26,24 +27,6 @@ static void CheckboxThreadVisiblity(view_t *view, u32 startIndex)
 	PopID();
 }
 
-static void CheckboxAllThreadVisiblity(view_t *view)
-{
-	view_threads_t *threads = &view->threads;
-	bool allChecked = true;
-	for(u32 index = 0; index < threads->count; ++index) {
-		view_thread_t *t = threads->data + index;
-		if(!t->visible) {
-			allChecked = false;
-			break;
-		}
-	}
-	PushID(-1);
-	if(Checkbox("", &allChecked)) {
-		view_set_all_thread_visibility(view, allChecked);
-	}
-	PopID();
-}
-
 void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
 {
 	recorded_threads_t *threads = &view->session->threads;
@@ -54,13 +37,16 @@ void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
 
 	const char *threadName = t->threadName;
 	CheckboxThreadVisiblity(view, startIndex);
+
 	ImGui::SameLine();
-	{
-		LogLevelColorizer colorizer(GetLogLevelBasedOnCounts(t->logCount), false);
-		if(ImGui::TreeNodeEx(va("%s###Thread%u", threadName, startIndex),
-		                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vt->selected)) {
-			ImGui::TreePop();
-		}
+
+	bb_log_level_e logLevel = GetLogLevelBasedOnCounts(t->logCount);
+	LogLevelColorizer colorizer(logLevel);
+	ScopedTextShadows shadows(logLevel);
+	ImVec2 pos = ImGui::GetIconPosForText();
+	ImGui::TextShadow(threadName);
+	if(ImGui::Selectable(threadName, vt->selected != 0)) {
+		// handle click
 	}
 
 	if(IsTooltipActive()) {
@@ -78,21 +64,40 @@ void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
 
 void UIViewThreads_Update(view_t *view)
 {
-	CheckboxAllThreadVisiblity(view);
-	ImGui::SameLine();
-	if(ImGui::TreeNodeEx("Threads", DefaultOpenTreeNodeFlags)) {
-		if(ImGui::BeginPopupContextItem("ThreadsContextMenu")) {
-			if(ImGui::Selectable("Check All")) {
-				view_set_all_thread_visibility(view, true);
+	if(view->threads.count > 1) {
+		if(ImGui::CollapsingHeader("Threads", ImGuiTreeNodeFlags_None)) {
+			ImGui::PushID("ThreadsHeader");
+
+			u32 checkedCount = 0;
+			u32 uncheckedCount = 0;
+			for(u32 index = 0; index < view->threads.count; ++index) {
+				view_thread_t *vf = view->threads.data + index;
+				if(vf->visible) {
+					++checkedCount;
+				} else {
+					++uncheckedCount;
+				}
 			}
-			if(ImGui::Selectable("Uncheck All")) {
-				view_set_all_thread_visibility(view, false);
+
+			ImGui::PushID(-1);
+			bool allChecked = uncheckedCount == 0;
+			if(checkedCount && uncheckedCount) {
+				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
-			ImGui::EndPopup();
+			if(ImGui::Checkbox("", &allChecked)) {
+				view_set_all_thread_visibility(view, allChecked);
+			}
+			if(checkedCount && uncheckedCount) {
+				ImGui::PopItemFlag();
+			}
+			ImGui::SameLine();
+			ImGui::TextUnformatted("All Threads");
+			ImGui::PopID();
+
+			for(u32 index = 0; index < view->threads.count; ++index) {
+				UIRecordedView_ThreadTreeNode(view, index);
+			}
+			ImGui::PopID();
 		}
-		for(u32 index = 0; index < view->session->threads.count; ++index) {
-			UIRecordedView_ThreadTreeNode(view, index);
-		}
-		ImGui::TreePop();
 	}
 }

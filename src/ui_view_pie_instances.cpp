@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "ui_view_pie_instances.h"
+#include "imgui_text_shadows.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
 #include "recorded_session.h"
@@ -26,38 +27,25 @@ static void CheckboxPIEInstanceVisiblity(view_t *view, u32 startIndex)
 	PopID();
 }
 
-static void CheckboxAllPIEInstanceVisiblity(view_t *view)
-{
-	view_pieInstances_t *pieInstances = &view->pieInstances;
-	bool allChecked = true;
-	for(u32 index = 0; index < pieInstances->count; ++index) {
-		view_pieInstance_t *t = pieInstances->data + index;
-		if(!t->visible) {
-			allChecked = false;
-			break;
-		}
-	}
-	PushID(-1);
-	if(Checkbox("", &allChecked)) {
-		view_set_all_pieinstance_visibility(view, allChecked);
-	}
-	PopID();
-}
-
 void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
 {
 	view_pieInstance_t *vf = view->pieInstances.data + startIndex;
 	if(vf) {
 		recorded_pieInstance_t *rf = recorded_session_find_pieInstance(view->session, vf->pieInstance);
 		CheckboxPIEInstanceVisiblity(view, startIndex);
+
 		ImGui::SameLine();
-		{
-			LogLevelColorizer colorizer(rf ? GetLogLevelBasedOnCounts(rf->logCount) : kBBLogLevel_VeryVerbose, false);
-			if(ImGui::TreeNodeEx((vf->primary != 0) ? "-" : va("%d##PIEInstance%u", vf->pieInstance, startIndex),
-			                     DefaultOpenTreeNodeFlags | ImGuiTreeNodeFlags_Leaf, &vf->selected)) {
-				ImGui::TreePop();
-			}
+
+		bb_log_level_e logLevel = GetLogLevelBasedOnCounts(rf->logCount);
+		LogLevelColorizer colorizer(logLevel);
+		ScopedTextShadows shadows(logLevel);
+		ImVec2 pos = ImGui::GetIconPosForText();
+		const char *pieInstanceName = (vf->primary != 0) ? "-" : va("%d##PIEInstance%u", vf->pieInstance, startIndex);
+		ImGui::TextShadow(pieInstanceName);
+		if(ImGui::Selectable(pieInstanceName, vf->selected != 0)) {
+			// handle click
 		}
+
 		if(rf) {
 			if(IsTooltipActive()) {
 				BeginTooltip();
@@ -81,21 +69,40 @@ void UIRecordedView_PIEInstanceTreeNode(view_t *view, u32 startIndex)
 
 void UIViewPieInstances_Update(view_t *view)
 {
-	CheckboxAllPIEInstanceVisiblity(view);
-	ImGui::SameLine();
-	if(ImGui::TreeNodeEx("PIE Instances", DefaultOpenTreeNodeFlags)) {
-		if(ImGui::BeginPopupContextItem("PIEInstanceContextMenu")) {
-			if(ImGui::Selectable("Check All")) {
-				view_set_all_pieinstance_visibility(view, true);
+	if(view->pieInstances.count > 1) {
+		if(ImGui::CollapsingHeader("PIE Instances", ImGuiTreeNodeFlags_None)) {
+			ImGui::PushID("PIEInstancesHeader");
+
+			u32 checkedCount = 0;
+			u32 uncheckedCount = 0;
+			for(u32 index = 0; index < view->pieInstances.count; ++index) {
+				view_pieInstance_t *vf = view->pieInstances.data + index;
+				if(vf->visible) {
+					++checkedCount;
+				} else {
+					++uncheckedCount;
+				}
 			}
-			if(ImGui::Selectable("Uncheck All")) {
-				view_set_all_pieinstance_visibility(view, false);
+
+			ImGui::PushID(-1);
+			bool allChecked = uncheckedCount == 0;
+			if(checkedCount && uncheckedCount) {
+				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
-			ImGui::EndPopup();
+			if(ImGui::Checkbox("", &allChecked)) {
+				view_set_all_pieinstance_visibility(view, allChecked);
+			}
+			if(checkedCount && uncheckedCount) {
+				ImGui::PopItemFlag();
+			}
+			ImGui::SameLine();
+			ImGui::TextUnformatted("All PIE Instances");
+			ImGui::PopID();
+
+			for(u32 index = 0; index < view->pieInstances.count; ++index) {
+				UIRecordedView_PIEInstanceTreeNode(view, index);
+			}
+			ImGui::PopID();
 		}
-		for(u32 index = 0; index < view->pieInstances.count; ++index) {
-			UIRecordedView_PIEInstanceTreeNode(view, index);
-		}
-		ImGui::TreePop();
 	}
 }

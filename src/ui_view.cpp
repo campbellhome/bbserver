@@ -1109,15 +1109,6 @@ static void DrawViewToggles(view_t *view, const char *applicationName)
 #define ICON_EXPAND_LEFT ICON_FK_CHEVRON_LEFT
 #define ICON_EXPAND_RIGHT ICON_FK_CHEVRON_RIGHT
 
-	if(view->config.showSelectorTarget) {
-		PushExpandButtonColors();
-		if(Button(ICON_EXPAND_LEFT "##ShowSelectorLeft")) {
-			view->config.showSelectorTarget = !view->config.showSelectorTarget;
-			BB_LOG("Debug", "Toggled showSelector for '%s'\n", applicationName);
-		}
-		PopExpandButtonColors();
-		SameLine(view->categoriesWidth);
-	}
 	PushExpandButtonColors();
 	if(Button(view->config.showSelectorTarget ? ICON_EXPAND_LEFT "##ShowSelector" : ICON_EXPAND_RIGHT "##ShowSelector")) {
 		view->config.showSelectorTarget = !view->config.showSelectorTarget;
@@ -1387,8 +1378,6 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 
 		//Separator();
 
-		DrawViewToggles(view, applicationName);
-
 		bool consoleVisible = view->session->outgoingMqId != mq_invalid_id();
 		float consoleInputHeight = consoleVisible ? -ImGui::GetTextLineHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y * 2 : 0.0f;
 
@@ -1398,11 +1387,12 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			ImGui::BeginChild("CategoryChild", ImVec2(view->categoriesWidth, consoleInputHeight), false, ImGuiWindowFlags_HorizontalScrollbar);
 			categoriesChildFocused = ImGui::IsWindowFocused();
 
-			Separator();
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, 0.0f));
 			UITags_Update(view);
 			UIViewThreads_Update(view);
 			UIViewFiles_Update(view);
 			UIViewPieInstances_Update(view);
+			ImGui::PopStyleVar();
 
 			ImGui::EndChild();
 
@@ -1461,6 +1451,8 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		}
 
 		BeginChild("scrollingParent", ImVec2(0, consoleInputHeight), false, 0);
+
+		DrawViewToggles(view, applicationName);
 
 		ImGui::PushItemWidth(200.0f);
 		if(hasFocus && ImGui::IsKeyPressed('F') && ImGui::GetIO().KeyCtrl) {
