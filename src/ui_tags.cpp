@@ -323,13 +323,15 @@ static void UITags_CategoryPopup(view_t *view, u32 viewCategoryIndex)
 	}
 }
 
-static void UITags_Category_SetSelectedVisibility(view_t *view, b32 visible)
+static void UITags_Category_SetSelectedVisibility(view_t *view, b32 visible, bool exclusive)
 {
 	view->visibleLogsDirty = true;
 	for(u32 viewCategoryIndex = 0; viewCategoryIndex < view->categories.count; ++viewCategoryIndex) {
 		view_category_t *viewCategory = view->categories.data + viewCategoryIndex;
 		if(viewCategory->selected) {
 			viewCategory->visible = visible;
+		} else if(exclusive) {
+			viewCategory->visible = false;
 		}
 	}
 }
@@ -526,7 +528,7 @@ void UITags_Update(view_t *view)
 					UITags_Category_ClearSelection(view);
 					UITags_Category_AddSelection(view, viewCategoryIndex);
 				}
-				UITags_Category_SetSelectedVisibility(view, checked);
+				UITags_Category_SetSelectedVisibility(view, checked || ImGui::GetIO().KeyCtrl, ImGui::GetIO().KeyCtrl);
 			}
 			bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_None);
 			ImGui::SameLine();
