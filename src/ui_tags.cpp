@@ -138,12 +138,19 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 	}
 }
 
-static void UITags_Category_ClearSelection(view_t *view)
+void UITags_Category_ClearSelection(view_t *view)
 {
 	for(u32 i = 0; i < view->categories.count; ++i) {
 		view_category_t *viewCategory = view->categories.data + i;
 		viewCategory->selected = false;
 	}
+	view->lastCategoryClickIndex = ~0U;
+}
+
+void UITags_Category_SetSelected(view_t *view, u32 viewCategoryIndex, b32 selected)
+{
+	view_category_t *viewCategory = view->categories.data + viewCategoryIndex;
+	viewCategory->selected = selected;
 	view->lastCategoryClickIndex = ~0U;
 }
 

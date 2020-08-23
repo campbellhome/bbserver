@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2020 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_view.h"
@@ -493,8 +493,8 @@ static void UIRecordedView_SaveLog(view_t *view, bool allColumns, columnSpacer_e
 static void UIRecordedView_Logs_ClearSelection(view_t *view)
 {
 	view_logs_t *logs = &view->visibleLogs;
-	u32 i;
-	for(i = 0; i < logs->count; ++i) {
+	UITags_Category_ClearSelection(view);
+	for(u32 i = 0; i < logs->count; ++i) {
 		logs->data[i].selected = false;
 	}
 }
@@ -502,9 +502,10 @@ static void UIRecordedView_Logs_ClearSelection(view_t *view)
 static void UIRecordedView_Logs_SelectAll(view_t *view)
 {
 	view_logs_t *logs = &view->visibleLogs;
-	u32 i;
-	for(i = 0; i < logs->count; ++i) {
+	UITags_Category_ClearSelection(view);
+	for(u32 i = 0; i < logs->count; ++i) {
 		logs->data[i].selected = true;
+		UITags_Category_SetSelected(view, view_get_log_category_index(view, logs->data + i), true);
 	}
 }
 
@@ -512,12 +513,14 @@ static void UIRecordedView_Logs_AddSelection(view_t *view, view_log_t *log)
 {
 	log->selected = true;
 	view->visibleLogs.lastClickIndex = (u32)(log - view->visibleLogs.data);
+	UITags_Category_SetSelected(view, view_get_log_category_index(view, log), true);
 }
 
 static void UIRecordedView_Logs_ToggleSelection(view_t *view, view_log_t *log)
 {
 	log->selected = !log->selected;
 	view->visibleLogs.lastClickIndex = log->selected ? (u32)(log - view->visibleLogs.data) : ~0u;
+	UITags_Category_SetSelected(view, view_get_log_category_index(view, log), log->selected);
 }
 
 static void UIRecordedView_Logs_HandleClick(view_t *view, view_log_t *log)
@@ -542,7 +545,10 @@ static void UIRecordedView_Logs_HandleClick(view_t *view, view_log_t *log)
 				startIndex = tmp;
 			}
 			for(u32 i = startIndex; i <= endIndex; ++i) {
-				logs->data[i].selected = true;
+				view_log_t *otherLog = logs->data + i;
+				otherLog->selected = true;
+				u32 viewCategoryIndex = view_get_log_category_index(view, otherLog);
+				UITags_Category_SetSelected(view, viewCategoryIndex, true);
 			}
 		}
 	} else {
@@ -822,6 +828,20 @@ void UIRecordedView_LogPopup(view_t *view, view_log_t *viewLog)
 				}
 			}
 		}
+	}
+	if(ImGui::Selectable("Hide this category")) {
+		bb_decoded_packet_t *decoded = &sessionLog->packet;
+		recorded_category_t *recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+		view_category_t *viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
+		viewCategory->visible = false;
+		view->visibleLogsDirty = true;
+	}
+	if(ImGui::Selectable("Hide all but this category")) {
+		view_set_all_category_visibility(view, false);
+		bb_decoded_packet_t *decoded = &sessionLog->packet;
+		recorded_category_t *recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+		view_category_t *viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
+		viewCategory->visible = true;
 	}
 
 	PopUIFont();

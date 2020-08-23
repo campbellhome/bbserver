@@ -853,6 +853,23 @@ void view_advance_to_next_bookmark(view_t *view, b32 forward)
 	}
 }
 
+view_category_t *view_get_log_category(view_t *view, view_log_t *viewLog)
+{
+	u32 sessionLogIndex = viewLog->sessionLogIndex;
+	recorded_session_t *session = view->session;
+	recorded_log_t *sessionLog = session->logs.data[sessionLogIndex];
+	bb_decoded_packet_t *decoded = &sessionLog->packet;
+	recorded_category_t *recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+	view_category_t *viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
+	return viewCategory;
+}
+
+u32 view_get_log_category_index(view_t *view, view_log_t *viewLog)
+{
+	view_category_t *viewCategory = view_get_log_category(view, viewLog);
+	return (u32)(viewCategory - view->categories.data);
+}
+
 void view_update_visible_logs(view_t *view)
 {
 	u32 i, j;
