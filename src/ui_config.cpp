@@ -537,10 +537,11 @@ void UIConfig_Update(config_t *config)
 			Fonts_AddFont(config->uiFontConfig);
 			Fonts_AddFont(config->logFontConfig);
 			Imgui_Core_SetColorScheme(sb_get(&config->colorscheme));
-			Imgui_Core_SetTextShadows(g_config.textShadows);
+			Imgui_Core_SetTextShadows(config->textShadows);
 			if(apply) {
 				UIConfig_Open(config);
 			}
+			config_write(config);
 		}
 		SameLine();
 		if(Button("Cancel")) {
