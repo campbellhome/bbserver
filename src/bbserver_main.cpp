@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2020 Matt Campbell
 // MIT license (see License.txt)
 
 #include "app_update.h"
@@ -227,7 +227,9 @@ static b32 BBServer_SingleInstanceCheck(const char *classname, const char *cmdli
 {
 	HWND hExisting = FindWindowA(classname, nullptr);
 	if(hExisting) {
-		BBServer_BringWindowToFront(hExisting);
+		if(cmdline_find("-hide") <= 0) {
+			BBServer_BringWindowToFront(hExisting);
+		}
 
 		sb_t viewerPath = BBServer_GetCommandLineRecording(cmdline);
 		if(viewerPath.data) {
