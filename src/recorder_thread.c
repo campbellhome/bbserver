@@ -239,6 +239,25 @@ bb_thread_return_t recorder_thread(void *args)
 							}
 							recording.platform = decoded.packet.appInfo.platform;
 							to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(recording));
+
+							if((decoded.packet.appInfo.initFlags & kBBInitFlag_RecordingInfo) != 0) {
+								bb_decoded_packet_t outgoing;
+								memset(&outgoing, 0, sizeof(outgoing));
+								outgoing.type = kBBPacketType_RecordingInfo;
+#if BB_USING(BB_PLATFORM_WINDOWS)
+								DWORD machineNameSize = sizeof(outgoing.packet.recordingInfo.machineName);
+								if(!GetComputerNameA(outgoing.packet.recordingInfo.machineName, &machineNameSize)) {
+									bb_strncpy(outgoing.packet.recordingInfo.machineName, "Unknown", sizeof(outgoing.packet.recordingInfo.machineName));
+								}
+#else
+								bb_strncpy(outgoing.packet.recordingInfo.machineName, "Unknown", sizeof(outgoing.packet.recordingInfo.machineName));
+#endif
+								if(bb_snprintf(outgoing.packet.recordingInfo.recordingName, sizeof(outgoing.packet.recordingInfo.recordingName), "{%s}%s.bbox", uuidBuffer, applicationName) < 0) {
+									outgoing.packet.recordingInfo.recordingName[sizeof(outgoing.packet.recordingInfo.recordingName) - 1] = '\0';
+								}
+								outgoing.packet.recordingInfo.recordingName[sizeof(outgoing.packet.recordingInfo.recordingName) - 1] = '\0';
+								bbcon_try_send(con, &outgoing);
+							}
 						}
 					} else {
 						dirty = true;
