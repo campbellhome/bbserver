@@ -1495,10 +1495,10 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			BB_LOG("Debug", "Set filter to '%s' for '%s'\n", sb_get(&view->config.filterInput), applicationName);
 		}
 		Fonts_CacheGlyphs(sb_get(&view->config.filterInput));
-		if(IsItemActive() && Imgui_Core_HasFocus()) {
+		const bool filterFocused = IsItemActive() && Imgui_Core_HasFocus();
+		if(filterFocused) {
 			Imgui_Core_RequestRender();
 		}
-		bool filterFocused = ImGui::IsWindowFocused();
 
 		ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
 		ImGui::TextUnformatted("Line Spans:");
@@ -1514,10 +1514,11 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			BB_LOG("Debug", "Set spans to '%s' for '%s'\n", sb_get(&view->config.spansInput), applicationName);
 		}
 		Fonts_CacheGlyphs(sb_get(&view->config.spansInput));
-		if(IsItemActive() && Imgui_Core_HasFocus()) {
+		const bool spansFocused = IsItemActive() && Imgui_Core_HasFocus();
+		if(spansFocused) {
 			Imgui_Core_RequestRender();
 		}
-		bool spansFocused = ImGui::IsWindowFocused();
+
 		if(session->logs.count) {
 			ImGui::SameLine();
 			if(ImGui::Button("Clear")) {
@@ -1544,11 +1545,11 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				ImGui::PushItemWidth(-1.0f);
 				ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
 				ImGui::InputText("###SelectedHack", sb.data, sb.allocated, ImGuiInputTextFlags_ReadOnly);
-				if(IsItemActive() && Imgui_Core_HasFocus()) {
+				selectedHackFocused = IsItemActive() && Imgui_Core_HasFocus();
+				if(selectedHackFocused) {
 					Imgui_Core_RequestRender();
 				}
 				ImGui::PopItemWidth();
-				selectedHackFocused = ImGui::IsWindowFocused();
 			}
 			sb_reset(&sb);
 		}
