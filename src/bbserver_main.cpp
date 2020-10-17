@@ -53,6 +53,7 @@ static char s_imguiPath[kBBSize_MaxPath];
 static char s_bbLogPath[kBBSize_MaxPath];
 static UINT s_bringToFrontMessage;
 static updateData s_updateData;
+static b32 s_bMaximizeOnShow;
 
 static void BBServer_SetImguiPath(void)
 {
@@ -316,6 +317,10 @@ LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, 
 	if(msg == WM_DROPFILES) {
 		return DragDrop_OnDropFiles(wParam);
 	}
+	if(msg == WM_SHOWWINDOW && s_bMaximizeOnShow) {
+		s_bMaximizeOnShow = false;
+		ShowWindow(hWnd, SW_MAXIMIZE);
+	}
 	LRESULT ret = deviceCodes_HandleWindowMessage(hWnd, msg, wParam, lParam);
 	if(ret) {
 		return ret;
@@ -420,6 +425,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 						ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 						Imgui_Core_SetUserWndProc(&BBServer_HandleWindowMessage);
 						if(cmdline_find("-hide") > 0) {
+							s_bMaximizeOnShow = (g_config.wp.showCmd == SW_SHOWMAXIMIZED);
 							Imgui_Core_HideWindow();
 						}
 						sb_t viewerPath = BBServer_GetCommandLineRecording(CommandLine);
