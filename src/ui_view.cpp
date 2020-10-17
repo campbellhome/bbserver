@@ -610,11 +610,12 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 					if(json) {
 						bJson = true;
 						PushTextWrapPos(1800.0f);
-						if(Imgui_Core_GetTextShadows()) {
-							TextWrappedShadowed(va("%s", json));
-						} else {
-							TextWrapped("%s", json);
-						}
+						// TODO: shadows are misplaced with json
+						//if(Imgui_Core_GetTextShadows()) {
+						//	TextWrappedShadowed(va("%s", json));
+						//} else {
+						TextWrapped("%s", json);
+						//}
 						PopTextWrapPos();
 						json_free_serialized_string(json);
 					}
@@ -911,6 +912,7 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 		scrollDir = GetVerticalScrollDir();
 	}
 	if(!g_config.tooltips.onlyOverSelected || viewLog->selected) {
+		ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_kBBColor_Default));
 		if(ImGui::GetMousePos().x >= ImGui::GetWindowPos().x + s_textColumnCursorPosX - ImGui::GetScrollX()) {
 			if(g_config.tooltips.overText) {
 				SetLogTooltip(decoded, category, session, view);
@@ -920,7 +922,9 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 				SetLogTooltip(decoded, category, session, view);
 			}
 		}
+		ImGui::PopStyleColor(1);
 	}
+
 	if(ImGui::BeginPopupContextItem(va("RecordedEntry_%u_%u_ContextMenu", logIndex, viewLog->subLine))) {
 		if(!viewLog->selected) {
 			UIRecordedView_Logs_ClearSelection(view);
