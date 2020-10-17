@@ -184,6 +184,7 @@ tagCategory_t *tagCategory_find_or_add(const char *categoryName)
 			category->name = sb_from_c_string(categoryName);
 		}
 		qsort(g_tags.categories.data, g_tags.categories.count, sizeof(g_tags.categories.data[0]), tagCategory_sort);
+		category = tagCategory_find(categoryName);
 	}
 	return category;
 }

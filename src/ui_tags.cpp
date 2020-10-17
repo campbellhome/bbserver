@@ -3,6 +3,7 @@
 
 #include "ui_tags.h"
 #include "bb_array.h"
+#include "bb_colors.h"
 #include "imgui_text_shadows.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
@@ -36,15 +37,23 @@ static void UITags_CategoryToolTip(recorded_category_t *category)
 {
 	if(ImGui::IsTooltipActive()) {
 		ImGui::BeginTooltip();
+		ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_kBBColor_Default));
+		ImGui::TextUnformatted(category->categoryName);
 		tagCategory_t *tagCategory = tagCategory_find(category->categoryName);
 		if(tagCategory && tagCategory->tags.count) {
 			sb_clear(&s_categoryTagNames);
 			for(u32 i = 0; i < tagCategory->tags.count; ++i) {
-				sb_va(&s_categoryTagNames, " %s", sb_get(tagCategory->tags.data + i));
+				const char *tagName = sb_get(tagCategory->tags.data + i);
+				if(strchr(tagName, ' ')) {
+					sb_va(&s_categoryTagNames, " \"%s\"", tagName);
+				} else {
+					sb_va(&s_categoryTagNames, " %s", tagName);
+				}
 			}
 			ImGui::Text("Tags: %s", sb_get(&s_categoryTagNames));
-			ImGui::Separator();
 		}
+		ImGui::Separator();
+		ImGui::PopStyleColor(1);
 		UIRecordedView_TooltipLevelText("VeryVerbose: %u", category->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
 		UIRecordedView_TooltipLevelText("Verbose: %u", category->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
 		UIRecordedView_TooltipLevelText("Logs: %u", category->logCount[kBBLogLevel_Log], kBBLogLevel_Log);
@@ -52,6 +61,23 @@ static void UITags_CategoryToolTip(recorded_category_t *category)
 		UIRecordedView_TooltipLevelText("Warnings: %u", category->logCount[kBBLogLevel_Warning], kBBLogLevel_Warning);
 		UIRecordedView_TooltipLevelText("Errors: %u", category->logCount[kBBLogLevel_Error], kBBLogLevel_Error);
 		UIRecordedView_TooltipLevelText("Fatal: %u", category->logCount[kBBLogLevel_Fatal], kBBLogLevel_Fatal);
+		ImGui::EndTooltip();
+	}
+}
+
+static void UITags_TagToolTip(tag_t *tag)
+{
+	if(ImGui::IsTooltipActive()) {
+		ImGui::BeginTooltip();
+		ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_kBBColor_Default));
+		ImGui::TextUnformatted(sb_get(&tag->name));
+		if(tag->categories.count) {
+			ImGui::Text("Categories:");
+			for(u32 i = 0; i < tag->categories.count; ++i) {
+				ImGui::Text("  %s", sb_get(tag->categories.data + i));
+			}
+		}
+		ImGui::PopStyleColor(1);
 		ImGui::EndTooltip();
 	}
 }
@@ -408,6 +434,7 @@ void UITags_Update(view_t *view)
 				view_set_all_category_visibility(view, false);
 				view_set_category_collection_visiblity(&s_matchingAll, true);
 			}
+			UITags_TagToolTip(tag);
 			UITags_TagPopup(tag, view);
 
 			if(open) {
@@ -457,6 +484,7 @@ void UITags_Update(view_t *view)
 						ImColor color = ImGui::GetColorU32(color4);
 						ImGui::DrawStrikethrough(categoryName, color, pos);
 					}
+					UITags_CategoryToolTip(recordedCategory);
 					ImGui::PopID();
 				}
 				ImGui::TreePop();
