@@ -19,7 +19,7 @@
 #include "tokenize.h"
 #include "va.h"
 
-BB_WARNING_PUSH(4820)
+BB_WARNING_PUSH(4820, 4668)
 #include <Iphlpapi.h>
 #pragma comment(lib, "Iphlpapi.lib")
 BB_WARNING_POP

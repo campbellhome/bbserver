@@ -15,7 +15,7 @@
     <ProjectGuid>{71C1ADC0-7DA3-4878-A078-0E98DE5947E6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>bb</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
