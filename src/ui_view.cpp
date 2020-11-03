@@ -55,6 +55,7 @@ static gathered_views_t s_gathered_views;
 static sb_t s_strippedLine;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
+static int s_visibleLogLines;
 
 using namespace ImGui;
 
@@ -600,6 +601,7 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 		Separator();
 		PopUIFont();
 		span_t cursor = span_from_string(decoded->packet.logText.text);
+		int numLines = 0;
 		for(span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor)) {
 			bool bJson = false;
 			sb_t stripped = StripColorCodes(line);
@@ -631,6 +633,9 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 				}
 				PopTextWrapPos();
 			}
+
+			if (++numLines >= s_visibleLogLines)
+				break;
 		}
 		EndTooltip();
 	}
@@ -1651,6 +1656,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			bool hovered = ImGui::IsWindowHovered();
 			ImGuiListClipper clipper((int)view->visibleLogs.count, ImGui::GetTextLineHeightWithSpacing());
 			while(clipper.Step()) {
+				s_visibleLogLines = clipper.DisplayEnd - clipper.DisplayStart;
 				for(int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
 					view_log_t *viewLog = view->visibleLogs.data + i;
 					float width = UIRecordedView_LogLine(view, viewLog, textOffset, scrollDir);
@@ -1670,11 +1676,10 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				scrollDir = kVerticalScroll_None;
 			}
 			float curScrollY = GetScrollY();
-			int visibleLines = clipper.DisplayEnd - clipper.DisplayStart;
 			const float kScreenPercent = 0.5f;
 			//view->bookmarkThreshold = (int)(clipper.DisplayStart + visibleLines * 0.5f);
 			if(view->gotoTarget >= 0) {
-				int adjustedTarget = view->gotoTarget - (int)(visibleLines * kScreenPercent);
+				int adjustedTarget = view->gotoTarget - (int)(s_visibleLogLines * kScreenPercent);
 				if(adjustedTarget < 0) {
 					adjustedTarget = 0;
 				}
