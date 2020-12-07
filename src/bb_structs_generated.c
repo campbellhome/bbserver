@@ -268,7 +268,7 @@ config_t config_clone(const config_t *src)
 		dst.colorscheme = sb_clone(&src->colorscheme);
 		dst.wp = WINDOWPLACEMENT_clone(&src->wp);
 		dst.version = src->version;
-		dst.autoTileViews = src->autoTileViews;
+		dst.viewTileMode = src->viewTileMode;
 		dst.alternateRowBackground = src->alternateRowBackground;
 		dst.textShadows = src->textShadows;
 		dst.logColorUsage = src->logColorUsage;

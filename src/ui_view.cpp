@@ -634,7 +634,7 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 				PopTextWrapPos();
 			}
 
-			if (++numLines >= s_visibleLogLines)
+			if(++numLines >= s_visibleLogLines)
 				break;
 		}
 		EndTooltip();
@@ -1841,7 +1841,7 @@ void UIRecordedView_GatherViews(gathered_views_t &views)
 	qsort(views.data, views.count, sizeof(views.data[0]), GatheredViewSort);
 }
 
-void UIRecordedView_UpdateAll(bool autoTileViews)
+void UIRecordedView_UpdateAll()
 {
 	for(u32 sessionIndex = 0; sessionIndex < recorded_session_count(); ++sessionIndex) {
 		recorded_session_t *session = recorded_session_get(sessionIndex);
@@ -1873,6 +1873,7 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 	float screenWidth = io.DisplaySize.x - UIRecordings_Width();
 	float screenHeight = io.DisplaySize.y - startY;
 
+	const bool autoTileViews = g_config.viewTileMode != kViewTileMode_None;
 	if(autoTileViews) {
 
 		int tiledCount = 0;
@@ -1887,10 +1888,41 @@ void UIRecordedView_UpdateAll(bool autoTileViews)
 		cols = (cols < 1) ? 1 : cols;
 		int rows = (int)ceil(tiledCount / (float)cols);
 		rows = (rows < 1) ? 1 : rows;
-		if(screenHeight > screenWidth) {
-			int tmp = cols;
-			cols = rows;
-			rows = tmp;
+		switch(g_config.viewTileMode) {
+		case kViewTileMode_Auto:
+			if(screenHeight > screenWidth) {
+				int tmp = cols;
+				cols = rows;
+				rows = tmp;
+			}
+			break;
+		case kViewTileMode_PreferColumns:
+			if(rows > cols) {
+				int tmp = cols;
+				cols = rows;
+				rows = tmp;
+			}
+			break;
+		case kViewTileMode_PreferRows:
+			if(cols > rows) {
+				int tmp = cols;
+				cols = rows;
+				rows = tmp;
+			}
+			break;
+		case kViewTileMode_Columns:
+			cols = tiledCount;
+			rows = 1;
+			break;
+		case kViewTileMode_Rows:
+			cols = 1;
+			rows = tiledCount;
+			break;
+		case kViewTileMode_None:
+		case kViewTileMode_Count:
+		default:
+			BB_ASSERT(false);
+			break;
 		}
 		ImVec2 windowSpacing(screenWidth / cols, screenHeight / rows);
 		ImVec2 windowSize(windowSpacing.x - 1, windowSpacing.y - 1);

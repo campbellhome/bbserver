@@ -92,6 +92,16 @@ AUTOJSON typedef struct tag_sizeConfig {
 	s32 scrollbarSize;
 } sizeConfig;
 
+AUTOJSON AUTODEFAULT(kViewTileMode_Auto) typedef enum viewTileMode_t {
+	kViewTileMode_Auto,
+	kViewTileMode_PreferColumns,
+	kViewTileMode_PreferRows,
+	kViewTileMode_Columns,
+	kViewTileMode_Rows,
+	kViewTileMode_None,
+	kViewTileMode_Count,
+} viewTileMode_t;
+
 AUTOJSON typedef struct config_s {
 	configWhitelist_t whitelist;
 	openTargetList_t openTargets;
@@ -101,7 +111,7 @@ AUTOJSON typedef struct config_s {
 	sb_t colorscheme;
 	WINDOWPLACEMENT wp;
 	u32 version;
-	b32 autoTileViews;
+	viewTileMode_t viewTileMode;
 	b32 alternateRowBackground;
 	b32 textShadows;
 	configColorUsage logColorUsage;

@@ -217,7 +217,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.colorscheme = json_deserialize_sb_t(json_object_get_value(obj, "colorscheme"));
 			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
 			dst.version = (u32)json_object_get_number(obj, "version");
-			dst.autoTileViews = json_object_get_boolean_safe(obj, "autoTileViews");
+			dst.viewTileMode = json_deserialize_viewTileMode_t(json_object_get_value(obj, "viewTileMode"));
 			dst.alternateRowBackground = json_object_get_boolean_safe(obj, "alternateRowBackground");
 			dst.textShadows = json_object_get_boolean_safe(obj, "textShadows");
 			dst.logColorUsage = json_deserialize_configColorUsage(json_object_get_value(obj, "logColorUsage"));
@@ -888,7 +888,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "colorscheme", json_serialize_sb_t(&src->colorscheme));
 		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
 		json_object_set_number(obj, "version", src->version);
-		json_object_set_boolean(obj, "autoTileViews", src->autoTileViews);
+		json_object_set_value(obj, "viewTileMode", json_serialize_viewTileMode_t(src->viewTileMode));
 		json_object_set_boolean(obj, "alternateRowBackground", src->alternateRowBackground);
 		json_object_set_boolean(obj, "textShadows", src->textShadows);
 		json_object_set_value(obj, "logColorUsage", json_serialize_configColorUsage(src->logColorUsage));
@@ -1346,6 +1346,24 @@ configColorUsage json_deserialize_configColorUsage(JSON_Value *src)
 	return dst;
 }
 
+viewTileMode_t json_deserialize_viewTileMode_t(JSON_Value *src)
+{
+	viewTileMode_t dst = kViewTileMode_Auto;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kViewTileMode_Auto")) { dst = kViewTileMode_Auto; }
+			if(!strcmp(str, "kViewTileMode_PreferColumns")) { dst = kViewTileMode_PreferColumns; }
+			if(!strcmp(str, "kViewTileMode_PreferRows")) { dst = kViewTileMode_PreferRows; }
+			if(!strcmp(str, "kViewTileMode_Columns")) { dst = kViewTileMode_Columns; }
+			if(!strcmp(str, "kViewTileMode_Rows")) { dst = kViewTileMode_Rows; }
+			if(!strcmp(str, "kViewTileMode_None")) { dst = kViewTileMode_None; }
+			if(!strcmp(str, "kViewTileMode_Count")) { dst = kViewTileMode_Count; }
+		}
+	}
+	return dst;
+}
+
 recording_tab_t json_deserialize_recording_tab_t(JSON_Value *src)
 {
 	recording_tab_t dst = kRecordingTab_Count;
@@ -1479,6 +1497,22 @@ JSON_Value *json_serialize_configColorUsage(const configColorUsage src)
 		case kConfigColors_NoBg: str = "kConfigColors_NoBg"; break;
 		case kConfigColors_None: str = "kConfigColors_None"; break;
 		case kConfigColors_Count: str = "kConfigColors_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
+JSON_Value *json_serialize_viewTileMode_t(const viewTileMode_t src)
+{
+	const char *str = "";
+	switch(src) {
+		case kViewTileMode_Auto: str = "kViewTileMode_Auto"; break;
+		case kViewTileMode_PreferColumns: str = "kViewTileMode_PreferColumns"; break;
+		case kViewTileMode_PreferRows: str = "kViewTileMode_PreferRows"; break;
+		case kViewTileMode_Columns: str = "kViewTileMode_Columns"; break;
+		case kViewTileMode_Rows: str = "kViewTileMode_Rows"; break;
+		case kViewTileMode_None: str = "kViewTileMode_None"; break;
+		case kViewTileMode_Count: str = "kViewTileMode_Count"; break;
 	}
 	JSON_Value *val = json_value_init_string(str);
 	return val;

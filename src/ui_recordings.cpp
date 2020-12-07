@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2020 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_recordings.h"
@@ -187,7 +187,8 @@ static void UIRecordings_HandlePopupMenu(recording_tab_t tab, grouped_recording_
 	}
 
 	if(deletableCount) {
-		const char *label = (totalCount > deletableCount) ? va("Delete %u/%u recordings", deletableCount, totalCount) : deletableCount == 1 ? "Delete recording" : va("Delete %u recordings", deletableCount);
+		const char *label = (totalCount > deletableCount) ? va("Delete %u/%u recordings", deletableCount, totalCount) : deletableCount == 1 ? "Delete recording"
+		                                                                                                                                    : va("Delete %u recordings", deletableCount);
 		if(ImGui::Selectable(label)) {
 			UIRecordings_DeleteSelection(tab, pendingDeletions);
 		}
@@ -426,13 +427,13 @@ static const char *s_recordingTabNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_recordingTabNames) == kRecordingTab_Count);
 
-void UIRecordings_Update(bool autoTileViews)
+void UIRecordings_Update()
 {
 	recordings_config_t *config = recordings_get_config();
 	if(!config->recordingsOpen)
 		return;
 
-	autoTileViews = true;
+	const bool autoTileViews = g_config.viewTileMode != kViewTileMode_None;
 	if(autoTileViews) {
 		ImVec2 viewportPos(0.0f, 0.0f);
 		ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");

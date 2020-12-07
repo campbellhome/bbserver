@@ -66,7 +66,6 @@ b32 config_read(config_t *config)
 		config->wp.showCmd = SW_NORMAL;
 	}
 	if(config->version == 0) {
-		config->autoTileViews = true;
 		config->alternateRowBackground = true;
 		config->logColorUsage = kConfigColors_Full;
 		config->autoDeleteAfterDays = 14;

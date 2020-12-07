@@ -278,6 +278,16 @@ static const char *g_colorUsageNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(g_colorUsageNames) == kConfigColors_Count);
 
+static const char* g_viewTileModeNames[] = {
+	"Auto",
+	"Prefer Columns",
+	"Prefer Rows",
+	"Columns",
+	"Rows",
+	"None",
+};
+BB_CTASSERT(BB_ARRAYSIZE(g_viewTileModeNames) == kViewTileMode_Count);
+
 void UIConfig_Update(config_t *config)
 {
 	if(!s_preferencesOpen)
@@ -300,7 +310,7 @@ void UIConfig_Update(config_t *config)
 		if(ImGui::CollapsingHeader("Interface", ImGuiTreeNodeFlags_DefaultOpen)) {
 			PushItemWidth(200 * Imgui_Core_GetDpiScale());
 			ImGui::BeginGroup();
-			Checkbox("Auto-tile views", &s_preferencesConfig.autoTileViews);
+			ImGui::Combo("View tile mode", (s32*)&s_preferencesConfig.viewTileMode, g_viewTileModeNames, BB_ARRAYSIZE(g_viewTileModeNames));
 			InputFloat("Double-click seconds", &s_preferencesConfig.doubleClickSeconds);
 
 			Checkbox("Alternate row background colors", &s_preferencesConfig.alternateRowBackground);

@@ -127,6 +127,7 @@ typedef struct view_console_history_t view_console_history_t;
 typedef struct view_config_s view_config_t;
 
 typedef enum tag_configColorUsage configColorUsage;
+typedef enum viewTileMode_t viewTileMode_t;
 typedef enum recording_tab_t recording_tab_t;
 typedef enum recording_sort_e recording_sort_t;
 typedef enum recording_group_e recording_group_t;
@@ -233,6 +234,7 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src);
 
 
 configColorUsage json_deserialize_configColorUsage(JSON_Value *src);
+viewTileMode_t json_deserialize_viewTileMode_t(JSON_Value *src);
 recording_tab_t json_deserialize_recording_tab_t(JSON_Value *src);
 recording_sort_t json_deserialize_recording_sort_t(JSON_Value *src);
 recording_group_t json_deserialize_recording_group_t(JSON_Value *src);
@@ -240,6 +242,7 @@ recording_type_t json_deserialize_recording_type_t(JSON_Value *src);
 styleColor_e json_deserialize_styleColor_e(JSON_Value *src);
 
 JSON_Value *json_serialize_configColorUsage(const configColorUsage src);
+JSON_Value *json_serialize_viewTileMode_t(const viewTileMode_t src);
 JSON_Value *json_serialize_recording_tab_t(const recording_tab_t src);
 JSON_Value *json_serialize_recording_sort_t(const recording_sort_t src);
 JSON_Value *json_serialize_recording_group_t(const recording_group_t src);

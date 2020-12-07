@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2020 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bbserver_update.h"
@@ -507,7 +507,7 @@ extern "C" void BBServer_Update(void)
 
 	Update_Tick();
 	UIConfig_Update(&g_config);
-	UIRecordings_Update(g_config.autoTileViews != 0);
+	UIRecordings_Update();
 	messageBox *mb = mb_get_active(nullptr);
 	if(mb) {
 		ImVec2 viewportPos(0.0f, 0.0f);
@@ -545,7 +545,7 @@ extern "C" void BBServer_Update(void)
 	} else {
 		g_messageboxHeight = 0.0f;
 	}
-	UIRecordedView_UpdateAll(g_config.autoTileViews != 0);
+	UIRecordedView_UpdateAll();
 	UISystemTray_Update();
 
 	if(bAppliedScrollbarSize) {

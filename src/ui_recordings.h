@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2020 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -7,6 +7,6 @@
 
 void UIRecordings_Open();
 void UIRecordings_Close();
-void UIRecordings_Update(bool autoTileViews);
+void UIRecordings_Update();
 float UIRecordings_Width();
 float UIRecordings_WidthWhenOpen();
