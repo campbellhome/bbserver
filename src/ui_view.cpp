@@ -1503,6 +1503,9 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		const bool filterFocused = IsItemActive() && Imgui_Core_HasFocus();
 		if(filterFocused) {
 			Imgui_Core_RequestRender();
+			if(ImGui::IsTooltipActive()) {
+				ImGui::SetTooltip("%s", sb_get(&view->config.filterInput));
+			}
 		}
 
 		if(view->db) {
@@ -1526,6 +1529,9 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			const bool sqlWhereFocused = IsItemActive() && Imgui_Core_HasFocus();
 			if(sqlWhereFocused) {
 				Imgui_Core_RequestRender();
+			}
+			if(ImGui::IsTooltipActive()) {
+				ImGui::SetTooltip("%s", sb_get(&view->config.sqlWhereInput));
 			}
 		}
 
