@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2020 Matt Campbell
 // MIT license (see License.txt)
 
 #if defined(_MSC_VER)
@@ -16,6 +16,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 
 #include "bbclient/bb_wrap_malloc.h"
 #include "bbclient/bb_wrap_stdio.h"
+#include "sqlite/wrap_sqlite3.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -81,6 +82,9 @@ categories_t g_categories = { 0, 0, 0 };
 double g_millisPerTick = 1.0;
 u64 g_initialTimestamp = 0;
 static logPackets_t g_queuedPackets;
+
+static sqlite3 *db;
+static const char *g_sqlCommand;
 
 static int usage(void)
 {
@@ -166,6 +170,123 @@ static b32 test_verbosity(const bb_decoded_packet_t *decoded)
 	return (get_verbosity_sort(verbosity) >= get_verbosity_sort(g_verbosity));
 }
 
+static const char *s_verbosityNames[] = {
+	"Log",
+	"Warning",
+	"Error",
+	"Display",
+	"SetColor",
+	"VeryVerbose",
+	"Verbose",
+	"Fatal",
+};
+BB_CTASSERT(BB_ARRAYSIZE(s_verbosityNames) == kBBLogLevel_Count);
+const char *get_level_name(bb_log_level_e logLevel)
+{
+	if(logLevel >= 0 && logLevel < kBBLogLevel_Count)
+		return s_verbosityNames[logLevel];
+	return "Unknown";
+}
+
+static b32 sqlite3_bind_u32_and_log(sqlite3_stmt *stmt, int index, u32 value)
+{
+	int rc = sqlite3_bind_int(stmt, index, value);
+	if(rc == SQLITE_OK) {
+		return true;
+	} else {
+		fprintf(stderr, "SQL bind error: index:%d value:%u result:%d error:%s\n", index, value, rc, sqlite3_errmsg(db));
+		return false;
+	}
+}
+
+static b32 sqlite3_bind_text_and_log(sqlite3_stmt *stmt, int index, const char *value)
+{
+	int rc = sqlite3_bind_text(stmt, index, value, -1, SQLITE_STATIC);
+	if(rc == SQLITE_OK) {
+		return true;
+	} else {
+		fprintf(stderr, "SQL bind error: index:%d value:%s result:%d error:%s\n", index, value, rc, sqlite3_errmsg(db));
+		return false;
+	}
+}
+
+static int test_sql_callback(void *userData, int argc, char **argv, char **colNames)
+{
+	BB_UNUSED(argc);
+	BB_UNUSED(argv);
+	BB_UNUSED(colNames);
+	int *count = (int *)userData;
+	*count += 1;
+	return 0;
+}
+
+static b32 test_sql_internal(const bb_decoded_packet_t *decoded, const char *lines)
+{
+	// "(line INTEGER PRIMARY KEY, category TEXT, level TEXT, pie NUMBER, text TEXT);";
+
+	const char *category = get_category(decoded->packet.logText.categoryId);
+	const char *level = get_level_name(decoded->packet.logText.level);
+
+	int rc;
+	const char *insert_sql = "INSERT INTO logs (line, category, level, pie, text) VALUES(?, ?, ?, ?, ?)";
+	sqlite3_stmt *insert_stmt = NULL;
+	rc = sqlite3_prepare_v2(db, insert_sql, -1, &insert_stmt, NULL);
+	if(rc != SQLITE_OK) {
+		return false;
+	}
+
+	u32 line = 0;
+	sqlite3_bind_u32_and_log(insert_stmt, 1, line);
+	sqlite3_bind_text_and_log(insert_stmt, 2, category);
+	sqlite3_bind_text_and_log(insert_stmt, 3, level);
+	sqlite3_bind_u32_and_log(insert_stmt, 4, decoded->packet.logText.pieInstance);
+	sqlite3_bind_text_and_log(insert_stmt, 5, lines);
+
+	rc = sqlite3_step(insert_stmt);
+	if(SQLITE_DONE != rc) {
+		fprintf(stderr, "SQL error running INSERT INTO: result:%d error:%s\n", rc, sqlite3_errmsg(db));
+	}
+	sqlite3_clear_bindings(insert_stmt);
+	sqlite3_reset(insert_stmt);
+	sqlite3_finalize(insert_stmt);
+
+	int count = 0;
+	char *errorMessage = NULL;
+	rc = sqlite3_exec(db, g_sqlCommand, test_sql_callback, &count, &errorMessage);
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "SQL error running user cmd: %d %s\n", rc, errorMessage);
+		sqlite3_free(errorMessage);
+	}
+
+	return count > 0;
+}
+
+static b32 test_sql(const bb_decoded_packet_t *decoded, const char *lines)
+{
+	if(!g_sqlCommand || !db)
+		return true;
+
+	int rc;
+	char *errorMessage;
+
+	rc = sqlite3_exec(db, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "SQL error running BEGIN TRANSACTION ret:%d error:%s\n", rc, errorMessage);
+		sqlite3_free(errorMessage);
+		return false;
+	}
+
+	b32 result = test_sql_internal(decoded, lines);
+
+	rc = sqlite3_exec(db, "ROLLBACK", NULL, NULL, &errorMessage);
+	if(rc != SQLITE_OK) {
+		BB_ERROR("sqlite", "SQL error running ROLLBACK ret:%d error:%s\n", rc, errorMessage);
+		sqlite3_free(errorMessage);
+	}
+
+	return result;
+}
+
 static void queue_packet(const bb_decoded_packet_t *decoded, FILE *ofp)
 {
 	sb_t lines = { BB_EMPTY_INITIALIZER };
@@ -178,7 +299,7 @@ static void queue_packet(const bb_decoded_packet_t *decoded, FILE *ofp)
 	sb_append(&lines, decoded->packet.logText.text);
 
 	s64 ms = (s64)((decoded->header.timestamp - g_initialTimestamp) * g_millisPerTick);
-	if(test_verbosity(decoded)) {
+	if(test_verbosity(decoded) && test_sql(decoded, sb_get(&lines))) {
 		queue_lines(lines, decoded->packet.logText.categoryId, ms, ofp);
 	} else {
 		sb_reset(&lines);
@@ -202,7 +323,7 @@ static void print_queued(FILE *ofp)
 	}
 }
 
-int main(int argc, char **argv)
+int main_loop(int argc, char **argv)
 {
 	g_exe = argv[0];
 	char *sep = strrchr(g_exe, '\\');
@@ -273,6 +394,8 @@ int main(int argc, char **argv)
 				g_program = kProgram_bbcat;
 			} else if(!strcmp(arg, "-bbtail")) {
 				g_program = kProgram_bbtail;
+			} else if(!bb_strnicmp(arg, "-sql=", 5)) {
+				g_sqlCommand = arg + 5;
 			} else {
 				return usage();
 			}
@@ -435,5 +558,37 @@ int main(int argc, char **argv)
 		free(target);
 	}
 
+	return ret;
+}
+
+int main(int argc, char **argv)
+{
+	int rc = sqlite3_open(":memory:", &db);
+	if(rc != SQLITE_OK) {
+		fprintf(stderr, "Could not open in-memory database\n");
+		if(db) {
+			sqlite3_close(db);
+			db = NULL;
+		}
+	}
+
+	if(db) {
+		const char *createCommand = "CREATE TABLE logs (line INTEGER PRIMARY KEY, category TEXT, level TEXT, pie NUMBER, text TEXT);";
+		char *errorMessage = NULL;
+		rc = sqlite3_exec(db, createCommand, NULL, NULL, &errorMessage);
+		if(rc != SQLITE_OK) {
+			BB_ERROR("sqlite", "SQL error running CREATE TABLE: %s", errorMessage);
+			sqlite3_free(errorMessage);
+			sqlite3_close(db);
+			db = NULL;
+		}
+	}
+
+	int ret = main_loop(argc, argv);
+
+	if(db) {
+		sqlite3_close(db);
+		db = NULL;
+	}
 	return ret;
 }
