@@ -170,24 +170,6 @@ static b32 test_verbosity(const bb_decoded_packet_t *decoded)
 	return (get_verbosity_sort(verbosity) >= get_verbosity_sort(g_verbosity));
 }
 
-static const char *s_verbosityNames[] = {
-	"Log",
-	"Warning",
-	"Error",
-	"Display",
-	"SetColor",
-	"VeryVerbose",
-	"Verbose",
-	"Fatal",
-};
-BB_CTASSERT(BB_ARRAYSIZE(s_verbosityNames) == kBBLogLevel_Count);
-const char *get_level_name(bb_log_level_e logLevel)
-{
-	if(logLevel >= 0 && logLevel < kBBLogLevel_Count)
-		return s_verbosityNames[logLevel];
-	return "Unknown";
-}
-
 static b32 sqlite3_bind_u32_and_log(sqlite3_stmt *stmt, int index, u32 value)
 {
 	int rc = sqlite3_bind_int(stmt, index, value);
@@ -225,7 +207,7 @@ static b32 test_sql_internal(const bb_decoded_packet_t *decoded, const char *lin
 	// "(line INTEGER PRIMARY KEY, category TEXT, level TEXT, pie NUMBER, text TEXT);";
 
 	const char *category = get_category(decoded->packet.logText.categoryId);
-	const char *level = get_level_name(decoded->packet.logText.level);
+	const char *level = bb_get_log_level_name(decoded->packet.logText.level, "Unknown");
 
 	int rc;
 	const char *insert_sql = "INSERT INTO logs (line, category, level, pie, text) VALUES(?, ?, ?, ?, ?)";

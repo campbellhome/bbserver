@@ -699,6 +699,7 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.configCategories = json_deserialize_view_config_categories_t(json_object_get_value(obj, "configCategories"));
 			dst.consoleHistory = json_deserialize_view_console_history_t(json_object_get_value(obj, "consoleHistory"));
 			dst.filterInput = json_deserialize_sb_t(json_object_get_value(obj, "filterInput"));
+			dst.sqlWhereInput = json_deserialize_sb_t(json_object_get_value(obj, "sqlWhereInput"));
 			dst.spansInput = json_deserialize_sb_t(json_object_get_value(obj, "spansInput"));
 			dst.showVeryVerbose = json_object_get_boolean_safe(obj, "showVeryVerbose");
 			dst.showVerbose = json_object_get_boolean_safe(obj, "showVerbose");
@@ -712,10 +713,8 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.newThreadVisibility = json_object_get_boolean_safe(obj, "newThreadVisibility");
 			dst.newFileVisibility = json_object_get_boolean_safe(obj, "newFileVisibility");
 			dst.filterActive = json_object_get_boolean_safe(obj, "filterActive");
+			dst.sqlWhereActive = json_object_get_boolean_safe(obj, "sqlWhereActive");
 			dst.version = (u32)json_object_get_number(obj, "version");
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
-				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
-			}
 		}
 	}
 	return dst;
@@ -1307,6 +1306,7 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_value(obj, "configCategories", json_serialize_view_config_categories_t(&src->configCategories));
 		json_object_set_value(obj, "consoleHistory", json_serialize_view_console_history_t(&src->consoleHistory));
 		json_object_set_value(obj, "filterInput", json_serialize_sb_t(&src->filterInput));
+		json_object_set_value(obj, "sqlWhereInput", json_serialize_sb_t(&src->sqlWhereInput));
 		json_object_set_value(obj, "spansInput", json_serialize_sb_t(&src->spansInput));
 		json_object_set_boolean(obj, "showVeryVerbose", src->showVeryVerbose);
 		json_object_set_boolean(obj, "showVerbose", src->showVerbose);
@@ -1320,10 +1320,8 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_boolean(obj, "newThreadVisibility", src->newThreadVisibility);
 		json_object_set_boolean(obj, "newFileVisibility", src->newFileVisibility);
 		json_object_set_boolean(obj, "filterActive", src->filterActive);
+		json_object_set_boolean(obj, "sqlWhereActive", src->sqlWhereActive);
 		json_object_set_number(obj, "version", src->version);
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
-		}
 	}
 	return val;
 }

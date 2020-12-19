@@ -993,6 +993,7 @@ void view_config_reset(view_config_t *val)
 		view_config_categories_reset(&val->configCategories);
 		view_console_history_reset(&val->consoleHistory);
 		sb_reset(&val->filterInput);
+		sb_reset(&val->sqlWhereInput);
 		sb_reset(&val->spansInput);
 	}
 }
@@ -1006,6 +1007,7 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.configCategories = view_config_categories_clone(&src->configCategories);
 		dst.consoleHistory = view_console_history_clone(&src->consoleHistory);
 		dst.filterInput = sb_clone(&src->filterInput);
+		dst.sqlWhereInput = sb_clone(&src->sqlWhereInput);
 		dst.spansInput = sb_clone(&src->spansInput);
 		dst.showVeryVerbose = src->showVeryVerbose;
 		dst.showVerbose = src->showVerbose;
@@ -1019,10 +1021,8 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.newThreadVisibility = src->newThreadVisibility;
 		dst.newFileVisibility = src->newFileVisibility;
 		dst.filterActive = src->filterActive;
+		dst.sqlWhereActive = src->sqlWhereActive;
 		dst.version = src->version;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
 	}
 	return dst;
 }

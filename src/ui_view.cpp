@@ -586,7 +586,7 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 			TextShadowed(va("Timestamp: %" PRIu64, decoded->header.timestamp));
 		}
 		TextShadowed(va("Category: %s", category->categoryName));
-		TextShadowed(va("Verbosity: %s", decoded->packet.logText.level < kBBLogLevel_Count ? logLevelNames[decoded->packet.logText.level] : "(unknown)"));
+		TextShadowed(va("Verbosity: %s", bb_get_log_level_name((bb_log_level_e)decoded->packet.logText.level, "(unknown)")));
 		if(decoded->header.line) {
 			TextShadowed(va("Source: %s:%u", GetSessionFilePath(session, decoded->header.fileId), decoded->header.line));
 		} else {
@@ -1503,6 +1503,30 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		const bool filterFocused = IsItemActive() && Imgui_Core_HasFocus();
 		if(filterFocused) {
 			Imgui_Core_RequestRender();
+		}
+
+		if(view->db) {
+			ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
+			if(hasFocus && ImGui::IsKeyPressed('S') && ImGui::GetIO().KeyCtrl) {
+				ImGui::SetKeyboardFocusHere();
+			}
+			ImGui::TextUnformatted("SQL Where:");
+			ImGui::SameLine();
+			if(ImGui::Checkbox("###SQLWhereActive", &view->config.sqlWhereActive)) {
+				view->visibleLogsDirty = true;
+				BB_LOG("Debug", "Set sqlWhereActive to '%d' for '%s'\n", view->config.sqlWhereActive, applicationName);
+			}
+			ImGui::SameLine();
+			if(ImGui::InputText("###SQLWhere", &view->config.sqlWhereInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
+				view->visibleLogsDirty = true;
+				view->config.sqlWhereActive = true;
+				BB_LOG("Debug", "Set sqlWhere to '%s' for '%s'\n", sb_get(&view->config.sqlWhereInput), applicationName);
+			}
+			Fonts_CacheGlyphs(sb_get(&view->config.sqlWhereInput));
+			const bool sqlWhereFocused = IsItemActive() && Imgui_Core_HasFocus();
+			if(sqlWhereFocused) {
+				Imgui_Core_RequestRender();
+			}
 		}
 
 		ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());

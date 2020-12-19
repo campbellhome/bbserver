@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2020 Matt Campbell
 // MIT license (see License.txt)
 
 #include "view.h"
@@ -10,6 +10,7 @@
 #include "recorded_session.h"
 #include "tags.h"
 #include "view_config.h"
+#include <sqlite/wrap_sqlite3.h>
 #include <stdlib.h>
 
 static void view_add_log_internal(view_t *view, recorded_log_t *log, u32 persistentLogIndex);
@@ -115,6 +116,25 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 	view->lastVisibleSessionLogIndex = ~0U;
 	view->redockCount = 2;
 
+	int rc = sqlite3_open(":memory:", &view->db);
+	if(rc != SQLITE_OK) {
+		if(view->db) {
+			sqlite3_close(view->db);
+			view->db = NULL;
+		}
+	}
+	if(view->db) {
+		const char *createCommand = "CREATE TABLE logs (line INTEGER PRIMARY KEY, category TEXT, level TEXT, pie NUMBER, text TEXT);";
+		char *errorMessage = NULL;
+		rc = sqlite3_exec(view->db, createCommand, NULL, NULL, &errorMessage);
+		if(rc != SQLITE_OK) {
+			BB_ERROR("sqlite", "SQL error running CREATE TABLE: %s", errorMessage);
+			sqlite3_free(errorMessage);
+			sqlite3_close(view->db);
+			view->db = NULL;
+		}
+	}
+
 	view->config.showSelectorTarget = false;
 	view->config.showVeryVerbose = view->config.showVerbose = false;
 	view->config.showLogs = view->config.showDisplay = view->config.showWarnings = view->config.showErrors = view->config.showFatal = true;
@@ -190,6 +210,11 @@ void view_reset(view_t *view)
 	sb_reset(&view->consoleInput);
 	view_console_history_reset(&view->consoleHistory);
 	mb_shutdown(&view->messageboxes);
+	if(view->db) {
+		sqlite3_close(view->db);
+		view->db = NULL;
+	}
+	bba_free(view->sqlSelect);
 }
 
 void view_restart(view_t *view)
@@ -487,6 +512,108 @@ b32 view_file_visible(view_t *view, u64 fileId)
 	return false;
 }
 
+static b32 sqlite3_bind_u32_and_log(sqlite3 *db, sqlite3_stmt *stmt, int index, u32 value)
+{
+	int rc = sqlite3_bind_int(stmt, index, value);
+	if(rc == SQLITE_OK) {
+		return true;
+	} else {
+		BB_ERROR("sqlite", "SQL bind error: index:%d value:%u result:%d error:%s\n", index, value, rc, sqlite3_errmsg(db));
+		return false;
+	}
+}
+
+static b32 sqlite3_bind_text_and_log(sqlite3 *db, sqlite3_stmt *stmt, int index, const char *value)
+{
+	int rc = sqlite3_bind_text(stmt, index, value, -1, SQLITE_STATIC);
+	if(rc == SQLITE_OK) {
+		return true;
+	} else {
+		BB_ERROR("sqlite", "SQL bind error: index:%d value:%s result:%d error:%s\n", index, value, rc, sqlite3_errmsg(db));
+		return false;
+	}
+}
+
+static int test_sql_callback(void *userData, int argc, char **argv, char **colNames)
+{
+	BB_UNUSED(argc);
+	BB_UNUSED(argv);
+	BB_UNUSED(colNames);
+	int *count = (int *)userData;
+	*count += 1;
+	return 0;
+}
+
+static b32 view_sqlWhere_visible_internal(view_t *view, recorded_log_t *log)
+{
+	if(!view->db || !view->sqlSelect.count)
+		return false;
+
+	bb_decoded_packet_t *decoded = &log->packet;
+	const view_category_t *viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
+	const char *level = bb_get_log_level_name(decoded->packet.logText.level, "Unknown");
+
+	int rc;
+	const char *insert_sql = "INSERT INTO logs (line, category, level, pie, text) VALUES(?, ?, ?, ?, ?)";
+	sqlite3_stmt *insert_stmt = NULL;
+	rc = sqlite3_prepare_v2(view->db, insert_sql, -1, &insert_stmt, NULL);
+	if(rc != SQLITE_OK) {
+		return false;
+	}
+
+	sqlite3_bind_u32_and_log(view->db, insert_stmt, 1, log->sessionLogIndex);
+	if(viewCategory) {
+		sqlite3_bind_text_and_log(view->db, insert_stmt, 2, viewCategory->categoryName);
+	}
+	sqlite3_bind_text_and_log(view->db, insert_stmt, 3, level);
+	sqlite3_bind_u32_and_log(view->db, insert_stmt, 4, decoded->packet.logText.pieInstance);
+	sqlite3_bind_text_and_log(view->db, insert_stmt, 5, decoded->packet.logText.text);
+
+	rc = sqlite3_step(insert_stmt);
+	if(SQLITE_DONE != rc) {
+		BB_ERROR("sqlite", "SQL error running INSERT INTO: result:%d error:%s\n", rc, sqlite3_errmsg(view->db));
+	}
+	sqlite3_clear_bindings(insert_stmt);
+	sqlite3_reset(insert_stmt);
+	sqlite3_finalize(insert_stmt);
+
+	int count = 0;
+	char *errorMessage = NULL;
+	rc = sqlite3_exec(view->db, view->sqlSelect.data, test_sql_callback, &count, &errorMessage);
+	if(rc != SQLITE_OK) {
+		BB_ERROR("sqlite", "SQL error running user cmd: %d %s\n", rc, errorMessage);
+		sqlite3_free(errorMessage);
+	}
+
+	return count > 0;
+}
+
+static b32 view_sqlWhere_visible(view_t *view, recorded_log_t *log)
+{
+	if(!view->db || !view->sqlSelect.count || !view->config.sqlWhereActive)
+		return true;
+
+	int rc;
+	char *errorMessage;
+
+	rc = sqlite3_exec(view->db, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
+	if(rc != SQLITE_OK) {
+		BB_ERROR("sqlite", "SQL error running BEGIN TRANSACTION ret:%d error:%s\n", rc, errorMessage);
+		sqlite3_free(errorMessage);
+		return true;
+	}
+
+	b32 result = view_sqlWhere_visible_internal(view, log);
+
+	rc = sqlite3_exec(view->db, "ROLLBACK", NULL, NULL, &errorMessage);
+	if(rc != SQLITE_OK) {
+		BB_ERROR("sqlite", "SQL error running ROLLBACK ret:%d error:%s\n", rc, errorMessage);
+		sqlite3_free(errorMessage);
+	}
+
+	return result;
+}
+
 static int view_pieInstance_sort(const void *_a, const void *_b)
 {
 	const view_pieInstance_t *a = (const view_pieInstance_t *)_a;
@@ -679,6 +806,8 @@ static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 	fileId = decoded->header.fileId;
 	if(!view_file_visible(view, fileId))
 		return false;
+	if(!view_sqlWhere_visible(view, log))
+		return false;
 	if(view->filter.count && view->config.filterActive) {
 		b32 ok = false;
 		u32 numRequired = 0;
@@ -741,6 +870,14 @@ static void view_update_filter(view_t *view)
 		entry.offset = (u32)(token - view->filter.tokenBuffer);
 		bba_push(view->filter, entry);
 		token = line_parser_next_token(&parser);
+	}
+}
+
+static void view_update_sqlWhere(view_t *view)
+{
+	bba_clear(view->sqlSelect);
+	if(view->config.sqlWhereInput.count) {
+		sb_va(&view->sqlSelect, "SELECT * FROM LOGS WHERE %s", sb_get(&view->config.sqlWhereInput));
 	}
 }
 
@@ -882,6 +1019,7 @@ void view_update_visible_logs(view_t *view)
 	view->lastSessionLogIndex = ~0U;
 	view->lastVisibleSessionLogIndex = ~0U;
 	view_update_filter(view);
+	view_update_sqlWhere(view);
 	view_update_spans(view);
 	for(i = 0; i < session->logs.count; ++i) {
 		recorded_log_t *log = session->logs.data[i];

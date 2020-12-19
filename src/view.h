@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2020 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -16,6 +16,7 @@ typedef struct recorded_log_s recorded_log_t;
 typedef struct recorded_thread_s recorded_thread_t;
 typedef struct recorded_filename_s recorded_filename_t;
 typedef struct bb_decoded_packet_s bb_decoded_packet_t;
+typedef struct sqlite3 sqlite3;
 typedef struct tag_s tag_t;
 typedef struct view_s view_t;
 
@@ -182,6 +183,7 @@ AUTOJSON typedef struct view_config_s {
 	view_config_categories_t configCategories;
 	view_console_history_t consoleHistory;
 	sb_t filterInput;
+	sb_t sqlWhereInput;
 	sb_t spansInput;
 	b32 showVeryVerbose;
 	b32 showVerbose;
@@ -195,8 +197,8 @@ AUTOJSON typedef struct view_config_s {
 	b32 newThreadVisibility;
 	b32 newFileVisibility;
 	b32 filterActive;
+	b32 sqlWhereActive;
 	u32 version;
-	u8 pad[4];
 } view_config_t;
 
 enum { kViewConfigVersion = 2 };
@@ -248,6 +250,8 @@ typedef struct view_column_s {
 typedef struct view_s {
 	view_config_t config;
 	recorded_session_t *session;
+	sqlite3 *db;
+	sb_t sqlSelect;
 	messageBoxes messageboxes;
 	view_threads_t threads;
 	view_files_t files;
@@ -312,6 +316,7 @@ void view_add_log(view_t *view, recorded_log_t *log);
 void view_update_visible_logs(view_t *view);
 void view_update_category_id(view_t *view, recorded_category_t *category);
 void view_set_thread_name(view_t *view, u64 id, const char *name);
+view_category_t *view_find_category(view_t *view, u32 categoryId);
 view_category_t *view_find_category_by_name(view_t *view, const char *categoryName);
 view_category_t *view_get_log_category(view_t *view, view_log_t *viewLog);
 u32 view_get_log_category_index(view_t *view, view_log_t *viewLog);
