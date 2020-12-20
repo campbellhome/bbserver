@@ -1532,8 +1532,19 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				Imgui_Core_RequestRender();
 			}
 			if(ImGui::IsTooltipActive()) {
-				const char *selectStatement = va(view_get_select_statement_fmt(), sb_get(&view->config.sqlWhereInput));
-				ImGui::SetTooltip("%s\n%s;", view_get_create_table_command(), selectStatement);
+				view->sqlSelectError;
+				BeginTooltip();
+				PushUIFont();
+				TextShadowed(view_get_create_table_command());
+				TextShadowed(va("%s;", va(view_get_select_statement_fmt(), sb_get(&view->config.sqlWhereInput))));
+				if(view->sqlSelectError.count) {
+					Separator();
+					PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
+					TextShadowed(view->sqlSelectError.data);
+					PopStyleColor();
+				}
+				PopUIFont();
+				EndTooltip();
 			}
 		}
 

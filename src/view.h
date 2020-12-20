@@ -252,6 +252,7 @@ typedef struct view_s {
 	recorded_session_t *session;
 	sqlite3 *db;
 	sb_t sqlSelect;
+	sb_t sqlSelectError;
 	messageBoxes messageboxes;
 	view_threads_t threads;
 	view_files_t files;

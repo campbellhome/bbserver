@@ -218,7 +218,8 @@ void view_reset(view_t *view)
 		sqlite3_close(view->db);
 		view->db = NULL;
 	}
-	bba_free(view->sqlSelect);
+	sb_reset(&view->sqlSelect);
+	sb_reset(&view->sqlSelectError);
 }
 
 void view_restart(view_t *view)
@@ -581,11 +582,12 @@ static b32 view_sqlWhere_visible_internal(view_t *view, recorded_log_t *log)
 	sqlite3_reset(insert_stmt);
 	sqlite3_finalize(insert_stmt);
 
+	sb_clear(&view->sqlSelectError);
 	int count = 0;
 	char *errorMessage = NULL;
 	rc = sqlite3_exec(view->db, view->sqlSelect.data, test_sql_callback, &count, &errorMessage);
 	if(rc != SQLITE_OK) {
-		BB_ERROR("sqlite", "SQL error running user cmd: %d %s\n", rc, errorMessage);
+		sb_va(&view->sqlSelectError, "SQL error: %s", errorMessage);
 		sqlite3_free(errorMessage);
 	}
 
@@ -877,7 +879,7 @@ static void view_update_filter(view_t *view)
 	}
 }
 
-const char* view_get_select_statement_fmt(void)
+const char *view_get_select_statement_fmt(void)
 {
 	return "SELECT line FROM logs WHERE %s";
 }
