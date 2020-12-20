@@ -303,6 +303,8 @@ typedef struct view_s {
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);
 void view_init_appinfo(view_t *view);
+const char* view_get_create_table_command(void);
+const char* view_get_select_statement_fmt(void);
 void view_reset(view_t *view);
 void view_restart(view_t *view);
 void view_reset_column_offsets(view_t *view);

@@ -90,6 +90,11 @@ static int ViewCategoryCompare(const void *_a, const void *_b)
 	return strcmp(a->categoryName, b->categoryName);
 }
 
+const char *view_get_create_table_command(void)
+{
+	return "CREATE TABLE logs (line INTEGER PRIMARY KEY, category TEXT, level TEXT, pie NUMBER, text TEXT);";
+}
+
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 {
 	u32 i, j;
@@ -124,9 +129,8 @@ void view_init(view_t *view, recorded_session_t *session, b8 autoClose)
 		}
 	}
 	if(view->db) {
-		const char *createCommand = "CREATE TABLE logs (line INTEGER PRIMARY KEY, category TEXT, level TEXT, pie NUMBER, text TEXT);";
 		char *errorMessage = NULL;
-		rc = sqlite3_exec(view->db, createCommand, NULL, NULL, &errorMessage);
+		rc = sqlite3_exec(view->db, view_get_create_table_command(), NULL, NULL, &errorMessage);
 		if(rc != SQLITE_OK) {
 			BB_ERROR("sqlite", "SQL error running CREATE TABLE: %s", errorMessage);
 			sqlite3_free(errorMessage);
@@ -873,11 +877,16 @@ static void view_update_filter(view_t *view)
 	}
 }
 
+const char* view_get_select_statement_fmt(void)
+{
+	return "SELECT line FROM logs WHERE %s";
+}
+
 static void view_update_sqlWhere(view_t *view)
 {
 	bba_clear(view->sqlSelect);
 	if(view->config.sqlWhereInput.count) {
-		sb_va(&view->sqlSelect, "SELECT * FROM LOGS WHERE %s", sb_get(&view->config.sqlWhereInput));
+		sb_va(&view->sqlSelect, view_get_select_statement_fmt(), sb_get(&view->config.sqlWhereInput));
 	}
 }
 

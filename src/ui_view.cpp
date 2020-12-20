@@ -1508,6 +1508,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			}
 		}
 
+		bool sqlWhereFocused = false;
 		if(view->db) {
 			ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
 			if(hasFocus && ImGui::IsKeyPressed('S') && ImGui::GetIO().KeyCtrl) {
@@ -1526,12 +1527,13 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				BB_LOG("Debug", "Set sqlWhere to '%s' for '%s'\n", sb_get(&view->config.sqlWhereInput), applicationName);
 			}
 			Fonts_CacheGlyphs(sb_get(&view->config.sqlWhereInput));
-			const bool sqlWhereFocused = IsItemActive() && Imgui_Core_HasFocus();
+			sqlWhereFocused = IsItemActive() && Imgui_Core_HasFocus();
 			if(sqlWhereFocused) {
 				Imgui_Core_RequestRender();
 			}
 			if(ImGui::IsTooltipActive()) {
-				ImGui::SetTooltip("%s", sb_get(&view->config.sqlWhereInput));
+				const char *selectStatement = va(view_get_select_statement_fmt(), sb_get(&view->config.sqlWhereInput));
+				ImGui::SetTooltip("%s\n%s;", view_get_create_table_command(), selectStatement);
 			}
 		}
 
@@ -1591,7 +1593,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 
 		ImGui::Separator();
 
-		b32 otherControlFocused = categoriesChildFocused || filterFocused || spansFocused || selectedHackFocused || view->consoleInputFocused;
+		b32 otherControlFocused = categoriesChildFocused || filterFocused || sqlWhereFocused || spansFocused || selectedHackFocused || view->consoleInputFocused;
 		b32 gotoWasVisible = view->gotoVisible;
 		if(hasFocus) {
 			if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
