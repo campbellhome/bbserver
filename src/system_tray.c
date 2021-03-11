@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #include "system_tray.h"
@@ -26,8 +26,11 @@ static LRESULT CALLBACK SystemTray_WndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 
 	switch(msg) {
 	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
 	case WM_CLOSE:
 	case WM_QUIT:
+		Imgui_Core_RequestShutDown();
 		return 0;
 	case WM_USER_NOTIFYICON: {
 		switch(LOWORD(lParam)) {
