@@ -301,6 +301,7 @@ void recorded_session_update(recorded_session_t *session)
 		case kBBPacketType_ConsoleCommand:
 		case kBBPacketType_UserToClient:
 		case kBBPacketType_StopRecording:
+		case kBBPacketType_RecordingInfo:
 		default:
 			break;
 		}
