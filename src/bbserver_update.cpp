@@ -470,7 +470,7 @@ extern "C" void BBServer_Update(void)
 {
 	b32 bAppliedScrollbarSize = g_config.sizes.scrollbarSize > 0;
 	if(bAppliedScrollbarSize) {
-		ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, g_config.sizes.scrollbarSize * Imgui_Core_GetDpiScale());
+		ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, (float)g_config.sizes.scrollbarSize * Imgui_Core_GetDpiScale());
 	}
 
 	devkit_autodetect_tick();

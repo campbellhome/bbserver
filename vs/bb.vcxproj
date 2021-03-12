@@ -206,10 +206,8 @@ if not exist "$(OutDir)freetype.dll" copy ..\submodules\mc_imgui\submodules\free
       <AdditionalLibraryDirectories>$(ProjectDir)..\submodules\mc_imgui\submodules\freetype\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ClCompile>
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5045</DisableSpecificWarnings>
-    </ClCompile>
-    <ClCompile>
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5045</DisableSpecificWarnings>
+      <DisableSpecificWarnings>5045</DisableSpecificWarnings>
+      <DisableSpecificWarnings>5220</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

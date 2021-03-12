@@ -198,7 +198,7 @@ static SYSTEMTIME SystemTimeFromDecoded(recorded_session_t *session, bb_decoded_
 	// Windows uses 100 nanosecond intervals since Jan 1, 1601 UTC
 	// https://support.microsoft.com/en-us/help/167296/how-to-convert-a-unix-time-t-to-a-win32-filetime-or-systemtime
 	s64 elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
-	double elapsedMillis = elapsedTicks * session->appInfo.packet.appInfo.millisPerTick;
+	double elapsedMillis = (double)elapsedTicks * session->appInfo.packet.appInfo.millisPerTick;
 	u64 epoch100Nanoseconds = session->appInfo.packet.appInfo.microsecondsFromEpoch * 10 +
 	                          (u64)(elapsedMillis * 10000);
 	u64 win32100Nanoseconds = epoch100Nanoseconds + 116444736000000000ULL;
@@ -262,13 +262,13 @@ static const char *BuildLogColumnText(view_t *view, view_log_t *viewLog, view_co
 		return TimeFromDecoded(session, decoded);
 	case kColumn_AbsMilliseconds:
 		elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
-		elapsedMillis = elapsedTicks * session->appInfo.packet.appInfo.millisPerTick;
+		elapsedMillis = (double)(elapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
 		return va("%.2f", elapsedMillis);
 	case kColumn_AbsDeltaMilliseconds:
 		elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
 		prevSessionLog = (sessionLogIndex) ? session->logs.data[sessionLogIndex - 1] : nullptr;
 		prevElapsedTicks = (prevSessionLog) ? (s64)prevSessionLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : 0;
-		deltaMillis = (elapsedTicks - prevElapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
+		deltaMillis = (double)(elapsedTicks - prevElapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
 		return va("%+.2f", deltaMillis);
 	case kColumn_ViewDeltaMilliseconds:
 		elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
@@ -282,7 +282,7 @@ static const char *BuildLogColumnText(view_t *view, view_log_t *viewLog, view_co
 		}
 		prevSessionLog = (prevViewLog) ? session->logs.data[prevViewLog->sessionLogIndex] : nullptr;
 		prevElapsedTicks = (prevSessionLog) ? (s64)prevSessionLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : elapsedTicks;
-		deltaMillis = (elapsedTicks - prevElapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
+		deltaMillis = (double)(elapsedTicks - prevElapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
 		return va("%+.2f", deltaMillis);
 	case kColumn_Filename:
 		return GetSessionFileName(session, decoded->header.fileId);
@@ -1722,11 +1722,11 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			const float kScreenPercent = 0.5f;
 			//view->bookmarkThreshold = (int)(clipper.DisplayStart + visibleLines * 0.5f);
 			if(view->gotoTarget >= 0) {
-				int adjustedTarget = view->gotoTarget - (int)(s_visibleLogLines * kScreenPercent);
+				int adjustedTarget = view->gotoTarget - (int)((float)s_visibleLogLines * kScreenPercent);
 				if(adjustedTarget < 0) {
 					adjustedTarget = 0;
 				}
-				SetScrollY(adjustedTarget * GetTextLineHeightWithSpacing());
+				SetScrollY((float)adjustedTarget * GetTextLineHeightWithSpacing());
 				if(view->prevDpiScale == Imgui_Core_GetDpiScale()) {
 					view->gotoTarget = -1;
 				}
@@ -1929,7 +1929,7 @@ void UIRecordedView_UpdateAll()
 
 		int cols = (int)ceil(sqrt((double)tiledCount));
 		cols = (cols < 1) ? 1 : cols;
-		int rows = (int)ceil(tiledCount / (float)cols);
+		int rows = (int)ceil((float)tiledCount / (float)cols);
 		rows = (rows < 1) ? 1 : rows;
 		switch(g_config.viewTileMode) {
 		case kViewTileMode_Auto:
@@ -1967,7 +1967,7 @@ void UIRecordedView_UpdateAll()
 			BB_ASSERT(false);
 			break;
 		}
-		ImVec2 windowSpacing(screenWidth / cols, screenHeight / rows);
+		ImVec2 windowSpacing(screenWidth / (float)cols, screenHeight / (float)rows);
 		ImVec2 windowSize(windowSpacing.x - 1, windowSpacing.y - 1);
 		int row = 0;
 		int col = 0;
@@ -1975,7 +1975,7 @@ void UIRecordedView_UpdateAll()
 			view_t *view = *(s_gathered_views.data + viewIndex);
 			ImGuiCond positioningCond = (view->tiled) ? ImGuiCond_Always : ImGuiCond_Once;
 			SetNextWindowSize(windowSize, positioningCond);
-			SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * col, viewportPos.y + startY + windowSpacing.y * row), positioningCond);
+			SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * (float)col, viewportPos.y + startY + windowSpacing.y * (float)row), positioningCond);
 			UIRecordedView_Update(view, autoTileViews);
 			if(view->tiled) {
 				++col;
