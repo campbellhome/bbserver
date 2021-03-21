@@ -150,9 +150,10 @@ static void recordings_add_group(recording_tab_t tab)
 static void recordings_add_grouped_recording(recording_tab_t tab, recording_t *r)
 {
 	grouped_recording_entry_t *prev = s_groupedRecordings[tab].data + s_groupedRecordings[tab].count - 1;
+	u32 prevGroupId = prev->groupId;
 	grouped_recording_entry_t *g = bba_add(s_groupedRecordings[tab], 1);
 	if(g) {
-		g->groupId = prev->groupId;
+		g->groupId = prevGroupId;
 		g->recording = r;
 	}
 }
