@@ -141,9 +141,10 @@ static int recordings_compare_application(const void *_a, const void *_b)
 }
 static void recordings_add_group(recording_tab_t tab)
 {
-	grouped_recording_entry_t *prev = s_groupedRecordings[tab].count ? s_groupedRecordings[tab].data + s_groupedRecordings[tab].count - 1 : NULL;
+	u32 prevCount = s_groupedRecordings[tab].count;
 	grouped_recording_entry_t *g = bba_add(s_groupedRecordings[tab], 1);
 	if(g) {
+		grouped_recording_entry_t *prev = prevCount > 0 ? s_groupedRecordings[tab].data + prevCount - 1 : NULL;
 		g->groupId = (prev) ? prev->groupId + 1 : 1;
 	}
 }
