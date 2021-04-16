@@ -415,6 +415,12 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 					const char *title = "Blackbox";
 					HWND hwnd = Imgui_Core_InitWindow(classname, title, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), g_config.wp);
 					if(hwnd) {
+						HWND hExisting = FindWindowA(classname, nullptr);
+						if (hExisting != hwnd) {
+							// there was a race condition with two instances starting at the same time, and
+							// we weren't the first to create our main window.
+							Imgui_Core_RequestShutDown();
+						}
 						Imgui_Core_SetCloseHidesWindow(true);
 						DragDrop_Init(hwnd);
 						BBServer_InitRegistry();
