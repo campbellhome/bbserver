@@ -262,7 +262,7 @@ static const char *BuildLogColumnText(view_t *view, view_log_t *viewLog, view_co
 		return TimeFromDecoded(session, decoded);
 	case kColumn_AbsMilliseconds:
 		elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
-		elapsedMillis = (double)(elapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
+		elapsedMillis = (double)(elapsedTicks)*session->appInfo.packet.appInfo.millisPerTick;
 		return va("%.2f", elapsedMillis);
 	case kColumn_AbsDeltaMilliseconds:
 		elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
@@ -355,9 +355,23 @@ static b32 line_can_be_json(sb_t line)
 	b32 result = false;
 	if(line.data && line.count > 2) {
 		if(line.data[0] == '{' && line.data[line.count - 2] == '}') {
-			result = true;
+			for(u32 index = 1; index < line.count - 2; ++index) {
+				if(line.data[index] == ' ' || line.data[index] == '\t')
+					continue;
+				if(line.data[index] == '\"') {
+					result = true;
+				}
+				break;
+			}
 		} else if(line.data[0] == '[' && line.data[line.count - 2] == ']') {
-			result = true;
+			for(u32 index = 1; index < line.count - 2; ++index) {
+				if(line.data[index] == ' ' || line.data[index] == '\t')
+					continue;
+				if(line.data[index] == '\"' || line.data[index] == '{') {
+					result = true;
+				}
+				break;
+			}
 		}
 	}
 	return result;
