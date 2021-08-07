@@ -224,6 +224,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.tooltips = json_deserialize_tooltipConfig(json_object_get_value(obj, "tooltips"));
 			dst.sizes = json_deserialize_sizeConfig(json_object_get_value(obj, "sizes"));
 			dst.dpiAware = json_object_get_boolean_safe(obj, "dpiAware");
+			dst.dpiScrollwheel = json_object_get_boolean_safe(obj, "dpiScrollwheel");
 			dst.autoDeleteAfterDays = (u32)json_object_get_number(obj, "autoDeleteAfterDays");
 			dst.autoCloseAll = json_object_get_boolean_safe(obj, "autoCloseAll");
 			dst.autoCloseManual = json_object_get_boolean_safe(obj, "autoCloseManual");
@@ -236,9 +237,6 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.assertMessageBox = json_object_get_boolean_safe(obj, "assertMessageBox");
 			dst.showDebugMenu = json_object_get_boolean_safe(obj, "showDebugMenu");
 			dst.showEmptyCategories = json_object_get_boolean_safe(obj, "showEmptyCategories");
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
-				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
-			}
 		}
 	}
 	return dst;
@@ -894,6 +892,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "tooltips", json_serialize_tooltipConfig(&src->tooltips));
 		json_object_set_value(obj, "sizes", json_serialize_sizeConfig(&src->sizes));
 		json_object_set_boolean(obj, "dpiAware", src->dpiAware);
+		json_object_set_boolean(obj, "dpiScrollwheel", src->dpiScrollwheel);
 		json_object_set_number(obj, "autoDeleteAfterDays", src->autoDeleteAfterDays);
 		json_object_set_boolean(obj, "autoCloseAll", src->autoCloseAll);
 		json_object_set_boolean(obj, "autoCloseManual", src->autoCloseManual);
@@ -906,9 +905,6 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "assertMessageBox", src->assertMessageBox);
 		json_object_set_boolean(obj, "showDebugMenu", src->showDebugMenu);
 		json_object_set_boolean(obj, "showEmptyCategories", src->showEmptyCategories);
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
-		}
 	}
 	return val;
 }

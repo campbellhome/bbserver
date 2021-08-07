@@ -313,20 +313,38 @@ void BBServer_MainMenuBar(void)
 				}
 				if(ImGui::BeginMenu("DEBUG Scale")) {
 					float dpiScale = Imgui_Core_GetDpiScale();
+					if(dpiScale < 1.0f) {
+						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
+					}
 					if(ImGui::MenuItem("1", nullptr, dpiScale == 1.0f)) {
 						Imgui_Core_SetDpiScale(1.0f);
+					}
+					if(dpiScale > 1.0f && dpiScale < 1.25f) {
+						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
 					if(ImGui::MenuItem("1.25", nullptr, dpiScale == 1.25f)) {
 						Imgui_Core_SetDpiScale(1.25f);
 					}
+					if(dpiScale > 1.25f && dpiScale < 1.5f) {
+						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
+					}
 					if(ImGui::MenuItem("1.5", nullptr, dpiScale == 1.5f)) {
 						Imgui_Core_SetDpiScale(1.5f);
+					}
+					if(dpiScale > 1.5f && dpiScale < 1.75f) {
+						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
 					if(ImGui::MenuItem("1.75", nullptr, dpiScale == 1.75f)) {
 						Imgui_Core_SetDpiScale(1.75f);
 					}
+					if(dpiScale > 1.75f && dpiScale < 2.0f) {
+						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
+					}
 					if(ImGui::MenuItem("2", nullptr, dpiScale == 2.0f)) {
 						Imgui_Core_SetDpiScale(2.0f);
+					}
+					if(dpiScale > 2.0f) {
+						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
 					ImGui::EndMenu();
 				}

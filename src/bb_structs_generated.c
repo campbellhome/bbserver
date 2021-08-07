@@ -275,6 +275,7 @@ config_t config_clone(const config_t *src)
 		dst.tooltips = tooltipConfig_clone(&src->tooltips);
 		dst.sizes = sizeConfig_clone(&src->sizes);
 		dst.dpiAware = src->dpiAware;
+		dst.dpiScrollwheel = src->dpiScrollwheel;
 		dst.autoDeleteAfterDays = src->autoDeleteAfterDays;
 		dst.autoCloseAll = src->autoCloseAll;
 		dst.autoCloseManual = src->autoCloseManual;
@@ -287,9 +288,6 @@ config_t config_clone(const config_t *src)
 		dst.assertMessageBox = src->assertMessageBox;
 		dst.showDebugMenu = src->showDebugMenu;
 		dst.showEmptyCategories = src->showEmptyCategories;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
 	}
 	return dst;
 }

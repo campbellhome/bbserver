@@ -342,6 +342,7 @@ void UIConfig_Update(config_t *config)
 			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
 				ImGui::SetTooltip("Requires restart.  Default font is not recommended if DPI Aware.");
 			}
+			ImGui::Checkbox("Ctrl+Scrollwheel scales UI", &s_preferencesConfig.dpiScrollwheel);
 			ImGui::EndGroup();
 			PopItemWidth();
 			ImGui::SameLine(0.0f, 20.0f * Imgui_Core_GetDpiScale());

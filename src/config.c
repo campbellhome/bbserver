@@ -104,6 +104,9 @@ b32 config_read(config_t *config)
 		config->tooltips.overText = false;
 		config->tooltips.overMisc = true;
 	}
+	if(config->version <= 7) {
+		config->dpiScrollwheel = true;
+	}
 	config->version = kConfigVersion;
 
 	for(u32 entryIndex = 0; entryIndex < config->whitelist.count;) {

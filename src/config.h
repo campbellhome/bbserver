@@ -118,6 +118,7 @@ AUTOJSON typedef struct config_s {
 	tooltipConfig tooltips;
 	sizeConfig sizes;
 	b32 dpiAware;
+	b32 dpiScrollwheel;
 	u32 autoDeleteAfterDays;
 	b32 autoCloseAll;
 	b32 autoCloseManual;
@@ -130,10 +131,9 @@ AUTOJSON typedef struct config_s {
 	b32 assertMessageBox;
 	b32 showDebugMenu;
 	b32 showEmptyCategories;
-	u8 pad[4];
 } config_t;
 
-enum { kConfigVersion = 7 };
+enum { kConfigVersion = 8 };
 
 extern config_t g_config;
 
