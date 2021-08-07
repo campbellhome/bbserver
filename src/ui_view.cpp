@@ -1999,6 +1999,9 @@ void UIRecordedView_UpdateAll()
 		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
 			view_t *view = *(s_gathered_views.data + viewIndex);
 			ImGuiCond positioningCond = (view->tiled) ? ImGuiCond_Always : ImGuiCond_Once;
+			if ((viewIndex == s_gathered_views.count - 1) && (row > 0) && (col != cols - 1)) {
+				windowSize.x *= (float)(cols - col);
+			}
 			SetNextWindowSize(windowSize, positioningCond);
 			SetNextWindowPos(ImVec2(viewportPos.x + windowSpacing.x * (float)col, viewportPos.y + startY + windowSpacing.y * (float)row), positioningCond);
 			UIRecordedView_Update(view, autoTileViews);
