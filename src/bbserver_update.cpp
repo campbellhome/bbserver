@@ -506,6 +506,19 @@ extern "C" void BBServer_Update(void)
 
 	BBServer_MainMenuBar();
 
+	if(ImGui::GetIO().MouseWheel != 0.0f) {
+		if(ImGui::GetIO().KeyCtrl) {
+			if(g_config.dpiScrollwheel) {
+				float prevDpiScale = Imgui_Core_GetDpiScale();
+				if(ImGui::GetIO().MouseWheel > 0) {
+					Imgui_Core_SetDpiScale(prevDpiScale + 0.1f);
+				} else {
+					Imgui_Core_SetDpiScale(prevDpiScale - 0.1f);
+				}
+			}
+		}
+	}
+
 	BBServer_DispatchToUIMessageQueue();
 	recordings_autodelete_old_recordings();
 

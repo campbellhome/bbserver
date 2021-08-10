@@ -1745,16 +1745,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 					view->gotoTarget = -1;
 				}
 			} else if(hovered && ImGui::GetIO().MouseWheel != 0.0f) {
-				if(ImGui::GetIO().KeyCtrl) {
-					if(g_config.dpiScrollwheel) {
-						view->prevDpiScale = Imgui_Core_GetDpiScale();
-						if(ImGui::GetIO().MouseWheel > 0) {
-							Imgui_Core_SetDpiScale(view->prevDpiScale + 0.1f);
-						} else {
-							Imgui_Core_SetDpiScale(view->prevDpiScale - 0.1f);
-						}
-					}
-				} else {
+				if(!ImGui::GetIO().KeyCtrl) {
 					view->prevDpiScale = Imgui_Core_GetDpiScale();
 					if(ImGui::GetIO().MouseWheel > 0) {
 						ClearViewTail(view, "Mouse Wheel");
