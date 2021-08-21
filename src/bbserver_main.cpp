@@ -82,8 +82,9 @@ static void BBServer_SetLogPath(void)
 	bb_init_file(s_bbLogPath);
 }
 
-static b32 BBServer_Init(const char* commandLineRecording)
+static b32 BBServer_Init(const char *commandLineRecording)
 {
+	BB_UNUSED(commandLineRecording);
 	site_config_init();
 	uuid_init(&uuid_read_state, &uuid_write_state);
 	BBServer_SetImguiPath();
