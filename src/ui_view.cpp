@@ -1508,6 +1508,9 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			BB_LOG("Debug", "Set filterActive to '%d' for '%s'\n", view->config.filterActive, applicationName);
 		}
 		ImGui::SameLine();
+		static int item_current_2 = 0;
+		ImGui::Combo("##FilterType", &item_current_2, "Standard\0SQL\0Smart\0\0");
+		ImGui::SameLine();
 		if(ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
 			view->visibleLogsDirty = true;
 			view->config.filterActive = true;
@@ -1523,44 +1526,44 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		}
 
 		bool sqlWhereFocused = false;
-		if(view->db) {
-			ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
-			if(hasFocus && ImGui::IsKeyPressed('S') && ImGui::GetIO().KeyCtrl) {
-				ImGui::SetKeyboardFocusHere();
-			}
-			ImGui::TextUnformatted("SQL Where:");
-			ImGui::SameLine();
-			if(ImGui::Checkbox("###SQLWhereActive", &view->config.sqlWhereActive)) {
-				view->visibleLogsDirty = true;
-				BB_LOG("Debug", "Set sqlWhereActive to '%d' for '%s'\n", view->config.sqlWhereActive, applicationName);
-			}
-			ImGui::SameLine();
-			if(ImGui::InputText("###SQLWhere", &view->config.sqlWhereInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
-				view->visibleLogsDirty = true;
-				view->config.sqlWhereActive = true;
-				BB_LOG("Debug", "Set sqlWhere to '%s' for '%s'\n", sb_get(&view->config.sqlWhereInput), applicationName);
-			}
-			Fonts_CacheGlyphs(sb_get(&view->config.sqlWhereInput));
-			sqlWhereFocused = IsItemActive() && Imgui_Core_HasFocus();
-			if(sqlWhereFocused) {
-				Imgui_Core_RequestRender();
-			}
-			if(ImGui::IsTooltipActive()) {
-				view->sqlSelectError;
-				BeginTooltip();
-				PushUIFont();
-				TextShadowed(view_get_create_table_command());
-				TextShadowed(va("%s;", va(view_get_select_statement_fmt(), sb_get(&view->config.sqlWhereInput))));
-				if(view->sqlSelectError.count) {
-					Separator();
-					PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
-					TextShadowed(view->sqlSelectError.data);
-					PopStyleColor();
-				}
-				PopUIFont();
-				EndTooltip();
-			}
-		}
+		//if(view->db) {
+		//	ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
+		//	if(hasFocus && ImGui::IsKeyPressed('S') && ImGui::GetIO().KeyCtrl) {
+		//		ImGui::SetKeyboardFocusHere();
+		//	}
+		//	ImGui::TextUnformatted("SQL Where:");
+		//	ImGui::SameLine();
+		//	if(ImGui::Checkbox("###SQLWhereActive", &view->config.sqlWhereActive)) {
+		//		view->visibleLogsDirty = true;
+		//		BB_LOG("Debug", "Set sqlWhereActive to '%d' for '%s'\n", view->config.sqlWhereActive, applicationName);
+		//	}
+		//	ImGui::SameLine();
+		//	if(ImGui::InputText("###SQLWhere", &view->config.sqlWhereInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
+		//		view->visibleLogsDirty = true;
+		//		view->config.sqlWhereActive = true;
+		//		BB_LOG("Debug", "Set sqlWhere to '%s' for '%s'\n", sb_get(&view->config.sqlWhereInput), applicationName);
+		//	}
+		//	Fonts_CacheGlyphs(sb_get(&view->config.sqlWhereInput));
+		//	sqlWhereFocused = IsItemActive() && Imgui_Core_HasFocus();
+		//	if(sqlWhereFocused) {
+		//		Imgui_Core_RequestRender();
+		//	}
+		//	if(ImGui::IsTooltipActive()) {
+		//		view->sqlSelectError;
+		//		BeginTooltip();
+		//		PushUIFont();
+		//		TextShadowed(view_get_create_table_command());
+		//		TextShadowed(va("%s;", va(view_get_select_statement_fmt(), sb_get(&view->config.sqlWhereInput))));
+		//		if(view->sqlSelectError.count) {
+		//			Separator();
+		//			PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
+		//			TextShadowed(view->sqlSelectError.data);
+		//			PopStyleColor();
+		//		}
+		//		PopUIFont();
+		//		EndTooltip();
+		//	}
+		//}
 
 		ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
 		ImGui::TextUnformatted("Line Spans:");
@@ -1990,7 +1993,7 @@ void UIRecordedView_UpdateAll()
 		for(u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex) {
 			view_t *view = *(s_gathered_views.data + viewIndex);
 			ImGuiCond positioningCond = (view->tiled) ? ImGuiCond_Always : ImGuiCond_Once;
-			if ((viewIndex == s_gathered_views.count - 1) && (row > 0) && (col != cols - 1)) {
+			if((viewIndex == s_gathered_views.count - 1) && (row > 0) && (col != cols - 1)) {
 				windowSize.x *= (float)(cols - col);
 			}
 			SetNextWindowSize(windowSize, positioningCond);

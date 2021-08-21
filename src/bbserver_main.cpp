@@ -82,7 +82,7 @@ static void BBServer_SetLogPath(void)
 	bb_init_file(s_bbLogPath);
 }
 
-static b32 BBServer_Init(void)
+static b32 BBServer_Init(const char* commandLineRecording)
 {
 	site_config_init();
 	uuid_init(&uuid_read_state, &uuid_write_state);
@@ -147,7 +147,7 @@ static b32 BBServer_Init(void)
 			recording.applicationFilename = sb_from_c_string("bb");
 			recording.path = sb_from_c_string(s_bbLogPath);
 #ifdef _DEBUG
-			recording.openView = true;
+			recording.openView = !commandLineRecording || !*commandLineRecording;
 #else
 			recording.openView = false;
 #endif
@@ -408,7 +408,8 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 			IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 			IO.ConfigViewportsNoDecoration = false;
 			IO.ConfigWindowsMoveFromTitleBarOnly = true;
-			if(BBServer_Init()) {
+			sb_t viewerPath = BBServer_GetCommandLineRecording(CommandLine);
+			if(BBServer_Init(sb_get(&viewerPath))) {
 				Imgui_Core_SetTextShadows(g_config.textShadows);
 				if(SystemTray_Init(Instance)) {
 					Fonts_ClearFonts();
@@ -416,7 +417,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 					HWND hwnd = Imgui_Core_InitWindow(classname, title, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), g_config.wp);
 					if(hwnd) {
 						HWND hExisting = FindWindowA(classname, nullptr);
-						if (hExisting != hwnd) {
+						if(hExisting != hwnd) {
 							// there was a race condition with two instances starting at the same time, and
 							// we weren't the first to create our main window.
 							Imgui_Core_RequestShutDown();
@@ -434,11 +435,9 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 							s_bMaximizeOnShow = (g_config.wp.showCmd == SW_SHOWMAXIMIZED);
 							Imgui_Core_HideWindow();
 						}
-						sb_t viewerPath = BBServer_GetCommandLineRecording(CommandLine);
 						if(viewerPath.data) {
 							DragDrop_ProcessPath(viewerPath.data);
 						}
-						sb_reset(&viewerPath);
 						while(!Imgui_Core_IsShuttingDown()) {
 							if(Imgui_Core_GetAndClearDirtyWindowPlacement()) {
 								config_getwindowplacement(hwnd);
@@ -456,6 +455,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 				SystemTray_Shutdown();
 			}
 			BBServer_Shutdown();
+			sb_reset(&viewerPath);
 		}
 		Imgui_Core_Shutdown();
 	}
