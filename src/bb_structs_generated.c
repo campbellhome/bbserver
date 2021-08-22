@@ -23,6 +23,7 @@
 #include "uuid_config.h"
 #include "uuid_rfc4122/sysdep.h"
 #include "view.h"
+#include "view_filter.h"
 
 #include <string.h>
 
@@ -1021,6 +1022,84 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.filterActive = src->filterActive;
 		dst.sqlWhereActive = src->sqlWhereActive;
 		dst.version = src->version;
+	}
+	return dst;
+}
+
+void vfilter_token_reset(vfilter_token_t *val)
+{
+	if(val) {
+	}
+}
+vfilter_token_t vfilter_token_clone(const vfilter_token_t *src)
+{
+	vfilter_token_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.span = src->span;
+		dst.type = src->type;
+		dst.number = src->number;
+	}
+	return dst;
+}
+
+void vfilter_tokens_reset(vfilter_tokens_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			vfilter_token_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+vfilter_tokens_t vfilter_tokens_clone(const vfilter_tokens_t *src)
+{
+	vfilter_tokens_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = vfilter_token_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void vfilter_error_reset(vfilter_error_t *val)
+{
+	if(val) {
+		sb_reset(&val->text);
+	}
+}
+vfilter_error_t vfilter_error_clone(const vfilter_error_t *src)
+{
+	vfilter_error_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.text = sb_clone(&src->text);
+		dst.column = src->column;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
+	}
+	return dst;
+}
+
+void vfilter_reset(vfilter_t *val)
+{
+	if(val) {
+		vfilter_tokens_reset(&val->tokens);
+		vfilter_error_reset(&val->error);
+	}
+}
+vfilter_t vfilter_clone(const vfilter_t *src)
+{
+	vfilter_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.tokens = vfilter_tokens_clone(&src->tokens);
+		dst.error = vfilter_error_clone(&src->error);
+		dst.type = src->type;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
 	}
 	return dst;
 }

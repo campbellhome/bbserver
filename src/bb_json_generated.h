@@ -69,6 +69,10 @@ struct view_console_history_entry_t;
 struct view_console_entries_t;
 struct view_console_history_t;
 struct view_config_s;
+struct vfilter_token_s;
+struct vfilter_tokens_s;
+struct vfilter_error_s;
+struct vfilter_s;
 
 typedef struct sb_s sb_t;
 typedef struct sbs_s sbs_t;
@@ -125,6 +129,10 @@ typedef struct view_console_history_entry_t view_console_history_entry_t;
 typedef struct view_console_entries_t view_console_history_entries_t;
 typedef struct view_console_history_t view_console_history_t;
 typedef struct view_config_s view_config_t;
+typedef struct vfilter_token_s vfilter_token_t;
+typedef struct vfilter_tokens_s vfilter_tokens_t;
+typedef struct vfilter_error_s vfilter_error_t;
+typedef struct vfilter_s vfilter_t;
 
 typedef enum tag_configColorUsage configColorUsage;
 typedef enum viewTileMode_t viewTileMode_t;
@@ -133,6 +141,8 @@ typedef enum recording_sort_e recording_sort_t;
 typedef enum recording_group_e recording_group_t;
 typedef enum recording_type_e recording_type_t;
 typedef enum tag_styleColor_e styleColor_e;
+typedef enum vfilter_type_e vfilter_type_e;
+typedef enum vfilter_token_type_e vfilter_token_type_e;
 
 sb_t json_deserialize_sb_t(JSON_Value *src);
 sbs_t json_deserialize_sbs_t(JSON_Value *src);
@@ -240,6 +250,8 @@ recording_sort_t json_deserialize_recording_sort_t(JSON_Value *src);
 recording_group_t json_deserialize_recording_group_t(JSON_Value *src);
 recording_type_t json_deserialize_recording_type_t(JSON_Value *src);
 styleColor_e json_deserialize_styleColor_e(JSON_Value *src);
+vfilter_type_e json_deserialize_vfilter_type_e(JSON_Value *src);
+vfilter_token_type_e json_deserialize_vfilter_token_type_e(JSON_Value *src);
 
 JSON_Value *json_serialize_configColorUsage(const configColorUsage src);
 JSON_Value *json_serialize_viewTileMode_t(const viewTileMode_t src);
@@ -248,6 +260,30 @@ JSON_Value *json_serialize_recording_sort_t(const recording_sort_t src);
 JSON_Value *json_serialize_recording_group_t(const recording_group_t src);
 JSON_Value *json_serialize_recording_type_t(const recording_type_t src);
 JSON_Value *json_serialize_styleColor_e(const styleColor_e src);
+JSON_Value *json_serialize_vfilter_type_e(const vfilter_type_e src);
+JSON_Value *json_serialize_vfilter_token_type_e(const vfilter_token_type_e src);
+
+
+configColorUsage configColorUsage_from_string(const char *src);
+viewTileMode_t viewTileMode_t_from_string(const char *src);
+recording_tab_t recording_tab_t_from_string(const char *src);
+recording_sort_t recording_sort_t_from_string(const char *src);
+recording_group_t recording_group_t_from_string(const char *src);
+recording_type_t recording_type_t_from_string(const char *src);
+styleColor_e styleColor_e_from_string(const char *src);
+vfilter_type_e vfilter_type_e_from_string(const char *src);
+vfilter_token_type_e vfilter_token_type_e_from_string(const char *src);
+
+const char *string_from_configColorUsage(const configColorUsage src);
+const char *string_from_viewTileMode_t(const viewTileMode_t src);
+const char *string_from_recording_tab_t(const recording_tab_t src);
+const char *string_from_recording_sort_t(const recording_sort_t src);
+const char *string_from_recording_group_t(const recording_group_t src);
+const char *string_from_recording_type_t(const recording_type_t src);
+const char *string_from_styleColor_e(const styleColor_e src);
+const char *string_from_vfilter_type_e(const vfilter_type_e src);
+const char *string_from_vfilter_token_type_e(const vfilter_token_type_e src);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

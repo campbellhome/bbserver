@@ -68,6 +68,10 @@ struct view_console_history_entry_t;
 struct view_console_entries_t;
 struct view_console_history_t;
 struct view_config_s;
+struct vfilter_token_s;
+struct vfilter_tokens_s;
+struct vfilter_error_s;
+struct vfilter_s;
 
 typedef struct sb_s sb_t;
 typedef struct sbs_s sbs_t;
@@ -124,6 +128,10 @@ typedef struct view_console_history_entry_t view_console_history_entry_t;
 typedef struct view_console_entries_t view_console_history_entries_t;
 typedef struct view_console_history_t view_console_history_t;
 typedef struct view_config_s view_config_t;
+typedef struct vfilter_token_s vfilter_token_t;
+typedef struct vfilter_tokens_s vfilter_tokens_t;
+typedef struct vfilter_error_s vfilter_error_t;
+typedef struct vfilter_s vfilter_t;
 
 void sb_reset_from_loc(const char *file, int line, sb_t *val);
 void sbs_reset_from_loc(const char *file, int line, sbs_t *val);
@@ -180,6 +188,10 @@ void view_console_history_entry_reset(view_console_history_entry_t *val);
 void view_console_history_entries_reset(view_console_history_entries_t *val);
 void view_console_history_reset(view_console_history_t *val);
 void view_config_reset(view_config_t *val);
+void vfilter_token_reset(vfilter_token_t *val);
+void vfilter_tokens_reset(vfilter_tokens_t *val);
+void vfilter_error_reset(vfilter_error_t *val);
+void vfilter_reset(vfilter_t *val);
 
 #if !defined(__cplusplus) || defined(DECLARE_sb_clone)
 sb_t sb_clone_from_loc(const char *file, int line, const sb_t *src);
@@ -345,6 +357,18 @@ view_console_history_t view_console_history_clone(const view_console_history_t *
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_view_config_clone)
 view_config_t view_config_clone(const view_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_vfilter_token_clone)
+vfilter_token_t vfilter_token_clone(const vfilter_token_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_vfilter_tokens_clone)
+vfilter_tokens_t vfilter_tokens_clone(const vfilter_tokens_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_vfilter_error_clone)
+vfilter_error_t vfilter_error_clone(const vfilter_error_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_vfilter_clone)
+vfilter_t vfilter_clone(const vfilter_t *src);
 #endif
 
 #if defined(__cplusplus)

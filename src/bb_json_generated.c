@@ -23,6 +23,7 @@
 #include "uuid_config.h"
 #include "uuid_rfc4122/sysdep.h"
 #include "view.h"
+#include "view_filter.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -1480,6 +1481,59 @@ styleColor_e json_deserialize_styleColor_e(JSON_Value *src)
 	return dst;
 }
 
+vfilter_type_e json_deserialize_vfilter_type_e(JSON_Value *src)
+{
+	vfilter_type_e dst = kVF_Count;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kVF_Standard")) { dst = kVF_Standard; }
+			if(!strcmp(str, "kVF_SQL")) { dst = kVF_SQL; }
+			if(!strcmp(str, "kVF_Legacy")) { dst = kVF_Legacy; }
+			if(!strcmp(str, "kVF_Count")) { dst = kVF_Count; }
+		}
+	}
+	return dst;
+}
+
+vfilter_token_type_e json_deserialize_vfilter_token_type_e(JSON_Value *src)
+{
+	vfilter_token_type_e dst = kVFT_Count;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kVFT_Invalid")) { dst = kVFT_Invalid; }
+			if(!strcmp(str, "kVFT_OpenParen")) { dst = kVFT_OpenParen; }
+			if(!strcmp(str, "kVFT_CloseParen")) { dst = kVFT_CloseParen; }
+			if(!strcmp(str, "kVFT_String")) { dst = kVFT_String; }
+			if(!strcmp(str, "kVFT_LessThan")) { dst = kVFT_LessThan; }
+			if(!strcmp(str, "kVFT_LessThanEquals")) { dst = kVFT_LessThanEquals; }
+			if(!strcmp(str, "kVFT_Equals")) { dst = kVFT_Equals; }
+			if(!strcmp(str, "kVFT_NotEquals")) { dst = kVFT_NotEquals; }
+			if(!strcmp(str, "kVFT_GreaterThan")) { dst = kVFT_GreaterThan; }
+			if(!strcmp(str, "kVFT_GreaterThanEquals")) { dst = kVFT_GreaterThanEquals; }
+			if(!strcmp(str, "kVFT_Like")) { dst = kVFT_Like; }
+			if(!strcmp(str, "kVFT_And")) { dst = kVFT_And; }
+			if(!strcmp(str, "kVFT_Or")) { dst = kVFT_Or; }
+			if(!strcmp(str, "kVFT_Not")) { dst = kVFT_Not; }
+			if(!strcmp(str, "kVFT_Contains")) { dst = kVFT_Contains; }
+			if(!strcmp(str, "kVFT_StartsWith")) { dst = kVFT_StartsWith; }
+			if(!strcmp(str, "kVFT_EndsWith")) { dst = kVFT_EndsWith; }
+			if(!strcmp(str, "kVFT_DeltaMillisecondsAbsolute")) { dst = kVFT_DeltaMillisecondsAbsolute; }
+			if(!strcmp(str, "kVFT_DeltaMillisecondsViewRelative")) { dst = kVFT_DeltaMillisecondsViewRelative; }
+			if(!strcmp(str, "kVFT_Filename")) { dst = kVFT_Filename; }
+			if(!strcmp(str, "kVFT_Thread")) { dst = kVFT_Thread; }
+			if(!strcmp(str, "kVFT_PIEInstance")) { dst = kVFT_PIEInstance; }
+			if(!strcmp(str, "kVFT_Category")) { dst = kVFT_Category; }
+			if(!strcmp(str, "kVFT_Verbosity")) { dst = kVFT_Verbosity; }
+			if(!strcmp(str, "kVFT_Text")) { dst = kVFT_Text; }
+			if(!strcmp(str, "kVFT_Number")) { dst = kVFT_Number; }
+			if(!strcmp(str, "kVFT_Count")) { dst = kVFT_Count; }
+		}
+	}
+	return dst;
+}
+
 //////////////////////////////////////////////////////////////////////////
 
 JSON_Value *json_serialize_configColorUsage(const configColorUsage src)
@@ -1622,6 +1676,414 @@ JSON_Value *json_serialize_styleColor_e(const styleColor_e src)
 	}
 	JSON_Value *val = json_value_init_string(str);
 	return val;
+}
+
+JSON_Value *json_serialize_vfilter_type_e(const vfilter_type_e src)
+{
+	const char *str = "";
+	switch(src) {
+		case kVF_Standard: str = "kVF_Standard"; break;
+		case kVF_SQL: str = "kVF_SQL"; break;
+		case kVF_Legacy: str = "kVF_Legacy"; break;
+		case kVF_Count: str = "kVF_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
+JSON_Value *json_serialize_vfilter_token_type_e(const vfilter_token_type_e src)
+{
+	const char *str = "";
+	switch(src) {
+		case kVFT_Invalid: str = "kVFT_Invalid"; break;
+		case kVFT_OpenParen: str = "kVFT_OpenParen"; break;
+		case kVFT_CloseParen: str = "kVFT_CloseParen"; break;
+		case kVFT_String: str = "kVFT_String"; break;
+		case kVFT_LessThan: str = "kVFT_LessThan"; break;
+		case kVFT_LessThanEquals: str = "kVFT_LessThanEquals"; break;
+		case kVFT_Equals: str = "kVFT_Equals"; break;
+		case kVFT_NotEquals: str = "kVFT_NotEquals"; break;
+		case kVFT_GreaterThan: str = "kVFT_GreaterThan"; break;
+		case kVFT_GreaterThanEquals: str = "kVFT_GreaterThanEquals"; break;
+		case kVFT_Like: str = "kVFT_Like"; break;
+		case kVFT_And: str = "kVFT_And"; break;
+		case kVFT_Or: str = "kVFT_Or"; break;
+		case kVFT_Not: str = "kVFT_Not"; break;
+		case kVFT_Contains: str = "kVFT_Contains"; break;
+		case kVFT_StartsWith: str = "kVFT_StartsWith"; break;
+		case kVFT_EndsWith: str = "kVFT_EndsWith"; break;
+		case kVFT_DeltaMillisecondsAbsolute: str = "kVFT_DeltaMillisecondsAbsolute"; break;
+		case kVFT_DeltaMillisecondsViewRelative: str = "kVFT_DeltaMillisecondsViewRelative"; break;
+		case kVFT_Filename: str = "kVFT_Filename"; break;
+		case kVFT_Thread: str = "kVFT_Thread"; break;
+		case kVFT_PIEInstance: str = "kVFT_PIEInstance"; break;
+		case kVFT_Category: str = "kVFT_Category"; break;
+		case kVFT_Verbosity: str = "kVFT_Verbosity"; break;
+		case kVFT_Text: str = "kVFT_Text"; break;
+		case kVFT_Number: str = "kVFT_Number"; break;
+		case kVFT_Count: str = "kVFT_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+configColorUsage configColorUsage_from_string(const char *src)
+{
+	configColorUsage dst = kConfigColors_Full;
+	if(src) {
+		if(!strcmp(src, "kConfigColors_Full")) { dst = kConfigColors_Full; }
+		if(!strcmp(src, "kConfigColors_BgAsFg")) { dst = kConfigColors_BgAsFg; }
+		if(!strcmp(src, "kConfigColors_NoBg")) { dst = kConfigColors_NoBg; }
+		if(!strcmp(src, "kConfigColors_None")) { dst = kConfigColors_None; }
+		if(!strcmp(src, "kConfigColors_Count")) { dst = kConfigColors_Count; }
+	}
+	return dst;
+}
+
+viewTileMode_t viewTileMode_t_from_string(const char *src)
+{
+	viewTileMode_t dst = kViewTileMode_Auto;
+	if(src) {
+		if(!strcmp(src, "kViewTileMode_Auto")) { dst = kViewTileMode_Auto; }
+		if(!strcmp(src, "kViewTileMode_PreferColumns")) { dst = kViewTileMode_PreferColumns; }
+		if(!strcmp(src, "kViewTileMode_PreferRows")) { dst = kViewTileMode_PreferRows; }
+		if(!strcmp(src, "kViewTileMode_Columns")) { dst = kViewTileMode_Columns; }
+		if(!strcmp(src, "kViewTileMode_Rows")) { dst = kViewTileMode_Rows; }
+		if(!strcmp(src, "kViewTileMode_None")) { dst = kViewTileMode_None; }
+		if(!strcmp(src, "kViewTileMode_Count")) { dst = kViewTileMode_Count; }
+	}
+	return dst;
+}
+
+recording_tab_t recording_tab_t_from_string(const char *src)
+{
+	recording_tab_t dst = kRecordingTab_Count;
+	if(src) {
+		if(!strcmp(src, "kRecordingTab_Internal")) { dst = kRecordingTab_Internal; }
+		if(!strcmp(src, "kRecordingTab_External")) { dst = kRecordingTab_External; }
+		if(!strcmp(src, "kRecordingTab_Count")) { dst = kRecordingTab_Count; }
+	}
+	return dst;
+}
+
+recording_sort_t recording_sort_t_from_string(const char *src)
+{
+	recording_sort_t dst = kRecordingSort_Count;
+	if(src) {
+		if(!strcmp(src, "kRecordingSort_StartTime")) { dst = kRecordingSort_StartTime; }
+		if(!strcmp(src, "kRecordingSort_Application")) { dst = kRecordingSort_Application; }
+		if(!strcmp(src, "kRecordingSort_Count")) { dst = kRecordingSort_Count; }
+	}
+	return dst;
+}
+
+recording_group_t recording_group_t_from_string(const char *src)
+{
+	recording_group_t dst = kRecordingGroup_Count;
+	if(src) {
+		if(!strcmp(src, "kRecordingGroup_None")) { dst = kRecordingGroup_None; }
+		if(!strcmp(src, "kRecordingGroup_Application")) { dst = kRecordingGroup_Application; }
+		if(!strcmp(src, "kRecordingGroup_Count")) { dst = kRecordingGroup_Count; }
+	}
+	return dst;
+}
+
+recording_type_t recording_type_t_from_string(const char *src)
+{
+	recording_type_t dst = kRecordingType_Count;
+	if(src) {
+		if(!strcmp(src, "kRecordingType_Normal")) { dst = kRecordingType_Normal; }
+		if(!strcmp(src, "kRecordingType_ExistingFile")) { dst = kRecordingType_ExistingFile; }
+		if(!strcmp(src, "kRecordingType_MainLog")) { dst = kRecordingType_MainLog; }
+		if(!strcmp(src, "kRecordingType_ExternalFile")) { dst = kRecordingType_ExternalFile; }
+		if(!strcmp(src, "kRecordingType_Count")) { dst = kRecordingType_Count; }
+	}
+	return dst;
+}
+
+styleColor_e styleColor_e_from_string(const char *src)
+{
+	styleColor_e dst = kStyleColor_Count;
+	if(src) {
+		if(!strcmp(src, "kStyleColor_kBBColor_Default")) { dst = kStyleColor_kBBColor_Default; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Black")) { dst = kStyleColor_kBBColor_Evergreen_Black; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Red")) { dst = kStyleColor_kBBColor_Evergreen_Red; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Green")) { dst = kStyleColor_kBBColor_Evergreen_Green; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Yellow")) { dst = kStyleColor_kBBColor_Evergreen_Yellow; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Blue")) { dst = kStyleColor_kBBColor_Evergreen_Blue; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Cyan")) { dst = kStyleColor_kBBColor_Evergreen_Cyan; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Pink")) { dst = kStyleColor_kBBColor_Evergreen_Pink; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_White")) { dst = kStyleColor_kBBColor_Evergreen_White; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_LightBlue")) { dst = kStyleColor_kBBColor_Evergreen_LightBlue; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Orange")) { dst = kStyleColor_kBBColor_Evergreen_Orange; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_LightBlueAlt")) { dst = kStyleColor_kBBColor_Evergreen_LightBlueAlt; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_OrangeAlt")) { dst = kStyleColor_kBBColor_Evergreen_OrangeAlt; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_MediumBlue")) { dst = kStyleColor_kBBColor_Evergreen_MediumBlue; }
+		if(!strcmp(src, "kStyleColor_kBBColor_Evergreen_Amber")) { dst = kStyleColor_kBBColor_Evergreen_Amber; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_Black")) { dst = kStyleColor_kBBColor_UE4_Black; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_DarkRed")) { dst = kStyleColor_kBBColor_UE4_DarkRed; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_DarkGreen")) { dst = kStyleColor_kBBColor_UE4_DarkGreen; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_DarkBlue")) { dst = kStyleColor_kBBColor_UE4_DarkBlue; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_DarkYellow")) { dst = kStyleColor_kBBColor_UE4_DarkYellow; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_DarkCyan")) { dst = kStyleColor_kBBColor_UE4_DarkCyan; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_DarkPurple")) { dst = kStyleColor_kBBColor_UE4_DarkPurple; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_DarkWhite")) { dst = kStyleColor_kBBColor_UE4_DarkWhite; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_Red")) { dst = kStyleColor_kBBColor_UE4_Red; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_Green")) { dst = kStyleColor_kBBColor_UE4_Green; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_Blue")) { dst = kStyleColor_kBBColor_UE4_Blue; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_Yellow")) { dst = kStyleColor_kBBColor_UE4_Yellow; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_Cyan")) { dst = kStyleColor_kBBColor_UE4_Cyan; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_Purple")) { dst = kStyleColor_kBBColor_UE4_Purple; }
+		if(!strcmp(src, "kStyleColor_kBBColor_UE4_White")) { dst = kStyleColor_kBBColor_UE4_White; }
+		if(!strcmp(src, "kStyleColor_ActiveSession")) { dst = kStyleColor_ActiveSession; }
+		if(!strcmp(src, "kStyleColor_InactiveSession")) { dst = kStyleColor_InactiveSession; }
+		if(!strcmp(src, "kStyleColor_LogLevel_VeryVerbose")) { dst = kStyleColor_LogLevel_VeryVerbose; }
+		if(!strcmp(src, "kStyleColor_LogLevel_Verbose")) { dst = kStyleColor_LogLevel_Verbose; }
+		if(!strcmp(src, "kStyleColor_LogLevel_Log")) { dst = kStyleColor_LogLevel_Log; }
+		if(!strcmp(src, "kStyleColor_LogLevel_Display")) { dst = kStyleColor_LogLevel_Display; }
+		if(!strcmp(src, "kStyleColor_LogLevel_Warning")) { dst = kStyleColor_LogLevel_Warning; }
+		if(!strcmp(src, "kStyleColor_LogLevel_Error")) { dst = kStyleColor_LogLevel_Error; }
+		if(!strcmp(src, "kStyleColor_LogLevel_Fatal")) { dst = kStyleColor_LogLevel_Fatal; }
+		if(!strcmp(src, "kStyleColor_Multiline")) { dst = kStyleColor_Multiline; }
+		if(!strcmp(src, "kStyleColor_LogBackground_Normal")) { dst = kStyleColor_LogBackground_Normal; }
+		if(!strcmp(src, "kStyleColor_LogBackground_NormalAlternate0")) { dst = kStyleColor_LogBackground_NormalAlternate0; }
+		if(!strcmp(src, "kStyleColor_LogBackground_NormalAlternate1")) { dst = kStyleColor_LogBackground_NormalAlternate1; }
+		if(!strcmp(src, "kStyleColor_LogBackground_Bookmarked")) { dst = kStyleColor_LogBackground_Bookmarked; }
+		if(!strcmp(src, "kStyleColor_LogBackground_BookmarkedAlternate0")) { dst = kStyleColor_LogBackground_BookmarkedAlternate0; }
+		if(!strcmp(src, "kStyleColor_LogBackground_BookmarkedAlternate1")) { dst = kStyleColor_LogBackground_BookmarkedAlternate1; }
+		if(!strcmp(src, "kStyleColor_ResizeNormal")) { dst = kStyleColor_ResizeNormal; }
+		if(!strcmp(src, "kStyleColor_ResizeHovered")) { dst = kStyleColor_ResizeHovered; }
+		if(!strcmp(src, "kStyleColor_ResizeActive")) { dst = kStyleColor_ResizeActive; }
+		if(!strcmp(src, "kStyleColor_MessageBoxBackground0")) { dst = kStyleColor_MessageBoxBackground0; }
+		if(!strcmp(src, "kStyleColor_MessageBoxBackground1")) { dst = kStyleColor_MessageBoxBackground1; }
+		if(!strcmp(src, "kStyleColor_TextShadow")) { dst = kStyleColor_TextShadow; }
+		if(!strcmp(src, "kStyleColor_Count")) { dst = kStyleColor_Count; }
+	}
+	return dst;
+}
+
+vfilter_type_e vfilter_type_e_from_string(const char *src)
+{
+	vfilter_type_e dst = kVF_Count;
+	if(src) {
+		if(!strcmp(src, "kVF_Standard")) { dst = kVF_Standard; }
+		if(!strcmp(src, "kVF_SQL")) { dst = kVF_SQL; }
+		if(!strcmp(src, "kVF_Legacy")) { dst = kVF_Legacy; }
+		if(!strcmp(src, "kVF_Count")) { dst = kVF_Count; }
+	}
+	return dst;
+}
+
+vfilter_token_type_e vfilter_token_type_e_from_string(const char *src)
+{
+	vfilter_token_type_e dst = kVFT_Count;
+	if(src) {
+		if(!strcmp(src, "kVFT_Invalid")) { dst = kVFT_Invalid; }
+		if(!strcmp(src, "kVFT_OpenParen")) { dst = kVFT_OpenParen; }
+		if(!strcmp(src, "kVFT_CloseParen")) { dst = kVFT_CloseParen; }
+		if(!strcmp(src, "kVFT_String")) { dst = kVFT_String; }
+		if(!strcmp(src, "kVFT_LessThan")) { dst = kVFT_LessThan; }
+		if(!strcmp(src, "kVFT_LessThanEquals")) { dst = kVFT_LessThanEquals; }
+		if(!strcmp(src, "kVFT_Equals")) { dst = kVFT_Equals; }
+		if(!strcmp(src, "kVFT_NotEquals")) { dst = kVFT_NotEquals; }
+		if(!strcmp(src, "kVFT_GreaterThan")) { dst = kVFT_GreaterThan; }
+		if(!strcmp(src, "kVFT_GreaterThanEquals")) { dst = kVFT_GreaterThanEquals; }
+		if(!strcmp(src, "kVFT_Like")) { dst = kVFT_Like; }
+		if(!strcmp(src, "kVFT_And")) { dst = kVFT_And; }
+		if(!strcmp(src, "kVFT_Or")) { dst = kVFT_Or; }
+		if(!strcmp(src, "kVFT_Not")) { dst = kVFT_Not; }
+		if(!strcmp(src, "kVFT_Contains")) { dst = kVFT_Contains; }
+		if(!strcmp(src, "kVFT_StartsWith")) { dst = kVFT_StartsWith; }
+		if(!strcmp(src, "kVFT_EndsWith")) { dst = kVFT_EndsWith; }
+		if(!strcmp(src, "kVFT_DeltaMillisecondsAbsolute")) { dst = kVFT_DeltaMillisecondsAbsolute; }
+		if(!strcmp(src, "kVFT_DeltaMillisecondsViewRelative")) { dst = kVFT_DeltaMillisecondsViewRelative; }
+		if(!strcmp(src, "kVFT_Filename")) { dst = kVFT_Filename; }
+		if(!strcmp(src, "kVFT_Thread")) { dst = kVFT_Thread; }
+		if(!strcmp(src, "kVFT_PIEInstance")) { dst = kVFT_PIEInstance; }
+		if(!strcmp(src, "kVFT_Category")) { dst = kVFT_Category; }
+		if(!strcmp(src, "kVFT_Verbosity")) { dst = kVFT_Verbosity; }
+		if(!strcmp(src, "kVFT_Text")) { dst = kVFT_Text; }
+		if(!strcmp(src, "kVFT_Number")) { dst = kVFT_Number; }
+		if(!strcmp(src, "kVFT_Count")) { dst = kVFT_Count; }
+	}
+	return dst;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+const char *string_from_configColorUsage(const configColorUsage src)
+{
+	switch(src) {
+		case kConfigColors_Full: return "kConfigColors_Full"; break;
+		case kConfigColors_BgAsFg: return "kConfigColors_BgAsFg"; break;
+		case kConfigColors_NoBg: return "kConfigColors_NoBg"; break;
+		case kConfigColors_None: return "kConfigColors_None"; break;
+		case kConfigColors_Count: return "kConfigColors_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_viewTileMode_t(const viewTileMode_t src)
+{
+	switch(src) {
+		case kViewTileMode_Auto: return "kViewTileMode_Auto"; break;
+		case kViewTileMode_PreferColumns: return "kViewTileMode_PreferColumns"; break;
+		case kViewTileMode_PreferRows: return "kViewTileMode_PreferRows"; break;
+		case kViewTileMode_Columns: return "kViewTileMode_Columns"; break;
+		case kViewTileMode_Rows: return "kViewTileMode_Rows"; break;
+		case kViewTileMode_None: return "kViewTileMode_None"; break;
+		case kViewTileMode_Count: return "kViewTileMode_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_recording_tab_t(const recording_tab_t src)
+{
+	switch(src) {
+		case kRecordingTab_Internal: return "kRecordingTab_Internal"; break;
+		case kRecordingTab_External: return "kRecordingTab_External"; break;
+		case kRecordingTab_Count: return "kRecordingTab_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_recording_sort_t(const recording_sort_t src)
+{
+	switch(src) {
+		case kRecordingSort_StartTime: return "kRecordingSort_StartTime"; break;
+		case kRecordingSort_Application: return "kRecordingSort_Application"; break;
+		case kRecordingSort_Count: return "kRecordingSort_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_recording_group_t(const recording_group_t src)
+{
+	switch(src) {
+		case kRecordingGroup_None: return "kRecordingGroup_None"; break;
+		case kRecordingGroup_Application: return "kRecordingGroup_Application"; break;
+		case kRecordingGroup_Count: return "kRecordingGroup_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_recording_type_t(const recording_type_t src)
+{
+	switch(src) {
+		case kRecordingType_Normal: return "kRecordingType_Normal"; break;
+		case kRecordingType_ExistingFile: return "kRecordingType_ExistingFile"; break;
+		case kRecordingType_MainLog: return "kRecordingType_MainLog"; break;
+		case kRecordingType_ExternalFile: return "kRecordingType_ExternalFile"; break;
+		case kRecordingType_Count: return "kRecordingType_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_styleColor_e(const styleColor_e src)
+{
+	switch(src) {
+		case kStyleColor_kBBColor_Default: return "kStyleColor_kBBColor_Default"; break;
+		case kStyleColor_kBBColor_Evergreen_Black: return "kStyleColor_kBBColor_Evergreen_Black"; break;
+		case kStyleColor_kBBColor_Evergreen_Red: return "kStyleColor_kBBColor_Evergreen_Red"; break;
+		case kStyleColor_kBBColor_Evergreen_Green: return "kStyleColor_kBBColor_Evergreen_Green"; break;
+		case kStyleColor_kBBColor_Evergreen_Yellow: return "kStyleColor_kBBColor_Evergreen_Yellow"; break;
+		case kStyleColor_kBBColor_Evergreen_Blue: return "kStyleColor_kBBColor_Evergreen_Blue"; break;
+		case kStyleColor_kBBColor_Evergreen_Cyan: return "kStyleColor_kBBColor_Evergreen_Cyan"; break;
+		case kStyleColor_kBBColor_Evergreen_Pink: return "kStyleColor_kBBColor_Evergreen_Pink"; break;
+		case kStyleColor_kBBColor_Evergreen_White: return "kStyleColor_kBBColor_Evergreen_White"; break;
+		case kStyleColor_kBBColor_Evergreen_LightBlue: return "kStyleColor_kBBColor_Evergreen_LightBlue"; break;
+		case kStyleColor_kBBColor_Evergreen_Orange: return "kStyleColor_kBBColor_Evergreen_Orange"; break;
+		case kStyleColor_kBBColor_Evergreen_LightBlueAlt: return "kStyleColor_kBBColor_Evergreen_LightBlueAlt"; break;
+		case kStyleColor_kBBColor_Evergreen_OrangeAlt: return "kStyleColor_kBBColor_Evergreen_OrangeAlt"; break;
+		case kStyleColor_kBBColor_Evergreen_MediumBlue: return "kStyleColor_kBBColor_Evergreen_MediumBlue"; break;
+		case kStyleColor_kBBColor_Evergreen_Amber: return "kStyleColor_kBBColor_Evergreen_Amber"; break;
+		case kStyleColor_kBBColor_UE4_Black: return "kStyleColor_kBBColor_UE4_Black"; break;
+		case kStyleColor_kBBColor_UE4_DarkRed: return "kStyleColor_kBBColor_UE4_DarkRed"; break;
+		case kStyleColor_kBBColor_UE4_DarkGreen: return "kStyleColor_kBBColor_UE4_DarkGreen"; break;
+		case kStyleColor_kBBColor_UE4_DarkBlue: return "kStyleColor_kBBColor_UE4_DarkBlue"; break;
+		case kStyleColor_kBBColor_UE4_DarkYellow: return "kStyleColor_kBBColor_UE4_DarkYellow"; break;
+		case kStyleColor_kBBColor_UE4_DarkCyan: return "kStyleColor_kBBColor_UE4_DarkCyan"; break;
+		case kStyleColor_kBBColor_UE4_DarkPurple: return "kStyleColor_kBBColor_UE4_DarkPurple"; break;
+		case kStyleColor_kBBColor_UE4_DarkWhite: return "kStyleColor_kBBColor_UE4_DarkWhite"; break;
+		case kStyleColor_kBBColor_UE4_Red: return "kStyleColor_kBBColor_UE4_Red"; break;
+		case kStyleColor_kBBColor_UE4_Green: return "kStyleColor_kBBColor_UE4_Green"; break;
+		case kStyleColor_kBBColor_UE4_Blue: return "kStyleColor_kBBColor_UE4_Blue"; break;
+		case kStyleColor_kBBColor_UE4_Yellow: return "kStyleColor_kBBColor_UE4_Yellow"; break;
+		case kStyleColor_kBBColor_UE4_Cyan: return "kStyleColor_kBBColor_UE4_Cyan"; break;
+		case kStyleColor_kBBColor_UE4_Purple: return "kStyleColor_kBBColor_UE4_Purple"; break;
+		case kStyleColor_kBBColor_UE4_White: return "kStyleColor_kBBColor_UE4_White"; break;
+		case kStyleColor_ActiveSession: return "kStyleColor_ActiveSession"; break;
+		case kStyleColor_InactiveSession: return "kStyleColor_InactiveSession"; break;
+		case kStyleColor_LogLevel_VeryVerbose: return "kStyleColor_LogLevel_VeryVerbose"; break;
+		case kStyleColor_LogLevel_Verbose: return "kStyleColor_LogLevel_Verbose"; break;
+		case kStyleColor_LogLevel_Log: return "kStyleColor_LogLevel_Log"; break;
+		case kStyleColor_LogLevel_Display: return "kStyleColor_LogLevel_Display"; break;
+		case kStyleColor_LogLevel_Warning: return "kStyleColor_LogLevel_Warning"; break;
+		case kStyleColor_LogLevel_Error: return "kStyleColor_LogLevel_Error"; break;
+		case kStyleColor_LogLevel_Fatal: return "kStyleColor_LogLevel_Fatal"; break;
+		case kStyleColor_Multiline: return "kStyleColor_Multiline"; break;
+		case kStyleColor_LogBackground_Normal: return "kStyleColor_LogBackground_Normal"; break;
+		case kStyleColor_LogBackground_NormalAlternate0: return "kStyleColor_LogBackground_NormalAlternate0"; break;
+		case kStyleColor_LogBackground_NormalAlternate1: return "kStyleColor_LogBackground_NormalAlternate1"; break;
+		case kStyleColor_LogBackground_Bookmarked: return "kStyleColor_LogBackground_Bookmarked"; break;
+		case kStyleColor_LogBackground_BookmarkedAlternate0: return "kStyleColor_LogBackground_BookmarkedAlternate0"; break;
+		case kStyleColor_LogBackground_BookmarkedAlternate1: return "kStyleColor_LogBackground_BookmarkedAlternate1"; break;
+		case kStyleColor_ResizeNormal: return "kStyleColor_ResizeNormal"; break;
+		case kStyleColor_ResizeHovered: return "kStyleColor_ResizeHovered"; break;
+		case kStyleColor_ResizeActive: return "kStyleColor_ResizeActive"; break;
+		case kStyleColor_MessageBoxBackground0: return "kStyleColor_MessageBoxBackground0"; break;
+		case kStyleColor_MessageBoxBackground1: return "kStyleColor_MessageBoxBackground1"; break;
+		case kStyleColor_TextShadow: return "kStyleColor_TextShadow"; break;
+		case kStyleColor_Count: return "kStyleColor_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_vfilter_type_e(const vfilter_type_e src)
+{
+	switch(src) {
+		case kVF_Standard: return "kVF_Standard"; break;
+		case kVF_SQL: return "kVF_SQL"; break;
+		case kVF_Legacy: return "kVF_Legacy"; break;
+		case kVF_Count: return "kVF_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_vfilter_token_type_e(const vfilter_token_type_e src)
+{
+	switch(src) {
+		case kVFT_Invalid: return "kVFT_Invalid"; break;
+		case kVFT_OpenParen: return "kVFT_OpenParen"; break;
+		case kVFT_CloseParen: return "kVFT_CloseParen"; break;
+		case kVFT_String: return "kVFT_String"; break;
+		case kVFT_LessThan: return "kVFT_LessThan"; break;
+		case kVFT_LessThanEquals: return "kVFT_LessThanEquals"; break;
+		case kVFT_Equals: return "kVFT_Equals"; break;
+		case kVFT_NotEquals: return "kVFT_NotEquals"; break;
+		case kVFT_GreaterThan: return "kVFT_GreaterThan"; break;
+		case kVFT_GreaterThanEquals: return "kVFT_GreaterThanEquals"; break;
+		case kVFT_Like: return "kVFT_Like"; break;
+		case kVFT_And: return "kVFT_And"; break;
+		case kVFT_Or: return "kVFT_Or"; break;
+		case kVFT_Not: return "kVFT_Not"; break;
+		case kVFT_Contains: return "kVFT_Contains"; break;
+		case kVFT_StartsWith: return "kVFT_StartsWith"; break;
+		case kVFT_EndsWith: return "kVFT_EndsWith"; break;
+		case kVFT_DeltaMillisecondsAbsolute: return "kVFT_DeltaMillisecondsAbsolute"; break;
+		case kVFT_DeltaMillisecondsViewRelative: return "kVFT_DeltaMillisecondsViewRelative"; break;
+		case kVFT_Filename: return "kVFT_Filename"; break;
+		case kVFT_Thread: return "kVFT_Thread"; break;
+		case kVFT_PIEInstance: return "kVFT_PIEInstance"; break;
+		case kVFT_Category: return "kVFT_Category"; break;
+		case kVFT_Verbosity: return "kVFT_Verbosity"; break;
+		case kVFT_Text: return "kVFT_Text"; break;
+		case kVFT_Number: return "kVFT_Number"; break;
+		case kVFT_Count: return "kVFT_Count"; break;
+	}
+	return "";
 }
 
 //////////////////////////////////////////////////////////////////////////
