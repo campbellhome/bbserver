@@ -992,7 +992,6 @@ void view_config_reset(view_config_t *val)
 		view_config_categories_reset(&val->configCategories);
 		view_console_history_reset(&val->consoleHistory);
 		sb_reset(&val->filterInput);
-		sb_reset(&val->sqlWhereInput);
 		sb_reset(&val->spansInput);
 	}
 }
@@ -1006,7 +1005,6 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.configCategories = view_config_categories_clone(&src->configCategories);
 		dst.consoleHistory = view_console_history_clone(&src->consoleHistory);
 		dst.filterInput = sb_clone(&src->filterInput);
-		dst.sqlWhereInput = sb_clone(&src->sqlWhereInput);
 		dst.spansInput = sb_clone(&src->spansInput);
 		dst.showVeryVerbose = src->showVeryVerbose;
 		dst.showVerbose = src->showVerbose;
@@ -1020,7 +1018,7 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.newThreadVisibility = src->newThreadVisibility;
 		dst.newFileVisibility = src->newFileVisibility;
 		dst.filterActive = src->filterActive;
-		dst.sqlWhereActive = src->sqlWhereActive;
+		dst.showFilterHelp = src->showFilterHelp;
 		dst.version = src->version;
 	}
 	return dst;
@@ -1083,23 +1081,65 @@ vfilter_error_t vfilter_error_clone(const vfilter_error_t *src)
 	return dst;
 }
 
+void vfilter_result_reset(vfilter_result_t *val)
+{
+	if(val) {
+	}
+}
+vfilter_result_t vfilter_result_clone(const vfilter_result_t *src)
+{
+	vfilter_result_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.value = src->value;
+	}
+	return dst;
+}
+
+void vfilter_results_reset(vfilter_results_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			vfilter_result_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+vfilter_results_t vfilter_results_clone(const vfilter_results_t *src)
+{
+	vfilter_results_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = vfilter_result_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
 void vfilter_reset(vfilter_t *val)
 {
 	if(val) {
+		sb_reset(&val->input);
+		sb_reset(&val->tokenstream);
 		vfilter_tokens_reset(&val->tokens);
+		vfilter_tokens_reset(&val->rpn_tokens);
 		vfilter_error_reset(&val->error);
+		vfilter_results_reset(&val->results);
 	}
 }
 vfilter_t vfilter_clone(const vfilter_t *src)
 {
 	vfilter_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
+		dst.input = sb_clone(&src->input);
+		dst.tokenstream = sb_clone(&src->tokenstream);
 		dst.tokens = vfilter_tokens_clone(&src->tokens);
+		dst.rpn_tokens = vfilter_tokens_clone(&src->rpn_tokens);
 		dst.error = vfilter_error_clone(&src->error);
+		dst.results = vfilter_results_clone(&src->results);
 		dst.type = src->type;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
+		dst.valid = src->valid;
 	}
 	return dst;
 }

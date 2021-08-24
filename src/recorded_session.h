@@ -139,6 +139,9 @@ recorded_category_t *recorded_session_find_category(recorded_session_t *session,
 recorded_filename_t *recorded_session_find_filename(recorded_session_t *session, u32 fileId);
 recorded_thread_t *recorded_session_find_thread(recorded_session_t *session, u64 threadId);
 recorded_pieInstance_t *recorded_session_find_pieInstance(recorded_session_t *session, s32 pieInstance);
+char *recorded_session_get_thread_name(recorded_session_t *session, u64 threadId);
+const char *recorded_session_get_filename(recorded_session_t *session, u32 fileId);
+const char *recorded_session_get_category_name(recorded_session_t *session, u32 categoryId);
 
 #if defined(__cplusplus)
 }

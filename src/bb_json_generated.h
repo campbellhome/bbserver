@@ -72,6 +72,8 @@ struct view_config_s;
 struct vfilter_token_s;
 struct vfilter_tokens_s;
 struct vfilter_error_s;
+struct vfilter_result_s;
+struct vfilter_results_s;
 struct vfilter_s;
 
 typedef struct sb_s sb_t;
@@ -132,6 +134,8 @@ typedef struct view_config_s view_config_t;
 typedef struct vfilter_token_s vfilter_token_t;
 typedef struct vfilter_tokens_s vfilter_tokens_t;
 typedef struct vfilter_error_s vfilter_error_t;
+typedef struct vfilter_result_s vfilter_result_t;
+typedef struct vfilter_results_s vfilter_results_t;
 typedef struct vfilter_s vfilter_t;
 
 typedef enum tag_configColorUsage configColorUsage;

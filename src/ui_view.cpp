@@ -1246,6 +1246,56 @@ static void view_close_and_write_config(view_t *view)
 	}
 }
 
+static void ShowFilterTooltip(view_t *view)
+{
+	if(view->vfilter.type == kVF_Standard) {
+		if(view->vfilter.valid) {
+			TextShadowed(sb_get(&view->vfilter.input));
+		} else {
+			PushLogFont();
+			PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
+			TextShadowed(view_filter_get_error_string(&view->vfilter));
+			PopStyleColor();
+			PopLogFont();
+		}
+	} else if(view->vfilter.type == kVF_SQL) {
+		TextShadowed(view_get_create_table_command());
+		TextShadowed(sb_get(&view->vfilter.input));
+		if(view->sqlSelectError.count) {
+			Separator();
+			PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
+			TextShadowed(view->sqlSelectError.data);
+			PopStyleColor();
+		}
+	} else {
+		ImGui::SetTooltip("%s", sb_get(&view->config.filterInput));
+	}
+
+	if(view->config.showFilterHelp) {
+		Separator();
+		TextUnformatted("Filters have multiple modes:");
+		Separator();
+		TextUnformatted("[Simple]");
+		TextUnformatted("Use one or more keywords to OR together.  Conditions:");
+		BulletText("A log line must contain one or more keywords");
+		BulletText("Quotes can be used to match phrases");
+		BulletText("All keywords prefixed with + have to be present");
+		BulletText("And all keywords prefixed with - cannot be present");
+		Separator();
+		TextUnformatted("[Expression]");
+		TextUnformatted("Filter using a SQL-like expression.  Use AND, OR, NOT, (, and ) to group comparisons.");
+		TextUnformatted("Comparison sources are Text, Category, Filename, etc.");
+		TextUnformatted("Comparisons are Is, Matches, Contains, StartsWith, and EndsWith.");
+		TextUnformatted("Example: category is \"LogConsoleResponse\" and (text startswith \"WorldName:\" or text startswith \"World is\" or text startswith \"GameModeType:\")");
+		Separator();
+		TextUnformatted("[SQL WHERE clause]");
+		TextUnformatted("Use sqlite to filter log lines.  Filter is a WHERE clause for this table schema:");
+		TextUnformatted(view_get_create_table_command());
+		TextUnformatted("Filter starts with WHERE and is used with this SELECT statement:");
+		TextUnformatted(view_get_select_statement_fmt());
+	}
+}
+
 static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 {
 	recorded_session_t *session = view->session;
@@ -1497,7 +1547,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 
 		DrawViewToggles(view, applicationName);
 
-		ImGui::PushItemWidth(200.0f);
+		ImGui::PushItemWidth(400.0f);
 		if(hasFocus && ImGui::IsKeyPressed('F') && ImGui::GetIO().KeyCtrl) {
 			ImGui::SetKeyboardFocusHere();
 		}
@@ -1517,49 +1567,29 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		const bool filterFocused = IsItemActive() && Imgui_Core_HasFocus();
 		if(filterFocused) {
 			Imgui_Core_RequestRender();
-			if(ImGui::IsTooltipActive()) {
-				ImGui::SetTooltip("%s", sb_get(&view->config.filterInput));
-			}
 		}
-
-		bool sqlWhereFocused = false;
-		if(view->db) {
-			ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
-			if(hasFocus && ImGui::IsKeyPressed('S') && ImGui::GetIO().KeyCtrl) {
-				ImGui::SetKeyboardFocusHere();
+		if(ImGui::IsTooltipActive()) {
+			BeginTooltip();
+			PushUIFont();
+			ShowFilterTooltip(view);
+			PopUIFont();
+			EndTooltip();
+		}
+		ImGui::SameLine();
+		if(ImGui::Button("?###FilterHelp")) {
+			view->config.showFilterHelp = !view->config.showFilterHelp;
+		}
+		if(ImGui::IsTooltipActive()) {
+			BeginTooltip();
+			PushUIFont();
+			if(view->config.showFilterHelp) {
+				TextUnformatted("Hide extended filter help");
+				ShowFilterTooltip(view);
+			} else {
+				TextUnformatted("Show extended filter help");
 			}
-			ImGui::TextUnformatted("SQL Where:");
-			ImGui::SameLine();
-			if(ImGui::Checkbox("###SQLWhereActive", &view->config.sqlWhereActive)) {
-				view->visibleLogsDirty = true;
-				BB_LOG("Debug", "Set sqlWhereActive to '%d' for '%s'\n", view->config.sqlWhereActive, applicationName);
-			}
-			ImGui::SameLine();
-			if(ImGui::InputText("###SQLWhere", &view->config.sqlWhereInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
-				view->visibleLogsDirty = true;
-				view->config.sqlWhereActive = true;
-				BB_LOG("Debug", "Set sqlWhere to '%s' for '%s'\n", sb_get(&view->config.sqlWhereInput), applicationName);
-			}
-			Fonts_CacheGlyphs(sb_get(&view->config.sqlWhereInput));
-			sqlWhereFocused = IsItemActive() && Imgui_Core_HasFocus();
-			if(sqlWhereFocused) {
-				Imgui_Core_RequestRender();
-			}
-			if(ImGui::IsTooltipActive()) {
-				view->sqlSelectError;
-				BeginTooltip();
-				PushUIFont();
-				TextShadowed(view_get_create_table_command());
-				TextShadowed(va("%s;", va(view_get_select_statement_fmt(), sb_get(&view->config.sqlWhereInput))));
-				if(view->sqlSelectError.count) {
-					Separator();
-					PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
-					TextShadowed(view->sqlSelectError.data);
-					PopStyleColor();
-				}
-				PopUIFont();
-				EndTooltip();
-			}
+			PopUIFont();
+			EndTooltip();
 		}
 
 		ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
@@ -1618,7 +1648,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 
 		ImGui::Separator();
 
-		b32 otherControlFocused = categoriesChildFocused || filterFocused || sqlWhereFocused || spansFocused || selectedHackFocused || view->consoleInputFocused;
+		b32 otherControlFocused = categoriesChildFocused || filterFocused || spansFocused || selectedHackFocused || view->consoleInputFocused;
 		b32 gotoWasVisible = view->gotoVisible;
 		if(hasFocus) {
 			if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
@@ -1799,7 +1829,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				}
 			} else if(view->tail) {
 				if(curScrollY < view->prevScrollY && view->prevScrollY <= ImGui::GetScrollMaxY()) {
-					ClearViewTail(view, "not at bottom");
+					//ClearViewTail(view, "not at bottom");
 				}
 				if(view->visibleLogsAdded) {
 					ImGui::SetScrollHereY();

@@ -698,7 +698,6 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.configCategories = json_deserialize_view_config_categories_t(json_object_get_value(obj, "configCategories"));
 			dst.consoleHistory = json_deserialize_view_console_history_t(json_object_get_value(obj, "consoleHistory"));
 			dst.filterInput = json_deserialize_sb_t(json_object_get_value(obj, "filterInput"));
-			dst.sqlWhereInput = json_deserialize_sb_t(json_object_get_value(obj, "sqlWhereInput"));
 			dst.spansInput = json_deserialize_sb_t(json_object_get_value(obj, "spansInput"));
 			dst.showVeryVerbose = json_object_get_boolean_safe(obj, "showVeryVerbose");
 			dst.showVerbose = json_object_get_boolean_safe(obj, "showVerbose");
@@ -712,7 +711,7 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.newThreadVisibility = json_object_get_boolean_safe(obj, "newThreadVisibility");
 			dst.newFileVisibility = json_object_get_boolean_safe(obj, "newFileVisibility");
 			dst.filterActive = json_object_get_boolean_safe(obj, "filterActive");
-			dst.sqlWhereActive = json_object_get_boolean_safe(obj, "sqlWhereActive");
+			dst.showFilterHelp = json_object_get_boolean_safe(obj, "showFilterHelp");
 			dst.version = (u32)json_object_get_number(obj, "version");
 		}
 	}
@@ -1303,7 +1302,6 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_value(obj, "configCategories", json_serialize_view_config_categories_t(&src->configCategories));
 		json_object_set_value(obj, "consoleHistory", json_serialize_view_console_history_t(&src->consoleHistory));
 		json_object_set_value(obj, "filterInput", json_serialize_sb_t(&src->filterInput));
-		json_object_set_value(obj, "sqlWhereInput", json_serialize_sb_t(&src->sqlWhereInput));
 		json_object_set_value(obj, "spansInput", json_serialize_sb_t(&src->spansInput));
 		json_object_set_boolean(obj, "showVeryVerbose", src->showVeryVerbose);
 		json_object_set_boolean(obj, "showVerbose", src->showVerbose);
@@ -1317,7 +1315,7 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_boolean(obj, "newThreadVisibility", src->newThreadVisibility);
 		json_object_set_boolean(obj, "newFileVisibility", src->newFileVisibility);
 		json_object_set_boolean(obj, "filterActive", src->filterActive);
-		json_object_set_boolean(obj, "sqlWhereActive", src->sqlWhereActive);
+		json_object_set_boolean(obj, "showFilterHelp", src->showFilterHelp);
 		json_object_set_number(obj, "version", src->version);
 	}
 	return val;
@@ -1512,7 +1510,7 @@ vfilter_token_type_e json_deserialize_vfilter_token_type_e(JSON_Value *src)
 			if(!strcmp(str, "kVFT_NotEquals")) { dst = kVFT_NotEquals; }
 			if(!strcmp(str, "kVFT_GreaterThan")) { dst = kVFT_GreaterThan; }
 			if(!strcmp(str, "kVFT_GreaterThanEquals")) { dst = kVFT_GreaterThanEquals; }
-			if(!strcmp(str, "kVFT_Like")) { dst = kVFT_Like; }
+			if(!strcmp(str, "kVFT_Matches")) { dst = kVFT_Matches; }
 			if(!strcmp(str, "kVFT_And")) { dst = kVFT_And; }
 			if(!strcmp(str, "kVFT_Or")) { dst = kVFT_Or; }
 			if(!strcmp(str, "kVFT_Not")) { dst = kVFT_Not; }
@@ -1705,7 +1703,7 @@ JSON_Value *json_serialize_vfilter_token_type_e(const vfilter_token_type_e src)
 		case kVFT_NotEquals: str = "kVFT_NotEquals"; break;
 		case kVFT_GreaterThan: str = "kVFT_GreaterThan"; break;
 		case kVFT_GreaterThanEquals: str = "kVFT_GreaterThanEquals"; break;
-		case kVFT_Like: str = "kVFT_Like"; break;
+		case kVFT_Matches: str = "kVFT_Matches"; break;
 		case kVFT_And: str = "kVFT_And"; break;
 		case kVFT_Or: str = "kVFT_Or"; break;
 		case kVFT_Not: str = "kVFT_Not"; break;
@@ -1890,7 +1888,7 @@ vfilter_token_type_e vfilter_token_type_e_from_string(const char *src)
 		if(!strcmp(src, "kVFT_NotEquals")) { dst = kVFT_NotEquals; }
 		if(!strcmp(src, "kVFT_GreaterThan")) { dst = kVFT_GreaterThan; }
 		if(!strcmp(src, "kVFT_GreaterThanEquals")) { dst = kVFT_GreaterThanEquals; }
-		if(!strcmp(src, "kVFT_Like")) { dst = kVFT_Like; }
+		if(!strcmp(src, "kVFT_Matches")) { dst = kVFT_Matches; }
 		if(!strcmp(src, "kVFT_And")) { dst = kVFT_And; }
 		if(!strcmp(src, "kVFT_Or")) { dst = kVFT_Or; }
 		if(!strcmp(src, "kVFT_Not")) { dst = kVFT_Not; }
@@ -2065,7 +2063,7 @@ const char *string_from_vfilter_token_type_e(const vfilter_token_type_e src)
 		case kVFT_NotEquals: return "kVFT_NotEquals"; break;
 		case kVFT_GreaterThan: return "kVFT_GreaterThan"; break;
 		case kVFT_GreaterThanEquals: return "kVFT_GreaterThanEquals"; break;
-		case kVFT_Like: return "kVFT_Like"; break;
+		case kVFT_Matches: return "kVFT_Matches"; break;
 		case kVFT_And: return "kVFT_And"; break;
 		case kVFT_Or: return "kVFT_Or"; break;
 		case kVFT_Not: return "kVFT_Not"; break;

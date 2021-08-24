@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #include "recorded_session.h"
@@ -6,6 +6,7 @@
 #include "imgui_core.h"
 #include "message_box.h"
 #include "message_queue.h"
+#include "path_utils.h"
 #include "recorded_session_thread.h"
 #include "recordings.h"
 #include "span.h"
@@ -665,4 +666,23 @@ static recorded_pieInstance_t *recorded_session_find_or_add_pieInstance(recorded
 		view_add_pieInstance(session->views.data + viewIndex, pieInstance);
 	}
 	return sessionPieInstance;
+}
+
+char *recorded_session_get_thread_name(recorded_session_t *session, u64 threadId)
+{
+	recorded_thread_t *t = recorded_session_find_thread(session, threadId);
+	return t ? t->threadName : va("%d", threadId);
+}
+
+const char *recorded_session_get_filename(recorded_session_t *session, u32 fileId)
+{
+	recorded_filename_t *f = recorded_session_find_filename(session, fileId);
+	const char *path = (f) ? f->path : va("%d", fileId);
+	return path_get_filename(path);
+}
+
+const char *recorded_session_get_category_name(recorded_session_t *session, u32 categoryId)
+{
+	recorded_category_t *category = recorded_session_find_category(session, categoryId);
+	return category ? category->categoryName : "";
 }

@@ -5,6 +5,7 @@
 
 #include "config.h"
 #include "message_box.h"
+#include "view_filter.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -183,7 +184,6 @@ AUTOJSON typedef struct view_config_s {
 	view_config_categories_t configCategories;
 	view_console_history_t consoleHistory;
 	sb_t filterInput;
-	sb_t sqlWhereInput;
 	sb_t spansInput;
 	b32 showVeryVerbose;
 	b32 showVerbose;
@@ -197,21 +197,11 @@ AUTOJSON typedef struct view_config_s {
 	b32 newThreadVisibility;
 	b32 newFileVisibility;
 	b32 filterActive;
-	b32 sqlWhereActive;
+	b32 showFilterHelp;
 	u32 version;
 } view_config_t;
 
 enum { kViewConfigVersion = 2 };
-
-typedef struct view_filter_token_s {
-	u32 offset;
-} view_filter_token_t;
-typedef struct view_filter_s {
-	u32 count;
-	u32 allocated;
-	view_filter_token_t *data;
-	char tokenBuffer[256];
-} view_filter_t;
 
 typedef struct view_span_s {
 	u32 start;
@@ -260,7 +250,7 @@ typedef struct view_s {
 	view_pieInstances_t pieInstances;
 	view_logs_t visibleLogs;
 	view_persistent_logs_t persistentLogs;
-	view_filter_t filter;
+	vfilter_t vfilter;
 	view_spans_t spans;
 	sb_t consoleInput;
 	view_console_history_t consoleHistory;
@@ -304,8 +294,8 @@ typedef struct view_s {
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);
 void view_init_appinfo(view_t *view);
-const char* view_get_create_table_command(void);
-const char* view_get_select_statement_fmt(void);
+const char *view_get_create_table_command(void);
+const char *view_get_select_statement_fmt(void);
 void view_reset(view_t *view);
 void view_restart(view_t *view);
 void view_reset_column_offsets(view_t *view);

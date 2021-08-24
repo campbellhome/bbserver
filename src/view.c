@@ -208,7 +208,7 @@ void view_reset(view_t *view)
 	bba_free(view->pieInstances);
 	bba_free(view->visibleLogs);
 	bba_free(view->persistentLogs);
-	bba_free(view->filter);
+	vfilter_reset(&view->vfilter);
 	bba_free(view->spans);
 	view_config_reset(&view->config);
 	sb_reset(&view->consoleInput);
@@ -517,109 +517,6 @@ b32 view_file_visible(view_t *view, u64 fileId)
 	return false;
 }
 
-static b32 sqlite3_bind_u32_and_log(sqlite3 *db, sqlite3_stmt *stmt, int index, u32 value)
-{
-	int rc = sqlite3_bind_int(stmt, index, value);
-	if(rc == SQLITE_OK) {
-		return true;
-	} else {
-		BB_ERROR("sqlite", "SQL bind error: index:%d value:%u result:%d error:%s\n", index, value, rc, sqlite3_errmsg(db));
-		return false;
-	}
-}
-
-static b32 sqlite3_bind_text_and_log(sqlite3 *db, sqlite3_stmt *stmt, int index, const char *value)
-{
-	int rc = sqlite3_bind_text(stmt, index, value, -1, SQLITE_STATIC);
-	if(rc == SQLITE_OK) {
-		return true;
-	} else {
-		BB_ERROR("sqlite", "SQL bind error: index:%d value:%s result:%d error:%s\n", index, value, rc, sqlite3_errmsg(db));
-		return false;
-	}
-}
-
-static int test_sql_callback(void *userData, int argc, char **argv, char **colNames)
-{
-	BB_UNUSED(argc);
-	BB_UNUSED(argv);
-	BB_UNUSED(colNames);
-	int *count = (int *)userData;
-	*count += 1;
-	return 0;
-}
-
-static b32 view_sqlWhere_visible_internal(view_t *view, recorded_log_t *log)
-{
-	if(!view->db || !view->sqlSelect.count)
-		return false;
-
-	bb_decoded_packet_t *decoded = &log->packet;
-	const view_category_t *viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
-	const char *level = bb_get_log_level_name(decoded->packet.logText.level, "Unknown");
-
-	int rc;
-	const char *insert_sql = "INSERT INTO logs (line, category, level, pie, text) VALUES(?, ?, ?, ?, ?)";
-	sqlite3_stmt *insert_stmt = NULL;
-	rc = sqlite3_prepare_v2(view->db, insert_sql, -1, &insert_stmt, NULL);
-	if(rc != SQLITE_OK) {
-		return false;
-	}
-
-	sqlite3_bind_u32_and_log(view->db, insert_stmt, 1, log->sessionLogIndex);
-	if(viewCategory) {
-		sqlite3_bind_text_and_log(view->db, insert_stmt, 2, viewCategory->categoryName);
-	}
-	sqlite3_bind_text_and_log(view->db, insert_stmt, 3, level);
-	sqlite3_bind_u32_and_log(view->db, insert_stmt, 4, decoded->packet.logText.pieInstance);
-	sqlite3_bind_text_and_log(view->db, insert_stmt, 5, decoded->packet.logText.text);
-
-	rc = sqlite3_step(insert_stmt);
-	if(SQLITE_DONE != rc) {
-		BB_ERROR("sqlite", "SQL error running INSERT INTO: result:%d error:%s\n", rc, sqlite3_errmsg(view->db));
-	}
-	sqlite3_clear_bindings(insert_stmt);
-	sqlite3_reset(insert_stmt);
-	sqlite3_finalize(insert_stmt);
-
-	sb_clear(&view->sqlSelectError);
-	int count = 0;
-	char *errorMessage = NULL;
-	rc = sqlite3_exec(view->db, view->sqlSelect.data, test_sql_callback, &count, &errorMessage);
-	if(rc != SQLITE_OK) {
-		sb_va(&view->sqlSelectError, "SQL error: %s", errorMessage);
-		sqlite3_free(errorMessage);
-	}
-
-	return count > 0;
-}
-
-static b32 view_sqlWhere_visible(view_t *view, recorded_log_t *log)
-{
-	if(!view->db || !view->sqlSelect.count || !view->config.sqlWhereActive)
-		return true;
-
-	int rc;
-	char *errorMessage;
-
-	rc = sqlite3_exec(view->db, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
-	if(rc != SQLITE_OK) {
-		BB_ERROR("sqlite", "SQL error running BEGIN TRANSACTION ret:%d error:%s\n", rc, errorMessage);
-		sqlite3_free(errorMessage);
-		return true;
-	}
-
-	b32 result = view_sqlWhere_visible_internal(view, log);
-
-	rc = sqlite3_exec(view->db, "ROLLBACK", NULL, NULL, &errorMessage);
-	if(rc != SQLITE_OK) {
-		BB_ERROR("sqlite", "SQL error running ROLLBACK ret:%d error:%s\n", rc, errorMessage);
-		sqlite3_free(errorMessage);
-	}
-
-	return result;
-}
-
 static int view_pieInstance_sort(const void *_a, const void *_b)
 {
 	const view_pieInstance_t *a = (const view_pieInstance_t *)_a;
@@ -666,99 +563,6 @@ view_category_t *view_find_category(view_t *view, u32 categoryId)
 		}
 	}
 	return NULL;
-}
-
-typedef enum view_filter_comparison_e {
-	kViewFilterComparison_Equal,
-	kViewFilterComparison_GreaterEqual,
-	kViewFilterComparison_Greater,
-	kViewFilterComparison_LessThanEqual,
-	kViewFilterComparison_LessThan,
-	kViewFilterComparison_NotEqual,
-	kViewFilterComparison_Count
-} view_filter_comparison_t;
-
-static const char *s_view_filter_comparator[] = {
-	"==",
-	">=",
-	">",
-	"<=",
-	"<",
-	"!=",
-};
-BB_CTASSERT(BB_ARRAYSIZE(s_view_filter_comparator) == kViewFilterComparison_Count);
-
-static view_filter_comparison_t view_parse_filter_comparator(const char **token)
-{
-	for(u32 i = 0; i < kViewFilterComparison_Count; ++i) {
-		size_t len = strlen(s_view_filter_comparator[i]);
-		if(!strncmp(*token, s_view_filter_comparator[i], len)) {
-			*token += len;
-			return i;
-		}
-	}
-	return kViewFilterComparison_Count;
-}
-
-static inline b32 view_filter_compare_double(view_filter_comparison_t comp, double a, double b)
-{
-	switch(comp) {
-	case kViewFilterComparison_Equal: return a == b;
-	case kViewFilterComparison_GreaterEqual: return a >= b;
-	case kViewFilterComparison_Greater: return a > b;
-	case kViewFilterComparison_LessThanEqual: return a <= b;
-	case kViewFilterComparison_LessThan: return a < b;
-	case kViewFilterComparison_NotEqual: return a != b;
-	case kViewFilterComparison_Count:
-	default: return false;
-	}
-}
-
-static b32 view_filter_abs_millis(view_t *view, recorded_log_t *log, view_filter_comparison_t comp, const char *token)
-{
-	recorded_session_t *session = view->session;
-	recorded_log_t *lastLog = view->lastSessionLogIndex < session->logs.count ? session->logs.data[view->lastSessionLogIndex] : NULL;
-	bb_decoded_packet_t *decoded = &log->packet;
-
-	double thresholdMillis = atof(token);
-	s64 prevElapsedTicks = (lastLog) ? (s64)lastLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : 0;
-	s64 elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
-	double deltaMillis = (elapsedTicks - prevElapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
-	return view_filter_compare_double(comp, deltaMillis, thresholdMillis);
-}
-
-static b32 view_filter_rel_millis(view_t *view, recorded_log_t *log, view_filter_comparison_t comp, const char *token)
-{
-	recorded_session_t *session = view->session;
-	recorded_log_t *lastLog = view->lastVisibleSessionLogIndex < session->logs.count ? session->logs.data[view->lastVisibleSessionLogIndex] : NULL;
-	bb_decoded_packet_t *decoded = &log->packet;
-
-	double thresholdMillis = atof(token);
-	s64 prevElapsedTicks = (lastLog) ? (s64)lastLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : 0;
-	s64 elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
-	double deltaMillis = (elapsedTicks - prevElapsedTicks) * session->appInfo.packet.appInfo.millisPerTick;
-	return view_filter_compare_double(comp, deltaMillis, thresholdMillis);
-}
-
-static b32 view_find_filter_token(view_t *view, recorded_log_t *log, const char *token)
-{
-	bb_decoded_packet_t *decoded = &log->packet;
-	const char *text = decoded->packet.logText.text;
-	if(!bb_strnicmp(token, "absms", 5)) {
-		const char *tmp = token + 5;
-		view_filter_comparison_t comp = view_parse_filter_comparator(&tmp);
-		if(comp != kViewFilterComparison_Count) {
-			return view_filter_abs_millis(view, log, comp, tmp);
-		}
-	}
-	if(!bb_strnicmp(token, "relms", 5)) {
-		const char *tmp = token + 5;
-		view_filter_comparison_t comp = view_parse_filter_comparator(&tmp);
-		if(comp != kViewFilterComparison_Count) {
-			return view_filter_abs_millis(view, log, comp, tmp);
-		}
-	}
-	return bb_stristr(text, token) != NULL;
 }
 
 static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
@@ -812,37 +616,8 @@ static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 	fileId = decoded->header.fileId;
 	if(!view_file_visible(view, fileId))
 		return false;
-	if(!view_sqlWhere_visible(view, log))
+	if(!view_filter_visible(view, log))
 		return false;
-	if(view->filter.count && view->config.filterActive) {
-		b32 ok = false;
-		u32 numRequired = 0;
-		u32 numProhibited = 0;
-		u32 numAllowed = 0;
-		u32 i;
-		for(i = 0; i < view->filter.count; ++i) {
-			view_filter_token_t *token = view->filter.data + i;
-			const char *s = view->filter.tokenBuffer + token->offset;
-			b32 required = *s == '+';
-			b32 prohibited = *s == '-';
-			numRequired += required;
-			numProhibited += prohibited;
-			numAllowed += (!required && !prohibited);
-			if(required || prohibited) {
-				++s;
-			}
-			b32 found = view_find_filter_token(view, log, s);
-			if(found && prohibited || !found && required) {
-				return false;
-				break;
-			} else if(found) {
-				ok = true;
-			}
-		}
-		if(!ok && numAllowed) {
-			return false;
-		}
-	}
 	if(view->spans.count && view->spansActive) {
 		u32 sessionLogIndex = log->sessionLogIndex;
 		b32 ok = false;
@@ -861,24 +636,6 @@ static b32 view_is_log_visible(view_t *view, recorded_log_t *log)
 	return true;
 }
 
-static void view_update_filter(view_t *view)
-{
-	char *token;
-	line_parser_t parser;
-	bba_clear(view->filter);
-	bb_strncpy(view->filter.tokenBuffer, sb_get(&view->config.filterInput), sizeof(view->filter.tokenBuffer));
-	line_parser_init(&parser, "filter", view->filter.tokenBuffer);
-	parser.commentCharacter = 0;
-	parser.tokenCursor = parser.buffer;
-	token = line_parser_next_token(&parser);
-	while(token) {
-		view_filter_token_t entry;
-		entry.offset = (u32)(token - view->filter.tokenBuffer);
-		bba_push(view->filter, entry);
-		token = line_parser_next_token(&parser);
-	}
-}
-
 const char *view_get_select_statement_fmt(void)
 {
 	return "SELECT line FROM logs WHERE %s";
@@ -887,8 +644,11 @@ const char *view_get_select_statement_fmt(void)
 static void view_update_sqlWhere(view_t *view)
 {
 	bba_clear(view->sqlSelect);
-	if(view->config.sqlWhereInput.count) {
-		sb_va(&view->sqlSelect, view_get_select_statement_fmt(), sb_get(&view->config.sqlWhereInput));
+	if(view->vfilter.type == kVF_SQL && view->vfilter.tokens.count > 1) {
+		u64 skip = span_length(view->vfilter.tokens.data[0].span);
+		if(view->vfilter.input.count > skip) {
+			sb_va(&view->sqlSelect, view_get_select_statement_fmt(), sb_get(&view->vfilter.input) + skip);
+		}
 	}
 }
 
@@ -1029,7 +789,8 @@ void view_update_visible_logs(view_t *view)
 	view->visibleLogs.lastClickIndex = lastClickIndex;
 	view->lastSessionLogIndex = ~0U;
 	view->lastVisibleSessionLogIndex = ~0U;
-	view_update_filter(view);
+	vfilter_reset(&view->vfilter);
+	view->vfilter = view_filter_parse(sb_get(&view->config.filterInput));
 	view_update_sqlWhere(view);
 	view_update_spans(view);
 	for(i = 0; i < session->logs.count; ++i) {
