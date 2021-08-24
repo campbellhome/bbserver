@@ -1592,6 +1592,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			EndTooltip();
 		}
 
+		ImGui::PushItemWidth(175.0f);
 		ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
 		ImGui::TextUnformatted("Line Spans:");
 		ImGui::SameLine();
@@ -1610,6 +1611,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		if(spansFocused) {
 			Imgui_Core_RequestRender();
 		}
+		ImGui::PopItemWidth();
 
 		if(session->logs.count) {
 			ImGui::SameLine();
