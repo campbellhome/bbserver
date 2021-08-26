@@ -1268,7 +1268,7 @@ static void ShowFilterTooltip(view_t *view)
 			PopStyleColor();
 		}
 	} else {
-		ImGui::SetTooltip("%s", sb_get(&view->config.filterInput));
+		TextUnformatted(sb_get(&view->config.filterInput));
 	}
 
 	if(view->config.showFilterHelp) {
