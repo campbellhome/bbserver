@@ -425,7 +425,7 @@ static void view_filter_convert_tokens_to_rpn(vfilter_t *filter)
 			bba_push(stack, *token);
 			break;
 		case kVFC_CloseParen:
-			while(stack.count > 0 && stack.data[stack.count - 1].type != kVFT_OpenParen) {
+			while(stack.count > 1 && stack.data[stack.count - 1].type != kVFT_OpenParen) {
 				bba_push(filter->rpn_tokens, stack.data[stack.count - 1]);
 				--stack.count;
 			}
