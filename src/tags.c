@@ -7,6 +7,8 @@
 #include "bb_json_generated.h"
 #include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
+#include "recorded_session.h"
+#include "view.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,10 +33,14 @@ void tags_init(void)
 		json_value_free(val);
 
 		for(u32 i = 0; i < tagsConfig.tags.count; ++i) {
-			tag_t *tag = tagsConfig.tags.data + i;
-			for(u32 j = 0; j < tag->categories.count; ++j) {
-				sb_t *category = tag->categories.data + j;
-				tag_add_category(sb_get(&tag->name), sb_get(category));
+			tag_t *configTag = tagsConfig.tags.data + i;
+			for(u32 j = 0; j < configTag->categories.count; ++j) {
+				sb_t *category = configTag->categories.data + j;
+				tag_add_category(sb_get(&configTag->name), sb_get(category));
+			}
+			tag_t *tag = tag_find(sb_get(&configTag->name));
+			if(tag) {
+				tag->visibility = configTag->visibility;
 			}
 		}
 
@@ -220,5 +226,20 @@ void tag_remove_category(const char *tagName, const char *categoryName)
 	tagCategory_t *tagCategory = tagCategory_find(categoryName);
 	if(tagCategory) {
 		sbs_remove_unique(&tagCategory->tags, sb_from_c_string_no_alloc(tagName));
+	}
+}
+
+void tag_apply_tag_visibility_to_all_views(void)
+{
+	for(u32 sessionIndex = 0; sessionIndex < recorded_session_count(); ++sessionIndex) {
+		recorded_session_t *session = recorded_session_get(sessionIndex);
+		if(!session || session->appInfo.type == kBBPacketType_Invalid)
+			continue;
+
+		for(u32 viewIndex = 0; viewIndex < session->views.count; ++viewIndex) {
+			view_t *sessionView = session->views.data + viewIndex;
+			view_apply_tag_visibility(sessionView);
+			sessionView->visibleLogsDirty = true;
+		}
 	}
 }

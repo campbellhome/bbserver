@@ -508,6 +508,10 @@ tag_t tag_clone_from_loc(const char *file, int line, const tag_t *src)
 	if(src) {
 		dst.name = sb_clone_from_loc(file, line, &src->name);
 		dst.categories = sbs_clone_from_loc(file, line, &src->categories);
+		dst.visibility = src->visibility;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
 	}
 	return dst;
 }

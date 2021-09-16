@@ -275,6 +275,7 @@ void view_add_category(view_t *view, recorded_category_t *category, const view_c
 			c->visible = view->config.newNonFavoriteCategoryVisibility;
 		}
 		qsort(view->categories.data, view->categories.count, sizeof(view->categories.data[0]), ViewCategoryCompare);
+		view_apply_tag_visibility(view);
 	}
 }
 
@@ -335,6 +336,7 @@ void view_set_category_collection_visiblity(view_category_collection_t *category
 				categoryCollection->view->visibleLogsDirty = true;
 			}
 		}
+		view_apply_tag_visibility(categoryCollection->view);
 	}
 }
 
@@ -356,6 +358,22 @@ void view_set_category_collection_disabled(view_category_collection_t *categoryC
 			if(category->disabled != disabled) {
 				category->disabled = disabled;
 				categoryCollection->view->visibleLogsDirty = true;
+			}
+		}
+	}
+}
+
+void view_apply_tag_visibility(view_t *view)
+{
+	for(u32 i = 0; i < g_tags.tags.count; ++i) {
+		const tag_t *tag = g_tags.tags.data + i;
+		if(tag->visibility == kTagVisibility_AlwaysVisible || tag->visibility == kTagVisibility_AlwaysHidden) {
+			for(u32 j = 0; j < tag->categories.count; ++j) {
+				const sb_t *name = tag->categories.data + j;
+				view_category_t *category = view_find_category_by_name(view, sb_get(name));
+				if(category) {
+					category->visible = tag->visibility == kTagVisibility_AlwaysVisible;
+				}
 			}
 		}
 	}
@@ -864,6 +882,7 @@ void view_set_all_category_visibility(view_t *view, b8 visible)
 		view_category_t *c = view->categories.data + i;
 		c->visible = visible;
 	}
+	view_apply_tag_visibility(view);
 }
 
 void view_set_all_thread_visibility(view_t *view, b8 visible)

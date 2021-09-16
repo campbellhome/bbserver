@@ -9,6 +9,13 @@ extern "C" {
 
 #include "sb.h"
 
+AUTOJSON typedef enum tag_visibility_t {
+	kTagVisibility_Normal,
+	kTagVisibility_AlwaysVisible,
+	kTagVisibility_AlwaysHidden,
+	kTagVisibility_Count
+} tag_visibility_t;
+
 AUTOJSON AUTOFROMLOC typedef struct sbsHashEntry {
 	sb_t key;
 	sbs_t values;
@@ -29,6 +36,8 @@ AUTOSTRUCT AUTOFROMLOC AUTOSTRINGHASH typedef struct sbsHashTable {
 AUTOJSON AUTOFROMLOC typedef struct tag_s {
 	sb_t name;
 	sbs_t categories;
+	tag_visibility_t visibility;
+	u8 pad[4];
 } tag_t;
 
 AUTOJSON AUTOFROMLOC typedef struct tags_s {
@@ -72,6 +81,8 @@ tagCategory_t *tagCategory_find(const char *categoryName);
 
 void tag_add_category(const char *tagName, const char *categoryName);
 void tag_remove_category(const char *tagName, const char *categoryName);
+
+void tag_apply_tag_visibility_to_all_views(void);
 
 #if defined(__cplusplus)
 }

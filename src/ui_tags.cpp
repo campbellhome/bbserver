@@ -95,16 +95,35 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 			ImGui::EndMenu();
 		}
 
-		if(ImGui::MenuItem("Show tag")) {
+		if(tag->visibility == kTagVisibility_Normal && ImGui::MenuItem("Show tag")) {
 			view_set_category_collection_visiblity(&s_matchingAll, true);
 		}
-		if(ImGui::MenuItem("Show only tag")) {
+		if(tag->visibility != kTagVisibility_AlwaysHidden && ImGui::MenuItem("Show only tag")) {
 			view_set_category_collection_visiblity(&s_matchingAll, true);
 			view_set_category_collection_visiblity(&s_unmatchingAll, false);
 		}
-		if(ImGui::MenuItem("Hide tag")) {
+		if(tag->visibility == kTagVisibility_Normal && ImGui::MenuItem("Hide tag")) {
 			view_set_category_collection_visiblity(&s_matchingAll, false);
 		}
+
+		if(ImGui::BeginMenu("Visibility")) {
+			const tag_visibility_t oldVisibility = tag->visibility;
+			if(ImGui::RadioButton("Normal", tag->visibility == kTagVisibility_Normal)) {
+				tag->visibility = kTagVisibility_Normal;
+			}
+			if(ImGui::RadioButton("Always visible", tag->visibility == kTagVisibility_AlwaysVisible)) {
+				tag->visibility = kTagVisibility_AlwaysVisible;
+			}
+			if(ImGui::RadioButton("Always hidden", tag->visibility == kTagVisibility_AlwaysHidden)) {
+				tag->visibility = kTagVisibility_AlwaysHidden;
+			}
+			if(oldVisibility != tag->visibility) {
+				tags_write();
+				tag_apply_tag_visibility_to_all_views();
+			}
+			ImGui::EndMenu();
+		}
+
 		if(ImGui::MenuItem("Select tag categories")) {
 			view_set_category_collection_selection(&s_matching, true);
 		}
@@ -127,12 +146,12 @@ static void UITags_TagPopup(tag_t *tag, view_t *view)
 		}
 
 		if(!allEnabled) {
-			if(ImGui::MenuItem("Enable tag")) {
+			if(ImGui::MenuItem("Enable tag categories")) {
 				view_set_category_collection_disabled(&s_matching, false);
 			}
 		}
 		if(!allDisabled) {
-			if(ImGui::MenuItem("Disable tag")) {
+			if(ImGui::MenuItem("Disable tag categories")) {
 				view_set_category_collection_disabled(&s_matching, true);
 			}
 		}
@@ -262,6 +281,7 @@ static void UITags_SelectedCategories_AddTag(view_t *view, const char *tagName)
 		}
 	}
 	tags_write();
+	tag_apply_tag_visibility_to_all_views();
 }
 
 static void UITags_SelectedCategories_RemoveTag(view_t *view, const char *tagName)
@@ -360,6 +380,7 @@ static void UITags_Category_SetSelectedVisibility(view_t *view, b32 visible, boo
 			viewCategory->visible = false;
 		}
 	}
+	view_apply_tag_visibility(view);
 }
 
 static void UITags_CountCategoryVisibility(view_t *view, tag_t *tag, u32 *visibleCount, u32 *hiddenCount)
@@ -425,7 +446,13 @@ void UITags_Update(view_t *view)
 			if(!numVisible && !numHidden) {
 				ImGui::PushStyleColor(ImGuiCol_Text, GetTextColorForLogLevel(kBBLogLevel_Verbose));
 			}
-			bool open = ImGui::TreeNodeEx(tagName, tagNodeFlags | (bTagSelected ? ImGuiTreeNodeFlags_Selected : 0));
+			const char *resolvedTagName = tagName;
+			if(tag->visibility == kTagVisibility_AlwaysVisible) {
+				resolvedTagName = va("%s (visible)##%s", tagName, tagName);
+			} else if(tag->visibility == kTagVisibility_AlwaysHidden) {
+				resolvedTagName = va("%s (hidden)##%s", tagName, tagName);
+			}
+			bool open = ImGui::TreeNodeEx(resolvedTagName, tagNodeFlags | (bTagSelected ? ImGuiTreeNodeFlags_Selected : 0));
 			if(!numVisible && !numHidden) {
 				ImGui::PopStyleColor();
 			}
@@ -468,6 +495,7 @@ void UITags_Update(view_t *view)
 								vc->visible = checked;
 							}
 						}
+						view_apply_tag_visibility(view);
 					}
 					ImGui::SameLine();
 					u32 viewCategoryIndex = (u32)(viewCategory - view->categories.data);

@@ -389,6 +389,10 @@ tag_t json_deserialize_tag_t(JSON_Value *src)
 		if(obj) {
 			dst.name = json_deserialize_sb_t(json_object_get_value(obj, "name"));
 			dst.categories = json_deserialize_sbs_t(json_object_get_value(obj, "categories"));
+			dst.visibility = json_deserialize_tag_visibility_t(json_object_get_value(obj, "visibility"));
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
 		}
 	}
 	return dst;
@@ -1029,6 +1033,10 @@ JSON_Value *json_serialize_tag_t(const tag_t *src)
 	if(obj) {
 		json_object_set_value(obj, "name", json_serialize_sb_t(&src->name));
 		json_object_set_value(obj, "categories", json_serialize_sbs_t(&src->categories));
+		json_object_set_value(obj, "visibility", json_serialize_tag_visibility_t(src->visibility));
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
 	}
 	return val;
 }
@@ -1415,6 +1423,21 @@ recording_type_t json_deserialize_recording_type_t(JSON_Value *src)
 	return dst;
 }
 
+tag_visibility_t json_deserialize_tag_visibility_t(JSON_Value *src)
+{
+	tag_visibility_t dst = kTagVisibility_Count;
+	if(src) {
+		const char *str = json_value_get_string(src);
+		if(str) {
+			if(!strcmp(str, "kTagVisibility_Normal")) { dst = kTagVisibility_Normal; }
+			if(!strcmp(str, "kTagVisibility_AlwaysVisible")) { dst = kTagVisibility_AlwaysVisible; }
+			if(!strcmp(str, "kTagVisibility_AlwaysHidden")) { dst = kTagVisibility_AlwaysHidden; }
+			if(!strcmp(str, "kTagVisibility_Count")) { dst = kTagVisibility_Count; }
+		}
+	}
+	return dst;
+}
+
 styleColor_e json_deserialize_styleColor_e(JSON_Value *src)
 {
 	styleColor_e dst = kStyleColor_Count;
@@ -1614,6 +1637,19 @@ JSON_Value *json_serialize_recording_type_t(const recording_type_t src)
 	return val;
 }
 
+JSON_Value *json_serialize_tag_visibility_t(const tag_visibility_t src)
+{
+	const char *str = "";
+	switch(src) {
+		case kTagVisibility_Normal: str = "kTagVisibility_Normal"; break;
+		case kTagVisibility_AlwaysVisible: str = "kTagVisibility_AlwaysVisible"; break;
+		case kTagVisibility_AlwaysHidden: str = "kTagVisibility_AlwaysHidden"; break;
+		case kTagVisibility_Count: str = "kTagVisibility_Count"; break;
+	}
+	JSON_Value *val = json_value_init_string(str);
+	return val;
+}
+
 JSON_Value *json_serialize_styleColor_e(const styleColor_e src)
 {
 	const char *str = "";
@@ -1801,6 +1837,18 @@ recording_type_t recording_type_t_from_string(const char *src)
 	return dst;
 }
 
+tag_visibility_t tag_visibility_t_from_string(const char *src)
+{
+	tag_visibility_t dst = kTagVisibility_Count;
+	if(src) {
+		if(!strcmp(src, "kTagVisibility_Normal")) { dst = kTagVisibility_Normal; }
+		if(!strcmp(src, "kTagVisibility_AlwaysVisible")) { dst = kTagVisibility_AlwaysVisible; }
+		if(!strcmp(src, "kTagVisibility_AlwaysHidden")) { dst = kTagVisibility_AlwaysHidden; }
+		if(!strcmp(src, "kTagVisibility_Count")) { dst = kTagVisibility_Count; }
+	}
+	return dst;
+}
+
 styleColor_e styleColor_e_from_string(const char *src)
 {
 	styleColor_e dst = kStyleColor_Count;
@@ -1975,6 +2023,17 @@ const char *string_from_recording_type_t(const recording_type_t src)
 		case kRecordingType_MainLog: return "kRecordingType_MainLog"; break;
 		case kRecordingType_ExternalFile: return "kRecordingType_ExternalFile"; break;
 		case kRecordingType_Count: return "kRecordingType_Count"; break;
+	}
+	return "";
+}
+
+const char *string_from_tag_visibility_t(const tag_visibility_t src)
+{
+	switch(src) {
+		case kTagVisibility_Normal: return "kTagVisibility_Normal"; break;
+		case kTagVisibility_AlwaysVisible: return "kTagVisibility_AlwaysVisible"; break;
+		case kTagVisibility_AlwaysHidden: return "kTagVisibility_AlwaysHidden"; break;
+		case kTagVisibility_Count: return "kTagVisibility_Count"; break;
 	}
 	return "";
 }

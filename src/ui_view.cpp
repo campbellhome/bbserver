@@ -855,6 +855,7 @@ void UIRecordedView_LogPopup(view_t *view, view_log_t *viewLog)
 		view_category_t *viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
 		viewCategory->visible = false;
 		view->visibleLogsDirty = true;
+		view_apply_tag_visibility(view);
 	}
 	if(ImGui::Selectable("Hide all but this category")) {
 		view_set_all_category_visibility(view, false);
@@ -862,6 +863,7 @@ void UIRecordedView_LogPopup(view_t *view, view_log_t *viewLog)
 		recorded_category_t *recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
 		view_category_t *viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
 		viewCategory->visible = true;
+		view_apply_tag_visibility(view);
 	}
 
 	PopUIFont();
