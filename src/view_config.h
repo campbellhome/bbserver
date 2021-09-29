@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -29,6 +29,8 @@ view_config_thread_t *view_find_config_thread(view_t *view, const char *name);
 
 void view_apply_config_file(view_config_file_t *ct, view_file_t *vt);
 view_config_file_t *view_find_config_file(view_t *view, const char *name);
+
+sb_t view_session_config_get_path(const char *sessionPath);
 
 #if defined(__cplusplus)
 }

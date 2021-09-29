@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -103,6 +103,37 @@ typedef struct view_persistent_logs_s {
 	u32 allocated;
 	view_persistent_log_t *data;
 } view_persistent_logs_t;
+
+AUTOJSON typedef struct view_config_log_s {
+	u32 sessionLogIndex;
+	u32 subLine;
+	b32 bookmarked;
+	b32 selected;
+} view_config_log_t;
+AUTOJSON typedef struct view_config_logs_s {
+	u32 count;
+	u32 allocated;
+	view_config_log_t *data;
+} view_config_logs_t;
+
+AUTOJSON typedef struct view_config_log_index_s {
+	u32 sessionLogIndex;
+	u32 subLine;
+} view_config_log_index_t;
+AUTOJSON typedef struct view_config_log_indices_s {
+	u32 count;
+	u32 allocated;
+	view_config_log_index_t *data;
+} view_config_log_indices_t;
+
+AUTOJSON typedef struct view_session_config_s {
+	view_config_log_indices_t selectedLogs;
+	view_config_log_indices_t bookmarkedLogs;
+	u32 version;
+	u32 pad;
+} view_session_config_t;
+
+enum { kViewSessionConfigVersion = 1 };
 
 AUTOJSON typedef struct view_config_thread_s {
 	sb_t name;
@@ -239,6 +270,8 @@ typedef struct view_column_s {
 
 typedef struct view_s {
 	view_config_t config;
+	view_session_config_t sessionConfig;
+	view_config_logs_t configLogs;
 	recorded_session_t *session;
 	sqlite3 *db;
 	sb_t sqlSelect;
@@ -258,6 +291,8 @@ typedef struct view_s {
 	b32 open;
 	b32 initialized;
 	u32 viewId;
+	u32 nextConfigBookmarkedLogIndex;
+	u32 nextConfigSelectedLogIndex;
 	u32 lastSessionLogIndex;
 	u32 lastVisibleSessionLogIndex;
 	u32 lastVisibleSessionIndexStart;

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #include "view_config.h"
@@ -16,6 +16,22 @@
 #include "va.h"
 #include "view.h"
 #include <stdlib.h>
+
+static b32 view_session_config_write(view_t *view);
+static b32 view_session_config_read(view_t *view);
+
+sb_t view_session_config_get_path(const char *sessionPath)
+{
+	sb_t path = sb_from_c_string(sessionPath);
+	if(path.data) {
+		char *ext = strrchr(path.data, '.');
+		if(ext) {
+			path.count = (u32)(ext + 1 - path.data);
+		}
+		sb_append(&path, ".config.json");
+	}
+	return path;
+}
 
 static sb_t view_config_get_path(recorded_session_t *session, b32 bExternalView, const char *appName)
 {
@@ -334,6 +350,8 @@ static void view_config_read_fixup(view_t *view)
 
 b32 view_config_write(view_t *view)
 {
+	view_session_config_write(view);
+
 	sb_t path = view_config_get_path(view->session, view->externalView, "bb");
 	BB_LOG("view::config", "write config to %s", sb_get(&path));
 	view_config_write_prep(view);
@@ -357,6 +375,8 @@ b32 view_config_write(view_t *view)
 
 b32 view_config_read(view_t *view)
 {
+	view_session_config_read(view);
+
 	b32 ret = false;
 	recording_t *recording = recordings_find_by_path(view->session->path);
 	view->externalView = recording && recording->recordingType == kRecordingType_ExternalFile;
@@ -394,4 +414,101 @@ void view_config_add_categories_to_session(recorded_session_t *session)
 		view_config_reset(&config);
 	}
 	sb_reset(&path);
+}
+
+static void view_session_config_write_prep(view_t *view)
+{
+	view_config_logs_reset(&view->configLogs);
+
+	for(u32 i = 0; i < view->persistentLogs.count; ++i) {
+		view_persistent_log_t *persistentLog = view->persistentLogs.data + i;
+
+		view_config_log_t *configLog = bba_add(view->configLogs, 1);
+		if(configLog) {
+			configLog->sessionLogIndex = persistentLog->sessionLogIndex;
+			configLog->subLine = persistentLog->subLine;
+			configLog->bookmarked = persistentLog->bookmarked;
+			configLog->selected = false;
+		}
+	}
+
+	for(u32 i = 0; i < view->visibleLogs.count; ++i) {
+		view_log_t *visibleLog = view->visibleLogs.data + i;
+		if(visibleLog->persistentLogIndex < view->configLogs.count) {
+			view_config_log_t *configLog = view->configLogs.data + visibleLog->persistentLogIndex;
+
+			// allocation failure in above loop could lead to mismatch, so guard against that
+			if(configLog->sessionLogIndex == visibleLog->sessionLogIndex && configLog->subLine == visibleLog->subLine) {
+				configLog->selected = visibleLog->selected;
+			}
+		}
+	}
+
+	view_session_config_reset(&view->sessionConfig);
+
+	for(u32 i = 0; i < view->configLogs.count; ++i) {
+		view_config_log_t *configLog = view->configLogs.data + i;
+		if(configLog->bookmarked) {
+			view_config_log_index_t *configLogIndex = bba_add(view->sessionConfig.bookmarkedLogs, 1);
+			if(configLogIndex) {
+				configLogIndex->sessionLogIndex = configLog->sessionLogIndex;
+				configLogIndex->subLine = configLog->subLine;
+			}
+		}
+		if(configLog->selected) {
+			view_config_log_index_t *configLogIndex = bba_add(view->sessionConfig.selectedLogs, 1);
+			if(configLogIndex) {
+				configLogIndex->sessionLogIndex = configLog->sessionLogIndex;
+				configLogIndex->subLine = configLog->subLine;
+			}
+		}
+	}
+}
+
+static void view_session_config_read_fixup(view_t *view)
+{
+	BB_UNUSED(view);
+}
+
+b32 view_session_config_write(view_t *view)
+{
+	sb_t path = view_session_config_get_path(view->session->path);
+	BB_LOG("view::config", "write session config to %s", sb_get(&path));
+	view_session_config_write_prep(view);
+	b32 result = false;
+	JSON_Value *val = json_serialize_view_session_config_t(&view->sessionConfig);
+	if(val) {
+		FILE *fp = fopen(sb_get(&path), "wb");
+		if(fp) {
+			char *serialized_string = json_serialize_to_string_pretty(val);
+			fputs(serialized_string, fp);
+			fclose(fp);
+			json_free_serialized_string(serialized_string);
+			result = true;
+		}
+	}
+	json_value_free(val);
+	sb_reset(&path);
+	BB_LOG("view::config", "write session config done");
+	return result;
+}
+
+b32 view_session_config_read(view_t *view)
+{
+	b32 ret = false;
+	view_session_config_reset(&view->sessionConfig);
+	sb_t path = view_session_config_get_path(view->session->path);
+	JSON_Value *val = json_parse_file(sb_get(&path));
+	if(val) {
+		BB_LOG("view::config", "read session config from %s", sb_get(&path));
+		view->sessionConfig = json_deserialize_view_session_config_t(val);
+		json_value_free(val);
+		ret = true;
+	}
+	sb_reset(&path);
+
+	view->sessionConfig.version = kViewSessionConfigVersion;
+	view_session_config_read_fixup(view);
+	BB_LOG("view::config", "read session config done");
+	return ret;
 }

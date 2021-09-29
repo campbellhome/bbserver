@@ -773,6 +773,101 @@ view_pieInstances_t view_pieInstances_clone(const view_pieInstances_t *src)
 	return dst;
 }
 
+void view_config_log_reset(view_config_log_t *val)
+{
+	if(val) {
+	}
+}
+view_config_log_t view_config_log_clone(const view_config_log_t *src)
+{
+	view_config_log_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.sessionLogIndex = src->sessionLogIndex;
+		dst.subLine = src->subLine;
+		dst.bookmarked = src->bookmarked;
+		dst.selected = src->selected;
+	}
+	return dst;
+}
+
+void view_config_logs_reset(view_config_logs_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			view_config_log_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+view_config_logs_t view_config_logs_clone(const view_config_logs_t *src)
+{
+	view_config_logs_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = view_config_log_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void view_config_log_index_reset(view_config_log_index_t *val)
+{
+	if(val) {
+	}
+}
+view_config_log_index_t view_config_log_index_clone(const view_config_log_index_t *src)
+{
+	view_config_log_index_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.sessionLogIndex = src->sessionLogIndex;
+		dst.subLine = src->subLine;
+	}
+	return dst;
+}
+
+void view_config_log_indices_reset(view_config_log_indices_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			view_config_log_index_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+view_config_log_indices_t view_config_log_indices_clone(const view_config_log_indices_t *src)
+{
+	view_config_log_indices_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = view_config_log_index_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void view_session_config_reset(view_session_config_t *val)
+{
+	if(val) {
+		view_config_log_indices_reset(&val->selectedLogs);
+		view_config_log_indices_reset(&val->bookmarkedLogs);
+	}
+}
+view_session_config_t view_session_config_clone(const view_session_config_t *src)
+{
+	view_session_config_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.selectedLogs = view_config_log_indices_clone(&src->selectedLogs);
+		dst.bookmarkedLogs = view_config_log_indices_clone(&src->bookmarkedLogs);
+		dst.version = src->version;
+		dst.pad = src->pad;
+	}
+	return dst;
+}
+
 void view_config_thread_reset(view_config_thread_t *val)
 {
 	if(val) {

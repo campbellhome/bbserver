@@ -522,6 +522,82 @@ view_pieInstances_t json_deserialize_view_pieInstances_t(JSON_Value *src)
 	return dst;
 }
 
+view_config_log_t json_deserialize_view_config_log_t(JSON_Value *src)
+{
+	view_config_log_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.sessionLogIndex = (u32)json_object_get_number(obj, "sessionLogIndex");
+			dst.subLine = (u32)json_object_get_number(obj, "subLine");
+			dst.bookmarked = json_object_get_boolean_safe(obj, "bookmarked");
+			dst.selected = json_object_get_boolean_safe(obj, "selected");
+		}
+	}
+	return dst;
+}
+
+view_config_logs_t json_deserialize_view_config_logs_t(JSON_Value *src)
+{
+	view_config_logs_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Array *arr = json_value_get_array(src);
+		if(arr) {
+			for(u32 i = 0; i < json_array_get_count(arr); ++i) {
+				bba_push(dst, json_deserialize_view_config_log_t(json_array_get_value(arr, i)));
+			}
+		}
+	}
+	return dst;
+}
+
+view_config_log_index_t json_deserialize_view_config_log_index_t(JSON_Value *src)
+{
+	view_config_log_index_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.sessionLogIndex = (u32)json_object_get_number(obj, "sessionLogIndex");
+			dst.subLine = (u32)json_object_get_number(obj, "subLine");
+		}
+	}
+	return dst;
+}
+
+view_config_log_indices_t json_deserialize_view_config_log_indices_t(JSON_Value *src)
+{
+	view_config_log_indices_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Array *arr = json_value_get_array(src);
+		if(arr) {
+			for(u32 i = 0; i < json_array_get_count(arr); ++i) {
+				bba_push(dst, json_deserialize_view_config_log_index_t(json_array_get_value(arr, i)));
+			}
+		}
+	}
+	return dst;
+}
+
+view_session_config_t json_deserialize_view_session_config_t(JSON_Value *src)
+{
+	view_session_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.selectedLogs = json_deserialize_view_config_log_indices_t(json_object_get_value(obj, "selectedLogs"));
+			dst.bookmarkedLogs = json_deserialize_view_config_log_indices_t(json_object_get_value(obj, "bookmarkedLogs"));
+			dst.version = (u32)json_object_get_number(obj, "version");
+			dst.pad = (u32)json_object_get_number(obj, "pad");
+		}
+	}
+	return dst;
+}
+
 view_config_thread_t json_deserialize_view_config_thread_t(JSON_Value *src)
 {
 	view_config_thread_t dst;
@@ -1146,6 +1222,73 @@ JSON_Value *json_serialize_view_pieInstances_t(const view_pieInstances_t *src)
 				json_array_append_value(arr, child);
 			}
 		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_view_config_log_t(const view_config_log_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_number(obj, "sessionLogIndex", src->sessionLogIndex);
+		json_object_set_number(obj, "subLine", src->subLine);
+		json_object_set_boolean(obj, "bookmarked", src->bookmarked);
+		json_object_set_boolean(obj, "selected", src->selected);
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_view_config_logs_t(const view_config_logs_t *src)
+{
+	JSON_Value *val = json_value_init_array();
+	JSON_Array *arr = json_value_get_array(val);
+	if(arr) {
+		for(u32 i = 0; i < src->count; ++i) {
+			JSON_Value *child = json_serialize_view_config_log_t(src->data + i);
+			if(child) {
+				json_array_append_value(arr, child);
+			}
+		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_view_config_log_index_t(const view_config_log_index_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_number(obj, "sessionLogIndex", src->sessionLogIndex);
+		json_object_set_number(obj, "subLine", src->subLine);
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_view_config_log_indices_t(const view_config_log_indices_t *src)
+{
+	JSON_Value *val = json_value_init_array();
+	JSON_Array *arr = json_value_get_array(val);
+	if(arr) {
+		for(u32 i = 0; i < src->count; ++i) {
+			JSON_Value *child = json_serialize_view_config_log_index_t(src->data + i);
+			if(child) {
+				json_array_append_value(arr, child);
+			}
+		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_view_session_config_t(const view_session_config_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "selectedLogs", json_serialize_view_config_log_indices_t(&src->selectedLogs));
+		json_object_set_value(obj, "bookmarkedLogs", json_serialize_view_config_log_indices_t(&src->bookmarkedLogs));
+		json_object_set_number(obj, "version", src->version);
+		json_object_set_number(obj, "pad", src->pad);
 	}
 	return val;
 }

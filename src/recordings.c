@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #include "recordings.h"
@@ -11,6 +11,7 @@
 #include "recordings_config.h"
 #include "sb.h"
 #include "va.h"
+#include "view_config.h"
 
 #include "bb_array.h"
 #include "bb_packet.h"
@@ -338,6 +339,21 @@ static b32 recordings_delete_by_id_internal(u32 id, recordings_t *recordings)
 				}
 			}
 			sb_reset(&logPath);
+
+			sb_t configPath = view_session_config_get_path(path);
+			if(configPath.data) {
+				ret = DeleteFileA(configPath.data);
+				if(ret) {
+					BB_LOG("Recordings", "Deleted '%s'", configPath.data);
+				} else {
+					DWORD err = GetLastError();
+					if(err != ERROR_FILE_NOT_FOUND && err != ERROR_PATH_NOT_FOUND) {
+						BB_ERROR("Recordings", "Failed to delete '%s' - errno is %d", configPath.data, err);
+					}
+				}
+				sb_reset(&configPath);
+			}
+
 			bba_erase(*recordings, i);
 			return true;
 		}

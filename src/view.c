@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #include "view.h"
@@ -211,6 +211,8 @@ void view_reset(view_t *view)
 	vfilter_reset(&view->vfilter);
 	bba_free(view->spans);
 	view_config_reset(&view->config);
+	view_session_config_reset(&view->sessionConfig);
+	view_config_logs_reset(&view->configLogs);
 	sb_reset(&view->consoleInput);
 	view_console_history_reset(&view->consoleHistory);
 	mb_shutdown(&view->messageboxes);
@@ -237,6 +239,8 @@ void view_restart(view_t *view)
 	bba_free(view->persistentLogs);
 	bba_free(view->spans);
 	view_config_reset(&view->config);
+	view_session_config_reset(&view->sessionConfig);
+	view_config_logs_reset(&view->configLogs);
 }
 
 void view_reset_column_offsets(view_t *view)
@@ -934,6 +938,48 @@ void view_set_all_pieinstance_visibility(view_t *view, b8 visible)
 	}
 }
 
+static b32 view_get_config_log_bookmarked(view_t *view, u32 sessionLogIndex, u32 subLine)
+{
+	while(view->nextConfigBookmarkedLogIndex < view->sessionConfig.bookmarkedLogs.count) {
+		view_config_log_index_t *logIndex = view->sessionConfig.bookmarkedLogs.data + view->nextConfigBookmarkedLogIndex;
+		if(logIndex->sessionLogIndex > sessionLogIndex)
+			break;
+
+		if(logIndex->sessionLogIndex == sessionLogIndex) {
+			if(logIndex->subLine > subLine)
+				break;
+
+			if(logIndex->subLine == subLine) {
+				return true;
+			}
+		}
+
+		++view->nextConfigBookmarkedLogIndex;
+	}
+	return false;
+}
+
+static b32 view_get_config_log_selected(view_t *view, u32 sessionLogIndex, u32 subLine)
+{
+	while(view->nextConfigSelectedLogIndex < view->sessionConfig.selectedLogs.count) {
+		view_config_log_index_t *logIndex = view->sessionConfig.selectedLogs.data + view->nextConfigSelectedLogIndex;
+		if(logIndex->sessionLogIndex > sessionLogIndex)
+			break;
+
+		if(logIndex->sessionLogIndex == sessionLogIndex) {
+			if(logIndex->subLine > subLine)
+				break;
+
+			if(logIndex->subLine == subLine) {
+				return true;
+			}
+		}
+
+		++view->nextConfigSelectedLogIndex;
+	}
+	return false;
+}
+
 void view_add_log(view_t *view, recorded_log_t *log)
 {
 	u32 i;
@@ -942,7 +988,7 @@ void view_add_log(view_t *view, recorded_log_t *log)
 		view_persistent_log_t *persistent = bba_add(view->persistentLogs, 1);
 		persistent->sessionLogIndex = log->sessionLogIndex;
 		persistent->subLine = i;
-		persistent->bookmarked = false;
+		persistent->bookmarked = view_get_config_log_bookmarked(view, persistent->sessionLogIndex, persistent->subLine);
 	}
 	u32 visibleLogCount = view->visibleLogs.count;
 	view_add_log_internal(view, log, persistentLogIndex);
@@ -950,6 +996,11 @@ void view_add_log(view_t *view, recorded_log_t *log)
 	if(visibleLogCount < view->visibleLogs.count) {
 		view->visibleLogsAdded = true;
 		view->lastVisibleSessionLogIndex = log->sessionLogIndex;
+
+		for(i = visibleLogCount; i < view->visibleLogs.count; ++i) {
+			view_log_t *visibleLog = view->visibleLogs.data + i;
+			visibleLog->selected = view_get_config_log_selected(view, visibleLog->sessionLogIndex, visibleLog->subLine);
+		}
 	}
 }
 
