@@ -104,37 +104,6 @@ typedef struct view_persistent_logs_s {
 	view_persistent_log_t *data;
 } view_persistent_logs_t;
 
-AUTOJSON typedef struct view_config_log_s {
-	u32 sessionLogIndex;
-	u32 subLine;
-	b32 bookmarked;
-	b32 selected;
-} view_config_log_t;
-AUTOJSON typedef struct view_config_logs_s {
-	u32 count;
-	u32 allocated;
-	view_config_log_t *data;
-} view_config_logs_t;
-
-AUTOJSON typedef struct view_config_log_index_s {
-	u32 sessionLogIndex;
-	u32 subLine;
-} view_config_log_index_t;
-AUTOJSON typedef struct view_config_log_indices_s {
-	u32 count;
-	u32 allocated;
-	view_config_log_index_t *data;
-} view_config_log_indices_t;
-
-AUTOJSON typedef struct view_session_config_s {
-	view_config_log_indices_t selectedLogs;
-	view_config_log_indices_t bookmarkedLogs;
-	u32 version;
-	u32 pad;
-} view_session_config_t;
-
-enum { kViewSessionConfigVersion = 1 };
-
 AUTOJSON typedef struct view_config_thread_s {
 	sb_t name;
 	b32 selected;
@@ -233,6 +202,38 @@ AUTOJSON typedef struct view_config_s {
 } view_config_t;
 
 enum { kViewConfigVersion = 2 };
+
+AUTOJSON typedef struct view_config_log_s {
+	u32 sessionLogIndex;
+	u32 subLine;
+	b32 bookmarked;
+	b32 selected;
+} view_config_log_t;
+AUTOJSON typedef struct view_config_logs_s {
+	u32 count;
+	u32 allocated;
+	view_config_log_t *data;
+} view_config_logs_t;
+
+AUTOJSON typedef struct view_config_log_index_s {
+	u32 sessionLogIndex;
+	u32 subLine;
+} view_config_log_index_t;
+AUTOJSON typedef struct view_config_log_indices_s {
+	u32 count;
+	u32 allocated;
+	view_config_log_index_t *data;
+} view_config_log_indices_t;
+
+AUTOJSON typedef struct view_session_config_s {
+	view_config_t viewConfig;
+	view_config_log_indices_t selectedLogs;
+	view_config_log_indices_t bookmarkedLogs;
+	u32 version;
+	u32 pad;
+} view_session_config_t;
+
+enum { kViewSessionConfigVersion = 1 };
 
 typedef struct view_span_s {
 	u32 start;

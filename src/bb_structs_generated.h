@@ -56,11 +56,6 @@ struct theme_config_s;
 struct uuidState_s;
 struct view_pieInstance_s;
 struct view_pieInstances_s;
-struct view_config_log_s;
-struct view_config_logs_s;
-struct view_config_log_index_s;
-struct view_config_log_indices_s;
-struct view_session_config_s;
 struct view_config_thread_s;
 struct view_config_threads_s;
 struct view_config_file_s;
@@ -73,6 +68,11 @@ struct view_console_history_entry_t;
 struct view_console_entries_t;
 struct view_console_history_t;
 struct view_config_s;
+struct view_config_log_s;
+struct view_config_logs_s;
+struct view_config_log_index_s;
+struct view_config_log_indices_s;
+struct view_session_config_s;
 struct vfilter_token_s;
 struct vfilter_tokens_s;
 struct vfilter_error_s;
@@ -123,11 +123,6 @@ typedef struct theme_config_s theme_config_t;
 typedef struct uuidState_s uuidState_t;
 typedef struct view_pieInstance_s view_pieInstance_t;
 typedef struct view_pieInstances_s view_pieInstances_t;
-typedef struct view_config_log_s view_config_log_t;
-typedef struct view_config_logs_s view_config_logs_t;
-typedef struct view_config_log_index_s view_config_log_index_t;
-typedef struct view_config_log_indices_s view_config_log_indices_t;
-typedef struct view_session_config_s view_session_config_t;
 typedef struct view_config_thread_s view_config_thread_t;
 typedef struct view_config_threads_s view_config_threads_t;
 typedef struct view_config_file_s view_config_file_t;
@@ -140,6 +135,11 @@ typedef struct view_console_history_entry_t view_console_history_entry_t;
 typedef struct view_console_entries_t view_console_history_entries_t;
 typedef struct view_console_history_t view_console_history_t;
 typedef struct view_config_s view_config_t;
+typedef struct view_config_log_s view_config_log_t;
+typedef struct view_config_logs_s view_config_logs_t;
+typedef struct view_config_log_index_s view_config_log_index_t;
+typedef struct view_config_log_indices_s view_config_log_indices_t;
+typedef struct view_session_config_s view_session_config_t;
 typedef struct vfilter_token_s vfilter_token_t;
 typedef struct vfilter_tokens_s vfilter_tokens_t;
 typedef struct vfilter_error_s vfilter_error_t;
@@ -190,11 +190,6 @@ void theme_config_reset(theme_config_t *val);
 void uuidState_reset(uuidState_t *val);
 void view_pieInstance_reset(view_pieInstance_t *val);
 void view_pieInstances_reset(view_pieInstances_t *val);
-void view_config_log_reset(view_config_log_t *val);
-void view_config_logs_reset(view_config_logs_t *val);
-void view_config_log_index_reset(view_config_log_index_t *val);
-void view_config_log_indices_reset(view_config_log_indices_t *val);
-void view_session_config_reset(view_session_config_t *val);
 void view_config_thread_reset(view_config_thread_t *val);
 void view_config_threads_reset(view_config_threads_t *val);
 void view_config_file_reset(view_config_file_t *val);
@@ -207,6 +202,11 @@ void view_console_history_entry_reset(view_console_history_entry_t *val);
 void view_console_history_entries_reset(view_console_history_entries_t *val);
 void view_console_history_reset(view_console_history_t *val);
 void view_config_reset(view_config_t *val);
+void view_config_log_reset(view_config_log_t *val);
+void view_config_logs_reset(view_config_logs_t *val);
+void view_config_log_index_reset(view_config_log_index_t *val);
+void view_config_log_indices_reset(view_config_log_indices_t *val);
+void view_session_config_reset(view_session_config_t *val);
 void vfilter_token_reset(vfilter_token_t *val);
 void vfilter_tokens_reset(vfilter_tokens_t *val);
 void vfilter_error_reset(vfilter_error_t *val);
@@ -343,21 +343,6 @@ view_pieInstance_t view_pieInstance_clone(const view_pieInstance_t *src);
 #if !defined(__cplusplus) || defined(DECLARE_view_pieInstances_clone)
 view_pieInstances_t view_pieInstances_clone(const view_pieInstances_t *src);
 #endif
-#if !defined(__cplusplus) || defined(DECLARE_view_config_log_clone)
-view_config_log_t view_config_log_clone(const view_config_log_t *src);
-#endif
-#if !defined(__cplusplus) || defined(DECLARE_view_config_logs_clone)
-view_config_logs_t view_config_logs_clone(const view_config_logs_t *src);
-#endif
-#if !defined(__cplusplus) || defined(DECLARE_view_config_log_index_clone)
-view_config_log_index_t view_config_log_index_clone(const view_config_log_index_t *src);
-#endif
-#if !defined(__cplusplus) || defined(DECLARE_view_config_log_indices_clone)
-view_config_log_indices_t view_config_log_indices_clone(const view_config_log_indices_t *src);
-#endif
-#if !defined(__cplusplus) || defined(DECLARE_view_session_config_clone)
-view_session_config_t view_session_config_clone(const view_session_config_t *src);
-#endif
 #if !defined(__cplusplus) || defined(DECLARE_view_config_thread_clone)
 view_config_thread_t view_config_thread_clone(const view_config_thread_t *src);
 #endif
@@ -393,6 +378,21 @@ view_console_history_t view_console_history_clone(const view_console_history_t *
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_view_config_clone)
 view_config_t view_config_clone(const view_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_log_clone)
+view_config_log_t view_config_log_clone(const view_config_log_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_logs_clone)
+view_config_logs_t view_config_logs_clone(const view_config_logs_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_log_index_clone)
+view_config_log_index_t view_config_log_index_clone(const view_config_log_index_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_config_log_indices_clone)
+view_config_log_indices_t view_config_log_indices_clone(const view_config_log_indices_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_view_session_config_clone)
+view_session_config_t view_session_config_clone(const view_session_config_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_vfilter_token_clone)
 vfilter_token_t vfilter_token_clone(const vfilter_token_t *src);

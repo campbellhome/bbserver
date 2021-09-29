@@ -350,11 +350,14 @@ static void view_config_read_fixup(view_t *view)
 
 b32 view_config_write(view_t *view)
 {
-	view_session_config_write(view);
-
 	sb_t path = view_config_get_path(view->session, view->externalView, "bb");
 	BB_LOG("view::config", "write config to %s", sb_get(&path));
 	view_config_write_prep(view);
+
+	view_session_config_reset(&view->sessionConfig);
+	view->sessionConfig.viewConfig = view_config_clone(&view->config);
+	view_session_config_write(view);
+
 	b32 result = false;
 	JSON_Value *val = json_serialize_view_config_t(&view->config);
 	if(val) {
@@ -375,20 +378,23 @@ b32 view_config_write(view_t *view)
 
 b32 view_config_read(view_t *view)
 {
-	view_session_config_read(view);
-
-	b32 ret = false;
-	recording_t *recording = recordings_find_by_path(view->session->path);
-	view->externalView = recording && recording->recordingType == kRecordingType_ExternalFile;
-	sb_t path = view_config_get_path(view->session, view->externalView, "bb");
-	JSON_Value *val = json_parse_file(sb_get(&path));
-	if(val) {
-		BB_LOG("view::config", "read config from %s", sb_get(&path));
-		view->config = json_deserialize_view_config_t(val);
-		json_value_free(val);
-		ret = true;
+	b32 ret = view_session_config_read(view);
+	if(ret) {
+		view->config = view_config_clone(&view->sessionConfig.viewConfig);
+		view_config_reset(&view->sessionConfig.viewConfig);
+	} else {
+		recording_t *recording = recordings_find_by_path(view->session->path);
+		view->externalView = recording && recording->recordingType == kRecordingType_ExternalFile;
+		sb_t path = view_config_get_path(view->session, view->externalView, "bb");
+		JSON_Value *val = json_parse_file(sb_get(&path));
+		if(val) {
+			BB_LOG("view::config", "read config from %s", sb_get(&path));
+			view->config = json_deserialize_view_config_t(val);
+			json_value_free(val);
+			ret = true;
+		}
+		sb_reset(&path);
 	}
-	sb_reset(&path);
 
 	view->config.version = kViewConfigVersion;
 	view_config_read_fixup(view);
@@ -443,8 +449,6 @@ static void view_session_config_write_prep(view_t *view)
 			}
 		}
 	}
-
-	view_session_config_reset(&view->sessionConfig);
 
 	for(u32 i = 0; i < view->configLogs.count; ++i) {
 		view_config_log_t *configLog = view->configLogs.data + i;
