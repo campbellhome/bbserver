@@ -371,8 +371,8 @@ b32 view_config_write(view_t *view)
 			}
 		}
 		json_value_free(val);
-		sb_reset(&path);
 	}
+	sb_reset(&path);
 	BB_LOG("view::config", "write config done");
 	return result;
 }
