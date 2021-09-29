@@ -356,22 +356,23 @@ b32 view_config_write(view_t *view)
 
 	view_session_config_reset(&view->sessionConfig);
 	view->sessionConfig.viewConfig = view_config_clone(&view->config);
-	view_session_config_write(view);
+	b32 result = view_session_config_write(view);
 
-	b32 result = false;
-	JSON_Value *val = json_serialize_view_config_t(&view->config);
-	if(val) {
-		FILE *fp = fopen(sb_get(&path), "wb");
-		if(fp) {
-			char *serialized_string = json_serialize_to_string_pretty(val);
-			fputs(serialized_string, fp);
-			fclose(fp);
-			json_free_serialized_string(serialized_string);
-			result = true;
+	if(!view->externalView) {
+		JSON_Value *val = json_serialize_view_config_t(&view->config);
+		if(val) {
+			FILE *fp = fopen(sb_get(&path), "wb");
+			if(fp) {
+				char *serialized_string = json_serialize_to_string_pretty(val);
+				fputs(serialized_string, fp);
+				fclose(fp);
+				json_free_serialized_string(serialized_string);
+				result = true;
+			}
 		}
+		json_value_free(val);
+		sb_reset(&path);
 	}
-	json_value_free(val);
-	sb_reset(&path);
 	BB_LOG("view::config", "write config done");
 	return result;
 }
