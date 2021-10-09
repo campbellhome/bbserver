@@ -1446,7 +1446,8 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				}
 			}
 			PopStyleColor();
-			if(bMenuOpen) {
+			bool bPopup = !bMenuOpen && ImGui::BeginPopupContextItem(menuText);
+			if(bPopup || bMenuOpen) {
 				if(ImGui::MenuItem("Copy filename to clipboard")) {
 					SetClipboardText(path_get_filename(view->session->path));
 				}
@@ -1474,7 +1475,12 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 						mb_queue(mb, &view->messageboxes);
 					}
 				}
-				ImGui::EndMenu();
+				if(bPopup) {
+					ImGui::EndPopup();
+				}
+				if(bMenuOpen) {
+					ImGui::EndMenu();
+				}
 			}
 			EndMenuBar();
 		}
