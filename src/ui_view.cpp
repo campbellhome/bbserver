@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_view.h"
@@ -53,6 +53,7 @@ typedef struct gathered_views_s {
 
 static gathered_views_t s_gathered_views;
 static sb_t s_strippedLine;
+static sb_t s_textSpan;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 static int s_visibleLogLines;
@@ -1050,7 +1051,9 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 				oldShadows = PushTextShadows(span.styleColor);
 			}
 			ImGui::PushStyleColor(ImGuiCol_Text, color);
-			TextShadowed(va("%.*s", span.len, span.start));
+			sb_clear(&s_textSpan);
+			sb_va(&s_textSpan, "%.*s", span.len, span.start);
+			TextShadowed(sb_get(&s_textSpan));
 			ImGui::PopStyleColor();
 			if(g_config.logColorUsage != kConfigColors_None) {
 				PopTextShadows(oldShadows);
@@ -1064,7 +1067,10 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 	}
 
 	ImFont *font = GetFont();
-	return textOffset + font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, decoded->packet.logText.text).x;
+	ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, decoded->packet.logText.text);
+	ImVec2 blankSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "            ");
+	float requiredWidth = textOffset + textSize.x + blankSize.x;
+	return requiredWidth;
 }
 
 static void UIRecordedView_ColumnContextMenu(view_t *view, const char *menuName)
@@ -1441,6 +1447,12 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			}
 			PopStyleColor();
 			if(bMenuOpen) {
+				if(ImGui::MenuItem("Copy filename to clipboard")) {
+					SetClipboardText(path_get_filename(view->session->path));
+				}
+				if(ImGui::MenuItem("Copy full path to clipboard")) {
+					SetClipboardText(view->session->path);
+				}
 				if(ImGui::MenuItem("Save text")) {
 					UIRecordedView_SaveLog(view, false, kColumnSpacer_Tab);
 				}
@@ -1744,6 +1756,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		if(BeginChild("logentries", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
 			SetScrollX(view->prevScrollX);
 			PushLogFont();
+			float contentWidth = 0.0f;
 			bool hovered = ImGui::IsWindowHovered();
 			ImGuiListClipper clipper((int)view->visibleLogs.count, ImGui::GetTextLineHeightWithSpacing());
 			while(clipper.Step()) {
@@ -1751,8 +1764,8 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				for(int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
 					view_log_t *viewLog = view->visibleLogs.data + i;
 					float width = UIRecordedView_LogLine(view, viewLog, textOffset, scrollDir);
-					if(view->scrollWidth < width) {
-						view->scrollWidth = width;
+					if(contentWidth < width) {
+						contentWidth = width;
 					}
 
 					view->lastVisibleSessionIndexStart = BB_MIN(view->lastVisibleSessionIndexStart, viewLog->sessionLogIndex);
@@ -1763,6 +1776,13 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 					}
 				}
 			}
+
+			if(contentWidth > view->scrollWidth) {
+				view->scrollWidth = contentWidth;
+			} else if(GetScrollX() == 0.0f) {
+				view->scrollWidth = contentWidth;
+			}
+
 			if(otherControlFocused) {
 				scrollDir = kVerticalScroll_None;
 			}
@@ -2074,4 +2094,5 @@ void UIRecordedView_Shutdown(void)
 {
 	bba_free(s_gathered_views);
 	sb_reset(&s_strippedLine);
+	sb_reset(&s_textSpan);
 }

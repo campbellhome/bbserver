@@ -811,6 +811,7 @@ void view_update_visible_logs(view_t *view)
 	view->visibleLogs.lastClickIndex = lastClickIndex;
 	view->lastSessionLogIndex = ~0U;
 	view->lastVisibleSessionLogIndex = ~0U;
+	view->scrollWidth = 0.0f;
 	vfilter_reset(&view->vfilter);
 	view->vfilter = view_filter_parse(sb_get(&view->config.filterInput));
 	view_update_sqlWhere(view);
