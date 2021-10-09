@@ -183,6 +183,7 @@ AUTOJSON typedef struct view_config_s {
 	view_config_files_t configFiles;
 	view_config_categories_t configCategories;
 	view_console_history_t consoleHistory;
+	view_console_history_t filterHistory;
 	sb_t filterInput;
 	sb_t spansInput;
 	b32 showVeryVerbose;
@@ -325,7 +326,7 @@ typedef struct view_s {
 	b8 visibleLogsAdded;
 	b8 externalView;
 	s8 redockCount;
-	u8 pad[1];
+	b8 filterPopupOpen;
 } view_t;
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);

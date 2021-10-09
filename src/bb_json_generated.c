@@ -701,6 +701,7 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.configFiles = json_deserialize_view_config_files_t(json_object_get_value(obj, "configFiles"));
 			dst.configCategories = json_deserialize_view_config_categories_t(json_object_get_value(obj, "configCategories"));
 			dst.consoleHistory = json_deserialize_view_console_history_t(json_object_get_value(obj, "consoleHistory"));
+			dst.filterHistory = json_deserialize_view_console_history_t(json_object_get_value(obj, "filterHistory"));
 			dst.filterInput = json_deserialize_sb_t(json_object_get_value(obj, "filterInput"));
 			dst.spansInput = json_deserialize_sb_t(json_object_get_value(obj, "spansInput"));
 			dst.showVeryVerbose = json_object_get_boolean_safe(obj, "showVeryVerbose");
@@ -1386,6 +1387,7 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_value(obj, "configFiles", json_serialize_view_config_files_t(&src->configFiles));
 		json_object_set_value(obj, "configCategories", json_serialize_view_config_categories_t(&src->configCategories));
 		json_object_set_value(obj, "consoleHistory", json_serialize_view_console_history_t(&src->consoleHistory));
+		json_object_set_value(obj, "filterHistory", json_serialize_view_console_history_t(&src->filterHistory));
 		json_object_set_value(obj, "filterInput", json_serialize_sb_t(&src->filterInput));
 		json_object_set_value(obj, "spansInput", json_serialize_sb_t(&src->spansInput));
 		json_object_set_boolean(obj, "showVeryVerbose", src->showVeryVerbose);

@@ -5,6 +5,7 @@
 #include "bb_array.h"
 #include "bb_colors.h"
 #include "bb_string.h"
+#include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
 #include "bbserver_utils.h"
 #include "fonts.h"
@@ -1304,6 +1305,139 @@ static void ShowFilterTooltip(view_t *view)
 	}
 }
 
+static void view_filter_history_entry_add(view_t *view, const char *command)
+{
+	view->config.filterHistory.pos = ~0U;
+	while(view->config.filterHistory.entries.count > 9) {
+		bba_erase(view->config.filterHistory.entries, 0);
+	}
+	for(u32 i = 0; i < view->config.filterHistory.entries.count; ++i) {
+		view_console_history_entry_t *entry = view->config.filterHistory.entries.data + i;
+		const char *entryCommand = sb_get(&entry->command);
+		if(!bb_stricmp(entryCommand, command)) {
+			view_console_history_entry_reset(entry);
+			bba_erase(view->config.filterHistory.entries, i);
+			break;
+		}
+	}
+	view_console_history_entry_t newEntry = { BB_EMPTY_INITIALIZER };
+	sb_append(&newEntry.command, command);
+	bba_push(view->config.filterHistory.entries, newEntry);
+	sb_reset(&view->consoleInput);
+	view->consoleRequestActive = true;
+}
+
+static void UIRecordedView_ApplyFilter(view_t *view)
+{
+	const char *filterText = sb_get(&view->config.filterInput);
+	view->filterPopupOpen = 0;
+	view->visibleLogsDirty = true;
+	view->config.filterActive = true;
+	view_filter_history_entry_add(view, filterText);
+	BB_LOG("Debug", "Set filter to '%s'\n", filterText);
+}
+
+static void UIRecordedView_FilterItem(view_t *view, const char *filterText)
+{
+	bool selected = (!strcmp(sb_get(&view->config.filterInput), filterText));
+	if(ImGui::Selectable(filterText, &selected)) {
+		sb_clear(&view->config.filterInput);
+		sb_append(&view->config.filterInput, filterText);
+		UIRecordedView_ApplyFilter(view);
+	}
+}
+
+static int UIRecordedView_FilterInputCallback(ImGuiInputTextCallbackData *CallbackData)
+{
+	view_t *view = (view_t *)CallbackData->UserData;
+	switch(CallbackData->EventFlag) {
+	case ImGuiInputTextFlags_CallbackCharFilter:
+		if(CallbackData->EventChar == '`')
+			return 1;
+		break;
+
+	case ImGuiInputTextFlags_CallbackCompletion:
+		break;
+
+	case ImGuiInputTextFlags_CallbackHistory:
+		if(view->config.filterHistory.entries.count) {
+			u32 prevHistoryPos = view->config.filterHistory.pos;
+			if(CallbackData->EventKey == ImGuiKey_DownArrow) {
+				if(view->config.filterHistory.pos == ~0U) {
+					view->config.filterHistory.pos = view->config.filterHistory.entries.count - 1;
+				} else if(view->config.filterHistory.pos) {
+					--view->config.filterHistory.pos;
+				}
+			} else if(CallbackData->EventKey == ImGuiKey_UpArrow) {
+				if(view->config.filterHistory.pos != ~0U) {
+					++view->config.filterHistory.pos;
+					if(view->config.filterHistory.pos >= view->config.filterHistory.entries.count) {
+						view->config.filterHistory.pos = ~0U;
+					}
+				}
+			}
+			if(prevHistoryPos != view->config.filterHistory.pos) {
+				const char *command = (view->config.filterHistory.pos == ~0U) ? "" : sb_get(&view->config.filterHistory.entries.data[view->config.filterHistory.pos].command);
+				int len = (int)bb_strncpy(CallbackData->Buf, command, (size_t)CallbackData->BufSize);
+				CallbackData->CursorPos = len;
+				CallbackData->SelectionStart = len;
+				CallbackData->SelectionEnd = len;
+				CallbackData->BufTextLen = len;
+				CallbackData->BufDirty = true;
+			}
+			break;
+		}
+
+	default:
+		break;
+	}
+	return 0;
+}
+
+static bool UIRecordedView_UpdateFilter(view_t *view)
+{
+	const ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+	if(ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter, &UIRecordedView_FilterInputCallback, view)) {
+		UIRecordedView_ApplyFilter(view);
+	}
+	bool filterActive = ImGui::IsItemActive();
+	bool filterWindowActive = false;
+	bool filterPopupWasOpen = view->filterPopupOpen != 0;
+	if(filterActive) {
+		view->filterPopupOpen = true;
+	}
+	if(view->filterPopupOpen && view->config.filterHistory.entries.count > 0) {
+		ImGuiCond filterPopupFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
+		if(ImGui::Begin("###FilterPopup", &view->filterPopupOpen, filterPopupFlags)) {
+			if(ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
+				filterWindowActive = true;
+			}
+			for(u32 i = 0; i < view->config.filterHistory.entries.count; ++i) {
+				u32 reverseIndex = view->config.filterHistory.entries.count - i - 1;
+				UIRecordedView_FilterItem(view, sb_get(&view->config.filterHistory.entries.data[reverseIndex].command));
+			}
+			ImGui::End();
+		}
+	}
+	if(!filterActive && !filterWindowActive && filterPopupWasOpen && !ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+		view->filterPopupOpen = 0;
+		view->config.filterHistory.pos = ~0U;
+	}
+	Fonts_CacheGlyphs(sb_get(&view->config.filterInput));
+	const bool filterFocused = IsItemActive() && Imgui_Core_HasFocus();
+	if(filterFocused) {
+		Imgui_Core_RequestRender();
+	}
+	if(ImGui::IsTooltipActive()) {
+		BeginTooltip();
+		PushUIFont();
+		ShowFilterTooltip(view);
+		PopUIFont();
+		EndTooltip();
+	}
+	return filterFocused || view->filterPopupOpen;
+}
+
 static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 {
 	recorded_session_t *session = view->session;
@@ -1578,23 +1712,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			BB_LOG("Debug", "Set filterActive to '%d' for '%s'\n", view->config.filterActive, applicationName);
 		}
 		ImGui::SameLine();
-		if(ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
-			view->visibleLogsDirty = true;
-			view->config.filterActive = true;
-			BB_LOG("Debug", "Set filter to '%s' for '%s'\n", sb_get(&view->config.filterInput), applicationName);
-		}
-		Fonts_CacheGlyphs(sb_get(&view->config.filterInput));
-		const bool filterFocused = IsItemActive() && Imgui_Core_HasFocus();
-		if(filterFocused) {
-			Imgui_Core_RequestRender();
-		}
-		if(ImGui::IsTooltipActive()) {
-			BeginTooltip();
-			PushUIFont();
-			ShowFilterTooltip(view);
-			PopUIFont();
-			EndTooltip();
-		}
+		const bool filterFocused = UIRecordedView_UpdateFilter(view);
 		ImGui::SameLine();
 		if(ImGui::Button("?###FilterHelp")) {
 			view->config.showFilterHelp = !view->config.showFilterHelp;
