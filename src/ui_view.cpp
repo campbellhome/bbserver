@@ -19,6 +19,7 @@
 #include "recorded_session.h"
 #include "recordings.h"
 #include "sb.h"
+#include "site_config.h"
 #include "time_utils.h"
 #include "ui_config.h"
 #include "ui_loglevel_colorizer.h"
@@ -1327,23 +1328,32 @@ static void view_filter_history_entry_add(view_t *view, const char *command)
 	view->consoleRequestActive = true;
 }
 
-static void UIRecordedView_ApplyFilter(view_t *view)
+static void UIRecordedView_ApplyFilter(view_t *view, const char *category)
 {
 	const char *filterText = sb_get(&view->config.filterInput);
 	view->filterPopupOpen = 0;
 	view->visibleLogsDirty = true;
 	view->config.filterActive = true;
-	view_filter_history_entry_add(view, filterText);
+	if (strcmp(category, "Site"))
+	{
+		view_filter_history_entry_add(view, filterText);
+	}
 	BB_LOG("Debug", "Set filter to '%s'\n", filterText);
 }
 
-static void UIRecordedView_FilterItem(view_t *view, const char *filterText)
+static void UIRecordedView_FilterItem(view_t *view, const char *filterName, const char *filterText, const char *category)
 {
+	sb_clear((&s_textSpan));
+	if(*filterName) {
+		sb_va(&s_textSpan, "%s: %s###%s_%s", filterName, filterText, category, filterName);
+	} else {
+		sb_va(&s_textSpan, "%s###%s_%s", filterText, category, filterText);
+	}
 	bool selected = (!strcmp(sb_get(&view->config.filterInput), filterText));
-	if(ImGui::Selectable(filterText, &selected)) {
+	if(ImGui::Selectable(sb_get(&s_textSpan), &selected)) {
 		sb_clear(&view->config.filterInput);
 		sb_append(&view->config.filterInput, filterText);
-		UIRecordedView_ApplyFilter(view);
+		UIRecordedView_ApplyFilter(view, category);
 	}
 }
 
@@ -1398,7 +1408,7 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 {
 	const ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 	if(ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter, &UIRecordedView_FilterInputCallback, view)) {
-		UIRecordedView_ApplyFilter(view);
+		UIRecordedView_ApplyFilter(view, "Input");
 	}
 	bool filterActive = ImGui::IsItemActive();
 	bool filterWindowActive = false;
@@ -1406,15 +1416,25 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 	if(filterActive) {
 		view->filterPopupOpen = true;
 	}
-	if(view->filterPopupOpen && view->config.filterHistory.entries.count > 0) {
-		ImGuiCond filterPopupFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
+	if(view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0)) {
+		SetNextWindowPos(ImVec2(cursorPos.x, cursorPos.y + ImGui::GetFrameHeightWithSpacing()), ImGuiCond_Always);
+		ImGuiCond filterPopupFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
 		if(ImGui::Begin("###FilterPopup", &view->filterPopupOpen, filterPopupFlags)) {
 			if(ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
 				filterWindowActive = true;
 			}
 			for(u32 i = 0; i < view->config.filterHistory.entries.count; ++i) {
 				u32 reverseIndex = view->config.filterHistory.entries.count - i - 1;
-				UIRecordedView_FilterItem(view, sb_get(&view->config.filterHistory.entries.data[reverseIndex].command));
+				const char *text = sb_get(&view->config.filterHistory.entries.data[reverseIndex].command);
+				UIRecordedView_FilterItem(view, "", text, "History");
+			}
+			if(g_site_config.namedFilters.count > 0) {
+				ImGui::Separator();
+				for(u32 i = 0; i < g_site_config.namedFilters.count; ++i) {
+					const char *name = sb_get(&g_site_config.namedFilters.data[i].name);
+					const char *text = sb_get(&g_site_config.namedFilters.data[i].text);
+					UIRecordedView_FilterItem(view, name, text, "Site");
+				}
 			}
 			ImGui::End();
 		}

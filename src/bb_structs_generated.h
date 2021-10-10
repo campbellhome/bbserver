@@ -39,6 +39,8 @@ struct _FILETIME;
 struct new_recording_s;
 struct recordings_tab_config_s;
 struct recordings_config_s;
+struct site_config_named_filter_t;
+struct site_config_named_filters_t;
 struct updateConfig_s;
 struct site_config_s;
 struct sbsHashEntry;
@@ -106,6 +108,8 @@ typedef struct _FILETIME FILETIME;
 typedef struct new_recording_s new_recording_t;
 typedef struct recordings_tab_config_s recordings_tab_config_t;
 typedef struct recordings_config_s recordings_config_t;
+typedef struct site_config_named_filter_t site_config_named_filter_t;
+typedef struct site_config_named_filters_t site_config_named_filters_t;
 typedef struct updateConfig_s updateConfig_t;
 typedef struct site_config_s site_config_t;
 typedef struct sbsHashEntry sbsHashEntry;
@@ -173,6 +177,8 @@ void FILETIME_reset(FILETIME *val);
 void new_recording_reset(new_recording_t *val);
 void recordings_tab_config_reset(recordings_tab_config_t *val);
 void recordings_config_reset(recordings_config_t *val);
+void site_config_named_filter_reset(site_config_named_filter_t *val);
+void site_config_named_filters_reset(site_config_named_filters_t *val);
 void updateConfig_reset(updateConfig_t *val);
 void site_config_reset(site_config_t *val);
 void sbsHashEntry_reset_from_loc(const char *file, int line, sbsHashEntry *val);
@@ -291,6 +297,12 @@ recordings_tab_config_t recordings_tab_config_clone(const recordings_tab_config_
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_recordings_config_clone)
 recordings_config_t recordings_config_clone(const recordings_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_site_config_named_filter_clone)
+site_config_named_filter_t site_config_named_filter_clone(const site_config_named_filter_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_site_config_named_filters_clone)
+site_config_named_filters_t site_config_named_filters_clone(const site_config_named_filters_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_updateConfig_clone)
 updateConfig_t updateConfig_clone(const updateConfig_t *src);

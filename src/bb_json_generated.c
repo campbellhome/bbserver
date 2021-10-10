@@ -325,6 +325,35 @@ recordings_config_t json_deserialize_recordings_config_t(JSON_Value *src)
 	return dst;
 }
 
+site_config_named_filter_t json_deserialize_site_config_named_filter_t(JSON_Value *src)
+{
+	site_config_named_filter_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.name = json_deserialize_sb_t(json_object_get_value(obj, "name"));
+			dst.text = json_deserialize_sb_t(json_object_get_value(obj, "text"));
+		}
+	}
+	return dst;
+}
+
+site_config_named_filters_t json_deserialize_site_config_named_filters_t(JSON_Value *src)
+{
+	site_config_named_filters_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Array *arr = json_value_get_array(src);
+		if(arr) {
+			for(u32 i = 0; i < json_array_get_count(arr); ++i) {
+				bba_push(dst, json_deserialize_site_config_named_filter_t(json_array_get_value(arr, i)));
+			}
+		}
+	}
+	return dst;
+}
+
 updateConfig_t json_deserialize_updateConfig_t(JSON_Value *src)
 {
 	updateConfig_t dst;
@@ -354,6 +383,7 @@ site_config_t json_deserialize_site_config_t(JSON_Value *src)
 		JSON_Object *obj = json_value_get_object(src);
 		if(obj) {
 			dst.updates = json_deserialize_updateConfig_t(json_object_get_value(obj, "updates"));
+			dst.namedFilters = json_deserialize_site_config_named_filters_t(json_object_get_value(obj, "namedFilters"));
 			dst.bugAssignee = json_deserialize_sb_t(json_object_get_value(obj, "bugAssignee"));
 			dst.bugProject = json_deserialize_sb_t(json_object_get_value(obj, "bugProject"));
 			dst.autodetectDevkits = json_object_get_boolean_safe(obj, "autodetectDevkits");
@@ -1058,6 +1088,32 @@ JSON_Value *json_serialize_recordings_config_t(const recordings_config_t *src)
 	return val;
 }
 
+JSON_Value *json_serialize_site_config_named_filter_t(const site_config_named_filter_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "name", json_serialize_sb_t(&src->name));
+		json_object_set_value(obj, "text", json_serialize_sb_t(&src->text));
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_site_config_named_filters_t(const site_config_named_filters_t *src)
+{
+	JSON_Value *val = json_value_init_array();
+	JSON_Array *arr = json_value_get_array(val);
+	if(arr) {
+		for(u32 i = 0; i < src->count; ++i) {
+			JSON_Value *child = json_serialize_site_config_named_filter_t(src->data + i);
+			if(child) {
+				json_array_append_value(arr, child);
+			}
+		}
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_updateConfig_t(const updateConfig_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -1082,6 +1138,7 @@ JSON_Value *json_serialize_site_config_t(const site_config_t *src)
 	JSON_Object *obj = json_value_get_object(val);
 	if(obj) {
 		json_object_set_value(obj, "updates", json_serialize_updateConfig_t(&src->updates));
+		json_object_set_value(obj, "namedFilters", json_serialize_site_config_named_filters_t(&src->namedFilters));
 		json_object_set_value(obj, "bugAssignee", json_serialize_sb_t(&src->bugAssignee));
 		json_object_set_value(obj, "bugProject", json_serialize_sb_t(&src->bugProject));
 		json_object_set_boolean(obj, "autodetectDevkits", src->autodetectDevkits);

@@ -427,6 +427,45 @@ recordings_config_t recordings_config_clone(const recordings_config_t *src)
 	return dst;
 }
 
+void site_config_named_filter_reset(site_config_named_filter_t *val)
+{
+	if(val) {
+		sb_reset(&val->name);
+		sb_reset(&val->text);
+	}
+}
+site_config_named_filter_t site_config_named_filter_clone(const site_config_named_filter_t *src)
+{
+	site_config_named_filter_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.name = sb_clone(&src->name);
+		dst.text = sb_clone(&src->text);
+	}
+	return dst;
+}
+
+void site_config_named_filters_reset(site_config_named_filters_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			site_config_named_filter_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+site_config_named_filters_t site_config_named_filters_clone(const site_config_named_filters_t *src)
+{
+	site_config_named_filters_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = site_config_named_filter_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
 void updateConfig_reset(updateConfig_t *val)
 {
 	if(val) {
@@ -458,6 +497,7 @@ void site_config_reset(site_config_t *val)
 {
 	if(val) {
 		updateConfig_reset(&val->updates);
+		site_config_named_filters_reset(&val->namedFilters);
 		sb_reset(&val->bugAssignee);
 		sb_reset(&val->bugProject);
 	}
@@ -467,6 +507,7 @@ site_config_t site_config_clone(const site_config_t *src)
 	site_config_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.updates = updateConfig_clone(&src->updates);
+		dst.namedFilters = site_config_named_filters_clone(&src->namedFilters);
 		dst.bugAssignee = sb_clone(&src->bugAssignee);
 		dst.bugProject = sb_clone(&src->bugProject);
 		dst.autodetectDevkits = src->autodetectDevkits;
