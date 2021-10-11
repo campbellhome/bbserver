@@ -1334,11 +1334,26 @@ static void UIRecordedView_ApplyFilter(view_t *view, const char *category)
 	view->filterPopupOpen = 0;
 	view->visibleLogsDirty = true;
 	view->config.filterActive = true;
-	if (strcmp(category, "Site"))
-	{
+	if(strcmp(category, "Site")) {
 		view_filter_history_entry_add(view, filterText);
 	}
 	BB_LOG("Debug", "Set filter to '%s'\n", filterText);
+}
+
+static ImVec2 UIRecordedView_SizeFilterItem(const char *filterName, const char *filterText, const char *category)
+{
+	BB_UNUSED(category);
+	sb_clear((&s_textSpan));
+	if(*filterName) {
+		sb_va(&s_textSpan, "%s: %s", filterName, filterText);
+	} else {
+		sb_va(&s_textSpan, "%s", filterText);
+	}
+	const char *filter = sb_get(&s_textSpan);
+
+	ImFont *font = GetFont();
+	ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, filter);
+	return textSize;
 }
 
 static void UIRecordedView_FilterItem(view_t *view, const char *filterName, const char *filterText, const char *category)
@@ -1406,7 +1421,8 @@ static int UIRecordedView_FilterInputCallback(ImGuiInputTextCallbackData *Callba
 
 static bool UIRecordedView_UpdateFilter(view_t *view)
 {
-	const ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+	const ImVec2 cursorPos = ImGui::GetCursorPos();
+	const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
 	if(ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter, &UIRecordedView_FilterInputCallback, view)) {
 		UIRecordedView_ApplyFilter(view, "Input");
 	}
@@ -1417,7 +1433,29 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 		view->filterPopupOpen = true;
 	}
 	if(view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0)) {
-		SetNextWindowPos(ImVec2(cursorPos.x, cursorPos.y + ImGui::GetFrameHeightWithSpacing()), ImGuiCond_Always);
+		ImVec2 totalSize;
+		for(u32 i = 0; i < view->config.filterHistory.entries.count; ++i) {
+			const char *text = sb_get(&view->config.filterHistory.entries.data[i].command);
+			ImVec2 size = UIRecordedView_SizeFilterItem("", text, "History");
+			totalSize.x = totalSize.x >= size.x ? totalSize.x : size.x;
+			totalSize.y += ImGui::GetFrameHeight();
+		}
+		if(g_site_config.namedFilters.count > 0) {
+			for(u32 i = 0; i < g_site_config.namedFilters.count; ++i) {
+				const char *name = sb_get(&g_site_config.namedFilters.data[i].name);
+				const char *text = sb_get(&g_site_config.namedFilters.data[i].text);
+				ImVec2 size = UIRecordedView_SizeFilterItem(name, text, "Site");
+				totalSize.x = totalSize.x >= size.x ? totalSize.x : size.x;
+				totalSize.y += ImGui::GetFrameHeight();
+			}
+		}
+		totalSize.y += ImGui::GetFrameHeightWithSpacing() - ImGui::GetFrameHeight();
+
+		ImVec2 contentRegionAvail = ImGui::GetContentRegionAvail() - cursorPos - ImVec2(0.0f, ImGui::GetFrameHeightWithSpacing());
+		ImVec2 popupSize(contentRegionAvail.x < totalSize.x ? contentRegionAvail.x : totalSize.x, contentRegionAvail.y < totalSize.y ? contentRegionAvail.y : totalSize.y);
+		SetNextWindowSize(popupSize);
+
+		SetNextWindowPos(ImVec2(cursorScreenPos.x, cursorScreenPos.y + ImGui::GetFrameHeightWithSpacing()), ImGuiCond_Always);
 		ImGuiCond filterPopupFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
 		if(ImGui::Begin("###FilterPopup", &view->filterPopupOpen, filterPopupFlags)) {
 			if(ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
