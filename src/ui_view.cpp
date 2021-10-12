@@ -1434,6 +1434,7 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 	}
 	if(view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0)) {
 		ImVec2 totalSize;
+		const float spacingHeight = ImGui::GetFrameHeightWithSpacing() - ImGui::GetFrameHeight();
 		for(u32 i = 0; i < view->config.filterHistory.entries.count; ++i) {
 			const char *text = sb_get(&view->config.filterHistory.entries.data[i].command);
 			ImVec2 size = UIRecordedView_SizeFilterItem("", text, "History");
@@ -1449,7 +1450,8 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 				totalSize.y += ImGui::GetFrameHeight();
 			}
 		}
-		totalSize.y += ImGui::GetFrameHeightWithSpacing() - ImGui::GetFrameHeight();
+		totalSize.x += 4.0f * spacingHeight;
+		totalSize.y += 3.0f * spacingHeight;
 
 		ImVec2 contentRegionAvail = ImGui::GetContentRegionAvail() - cursorPos - ImVec2(0.0f, ImGui::GetFrameHeightWithSpacing());
 		ImVec2 popupSize(contentRegionAvail.x < totalSize.x ? contentRegionAvail.x : totalSize.x, contentRegionAvail.y < totalSize.y ? contentRegionAvail.y : totalSize.y);
