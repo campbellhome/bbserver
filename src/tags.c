@@ -71,7 +71,6 @@ void tags_write(void)
 
 void tags_shutdown(void)
 {
-	tags_write();
 	tagData_reset(&g_tags);
 }
 
