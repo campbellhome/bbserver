@@ -36,10 +36,11 @@ sb_t view_session_config_get_path(const char *sessionPath)
 static sb_t view_config_get_path(recorded_session_t *session, b32 bExternalView, const char *appName)
 {
 	const char *filename = session->applicationFilename;
-	sb_t s = appdata_get(appName);
+	sb_t s = { BB_EMPTY_INITIALIZER };
 	if(bExternalView) {
-		sb_va(&s, "\\bb_external_view_%s.json", filename);
+		s = view_session_config_get_path(session->path);
 	} else {
+		s = appdata_get(appName);
 		sb_va(&s, "\\bb_view_%s.json", filename);
 	}
 	return s;
@@ -379,13 +380,14 @@ b32 view_config_write(view_t *view)
 
 b32 view_config_read(view_t *view)
 {
+	recording_t *recording = recordings_find_by_path(view->session->path);
+	view->externalView = recording && recording->recordingType == kRecordingType_ExternalFile;
+
 	b32 ret = view_session_config_read(view);
 	if(ret) {
 		view->config = view_config_clone(&view->sessionConfig.viewConfig);
 		view_config_reset(&view->sessionConfig.viewConfig);
 	} else {
-		recording_t *recording = recordings_find_by_path(view->session->path);
-		view->externalView = recording && recording->recordingType == kRecordingType_ExternalFile;
 		sb_t path = view_config_get_path(view->session, view->externalView, "bb");
 		JSON_Value *val = json_parse_file(sb_get(&path));
 		if(val) {
@@ -411,14 +413,24 @@ void view_config_add_categories_to_session(recorded_session_t *session)
 	JSON_Value *val = json_parse_file(sb_get(&path));
 	if(val) {
 		BB_LOG("view::config", "read config from %s for session categories", sb_get(&path));
-		view_config_t config = json_deserialize_view_config_t(val);
-		json_value_free(val);
+		if(bExternalView) {
+			view_session_config_t sessionConfig = json_deserialize_view_session_config_t(val);
 
-		for(u32 i = 0; i < config.configCategories.count; ++i) {
-			recorded_session_add_config_category(session, config.configCategories.data + i);
+			for(u32 i = 0; i < sessionConfig.viewConfig.configCategories.count; ++i) {
+				recorded_session_add_config_category(session, sessionConfig.viewConfig.configCategories.data + i);
+			}
+
+			view_session_config_reset(&sessionConfig);
+		} else {
+			view_config_t config = json_deserialize_view_config_t(val);
+
+			for(u32 i = 0; i < config.configCategories.count; ++i) {
+				recorded_session_add_config_category(session, config.configCategories.data + i);
+			}
+
+			view_config_reset(&config);
 		}
-
-		view_config_reset(&config);
+		json_value_free(val);
 	}
 	sb_reset(&path);
 }
