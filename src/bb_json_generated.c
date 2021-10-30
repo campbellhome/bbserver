@@ -1753,6 +1753,7 @@ vfilter_token_type_e json_deserialize_vfilter_token_type_e(JSON_Value *src)
 			if(!strcmp(str, "kVFT_Verbosity")) { dst = kVFT_Verbosity; }
 			if(!strcmp(str, "kVFT_Text")) { dst = kVFT_Text; }
 			if(!strcmp(str, "kVFT_Number")) { dst = kVFT_Number; }
+			if(!strcmp(str, "kVFT_NamedFilter")) { dst = kVFT_NamedFilter; }
 			if(!strcmp(str, "kVFT_Count")) { dst = kVFT_Count; }
 		}
 	}
@@ -1959,6 +1960,7 @@ JSON_Value *json_serialize_vfilter_token_type_e(const vfilter_token_type_e src)
 		case kVFT_Verbosity: str = "kVFT_Verbosity"; break;
 		case kVFT_Text: str = "kVFT_Text"; break;
 		case kVFT_Number: str = "kVFT_Number"; break;
+		case kVFT_NamedFilter: str = "kVFT_NamedFilter"; break;
 		case kVFT_Count: str = "kVFT_Count"; break;
 	}
 	JSON_Value *val = json_value_init_string(str);
@@ -2156,6 +2158,7 @@ vfilter_token_type_e vfilter_token_type_e_from_string(const char *src)
 		if(!strcmp(src, "kVFT_Verbosity")) { dst = kVFT_Verbosity; }
 		if(!strcmp(src, "kVFT_Text")) { dst = kVFT_Text; }
 		if(!strcmp(src, "kVFT_Number")) { dst = kVFT_Number; }
+		if(!strcmp(src, "kVFT_NamedFilter")) { dst = kVFT_NamedFilter; }
 		if(!strcmp(src, "kVFT_Count")) { dst = kVFT_Count; }
 	}
 	return dst;
@@ -2342,6 +2345,7 @@ const char *string_from_vfilter_token_type_e(const vfilter_token_type_e src)
 		case kVFT_Verbosity: return "kVFT_Verbosity"; break;
 		case kVFT_Text: return "kVFT_Text"; break;
 		case kVFT_Number: return "kVFT_Number"; break;
+		case kVFT_NamedFilter: return "kVFT_NamedFilter"; break;
 		case kVFT_Count: return "kVFT_Count"; break;
 	}
 	return "";

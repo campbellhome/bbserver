@@ -1261,9 +1261,32 @@ vfilter_results_t vfilter_results_clone(const vfilter_results_t *src)
 	return dst;
 }
 
+void named_vfilters_reset(named_vfilters_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			vfilter_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+named_vfilters_t named_vfilters_clone(const named_vfilters_t *src)
+{
+	named_vfilters_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = vfilter_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
 void vfilter_reset(vfilter_t *val)
 {
 	if(val) {
+		sb_reset(&val->name);
 		sb_reset(&val->input);
 		sb_reset(&val->tokenstream);
 		vfilter_tokens_reset(&val->tokens);
@@ -1276,6 +1299,7 @@ vfilter_t vfilter_clone(const vfilter_t *src)
 {
 	vfilter_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
+		dst.name = sb_clone(&src->name);
 		dst.input = sb_clone(&src->input);
 		dst.tokenstream = sb_clone(&src->tokenstream);
 		dst.tokens = vfilter_tokens_clone(&src->tokens);

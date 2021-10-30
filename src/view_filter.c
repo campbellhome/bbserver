@@ -7,6 +7,7 @@
 #include "bb_string.h"
 #include "bb_structs_generated.h"
 #include "recorded_session.h"
+#include "site_config.h"
 #include "str.h"
 #include "va.h"
 #include "view.h"
@@ -175,8 +176,14 @@ static u32 view_filter_validate_error(vfilter_t *filter, u32 index, const char *
 {
 	filter->valid = false;
 	if(filter->error.text.data == NULL) {
-		vfilter_token_t *token = filter->tokens.data + index;
-		filter->error.column = (s32)(token->span.start - input);
+		if(index >= filter->tokens.count) {
+			vfilter_token_t *token = filter->tokens.data + filter->tokens.count - 1;
+			filter->error.column = (s32)(token->span.end - input + 1);
+		} else {
+			vfilter_token_t *token = filter->tokens.data + index;
+			filter->error.column = (s32)(token->span.start - input);
+		}
+		BB_ASSERT(filter->error.column >= 0 && filter->error.column < 4096);
 		sb_reset(&filter->error.text);
 		sb_va(&filter->error.text, "%s in column %d", message, filter->error.column);
 	}
@@ -246,6 +253,9 @@ u32 view_filter_validate_tokens(vfilter_t *filter, u32 index, int *parenDepth, c
 			if(state == kVFVS_Empty || state == kVFVS_HasConjunction) {
 				if(!span_stricmp(token->span, span_from_string("not"))) {
 					token->type = kVFT_Not;
+				} else if(span_starts_with(token->span, "@", kSpanCaseInsentitive) && span_length(token->span) > 1) {
+					token->type = kVFT_NamedFilter;
+					state = kVFVS_HasRight;
 				} else {
 					state = kVFVS_HasLeft;
 					bLeftTokenIsNumeric = false;
@@ -381,6 +391,7 @@ static vfilter_token_classification_e view_filter_token_classify(vfilter_token_t
 	case kVFT_Text:
 	case kVFT_Number:
 	case kVFT_String:
+	case kVFT_NamedFilter:
 		return kVFC_Operand;
 	case kVFT_Invalid:
 	case kVFT_Count:
@@ -454,11 +465,12 @@ static void view_filter_convert_tokens_to_rpn(vfilter_t *filter)
 	vfilter_tokens_reset(&stack);
 }
 
-vfilter_t view_filter_parse(const char *input)
+static vfilter_t view_filter_parse_single(const char *name, const char *input)
 {
-	BB_LOG("filter", "parse: %s", input);
+	BB_LOG("filter", "parse: [%s] %s", name, input);
 
 	vfilter_t filter = { BB_EMPTY_INITIALIZER };
+	filter.name = sb_from_c_string(name);
 	filter.input = sb_from_c_string(input);
 	filter.tokenstream = sb_from_c_string(input);
 	filter.valid = true;
@@ -484,6 +496,15 @@ vfilter_t view_filter_parse(const char *input)
 				   !span_stricmp(filter.tokens.data[1].span, span_from_string("contains")) ||
 				   !span_stricmp(filter.tokens.data[1].span, span_from_string("startswith")) ||
 				   !span_stricmp(filter.tokens.data[1].span, span_from_string("endswith"))) {
+					bAllString = false;
+				}
+			}
+		}
+	}
+	if(bAllString) {
+		if(filter.tokens.count == 1 || filter.tokens.count >= 3) {
+			if(span_starts_with(filter.tokens.data[0].span, "@", kSpanCaseInsentitive)) {
+				if(span_length(filter.tokens.data[0].span) > 1) {
 					bAllString = false;
 				}
 			}
@@ -565,6 +586,137 @@ vfilter_t view_filter_parse(const char *input)
 			BB_ERROR("filter", "%s", error);
 		}
 	}
+
+	return filter;
+}
+
+static const char *view_filter_get_named_filter(span_t searchName)
+{
+	searchName.start++; // ignore the initial @
+	for(u32 i = 0; i < g_site_config.namedFilters.count; ++i) {
+		const char *filterName = sb_get(&g_site_config.namedFilters.data[i].name);
+		if(!span_stricmp(searchName, span_from_string(filterName))) {
+			const char *filterText = sb_get(&g_site_config.namedFilters.data[i].text);
+			return filterText;
+		}
+	}
+	return NULL;
+}
+
+static vfilter_t *named_filter_find(named_vfilters_t *namedFilters, const span_t searchName)
+{
+	for(u32 i = 0; i < namedFilters->count; ++i) {
+		const char *filterName = sb_get(&namedFilters->data[i].name);
+		if(!span_stricmp(searchName, span_from_string(filterName))) {
+			return namedFilters->data + i;
+		}
+	}
+	return NULL;
+}
+
+static const char *get_vfilter_token_text(vfilter_token_t *token)
+{
+	switch(token->type) {
+	case kVFT_Invalid: return "Invalid"; break;
+	case kVFT_OpenParen: return "("; break;
+	case kVFT_CloseParen: return ")"; break;
+	case kVFT_String: return va(" \"%.*s\"", span_length(token->span), token->span.start); break;
+	case kVFT_LessThan: return "<"; break;
+	case kVFT_LessThanEquals: return "<="; break;
+	case kVFT_Equals: return "=="; break;
+	case kVFT_NotEquals: return "!="; break;
+	case kVFT_GreaterThan: return ">"; break;
+	case kVFT_GreaterThanEquals: return ">="; break;
+	case kVFT_Matches: return "Matches"; break;
+	case kVFT_And: return "And"; break;
+	case kVFT_Or: return "Or"; break;
+	case kVFT_Not: return "Not"; break;
+	case kVFT_Contains: return "Contains"; break;
+	case kVFT_StartsWith: return "StartsWith"; break;
+	case kVFT_EndsWith: return "EndsWith"; break;
+	case kVFT_DeltaMillisecondsAbsolute: return va("%u", token->number); break;
+	case kVFT_DeltaMillisecondsViewRelative: return va("%u", token->number); break;
+	case kVFT_Filename: return "Filename"; break;
+	case kVFT_Thread: return "Thread"; break;
+	case kVFT_PIEInstance: return "PIEInstance"; break;
+	case kVFT_Category: return "Category"; break;
+	case kVFT_Verbosity: return "Verbosity"; break;
+	case kVFT_Text: return "Text"; break;
+	case kVFT_Number: return va("%u", token->number); break;
+	case kVFT_NamedFilter: return va(" \"@%.*s\"", span_length(token->span), token->span.start); break;
+	case kVFT_Count: return "Count"; break;
+	}
+	return "";
+}
+
+static sb_t view_filter_to_text(vfilter_t filter, named_vfilters_t *namedFilters)
+{
+	sb_t out = { BB_EMPTY_INITIALIZER };
+	for(u32 i = 0; i < filter.tokens.count; ++i) {
+		if(i) {
+			sb_append(&out, " ");
+		}
+		vfilter_token_t *token = filter.tokens.data + i;
+		if(filter.type == kVF_Standard) {
+			if(token->type == kVFT_NamedFilter) {
+				vfilter_t *namedFilter = named_filter_find(namedFilters, token->span);
+				if(namedFilter) {
+					sb_t namedText = view_filter_to_text(*namedFilter, namedFilters);
+					sb_append(&out, sb_get(&namedText));
+					sb_reset(&namedText);
+				} else {
+					sb_va(&out, "%s", get_vfilter_token_text(token));
+				}
+			} else {
+				sb_va(&out, "%s", get_vfilter_token_text(token));
+			}
+		} else {
+			sb_va(&out, " \"%.*s\"", span_length(token->span), token->span.start);
+		}
+	}
+	return out;
+}
+
+static vfilter_t view_filter_parse_with_named_filters(const char *name, const char *input, named_vfilters_t *namedFilters)
+{
+	vfilter_t filter = view_filter_parse_single(name, input);
+
+	if(filter.valid && filter.type == kVF_Standard) {
+		// first, resolve all named filters recursively
+		for(u32 i = 0; i < filter.tokens.count; ++i) {
+			vfilter_token_t *token = filter.tokens.data + i;
+			if(token->type == kVFT_NamedFilter) {
+				vfilter_t *existing = named_filter_find(namedFilters, token->span);
+				if(!existing) {
+					// put a placeholder into namedFilters with the correct name to prevent stack overflow on recursive named filters
+					vfilter_t placeholder = { BB_EMPTY_INITIALIZER };
+					placeholder.name = sb_from_span(token->span);
+					bba_push(*namedFilters, placeholder);
+
+					const char *text = view_filter_get_named_filter(token->span);
+					vfilter_t namedFilter = view_filter_parse_with_named_filters(sb_get(&placeholder.name), text ? text : "", namedFilters);
+
+					vfilter_reset(&placeholder);
+					bba_last(*namedFilters) = namedFilter;
+				}
+			}
+		}
+
+		// after named filters are resolved, build a composite filter string and parse that
+		sb_t composite = view_filter_to_text(filter, namedFilters);
+		vfilter_reset(&filter);
+		filter = view_filter_parse_single(name, sb_get(&composite));
+		sb_reset(&composite);
+	}
+
+	return filter;
+}
+
+vfilter_t view_filter_parse(const char *name, const char *input)
+{
+	named_vfilters_t namedFilters = { BB_EMPTY_INITIALIZER };
+	vfilter_t filter = view_filter_parse_with_named_filters(name, input, &namedFilters);
+	named_vfilters_reset(&namedFilters);
 
 	return filter;
 }
@@ -736,6 +888,14 @@ static void view_filter_evaluate_not(view_t *view)
 	view->vfilter.results.data[view->vfilter.results.count - 1].value = !view->vfilter.results.data[view->vfilter.results.count - 1].value;
 }
 
+static void view_filter_evaluate_named_filter(view_t *view, recorded_log_t *log, u32 operatorIndex)
+{
+	BB_UNUSED(log);
+	BB_UNUSED(operatorIndex);
+	vfilter_result_t result = { false };
+	bba_push(view->vfilter.results, result);
+}
+
 static b32 view_filter_visible_standard(view_t *view, recorded_log_t *log)
 {
 	view->vfilter.results.count = 0;
@@ -766,6 +926,10 @@ static b32 view_filter_visible_standard(view_t *view, recorded_log_t *log)
 
 		case kVFT_Not:
 			view_filter_evaluate_not(view);
+			break;
+
+		case kVFT_NamedFilter:
+			view_filter_evaluate_named_filter(view, log, i);
 			break;
 
 		case kVFT_String:

@@ -80,6 +80,7 @@ struct vfilter_tokens_s;
 struct vfilter_error_s;
 struct vfilter_result_s;
 struct vfilter_results_s;
+struct named_vfilters_s;
 struct vfilter_s;
 
 typedef struct sb_s sb_t;
@@ -149,6 +150,7 @@ typedef struct vfilter_tokens_s vfilter_tokens_t;
 typedef struct vfilter_error_s vfilter_error_t;
 typedef struct vfilter_result_s vfilter_result_t;
 typedef struct vfilter_results_s vfilter_results_t;
+typedef struct named_vfilters_s named_vfilters_t;
 typedef struct vfilter_s vfilter_t;
 
 void sb_reset_from_loc(const char *file, int line, sb_t *val);
@@ -218,6 +220,7 @@ void vfilter_tokens_reset(vfilter_tokens_t *val);
 void vfilter_error_reset(vfilter_error_t *val);
 void vfilter_result_reset(vfilter_result_t *val);
 void vfilter_results_reset(vfilter_results_t *val);
+void named_vfilters_reset(named_vfilters_t *val);
 void vfilter_reset(vfilter_t *val);
 
 #if !defined(__cplusplus) || defined(DECLARE_sb_clone)
@@ -420,6 +423,9 @@ vfilter_result_t vfilter_result_clone(const vfilter_result_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_vfilter_results_clone)
 vfilter_results_t vfilter_results_clone(const vfilter_results_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_named_vfilters_clone)
+named_vfilters_t named_vfilters_clone(const named_vfilters_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_vfilter_clone)
 vfilter_t vfilter_clone(const vfilter_t *src);

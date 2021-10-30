@@ -48,6 +48,7 @@ AUTOJSON typedef enum vfilter_token_type_e {
 	kVFT_Verbosity,
 	kVFT_Text,
 	kVFT_Number,
+	kVFT_NamedFilter,
 	kVFT_Count
 } vfilter_token_type_e;
 
@@ -79,7 +80,15 @@ AUTOSTRUCT typedef struct vfilter_results_s {
 	vfilter_result_t *data;
 } vfilter_results_t;
 
+typedef struct vfilter_s vfilter_t;
+AUTOSTRUCT typedef struct named_vfilters_s {
+	u32 count;
+	u32 allocated;
+	vfilter_t *data;
+} named_vfilters_t;
+
 AUTOSTRUCT typedef struct vfilter_s {
+	sb_t name;
 	sb_t input;
 	sb_t tokenstream;
 	vfilter_tokens_t tokens;
@@ -90,7 +99,7 @@ AUTOSTRUCT typedef struct vfilter_s {
 	b32 valid;
 } vfilter_t;
 
-vfilter_t view_filter_parse(const char *input);
+vfilter_t view_filter_parse(const char *name, const char *input);
 const char *view_filter_get_error_string(vfilter_t *filter);
 b32 view_filter_visible(view_t *view, recorded_log_t *log);
 

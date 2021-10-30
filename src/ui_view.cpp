@@ -1367,7 +1367,11 @@ static void UIRecordedView_FilterItem(view_t *view, const char *filterName, cons
 	bool selected = (!strcmp(sb_get(&view->config.filterInput), filterText));
 	if(ImGui::Selectable(sb_get(&s_textSpan), &selected)) {
 		sb_clear(&view->config.filterInput);
-		sb_append(&view->config.filterInput, filterText);
+		if(*filterName) {
+			sb_va(&view->config.filterInput, "@%s", filterName);
+		} else {
+			sb_append(&view->config.filterInput, filterText);
+		}
 		UIRecordedView_ApplyFilter(view, category);
 	}
 }
