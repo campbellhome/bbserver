@@ -592,7 +592,9 @@ static vfilter_t view_filter_parse_single(const char *name, const char *input)
 
 static const char *view_filter_get_named_filter(span_t searchName)
 {
-	searchName.start++; // ignore the initial @
+	if(*searchName.start == '@') {
+		searchName.start++; // ignore the initial '@'
+	}
 	for(u32 i = 0; i < g_config.namedFilters.count; ++i) {
 		const char *filterName = sb_get(&g_config.namedFilters.data[i].name);
 		if(!span_stricmp(searchName, span_from_string(filterName))) {

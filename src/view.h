@@ -327,6 +327,8 @@ typedef struct view_s {
 	b8 externalView;
 	s8 redockCount;
 	b8 filterPopupOpen;
+	b8 filterContextPopupOpen;
+	u8 pad[7];
 } view_t;
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);

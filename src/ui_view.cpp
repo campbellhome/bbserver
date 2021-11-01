@@ -56,11 +56,27 @@ typedef struct gathered_views_s {
 static gathered_views_t s_gathered_views;
 static sb_t s_strippedLine;
 static sb_t s_textSpan;
+static sb_t s_newFilterName;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 static int s_visibleLogLines;
 
 using namespace ImGui;
+
+enum class EViewFilterCategory : u32 {
+	Input,
+	History,
+	Config,
+	SiteConfig,
+	Count
+};
+static const char *g_viewFilterCategoryNames[]{
+	"Input",
+	"History",
+	"Config",
+	"SiteConfig",
+};
+BB_CTASSERT(BB_ARRAYSIZE(g_viewFilterCategoryNames) == (size_t)EViewFilterCategory::Count);
 
 enum {
 	kColorIndexNormal = 8,
@@ -1077,6 +1093,8 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 
 static void UIRecordedView_ColumnContextMenu(view_t *view, const char *menuName)
 {
+	if(view->filterPopupOpen || view->filterContextPopupOpen)
+		return;
 	if(ImGui::BeginPopup(menuName)) {
 		for(u32 i = 0; i < kColumn_Count; ++i) {
 			if(Checkbox(g_view_column_long_display_names[i], &view->columns[i].visible)) {
@@ -1328,13 +1346,13 @@ static void view_filter_history_entry_add(view_t *view, const char *command)
 	view->consoleRequestActive = true;
 }
 
-static void UIRecordedView_ApplyFilter(view_t *view, const char *category)
+static void UIRecordedView_ApplyFilter(view_t *view, EViewFilterCategory category)
 {
 	const char *filterText = sb_get(&view->config.filterInput);
 	view->filterPopupOpen = 0;
 	view->visibleLogsDirty = true;
 	view->config.filterActive = true;
-	if(strcmp(category, "Config") && strcmp(category, "Site")) {
+	if(category != EViewFilterCategory::Config && category != EViewFilterCategory::SiteConfig) {
 		view_filter_history_entry_add(view, filterText);
 	}
 	BB_LOG("Debug", "Set filter to '%s'\n", filterText);
@@ -1356,15 +1374,55 @@ static ImVec2 UIRecordedView_SizeFilterItem(const char *filterName, const char *
 	return textSize;
 }
 
-static void UIRecordedView_FilterItem(view_t *view, const char *filterName, const char *filterText, const char *category)
+static const char *view_filter_find_config_by_text(const char *searchText)
 {
+	for(u32 i = 0; i < g_config.namedFilters.count; ++i) {
+		const char *filterText = sb_get(&g_config.namedFilters.data[i].text);
+		if(!bb_stricmp(searchText, filterText)) {
+			const char *filterName = sb_get(&g_config.namedFilters.data[i].name);
+			return filterName;
+		}
+	}
+	return NULL;
+}
+
+static const char *view_filter_find_site_config_by_text(const char *searchText)
+{
+	for(u32 i = 0; i < g_site_config.namedFilters.count; ++i) {
+		const char *filterText = sb_get(&g_site_config.namedFilters.data[i].text);
+		if(!bb_stricmp(searchText, filterText)) {
+			const char *filterName = sb_get(&g_site_config.namedFilters.data[i].name);
+			return filterName;
+		}
+	}
+	return NULL;
+}
+
+static void UIRecordedView_AddNamedFilterToConfig(const char *name, const char *text)
+{
+	config_named_filter_t filter = { BB_EMPTY_INITIALIZER };
+	filter.name = sb_from_c_string(name);
+	filter.text = sb_from_c_string(text);
+	bba_push(g_config.namedFilters, filter);
+	config_write(&g_config);
+}
+
+static void UIRecordedView_FilterItem(view_t *view, const char *filterName, const char *filterText, u32 categoryIndex, EViewFilterCategory category, bool filterContextPopupWasOpen)
+{
+	const char *categoryName = g_viewFilterCategoryNames[(size_t)category];
 	sb_clear((&s_textSpan));
 	if(*filterName) {
-		sb_va(&s_textSpan, "%s: %s###%s_%s", filterName, filterText, category, filterName);
+		sb_va(&s_textSpan, "%s: %s###%s_%s", filterName, filterText, categoryName, filterName);
 	} else {
-		sb_va(&s_textSpan, "%s###%s_%s", filterText, category, filterText);
+		sb_va(&s_textSpan, "%s###%s_%s", filterText, categoryName, filterText);
 	}
-	bool selected = (!strcmp(sb_get(&view->config.filterInput), filterText));
+
+	const char *CategoryPopupName = va("Filter%s%uContextMenu", categoryName, categoryIndex);
+	bool bCategoryPopupOpen = ImGui::IsPopupOpen(CategoryPopupName);
+
+	bool bMatchesInput = (!strcmp(sb_get(&view->config.filterInput), filterText));
+	bool selected = (filterContextPopupWasOpen) ? bCategoryPopupOpen : bMatchesInput;
+
 	if(ImGui::Selectable(sb_get(&s_textSpan), &selected)) {
 		sb_clear(&view->config.filterInput);
 		if(*filterName) {
@@ -1373,6 +1431,38 @@ static void UIRecordedView_FilterItem(view_t *view, const char *filterName, cons
 			sb_append(&view->config.filterInput, filterText);
 		}
 		UIRecordedView_ApplyFilter(view, category);
+	}
+
+	if(category == EViewFilterCategory::History) {
+		const char *configName = view_filter_find_config_by_text(filterText);
+		const char *siteConfigName = view_filter_find_site_config_by_text(filterText);
+		if(ImGui::BeginPopupContextItem(CategoryPopupName)) {
+			view->filterContextPopupOpen = true;
+			if(configName) {
+				ImGui::Selectable(va("In config as %s", configName), false);
+			} else if(siteConfigName) {
+				ImGui::Selectable(va("In site config as %s", siteConfigName), false);
+			} else {
+				ImGui::TextUnformatted("New: ");
+				ImGui::SameLine();
+				if(ImGui::InputText("##NewFilter", &s_newFilterName, 64, ImGuiInputTextFlags_EnterReturnsTrue)) {
+					UIRecordedView_AddNamedFilterToConfig(sb_get(&s_newFilterName), filterText);
+					sb_reset(&s_newFilterName);
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			ImGui::EndPopup();
+		}
+	} else if(category == EViewFilterCategory::Config) {
+		if(ImGui::BeginPopupContextItem(CategoryPopupName)) {
+			view->filterContextPopupOpen = true;
+			if(ImGui::Selectable(va("Remove named filter %s", filterName), false)) {
+				config_named_filter_t *filter = g_config.namedFilters.data + categoryIndex;
+				config_named_filter_reset(filter);
+				bba_erase(g_config.namedFilters, categoryIndex);
+			}
+			ImGui::EndPopup();
+		}
 	}
 }
 
@@ -1428,14 +1518,16 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 	const ImVec2 cursorPos = ImGui::GetCursorPos();
 	const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
 	if(ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter, &UIRecordedView_FilterInputCallback, view)) {
-		UIRecordedView_ApplyFilter(view, "Input");
+		UIRecordedView_ApplyFilter(view, EViewFilterCategory::Input);
 	}
 	bool filterActive = ImGui::IsItemActive();
 	bool filterWindowActive = false;
 	bool filterPopupWasOpen = view->filterPopupOpen != 0;
-	if(filterActive) {
+	bool filterContextPopupWasOpen = view->filterContextPopupOpen != 0;
+	if(filterActive || view->filterContextPopupOpen) {
 		view->filterPopupOpen = true;
 	}
+	view->filterContextPopupOpen = false;
 	if(view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0 || g_config.namedFilters.count > 0)) {
 		ImVec2 totalSize;
 		const float spacingHeight = ImGui::GetFrameHeightWithSpacing() - ImGui::GetFrameHeight();
@@ -1479,14 +1571,14 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 			for(u32 i = 0; i < view->config.filterHistory.entries.count; ++i) {
 				u32 reverseIndex = view->config.filterHistory.entries.count - i - 1;
 				const char *text = sb_get(&view->config.filterHistory.entries.data[reverseIndex].command);
-				UIRecordedView_FilterItem(view, "", text, "History");
+				UIRecordedView_FilterItem(view, "", text, i, EViewFilterCategory::History, filterContextPopupWasOpen);
 			}
 			if(g_config.namedFilters.count > 0) {
 				ImGui::Separator();
 				for(u32 i = 0; i < g_config.namedFilters.count; ++i) {
 					const char *name = sb_get(&g_config.namedFilters.data[i].name);
 					const char *text = sb_get(&g_config.namedFilters.data[i].text);
-					UIRecordedView_FilterItem(view, name, text, "Config");
+					UIRecordedView_FilterItem(view, name, text, i, EViewFilterCategory::Config, filterContextPopupWasOpen);
 				}
 			}
 			if(g_site_config.namedFilters.count > 0) {
@@ -1494,7 +1586,7 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 				for(u32 i = 0; i < g_site_config.namedFilters.count; ++i) {
 					const char *name = sb_get(&g_site_config.namedFilters.data[i].name);
 					const char *text = sb_get(&g_site_config.namedFilters.data[i].text);
-					UIRecordedView_FilterItem(view, name, text, "Site");
+					UIRecordedView_FilterItem(view, name, text, i, EViewFilterCategory::SiteConfig, filterContextPopupWasOpen);
 				}
 			}
 			ImGui::End();
@@ -2300,4 +2392,5 @@ void UIRecordedView_Shutdown(void)
 	bba_free(s_gathered_views);
 	sb_reset(&s_strippedLine);
 	sb_reset(&s_textSpan);
+	sb_reset(&s_newFilterName);
 }
