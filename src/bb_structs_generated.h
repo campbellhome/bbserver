@@ -31,6 +31,8 @@ struct pathFixupEntry_s;
 struct pathFixupList_s;
 struct tag_tooltipConfig;
 struct tag_sizeConfig;
+struct config_named_filter_t;
+struct config_named_filters_t;
 struct config_s;
 struct deviceCodes_s;
 struct message_queue_message_s;
@@ -101,6 +103,8 @@ typedef struct pathFixupEntry_s pathFixupEntry_t;
 typedef struct pathFixupList_s pathFixupList_t;
 typedef struct tag_tooltipConfig tooltipConfig;
 typedef struct tag_sizeConfig sizeConfig;
+typedef struct config_named_filter_t config_named_filter_t;
+typedef struct config_named_filters_t config_named_filters_t;
 typedef struct config_s config_t;
 typedef struct deviceCodes_s deviceCodes_t;
 typedef struct message_queue_message_s message_queue_message_t;
@@ -171,6 +175,8 @@ void pathFixupEntry_reset(pathFixupEntry_t *val);
 void pathFixupList_reset(pathFixupList_t *val);
 void tooltipConfig_reset(tooltipConfig *val);
 void sizeConfig_reset(sizeConfig *val);
+void config_named_filter_reset(config_named_filter_t *val);
+void config_named_filters_reset(config_named_filters_t *val);
 void config_reset(config_t *val);
 void deviceCodes_reset(deviceCodes_t *val);
 void message_queue_message_reset(message_queue_message_t *val);
@@ -276,6 +282,12 @@ tooltipConfig tooltipConfig_clone(const tooltipConfig *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_sizeConfig_clone)
 sizeConfig sizeConfig_clone(const sizeConfig *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_config_named_filter_clone)
+config_named_filter_t config_named_filter_clone(const config_named_filter_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_config_named_filters_clone)
+config_named_filters_t config_named_filters_clone(const config_named_filters_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_config_clone)
 config_t config_clone(const config_t *src);

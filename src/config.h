@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2021 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -102,10 +102,22 @@ AUTOJSON AUTODEFAULT(kViewTileMode_Auto) typedef enum viewTileMode_t {
 	kViewTileMode_Count,
 } viewTileMode_t;
 
+AUTOJSON typedef struct config_named_filter_t {
+	sb_t name;
+	sb_t text;
+} config_named_filter_t;
+
+AUTOJSON typedef struct config_named_filters_t {
+	u32 count;
+	u32 allocated;
+	config_named_filter_t *data;
+} config_named_filters_t;
+
 AUTOJSON typedef struct config_s {
 	configWhitelist_t whitelist;
 	openTargetList_t openTargets;
 	pathFixupList_t pathFixups;
+	config_named_filters_t namedFilters;
 	fontConfig_t logFontConfig;
 	fontConfig_t uiFontConfig;
 	sb_t colorscheme;

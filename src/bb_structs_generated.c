@@ -243,12 +243,52 @@ sizeConfig sizeConfig_clone(const sizeConfig *src)
 	return dst;
 }
 
+void config_named_filter_reset(config_named_filter_t *val)
+{
+	if(val) {
+		sb_reset(&val->name);
+		sb_reset(&val->text);
+	}
+}
+config_named_filter_t config_named_filter_clone(const config_named_filter_t *src)
+{
+	config_named_filter_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.name = sb_clone(&src->name);
+		dst.text = sb_clone(&src->text);
+	}
+	return dst;
+}
+
+void config_named_filters_reset(config_named_filters_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			config_named_filter_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+config_named_filters_t config_named_filters_clone(const config_named_filters_t *src)
+{
+	config_named_filters_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = config_named_filter_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
 void config_reset(config_t *val)
 {
 	if(val) {
 		configWhitelist_reset(&val->whitelist);
 		openTargetList_reset(&val->openTargets);
 		pathFixupList_reset(&val->pathFixups);
+		config_named_filters_reset(&val->namedFilters);
 		fontConfig_reset(&val->logFontConfig);
 		fontConfig_reset(&val->uiFontConfig);
 		sb_reset(&val->colorscheme);
@@ -264,6 +304,7 @@ config_t config_clone(const config_t *src)
 		dst.whitelist = configWhitelist_clone(&src->whitelist);
 		dst.openTargets = openTargetList_clone(&src->openTargets);
 		dst.pathFixups = pathFixupList_clone(&src->pathFixups);
+		dst.namedFilters = config_named_filters_clone(&src->namedFilters);
 		dst.logFontConfig = fontConfig_clone(&src->logFontConfig);
 		dst.uiFontConfig = fontConfig_clone(&src->uiFontConfig);
 		dst.colorscheme = sb_clone(&src->colorscheme);

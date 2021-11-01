@@ -1334,7 +1334,7 @@ static void UIRecordedView_ApplyFilter(view_t *view, const char *category)
 	view->filterPopupOpen = 0;
 	view->visibleLogsDirty = true;
 	view->config.filterActive = true;
-	if(strcmp(category, "Site")) {
+	if(strcmp(category, "Config") && strcmp(category, "Site")) {
 		view_filter_history_entry_add(view, filterText);
 	}
 	BB_LOG("Debug", "Set filter to '%s'\n", filterText);
@@ -1436,7 +1436,7 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 	if(filterActive) {
 		view->filterPopupOpen = true;
 	}
-	if(view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0)) {
+	if(view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0 || g_config.namedFilters.count > 0)) {
 		ImVec2 totalSize;
 		const float spacingHeight = ImGui::GetFrameHeightWithSpacing() - ImGui::GetFrameHeight();
 		for(u32 i = 0; i < view->config.filterHistory.entries.count; ++i) {
@@ -1449,6 +1449,15 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 			for(u32 i = 0; i < g_site_config.namedFilters.count; ++i) {
 				const char *name = sb_get(&g_site_config.namedFilters.data[i].name);
 				const char *text = sb_get(&g_site_config.namedFilters.data[i].text);
+				ImVec2 size = UIRecordedView_SizeFilterItem(name, text, "Config");
+				totalSize.x = totalSize.x >= size.x ? totalSize.x : size.x;
+				totalSize.y += ImGui::GetFrameHeight();
+			}
+		}
+		if(g_config.namedFilters.count > 0) {
+			for(u32 i = 0; i < g_config.namedFilters.count; ++i) {
+				const char *name = sb_get(&g_config.namedFilters.data[i].name);
+				const char *text = sb_get(&g_config.namedFilters.data[i].text);
 				ImVec2 size = UIRecordedView_SizeFilterItem(name, text, "Site");
 				totalSize.x = totalSize.x >= size.x ? totalSize.x : size.x;
 				totalSize.y += ImGui::GetFrameHeight();
@@ -1471,6 +1480,14 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 				u32 reverseIndex = view->config.filterHistory.entries.count - i - 1;
 				const char *text = sb_get(&view->config.filterHistory.entries.data[reverseIndex].command);
 				UIRecordedView_FilterItem(view, "", text, "History");
+			}
+			if(g_config.namedFilters.count > 0) {
+				ImGui::Separator();
+				for(u32 i = 0; i < g_config.namedFilters.count; ++i) {
+					const char *name = sb_get(&g_config.namedFilters.data[i].name);
+					const char *text = sb_get(&g_config.namedFilters.data[i].text);
+					UIRecordedView_FilterItem(view, name, text, "Config");
+				}
 			}
 			if(g_site_config.namedFilters.count > 0) {
 				ImGui::Separator();
