@@ -8,15 +8,11 @@ Blackbox stores logs in a binary format, and tracks source file/line, thread, lo
 
 ---
 
-Cloning
-------
-Blackbox is organized using git submodules, so you'll want to clone with --recurse-submodules.
-
 Usage
 -----
-This repository is the main server that (game) clients connect to.  The Visual Studio .sln is in the vs/ subdirectory.  The client lib that integrates into a game client etc is in submodules/mc_imgui/submodules/mc_common/submodules/bbclient, which is sourced from https://github.com/campbellhome/bbclient
+This repository is the main server that (game) clients connect to.  The Visual Studio .sln is in the vs/ subdirectory.  The client lib that integrates into a game client etc is in bbclient/.
 
-To integrate Blackbox, simply include bbclient's include/bb.h and link to lib/v142/x64/bbclient_lib.lib.  As an alternative to linking to bbclient_lib.lib, you can instead include bbclient's src/*.c in your project, compiled as either C or C++.
+To integrate Blackbox, simply include bbclient/include/bb.h and link to bbclient/lib/bbclient_lib_Release_v142/bbclient_lib.lib.  As an alternative to linking to bbclient_lib.lib, you can instead include bbclient's src/*.c in your project, compiled as either C or C++.
 
 Minimal integration looks something like this:
 
