@@ -1,0 +1,11 @@
+#include "mc_imgui_example.h"
+
+IDI_MAINICON ICON "mc_imgui_example.ico"
+
+IDR_SYSTRAY_MENU MENU
+BEGIN
+    POPUP "POPUP"
+    BEGIN
+        MENUITEM "Exit mc_imgui_example", ID_SYSTRAY_EXIT
+    END
+END

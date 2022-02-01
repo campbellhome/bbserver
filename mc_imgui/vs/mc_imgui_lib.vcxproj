@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseASan|x64">
+      <Configuration>ReleaseASan</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{66884295-0814-45D5-8187-0FF01A6C0333}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>mc_imgui_lib</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <OutDir>..\lib\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</OutDir>
+    <IntDir>..\obj\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseASan|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <EnableASAN>true</EnableASAN>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseASan|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>$(ProjectName)_d</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseASan|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_asan</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ImDrawIdx=unsigned int;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>5045</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ImDrawIdx=unsigned int;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>5045</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseASan|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ImDrawIdx=unsigned int;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExceptionHandling>false</ExceptionHandling>
+      <DisableSpecificWarnings>5045</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\app_update.h" />
+    <ClInclude Include="..\include\fonts.h" />
+    <ClInclude Include="..\include\forkawesome-webfont.h" />
+    <ClInclude Include="..\include\imgui_core.h" />
+    <ClInclude Include="..\include\imgui_core_freetype.h" />
+    <ClInclude Include="..\include\imgui_image.h" />
+    <ClInclude Include="..\include\imgui_input_text.h" />
+    <ClInclude Include="..\include\imgui_themes.h" />
+    <ClInclude Include="..\include\imgui_utils.h" />
+    <ClInclude Include="..\include\keys.h" />
+    <ClInclude Include="..\include\mc_imgui_json_generated.h" />
+    <ClInclude Include="..\include\mc_imgui_structs_generated.h" />
+    <ClInclude Include="..\include\ui_message_box.h" />
+    <ClInclude Include="..\include\wrap_imgui.h" />
+    <ClInclude Include="..\include\wrap_imgui_internal.h" />
+    <ClInclude Include="..\include\wrap_shellscalingapi.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\imconfig.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\imgui.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\..\thirdparty\stb\stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\app_update.c" />
+    <ClCompile Include="..\src\fonts.cpp" />
+    <ClCompile Include="..\src\imgui_core.cpp" />
+    <ClCompile Include="..\src\imgui_core_freetype.c" />
+    <ClCompile Include="..\src\imgui_image.cpp" />
+    <ClCompile Include="..\src\imgui_input_text.cpp" />
+    <ClCompile Include="..\src\imgui_themes.cpp" />
+    <ClCompile Include="..\src\imgui_utils.cpp" />
+    <ClCompile Include="..\src\keys.c" />
+    <ClCompile Include="..\src\mc_imgui_json_generated.c" />
+    <ClCompile Include="..\src\mc_imgui_structs_generated.c" />
+    <ClCompile Include="..\src\ui_message_box.cpp" />
+    <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.cpp">
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_win32.cpp">
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\imgui\imgui.cpp">
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_demo.cpp">
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_draw.cpp">
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_tables.cpp">
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_widgets.cpp">
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\thirdparty\imgui\misc\natvis\imgui.natvis" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <PreBuildEvent>
+      <Command>..\..\mc_common\bin\mc_common_preproc_$(Configuration)_$(PlatformToolset)\mc_common_preproc.exe -config=..\mc_imgui_preproc.json</Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="mc_imgui_lib.props" />
+  <Import Project="..\..\mc_common\vs\mc_common_lib.props" />
+  <Import Project="..\..\bbclient\vs\bbclient_lib.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\mc_common\vs\mc_common_lib.vcxproj">
+      <Project>{383FD59A-3CD9-4ECC-9395-6EE453A114FA}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\mc_imgui_preproc.json" />
+    <None Include="..\src\forkawesome-webfont.inc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

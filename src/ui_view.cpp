@@ -1339,7 +1339,7 @@ static void view_filter_history_entry_add(view_t *view, const char *command)
 			break;
 		}
 	}
-	view_console_history_entry_t newEntry = { BB_EMPTY_INITIALIZER };
+	view_console_history_entry_t newEntry = {};
 	sb_append(&newEntry.command, command);
 	bba_push(view->config.filterHistory.entries, newEntry);
 	sb_reset(&view->consoleInput);
@@ -1400,7 +1400,7 @@ static const char *view_filter_find_site_config_by_text(const char *searchText)
 
 static void UIRecordedView_AddNamedFilterToConfig(const char *name, const char *text)
 {
-	config_named_filter_t filter = { BB_EMPTY_INITIALIZER };
+	config_named_filter_t filter = {};
 	filter.name = sb_from_c_string(name);
 	filter.text = sb_from_c_string(text);
 	bba_push(g_config.namedFilters, filter);
@@ -1775,7 +1775,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 				}
 				if(g_config.showDebugMenu) {
 					if(ImGui::MenuItem("Test message box")) {
-						messageBox mb = { BB_EMPTY_INITIALIZER };
+						messageBox mb = {};
 						sdict_add_raw(&mb.data, "title", u8"\uf06a Data Corruption");
 						sdict_add_raw(&mb.data, "text", va("Failed to deserialize %s", session->path));
 						sdict_add_raw(&mb.data, "button1", "Ok");

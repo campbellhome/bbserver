@@ -25,8 +25,8 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
-    <OutDir>..\bin\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>..\obj\$(PlatformToolset)\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>..\bin\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</OutDir>
+    <IntDir>..\obj\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -117,21 +117,21 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <PreBuildEvent>
-      <Command>..\submodules\mc_imgui\submodules\mc_common\bin\$(PlatformToolset)\mc_common_preproc\$(Platform)\$(Configuration)\mc_common_preproc.exe -config=..\mc_build_preproc.json</Command>
+      <Command>..\mc_common\bin\mc_common_preproc_$(Configuration)_$(PlatformToolset)\mc_common_preproc.exe -config=..\mc_build_preproc.json</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_commands.c" />
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_dependencies.c" />
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_json_generated.c" />
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_structs_generated.c" />
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_utils.c" />
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_commands.c" />
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_dependencies.c" />
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_json_generated.c" />
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_structs_generated.c" />
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_utils.c" />
     <ClCompile Include="..\src\bb_build_linux\bb_build_linux_main.c" />
   </ItemGroup>
-  <Import Project="..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.props" />
-  <Import Project="..\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.props" />
+  <Import Project="..\mc_common\vs\mc_common_lib.props" />
+  <Import Project="..\bbclient\vs\bbclient_lib.props" />
   <ItemGroup>
-    <ProjectReference Include="..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj">
+    <ProjectReference Include="..\mc_common\vs\mc_common_lib.vcxproj">
       <Project>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -140,11 +140,11 @@
     <None Include="..\_clang-format" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_commands.h" />
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_dependencies.h" />
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_json_generated.h" />
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_structs_generated.h" />
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_utils.h" />
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_commands.h" />
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_dependencies.h" />
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_json_generated.h" />
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_structs_generated.h" />
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

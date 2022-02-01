@@ -1,0 +1,1 @@
+wsl clang-format -i include/*.h src/*.c*

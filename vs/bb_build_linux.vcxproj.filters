@@ -14,19 +14,19 @@
     <ClCompile Include="..\src\bb_build_linux\bb_build_linux_main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_json_generated.c">
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_json_generated.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_structs_generated.c">
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_structs_generated.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_utils.c">
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_commands.c">
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_commands.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\submodules\mc_imgui\submodules\mc_common\src\mc_build\mc_build_dependencies.c">
+    <ClCompile Include="..\mc_common\src\mc_build\mc_build_dependencies.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,19 +37,19 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_json_generated.h">
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_json_generated.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_structs_generated.h">
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_structs_generated.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_utils.h">
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_commands.h">
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_commands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\submodules\mc_imgui\submodules\mc_common\include\mc_build\mc_build_dependencies.h">
+    <ClInclude Include="..\mc_common\include\mc_build\mc_build_dependencies.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

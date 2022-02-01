@@ -289,7 +289,7 @@ void BBServer_MainMenuBar(void)
 		if(g_config.showDebugMenu) {
 			if(ImGui::BeginMenu("Debug")) {
 				if(ImGui::MenuItem("Message box")) {
-					messageBox mb = { BB_EMPTY_INITIALIZER };
+					messageBox mb = {};
 					sdict_add_raw(&mb.data, "title", "Test Message Box");
 					sdict_add_raw(&mb.data, "text", "Test message box text\nNothing to see here...");
 					sdict_add_raw(&mb.data, "button1", "Ok");

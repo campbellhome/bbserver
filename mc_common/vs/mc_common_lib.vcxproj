@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseASan|x64">
+      <Configuration>ReleaseASan</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>mc_common_lib</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <OutDir>..\lib\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</OutDir>
+    <IntDir>..\obj\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <EnableASAN>false</EnableASAN>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseASan|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <EnableASAN>true</EnableASAN>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='ReleaseASan|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>$(ProjectName)_d</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseASan|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName)_asan</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <DisableSpecificWarnings>5045</DisableSpecificWarnings>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>5045</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseASan|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>5045</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\appdata.c" />
+    <ClCompile Include="..\src\bb_thread.c" />
+    <ClCompile Include="..\src\cmdline.c" />
+    <ClCompile Include="..\src\crt_leak_check.c" />
+    <ClCompile Include="..\src\dns_task.c" />
+    <ClCompile Include="..\src\env_utils.c" />
+    <ClCompile Include="..\src\filter.c" />
+    <ClCompile Include="..\src\json_utils.c" />
+    <ClCompile Include="..\src\mc_callstack\bug_reporter.c" />
+    <ClCompile Include="..\src\mc_callstack\callstack_utils.cpp">
+      <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\src\mc_callstack\exception_handler.c" />
+    <ClCompile Include="..\src\md5_rfc1321\md5c.c" />
+    <ClCompile Include="..\src\message_box.c" />
+    <ClCompile Include="..\src\output.c" />
+    <ClCompile Include="..\src\path_utils.c" />
+    <ClCompile Include="..\src\process_task.c" />
+    <ClCompile Include="..\src\process_utils.c" />
+    <ClCompile Include="..\src\py_parser.c" />
+    <ClCompile Include="..\src\random_stream.c" />
+    <ClCompile Include="..\src\sb.c" />
+    <ClCompile Include="..\src\sdict.c" />
+    <ClCompile Include="..\src\span.c" />
+    <ClCompile Include="..\src\str.c" />
+    <ClCompile Include="..\src\system_error_utils.c" />
+    <ClCompile Include="..\src\tasks.c" />
+    <ClCompile Include="..\src\thread_task.c" />
+    <ClCompile Include="..\src\tokenize.c" />
+    <ClCompile Include="..\src\update_utils.c" />
+    <ClCompile Include="..\src\uuid_rfc4122\sysdep.c" />
+    <ClCompile Include="..\src\uuid_rfc4122\uuid.c" />
+    <ClCompile Include="..\src\va.c" />
+    <ClCompile Include="..\src\file_utils.c" />
+    <ClCompile Include="..\src\time_utils.c" />
+    <ClCompile Include="..\..\thirdparty\parson\parson.c">
+      <WarningLevel>Level4</WarningLevel>
+      <DisableSpecificWarnings>5045;4232</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\sqlite\sqlite3.c">
+      <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\stackwalker\Main\StackWalker\StackWalker.cpp">
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\appdata.h" />
+    <ClInclude Include="..\include\bb_thread.h" />
+    <ClInclude Include="..\include\bb_wrap_dirent.h" />
+    <ClInclude Include="..\include\cmdline.h" />
+    <ClInclude Include="..\include\common.h" />
+    <ClInclude Include="..\include\crt_leak_check.h" />
+    <ClInclude Include="..\include\dlist.h" />
+    <ClInclude Include="..\include\dns_task.h" />
+    <ClInclude Include="..\include\env_utils.h" />
+    <ClInclude Include="..\include\file_utils.h" />
+    <ClInclude Include="..\include\filter.h" />
+    <ClInclude Include="..\include\json_utils.h" />
+    <ClInclude Include="..\include\mc_callstack\bug_reporter.h" />
+    <ClInclude Include="..\include\mc_callstack\callstack_utils.h" />
+    <ClInclude Include="..\include\mc_callstack\exception_handler.h" />
+    <ClInclude Include="..\include\md5_rfc1321\global.h" />
+    <ClInclude Include="..\include\md5_rfc1321\md5.h" />
+    <ClInclude Include="..\include\message_box.h" />
+    <ClInclude Include="..\include\output.h" />
+    <ClInclude Include="..\include\path_utils.h" />
+    <ClInclude Include="..\include\process_task.h" />
+    <ClInclude Include="..\include\process_utils.h" />
+    <ClInclude Include="..\include\py_parser.h" />
+    <ClInclude Include="..\include\random_stream.h" />
+    <ClInclude Include="..\include\sb.h" />
+    <ClInclude Include="..\include\sdict.h" />
+    <ClInclude Include="..\include\span.h" />
+    <ClInclude Include="..\include\sqlite\wrap_sqlite3.h" />
+    <ClInclude Include="..\include\str.h" />
+    <ClInclude Include="..\include\system_error_utils.h" />
+    <ClInclude Include="..\include\tasks.h" />
+    <ClInclude Include="..\include\thread_task.h" />
+    <ClInclude Include="..\include\time_utils.h" />
+    <ClInclude Include="..\include\tokenize.h" />
+    <ClInclude Include="..\include\update_utils.h" />
+    <ClInclude Include="..\include\uuid_rfc4122\copyrt.h" />
+    <ClInclude Include="..\include\uuid_rfc4122\sysdep.h" />
+    <ClInclude Include="..\include\uuid_rfc4122\uuid.h" />
+    <ClInclude Include="..\include\uuid_rfc4122\uuid_struct.h" />
+    <ClInclude Include="..\include\va.h" />
+    <ClInclude Include="..\..\thirdparty\parson\parson.h" />
+    <ClInclude Include="..\..\thirdparty\sqlite\sqlite3.h" />
+    <ClInclude Include="..\..\thirdparty\sqlite\sqlite3ext.h" />
+    <ClInclude Include="..\..\thirdparty\stackwalker\Main\StackWalker\StackWalker.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\src\uuid_rfc4122\rfc4122.txt" />
+    <Text Include="..\src\uuid_rfc4122\utest.txt" />
+  </ItemGroup>
+  <Import Project="mc_common_lib.props" />
+  <Import Project="..\..\bbclient\vs\bbclient_lib.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\bbclient\vs\bbclient_lib.vcxproj">
+      <Project>{383FD59A-3CD9-4ECC-9395-6EE453A114FA}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

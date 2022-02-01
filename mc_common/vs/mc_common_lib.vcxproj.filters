@@ -1,0 +1,299 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\appdata.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bb_thread.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\cmdline.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dns_task.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\env_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\file_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\filter.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\message_box.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\output.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\path_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\process_task.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\process_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\py_parser.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\random_stream.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sdict.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\span.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\str.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tasks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thread_task.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\time_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tokenize.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\update_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\va.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\uuid_rfc4122\uuid.c">
+      <Filter>Source Files\uuid_rfc4122</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\md5_rfc1321\md5c.c">
+      <Filter>Source Files\md5_rfc1321</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\uuid_rfc4122\sysdep.c">
+      <Filter>Source Files\uuid_rfc4122</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\parson\parson.c">
+      <Filter>Source Files\parson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\crt_leak_check.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\json_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mc_callstack\exception_handler.c">
+      <Filter>Source Files\mc_callstack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mc_callstack\bug_reporter.c">
+      <Filter>Source Files\mc_callstack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mc_callstack\callstack_utils.cpp">
+      <Filter>Source Files\mc_callstack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\stackwalker\Main\StackWalker\StackWalker.cpp">
+      <Filter>Source Files\StackWalker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\system_error_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\thirdparty\sqlite\sqlite3.c">
+      <Filter>Source Files\sqlite</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\appdata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\bb_thread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\bb_wrap_dirent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cmdline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dlist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\dns_task.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\env_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\file_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\filter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\message_box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\output.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\path_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\process_task.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\process_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\py_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\random_stream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\sb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\sdict.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\span.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\str.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\tasks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\thread_task.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\time_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\tokenize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\update_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\va.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\md5_rfc1321\md5.h">
+      <Filter>Header Files\md5_rfc1321</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\md5_rfc1321\global.h">
+      <Filter>Header Files\md5_rfc1321</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\uuid_rfc4122\copyrt.h">
+      <Filter>Header Files\uuid_rfc4122</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\uuid_rfc4122\sysdep.h">
+      <Filter>Header Files\uuid_rfc4122</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\uuid_rfc4122\uuid.h">
+      <Filter>Header Files\uuid_rfc4122</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\uuid_rfc4122\uuid_struct.h">
+      <Filter>Header Files\uuid_rfc4122</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\thirdparty\parson\parson.h">
+      <Filter>Header Files\parson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\crt_leak_check.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\json_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\mc_callstack\callstack_utils.h">
+      <Filter>Header Files\mc_callstack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\mc_callstack\exception_handler.h">
+      <Filter>Header Files\mc_callstack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\mc_callstack\bug_reporter.h">
+      <Filter>Header Files\mc_callstack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\thirdparty\stackwalker\Main\StackWalker\StackWalker.h">
+      <Filter>Header Files\StackWalker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\system_error_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\thirdparty\sqlite\sqlite3ext.h">
+      <Filter>Header Files\sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\thirdparty\sqlite\sqlite3.h">
+      <Filter>Header Files\sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\sqlite\wrap_sqlite3.h">
+      <Filter>Header Files\sqlite</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\src\uuid_rfc4122\rfc4122.txt">
+      <Filter>Source Files\uuid_rfc4122</Filter>
+    </Text>
+    <Text Include="..\src\uuid_rfc4122\utest.txt">
+      <Filter>Source Files\uuid_rfc4122</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{da73273d-9084-45f9-b022-56c7001c0d0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{81f6b3a5-6aa9-4fcd-a5c0-2c459a4ce971}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\uuid_rfc4122">
+      <UniqueIdentifier>{8fa6c085-564d-4b69-9a91-afc4cdf7d083}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\md5_rfc1321">
+      <UniqueIdentifier>{63ed7d94-f7c8-455b-ab24-b34803701b89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\md5_rfc1321">
+      <UniqueIdentifier>{dfb11e98-b729-49bf-bbc2-24c06abd734d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\uuid_rfc4122">
+      <UniqueIdentifier>{81cf8481-a228-4ae0-96de-a0be895c8206}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\parson">
+      <UniqueIdentifier>{2c5e6ae0-7403-4942-95dd-b6700d1c1da5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\parson">
+      <UniqueIdentifier>{07d4400e-a654-4742-82c5-b1450b3b3a1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\mc_callstack">
+      <UniqueIdentifier>{f36c266d-9bce-4de1-ad21-2a434ee43a13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\mc_callstack">
+      <UniqueIdentifier>{57150b12-66de-4106-adc2-68f981ce42ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\StackWalker">
+      <UniqueIdentifier>{6197c0ea-3b19-459b-8462-784197e038f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\StackWalker">
+      <UniqueIdentifier>{efda0b1b-d1f5-450a-ab1a-95ea5b965dfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\sqlite">
+      <UniqueIdentifier>{717365e7-77a4-4448-a0e0-40a5dc785c30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\sqlite">
+      <UniqueIdentifier>{2c9bd971-231e-4098-92cd-e8d20cb1335f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

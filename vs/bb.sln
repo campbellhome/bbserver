@@ -21,27 +21,27 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbupdater", "bbupdater.vcxp
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_lib", "..\submodules\mc_imgui\vs\mc_imgui_lib.vcxproj", "{66884295-0814-45D5-8187-0FF01A6C0333}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_lib", "..\mc_imgui\vs\mc_imgui_lib.vcxproj", "{66884295-0814-45D5-8187-0FF01A6C0333}"
 	ProjectSection(ProjectDependencies) = postProject
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 		{766B8754-81EE-4880-91CE-5DEAF459205F} = {766B8754-81EE-4880-91CE-5DEAF459205F}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_preproc", "..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_preproc.vcxproj", "{766B8754-81EE-4880-91CE-5DEAF459205F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_preproc", "..\mc_common\vs\mc_common_preproc.vcxproj", "{766B8754-81EE-4880-91CE-5DEAF459205F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_lib", "..\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_lib.vcxproj", "{383FD59A-3CD9-4ECC-9395-6EE453A114FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_lib", "..\bbclient\vs\bbclient_lib.vcxproj", "{383FD59A-3CD9-4ECC-9395-6EE453A114FA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_lib", "..\submodules\mc_imgui\submodules\mc_common\vs\mc_common_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_lib", "..\mc_common\vs\mc_common_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
 	ProjectSection(ProjectDependencies) = postProject
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_example_wchar", "..\submodules\mc_imgui\submodules\mc_common\submodules\bbclient\vs\bbclient_example_wchar.vcxproj", "{CF7689D6-2341-43F3-89C0-EB59791675AB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_example_wchar", "..\bbclient\vs\bbclient_example_wchar.vcxproj", "{CF7689D6-2341-43F3-89C0-EB59791675AB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_example", "..\submodules\mc_imgui\vs\mc_imgui_example.vcxproj", "{3C7E2D15-F723-4C73-AF12-C87A066522EE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_example", "..\mc_imgui\vs\mc_imgui_example.vcxproj", "{3C7E2D15-F723-4C73-AF12-C87A066522EE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

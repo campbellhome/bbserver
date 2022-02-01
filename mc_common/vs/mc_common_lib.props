@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <mc_common_lib_PropsDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</mc_common_lib_PropsDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(mc_common_lib_PropsDir)..\include;$(mc_common_lib_PropsDir)..\..\thirdparty;$(mc_common_lib_PropsDir)..\..\bbclient\include\bbclient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

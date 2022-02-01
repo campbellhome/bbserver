@@ -1,6 +1,6 @@
 .git/
 bin/
-!bin/v141/bb/x64/Release/bb_site_config.json
+!bin/v142/bb/x64/Release/bb_site_config.json
 lib/
 obj/
 src/a.out

@@ -83,7 +83,7 @@ static void view_console_history_entry_add(view_t *view, const char *command)
 			break;
 		}
 	}
-	view_console_history_entry_t newEntry = { BB_EMPTY_INITIALIZER };
+	view_console_history_entry_t newEntry = {};
 	sb_append(&newEntry.command, command);
 	bba_push(view->consoleHistory.entries, newEntry);
 	sb_reset(&view->consoleInput);
