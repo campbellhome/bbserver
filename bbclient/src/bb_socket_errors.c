@@ -1,14 +1,19 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
-#include "bbclient/bb_socket_errors.h"
+#if defined(_MSC_VER)
+__pragma(warning(disable : 4464)); // warning C4464: relative include path contains '..'
+#endif
+
+#include "../include/bb.h" // relative path so we don't rely on include path being set up for configurations that have BB_ENABLED 0
 
 #if BB_ENABLED
 
+#include "bbclient/bb_socket_errors.h"
+
 const char *bbnet_error_to_string(int err)
 {
-#define BBNET_SOCKET_ERROR_CASE(x) \
-	case x: return #x
+#define BBNET_SOCKET_ERROR_CASE(x) case x: return #x
 
 	switch(err) {
 		BBNET_SOCKET_ERROR_CASE(BBNET_EWOULDBLOCK);

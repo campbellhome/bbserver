@@ -1,7 +1,11 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
-#include "bb.h"
+#if defined(_MSC_VER)
+__pragma(warning(disable : 4464)); // warning C4464: relative include path contains '..'
+#endif
+
+#include "../include/bb.h" // relative path so we don't rely on include path being set up for configurations that have BB_ENABLED 0
 
 #if BB_ENABLED
 
