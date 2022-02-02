@@ -1,13 +1,9 @@
 // Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
-#if defined(_MSC_VER)
-__pragma(warning(disable : 4464)); // warning C4464: relative include path contains '..'
-#endif
+#if !defined(BB_ENABLED) || BB_ENABLED
 
-#include "../include/bb.h" // relative path so we don't rely on include path being set up for configurations that have BB_ENABLED 0
-
-#if BB_ENABLED
+#include "bb.h"
 
 #include "bbclient/bb_discovery_packet.h"
 #include "bbclient/bb_serialize.h"
