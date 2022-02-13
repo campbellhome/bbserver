@@ -608,7 +608,7 @@ void UITags_Update(view_t *view)
 			bHovered = bHovered || ImGui::IsItemHovered(ImGuiHoveredFlags_None);
 			ImGui::PopID();
 			if(ImGui::IsWindowFocused() && bHovered) {
-				if(ImGui::IsKeyPressed('A') && ImGui::GetIO().KeyCtrl) {
+				if(ImGui::IsKeyPressed(ImGuiKey_A) && ImGui::GetIO().KeyCtrl) {
 					for(u32 c = 0; c < view->categories.count; ++c) {
 						view->categories.data[c].selected = true;
 					}

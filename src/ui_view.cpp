@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_view.h"
@@ -13,7 +13,6 @@
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
-#include "keys.h"
 #include "message_queue.h"
 #include "path_utils.h"
 #include "recorded_session.h"
@@ -1798,7 +1797,8 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 
 		//Separator();
 
-		bool consoleVisible = view->session->outgoingMqId != mq_invalid_id();
+		bool consoleAvailable = (view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0;
+		bool consoleVisible = consoleAvailable && view->session->outgoingMqId != mq_invalid_id();
 		float consoleInputHeight = consoleVisible ? -ImGui::GetTextLineHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y * 2 : 0.0f;
 
 		bool categoriesChildFocused = false;
@@ -1875,7 +1875,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		DrawViewToggles(view, applicationName);
 
 		ImGui::PushItemWidth(400.0f);
-		if(hasFocus && ImGui::IsKeyPressed('F') && ImGui::GetIO().KeyCtrl) {
+		if(hasFocus && ImGui::IsKeyPressed(ImGuiKey_F) && ImGui::GetIO().KeyCtrl) {
 			ImGui::SetKeyboardFocusHere();
 		}
 		ImGui::TextUnformatted("Filter:");
@@ -1964,7 +1964,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 		b32 otherControlFocused = categoriesChildFocused || filterFocused || spansFocused || selectedHackFocused || view->consoleInputFocused;
 		b32 gotoWasVisible = view->gotoVisible;
 		if(hasFocus) {
-			if(ImGui::IsKeyPressed('G') && ImGui::GetIO().KeyCtrl) {
+			if(ImGui::IsKeyPressed(ImGuiKey_G) && ImGui::GetIO().KeyCtrl) {
 				gotoWasVisible = false;
 				if(view->gotoVisible) {
 					view->gotoViewRelative = !view->gotoViewRelative;
@@ -1976,11 +1976,11 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			} else if(ImGui::IsKeyPressed(ImGuiKey_Escape)) {
 				view->gotoVisible = false;
 			} else if(!otherControlFocused) {
-				if(ImGui::IsKeyPressed('A') && ImGui::GetIO().KeyCtrl) {
+				if(ImGui::IsKeyPressed(ImGuiKey_A) && ImGui::GetIO().KeyCtrl) {
 					UIRecordedView_Logs_SelectAll(view);
-				} else if(ImGui::IsKeyPressed('C') && ImGui::GetIO().KeyCtrl) {
+				} else if(ImGui::IsKeyPressed(ImGuiKey_C) && ImGui::GetIO().KeyCtrl) {
 					CopySelectedLogsToClipboard(view, ImGui::GetIO().KeyShift, kColumnSpacer_Spaces);
-				} else if(key_is_pressed_this_frame(Key_F2)) {
+				} else if(ImGui::IsKeyPressed(ImGuiKey_F2, false)) {
 					if(ImGui::GetIO().KeyCtrl) {
 						if(ImGui::GetIO().KeyShift) {
 							view_remove_all_bookmarks(view);

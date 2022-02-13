@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -26,7 +26,7 @@ namespace ImGui
 	bool MenuItem(const char *label, const char *shortcut, b32 *p_selected, bool enabled = true);
 	bool Begin(const char *name, b32 *p_open, ImGuiWindowFlags flags = 0);
 	bool Begin(const char *name, b8 *p_open, ImGuiWindowFlags flags = 0);
-	bool IsKeyPressed(ImGuiKey_ key, bool repeat = true);
+	bool IsAnyKeyPressedOrReleasedThisFrame();
 	bool IsCurrentWindowNavWindowRoot(void);
 	bool IsCurrentWindowNavWindow(void);
 	bool IsCurrentWindowMoving(void);

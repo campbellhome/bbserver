@@ -143,7 +143,6 @@
     <ClInclude Include="..\include\imgui_input_text.h" />
     <ClInclude Include="..\include\imgui_themes.h" />
     <ClInclude Include="..\include\imgui_utils.h" />
-    <ClInclude Include="..\include\keys.h" />
     <ClInclude Include="..\include\mc_imgui_json_generated.h" />
     <ClInclude Include="..\include\mc_imgui_structs_generated.h" />
     <ClInclude Include="..\include\ui_message_box.h" />
@@ -169,7 +168,6 @@
     <ClCompile Include="..\src\imgui_input_text.cpp" />
     <ClCompile Include="..\src\imgui_themes.cpp" />
     <ClCompile Include="..\src\imgui_utils.cpp" />
-    <ClCompile Include="..\src\keys.c" />
     <ClCompile Include="..\src\mc_imgui_json_generated.c" />
     <ClCompile Include="..\src\mc_imgui_structs_generated.c" />
     <ClCompile Include="..\src\ui_message_box.cpp" />

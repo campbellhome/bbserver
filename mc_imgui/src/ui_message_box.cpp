@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_message_box.h"
@@ -61,7 +61,7 @@ static bool UIMessageBox_DrawModal(messageBox *mb)
 		}
 	};
 
-	if(ImGui::IsKeyPressed(ImGui::GetIO().KeyMap[ImGuiKey_Escape])) {
+	if(ImGui::IsKeyPressed(ImGuiKey_Escape)) {
 		if(mb->callback) {
 			mb->callback(mb, "escape");
 		}

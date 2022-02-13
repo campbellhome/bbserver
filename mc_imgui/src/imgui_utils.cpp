@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "imgui_utils.h"
@@ -101,9 +101,15 @@ namespace ImGui
 		return ret;
 	}
 
-	bool IsKeyPressed(ImGuiKey_ key, bool repeat)
+	bool IsAnyKeyPressedOrReleasedThisFrame()
 	{
-		return IsKeyPressed(GetKeyIndex(key), repeat);
+		const ImGuiIO &io = ImGui::GetIO();
+		for(const ImGuiKeyData &keyData : io.KeysData) {
+			if(keyData.Down || keyData.DownDurationPrev > 0.0f) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	bool IsCurrentWindowNavWindowRoot(void)

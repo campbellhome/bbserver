@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_view_console_command.h"
@@ -9,7 +9,6 @@
 #include "imgui_core.h"
 #include "imgui_themes.h"
 #include "imgui_utils.h"
-#include "keys.h"
 #include "message_queue.h"
 #include "recorded_session.h"
 #include "recordings.h"
@@ -142,7 +141,8 @@ static void view_console_command_exec(view_t *view, const char *filepath)
 
 static void UIRecordedView_Console_Dispatch(view_t *view)
 {
-	if(view->session->outgoingMqId != mq_invalid_id() && (view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0) {
+	bool consoleAvailable = (view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0;
+	if(consoleAvailable && view->session->outgoingMqId != mq_invalid_id()) {
 		const char *command = sb_get(&view->consoleInput);
 		if(*command == '/') {
 			if(!bb_strnicmp(command, "/exec ", 6)) {
@@ -159,11 +159,12 @@ static void UIRecordedView_Console_Dispatch(view_t *view)
 
 void UIRecordedView_Console(view_t *view, bool bHasFocus)
 {
-	bool consoleVisible = view->session->outgoingMqId != mq_invalid_id();
+	bool consoleAvailable = (view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0;
+	bool consoleVisible = consoleAvailable && view->session->outgoingMqId != mq_invalid_id();
 	if(consoleVisible) {
 		ImGui::TextUnformatted("]");
 		ImGui::SameLine();
-		if(bHasFocus && key_is_pressed_this_frame(Key_Tilde)) {
+		if(bHasFocus && ImGui::IsKeyPressed(ImGuiKey_GraveAccent, false)) {
 			if(view->consoleInputActive) {
 				// TODO: remove input focus here
 			} else {

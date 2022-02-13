@@ -25,9 +25,6 @@
     <ClCompile Include="..\src\imgui_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\keys.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui_message_box.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -76,9 +73,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\imgui_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\keys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\wrap_imgui.h">

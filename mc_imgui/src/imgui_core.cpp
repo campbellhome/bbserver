@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "imgui_core.h"
@@ -11,7 +11,7 @@
 #include "imgui_image.h"
 #include "imgui_input_text.h"
 #include "imgui_themes.h"
-#include "keys.h"
+#include "imgui_utils.h"
 #include "message_box.h"
 #include "sb.h"
 #include "system_error_utils.h"
@@ -464,9 +464,6 @@ static void CALLBACK Imgui_Core_WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD 
 			g_hasFocus = true;
 		} else if(g_hasFocus) {
 			g_hasFocus = false;
-			key_clear_all();
-			auto &keysDown = ImGui::GetIO().KeysDown;
-			memset(&keysDown, 0, sizeof(keysDown));
 		}
 	}
 }
@@ -697,23 +694,6 @@ extern "C" void Imgui_Core_ShutdownWindow(void)
 	}
 }
 
-static int s_KeyToVK[] = {
-	VK_F1,
-	VK_F2,
-	VK_F3,
-	VK_F4,
-	VK_F5,
-	VK_F6,
-	VK_F7,
-	VK_F8,
-	VK_F9,
-	VK_F10,
-	VK_F11,
-	VK_F12,
-	VK_OEM_3,
-};
-BB_CTASSERT(BB_ARRAYSIZE(s_KeyToVK) == Key_Count);
-
 b32 Imgui_Core_BeginFrame(void)
 {
 	MSG msg = { BB_EMPTY_INITIALIZER };
@@ -751,19 +731,6 @@ b32 Imgui_Core_BeginFrame(void)
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	ImGuiIO &io = ImGui::GetIO();
-	for(int i = 0; i < Key_Count; ++i) {
-		b32 bDown = io.KeysDown[s_KeyToVK[i]];
-		key_e key = (key_e)i;
-		if(bDown != key_is_down(key)) {
-			if(bDown) {
-				key_on_pressed(key);
-			} else {
-				key_on_released(key);
-			}
-		}
-	}
-
 	BB_TICK();
 
 	return true;
@@ -779,7 +746,7 @@ void Imgui_Core_EndFrame(ImVec4 clear_col)
 
 	ImGuiIO &io = ImGui::GetIO();
 	bool requestRender = Imgui_Core_GetAndClearRequestRender() ||
-	                     key_is_any_down_or_released_this_frame() ||
+	                     ImGui::IsAnyKeyPressedOrReleasedThisFrame() ||
 	                     io.MouseHoveredViewport != 0 ||
 	                     io.MouseWheel != 0.0f ||
 	                     io.MouseWheelH != 0.0f;
@@ -790,8 +757,8 @@ void Imgui_Core_EndFrame(ImVec4 clear_col)
 		}
 	}
 	if(!requestRender) {
-		for(bool keyDown : io.KeysDown) {
-			if(keyDown) {
+		for(const ImGuiKeyData& keyData : io.KeysData) {
+			if(keyData.Down) {
 				requestRender = true;
 				break;
 			}
