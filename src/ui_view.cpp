@@ -1525,6 +1525,7 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 	bool filterContextPopupWasOpen = view->filterContextPopupOpen != 0;
 	if(filterActive || view->filterContextPopupOpen) {
 		view->filterPopupOpen = true;
+		ImGui::OpenPopup("###FilterPopup", ImGuiPopupFlags_None);
 	}
 	view->filterContextPopupOpen = false;
 	if(view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0 || g_config.namedFilters.count > 0)) {
@@ -1557,13 +1558,16 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 		totalSize.x += 4.0f * spacingHeight;
 		totalSize.y += 3.0f * spacingHeight;
 
-		ImVec2 contentRegionAvail = ImGui::GetContentRegionAvail() - cursorPos - ImVec2(0.0f, ImGui::GetFrameHeightWithSpacing());
+		ImVec2 contentRegionAvail = ImGui::GetContentRegionAvail() - cursorPos - ImVec2(10.0f, ImGui::GetFrameHeightWithSpacing());
 		ImVec2 popupSize(contentRegionAvail.x < totalSize.x ? contentRegionAvail.x : totalSize.x, contentRegionAvail.y < totalSize.y ? contentRegionAvail.y : totalSize.y);
 		SetNextWindowSize(popupSize);
 
 		SetNextWindowPos(ImVec2(cursorScreenPos.x, cursorScreenPos.y + ImGui::GetFrameHeightWithSpacing()), ImGuiCond_Always);
 		ImGuiCond filterPopupFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
-		if(ImGui::Begin("###FilterPopup", &view->filterPopupOpen, filterPopupFlags)) {
+		if(ImGui::BeginPopup("###FilterPopup", filterPopupFlags)) {
+			if(ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+				ImGui::CloseCurrentPopup();
+			}
 			if(ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
 				filterWindowActive = true;
 			}
@@ -1588,7 +1592,7 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 					UIRecordedView_FilterItem(view, name, text, i, EViewFilterCategory::SiteConfig, filterContextPopupWasOpen);
 				}
 			}
-			ImGui::End();
+			ImGui::EndPopup();
 		}
 	}
 	if(!filterActive && !filterWindowActive && filterPopupWasOpen && !ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
