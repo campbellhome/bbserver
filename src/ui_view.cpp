@@ -2055,7 +2055,8 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 			PushLogFont();
 			float contentWidth = 0.0f;
 			bool hovered = ImGui::IsWindowHovered();
-			ImGuiListClipper clipper((int)view->visibleLogs.count, ImGui::GetTextLineHeightWithSpacing());
+			ImGuiListClipper clipper;
+			clipper.Begin((int)view->visibleLogs.count, ImGui::GetTextLineHeightWithSpacing());
 			while(clipper.Step()) {
 				s_visibleLogLines = clipper.DisplayEnd - clipper.DisplayStart;
 				for(int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {

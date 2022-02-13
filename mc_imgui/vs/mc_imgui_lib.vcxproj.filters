@@ -10,12 +10,6 @@
     <ClCompile Include="..\..\thirdparty\imgui\imgui_draw.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\thirdparty\imgui\examples\imgui_impl_dx9.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\thirdparty\imgui\examples\imgui_impl_win32.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\thirdparty\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
@@ -55,18 +49,15 @@
     <ClCompile Include="..\src\imgui_core_freetype.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.cpp" />
+    <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\thirdparty\imgui\imgui_tables.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\thirdparty\imgui\imconfig.h">
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\thirdparty\imgui\imgui.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\thirdparty\imgui\examples\imgui_impl_dx9.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\thirdparty\imgui\examples\imgui_impl_win32.h">
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\thirdparty\imgui\imgui_internal.h">
@@ -132,6 +123,8 @@
     <ClInclude Include="..\include\imgui_core_freetype.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_win32.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

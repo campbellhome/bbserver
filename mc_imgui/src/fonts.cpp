@@ -56,14 +56,7 @@ struct fontBuilder {
 		if(!rebuild)
 			return false;
 		ImGuiIO &io = ImGui::GetIO();
-#if BB_USING(FEATURE_FREETYPE)
-		if(useFreeType && Imgui_Core_Freetype_Valid()) {
-			ImGuiFreeType::BuildFontAtlas(io.Fonts, 0);
-		} else
-#endif // #if BB_USING(FEATURE_FREETYPE)
-		{
-			io.Fonts->Build();
-		}
+		io.Fonts->Build();
 		rebuild = false;
 		return true;
 	}
