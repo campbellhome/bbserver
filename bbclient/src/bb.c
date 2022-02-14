@@ -3,11 +3,11 @@
 
 #if !defined(BB_ENABLED) || BB_ENABLED
 
-#include "bb.h"
-
 #if defined(_MSC_VER)
 __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *const ,...)' : function not inlined
 #endif
+
+#include "bb.h"
 
 #include "bbclient/bb_array.h"
 #include "bbclient/bb_connection.h"
