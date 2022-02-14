@@ -19,7 +19,7 @@ int main(int argc, const char **argv)
 	globals.appName = "bb.exe";
 	globals.appdataName = "bb";
 	globals.currentVersionJsonFilename = "bb_current_version.json";
-	globals.p4VersionDir = "..\\..\\..\\..\\..";
+	globals.p4VersionDir = "..\\..";
 	globals.manifestFilename = "bb_build_manifest.json";
 
 	if(cmdline_find("-nolog") <= 0) {

@@ -25,7 +25,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
-    <OutDir>..\bin\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</OutDir>
+    <OutDir>..\bin\$(Configuration)_$(PlatformToolset)\</OutDir>
     <IntDir>..\obj\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
