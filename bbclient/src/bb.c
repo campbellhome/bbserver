@@ -1147,13 +1147,13 @@ void bb_trace_partial_end(void)
 		len = (len < 0 || len > maxLen) ? maxLen : len;
 		decoded->packet.logText.text[len] = '\0';
 		decoded->packet.logText.colors = s_bb_colors;
+		s_bb_partial.len = 0;
+		s_bb_partial.partialPacketsSent = 0;
 		if(decoded->packet.logText.level == kBBLogLevel_SetColor) {
 			bb_resolve_and_set_colors(decoded->packet.logText.text);
 		} else {
 			bb_send(decoded);
 		}
-		s_bb_partial.len = 0;
-		s_bb_partial.partialPacketsSent = 0;
 	}
 }
 
@@ -1169,12 +1169,12 @@ static void bb_trace_partial_packet(void)
 		decoded->packet.logText.text[len] = '\0';
 		decoded->packet.logText.colors = s_bb_colors;
 		if(decoded->packet.logText.level == kBBLogLevel_SetColor) {
-			bb_resolve_and_set_colors(decoded->packet.logText.text);
+			bb_trace_partial_end(); // calls bb_resolve_and_set_colors(decoded->packet.logText.text) internally
 		} else {
 			bb_send(decoded);
+			s_bb_partial.len = 0;
+			++s_bb_partial.partialPacketsSent;
 		}
-		s_bb_partial.len = 0;
-		++s_bb_partial.partialPacketsSent;
 	}
 }
 

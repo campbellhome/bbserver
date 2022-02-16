@@ -267,6 +267,7 @@ void bb_trace_partial_w(const char *path, uint32_t line, const bb_wchar_t *categ
 #define BB_ERROR_DYNAMIC_PREFORMATTED(file, line, pieInstance, category, preformatted) _BB_TRACE_DYNAMIC_PREFORMATTED_FUNC(file, line, category, kBBLogLevel_Error, pieInstance, preformatted)
 #define BB_TRACE_DYNAMIC_PREFORMATTED(file, line, level, pieInstance, category, preformatted) _BB_TRACE_DYNAMIC_PREFORMATTED_FUNC(file, line, category, level, pieInstance, preformatted)
 
+#define BB_TRACE_PARTIAL(logLevel, category, ...) _BB_TRACE_PARTIAL_FUNC(__FILE__, (uint32_t)__LINE__, category, logLevel, 0, __VA_ARGS__)
 #define BB_LOG_PARTIAL(category, ...) _BB_TRACE_PARTIAL_FUNC(__FILE__, (uint32_t)__LINE__, category, kBBLogLevel_Log, 0, __VA_ARGS__)
 #define BB_WARNING_PARTIAL(category, ...) _BB_TRACE_PARTIAL_FUNC(__FILE__, (uint32_t)__LINE__, category, kBBLogLevel_Warning, 0, __VA_ARGS__)
 #define BB_ERROR_PARTIAL(category, ...) _BB_TRACE_PARTIAL_FUNC(__FILE__, (uint32_t)__LINE__, category, kBBLogLevel_Error, 0, __VA_ARGS__)
