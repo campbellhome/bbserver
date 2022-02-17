@@ -607,6 +607,31 @@ void UIRecordedView_TooltipLevelText(const char *fmt, u32 count, bb_log_level_e 
 	}
 }
 
+static void TextWrappedMaxLines(const char *text, s32 numLines, bool bShadowed)
+{
+	span_t span = span_from_string(text);
+
+	s32 lineIndex = 0;
+	for(span_t line = tokenizeLine(&span); line.start; line = tokenizeLine(&span)) {
+		if(lineIndex == numLines) {
+			break;
+		}
+		++lineIndex;
+
+		ptrdiff_t len = line.end - line.start;
+		if(len > 0) {
+			if(len > 1024) {
+				len = 1024;
+			}
+			if(bShadowed) {
+				TextWrappedShadowed(va("%.*s", len, line.start));
+			} else {
+				TextWrapped("%.*s", len, line.start);
+			}
+		}
+	}
+}
+
 static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *category, recorded_session_t *session, view_t *view)
 {
 	if(IsTooltipActive()) {
@@ -644,12 +669,7 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 					if(json) {
 						bJson = true;
 						PushTextWrapPos(1800.0f);
-						// TODO: shadows are misplaced with json
-						//if(Imgui_Core_GetTextShadows()) {
-						//	TextWrappedShadowed(va("%s", json));
-						//} else {
-						TextWrapped("%s", json);
-						//}
+						TextWrappedMaxLines(json, 40, Imgui_Core_GetTextShadows() != 0);
 						PopTextWrapPos();
 						json_free_serialized_string(json);
 					}
@@ -658,11 +678,7 @@ static void SetLogTooltip(bb_decoded_packet_t *decoded, recorded_category_t *cat
 			}
 			if(!bJson) {
 				PushTextWrapPos(1200.0f);
-				if(Imgui_Core_GetTextShadows()) {
-					TextWrappedShadowed(va("%s", sb_get(&stripped)));
-				} else {
-					TextWrapped("%s", sb_get(&stripped));
-				}
+				TextWrappedMaxLines(sb_get(&stripped), 40, Imgui_Core_GetTextShadows() != 0);
 				PopTextWrapPos();
 			}
 
