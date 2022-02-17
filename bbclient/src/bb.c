@@ -87,7 +87,7 @@ static u32 s_serverIp;
 static u16 s_serverPort;
 static b32 s_bCallbackSentAppInfo;
 static b32 s_bFileSentAppInfo;
-static b32 s_bStoreThreadIds = true;
+static b32 s_bDisableStoredThreadIds;
 static bb_write_callback s_bb_write_callback;
 static void *s_bb_write_callback_context;
 static bb_flush_callback s_bb_flush_callback;
@@ -646,7 +646,7 @@ void bb_set_initial_buffer(void *buffer, uint32_t bufferSize)
 
 void bb_enable_stored_thread_ids(int store)
 {
-	s_bStoreThreadIds = store;
+	s_bDisableStoredThreadIds = !store;
 }
 
 int bb_is_connected(void)
@@ -770,11 +770,13 @@ void bb_set_incoming_packet_handler(bb_incoming_packet_handler handler, void *co
 	s_bb_incoming_packet_context = context;
 }
 
-static void bb_thread_store_id_packet(bb_decoded_packet_t* decoded)
+static void bb_thread_store_id_packet(bb_decoded_packet_t *decoded)
 {
-	if(!s_id_cs.initialized || !s_bStoreThreadIds)
+	if(s_bDisableStoredThreadIds)
 		return;
-	bb_critical_section_lock(&s_id_cs);
+	if(s_id_cs.initialized) {
+		bb_critical_section_lock(&s_id_cs);
+	}
 	bb_thread_id_t *newIdData = bba_add(s_bb_threadIds, 1);
 	if(newIdData) {
 		newIdData->packetType = decoded->type;
@@ -785,7 +787,9 @@ static void bb_thread_store_id_packet(bb_decoded_packet_t* decoded)
 			bb_strncpy(newIdData->text, decoded->packet.threadName.text, sizeof(newIdData->text));
 		}
 	}
-	bb_critical_section_unlock(&s_id_cs);
+	if(s_id_cs.initialized) {
+		bb_critical_section_unlock(&s_id_cs);
+	}
 }
 
 void bb_thread_start(uint32_t pathId, uint32_t line, const char *name)
