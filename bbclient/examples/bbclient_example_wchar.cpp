@@ -19,6 +19,66 @@ BB_WARNING_DISABLE(4710) // function not inlined
 #include <stdint.h>
 #endif
 
+// Thread code taken from bb_thread.h/.c in mc_common
+
+#if BB_USING(BB_COMPILER_MSVC)
+
+typedef uintptr_t bb_thread_handle_t;
+typedef unsigned bb_thread_return_t;
+typedef bb_thread_return_t (*bb_thread_func)(void *args);
+#define bb_thread_local __declspec(thread)
+#define bb_thread_exit(ret) \
+	{                       \
+		_endthreadex(ret);  \
+		return ret;         \
+	}
+
+#include <stdlib.h>
+
+bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)
+{
+	bb_thread_handle_t thread = _beginthreadex(
+	    NULL, // security,
+	    0,    // stack_size,
+	    func, // start_address
+	    arg,  // arglist
+	    0,    // initflag - CREATE_SUSPENDED waits for ResumeThread
+	    NULL  // thrdaddr
+	);
+	BB_ASSERT_MSG(thread != 0, "failed to spawn thread");
+	return thread;
+}
+#else
+#include <pthread.h>
+
+typedef pthread_t bb_thread_handle_t;
+typedef void *bb_thread_return_t;
+typedef bb_thread_return_t (*bb_thread_func)(void *args);
+#define bb_thread_local __thread
+#define bb_thread_exit(ret) \
+	{                       \
+		return ret;         \
+	}
+
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)
+{
+	bb_thread_handle_t thread = 0;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_create(
+	    &thread, // thread
+	    &attr,   // attr
+	    func,    // start_routine
+	    arg      // arg
+	);
+	return thread;
+}
+#endif
+
 static const wchar_t *s_categoryNames[] = {
 	L"dynamic::category::thing",
 	L"dynamic::monkey::banana",
@@ -32,7 +92,8 @@ static const char *s_pathNames[] = {
 
 static b32 s_bQuit = false;
 
-enum { InitialBufferLen = 1024 * 1024 };
+enum { InitialBufferLen = 1 };
+//enum { InitialBufferLen = 1024 * 1024 };
 static uint8_t s_initialBuffer[InitialBufferLen];
 
 static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *context)
@@ -47,6 +108,42 @@ static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *co
 	}
 }
 
+static bb_thread_return_t before_connect_thread_proc(void *)
+{
+	BB_THREAD_SET_NAME(L"before_connect_thread_proc");
+
+	u64 count = 0;
+	u64 start = bb_current_time_ms();
+	u64 now = start;
+	u64 end = now + 1000000;
+	while(now < end && !s_bQuit) {
+		BB_TRACE_A(kBBLogLevel_Verbose, "Thread::before_connect_thread_proc", "before_connect_thread_proc %llu dt %llu ms", ++count, now - start);
+		bb_sleep_ms(1000);
+		now = bb_current_time_ms();
+	}
+
+	BB_THREAD_END();
+	return 0;
+}
+
+static bb_thread_return_t after_connect_thread_proc(void *)
+{
+	BB_THREAD_SET_NAME(L"after_connect_thread_proc");
+
+	u64 count = 0;
+	u64 start = bb_current_time_ms();
+	u64 now = start;
+	u64 end = now + 1000000;
+	while(now < end && !s_bQuit) {
+		BB_TRACE_A(kBBLogLevel_Verbose, "Thread::after_connect_thread_proc", "after_connect_thread_proc %llu dt %llu ms", ++count, now - start);
+		bb_sleep_ms(1000);
+		now = bb_current_time_ms();
+	}
+
+	BB_THREAD_END();
+	return 0;
+}
+
 int main(int argc, const char **argv)
 {
 	uint64_t start = bb_current_time_ms();
@@ -56,6 +153,9 @@ int main(int argc, const char **argv)
 	(void)argv;
 
 	bb_set_initial_buffer(s_initialBuffer, InitialBufferLen);
+	//bb_enable_stored_thread_ids(false);
+
+	bbthread_create(before_connect_thread_proc, nullptr);
 
 	//bb_init_file_w(L"bbclient.bbox");
 	//BB_INIT(L"bbclient: matt");
@@ -122,7 +222,9 @@ int main(int argc, const char **argv)
 	s_bQuit = false;
 	printf("Here we go...\n");
 	bb_disconnect();
+	bb_sleep_ms(1000);
 	bb_connect(127 << 24 | 1, 0);
+	bbthread_create(after_connect_thread_proc, nullptr);
 
 	while(BB_IS_CONNECTED() && !s_bQuit) {
 		BB_TICK();

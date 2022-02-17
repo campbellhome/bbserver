@@ -103,6 +103,7 @@ void bb_init(const char *applicationName, const char *sourceApplicationName, con
 void bb_init_file(const char *path);
 void bb_shutdown(const char *file, int line);
 void bb_set_initial_buffer(void *buffer, uint32_t bufferSize);
+void bb_enable_stored_thread_ids(int store);
 #if BB_WIDECHAR
 void bb_init_w(const bb_wchar_t *applicationName, const bb_wchar_t *sourceApplicationName, const bb_wchar_t *deviceCode, uint32_t sourceIp, bb_init_flags_t initFlags);
 void bb_init_file_w(const bb_wchar_t *path);

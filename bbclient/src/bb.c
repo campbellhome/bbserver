@@ -59,6 +59,21 @@ typedef struct bb_ids_s {
 
 static bb_ids_t s_bb_categoryIds;
 static bb_ids_t s_bb_pathIds;
+
+typedef struct bb_thread_id_s {
+	bb_packet_header_t header;
+	bb_packet_type_e packetType;
+	char text[kBBSize_ThreadName];
+	u8 pad[4];
+} bb_thread_id_t;
+typedef struct bb_thread_ids_s {
+	u32 count;
+	u32 allocated;
+	bb_thread_id_t *data;
+} bb_thread_ids_t;
+
+static bb_thread_ids_t s_bb_threadIds;
+
 static bb_connection_t s_con;
 static bb_critical_section s_id_cs;
 static bb_file_handle_t s_fp = BB_INVALID_FILE_HANDLE;
@@ -72,6 +87,7 @@ static u32 s_serverIp;
 static u16 s_serverPort;
 static b32 s_bCallbackSentAppInfo;
 static b32 s_bFileSentAppInfo;
+static b32 s_bStoreThreadIds = true;
 static bb_write_callback s_bb_write_callback;
 static void *s_bb_write_callback_context;
 static bb_flush_callback s_bb_flush_callback;
@@ -333,6 +349,22 @@ static void bb_send_ids(bb_ids_t *ids, bb_packet_type_e packetType, b32 bCallbac
 	}
 }
 
+static void bb_send_thread_ids(bb_thread_ids_t *ids, b32 bCallbacks, b32 bSocket, b32 bFile)
+{
+	for(u32 i = 0; i < ids->count; ++i) {
+		bb_thread_id_t *id = ids->data + i;
+		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
+		decoded.type = id->packetType;
+		decoded.header = id->header;
+		if(id->packetType == kBBPacketType_ThreadStart) {
+			bb_strncpy(decoded.packet.threadStart.text, id->text, sizeof(id->text));
+		} else if(id->packetType == kBBPacketType_ThreadName) {
+			bb_strncpy(decoded.packet.threadName.text, id->text, sizeof(id->text));
+		}
+		bb_send_directed(&decoded, bCallbacks, bSocket, bFile);
+	}
+}
+
 static bb_decoded_packet_t bb_build_appinfo(void)
 {
 	bb_decoded_packet_t decoded;
@@ -396,6 +428,7 @@ static void bb_send_initial(b32 bCallbacks, b32 bSocket, b32 bFile)
 
 	bb_send_ids(&s_bb_pathIds, kBBPacketType_FileId, bCallbacks, bSocket, bFile);
 	bb_send_ids(&s_bb_categoryIds, kBBPacketType_CategoryId, bCallbacks, bSocket, bFile);
+	bb_send_thread_ids(&s_bb_threadIds, bCallbacks, bSocket, bFile);
 }
 
 void bb_init_file(const char *path)
@@ -581,6 +614,7 @@ void bb_shutdown(const char *file, int line)
 	bb_critical_section_shutdown(&s_id_cs);
 	bba_free(s_bb_categoryIds);
 	bba_free(s_bb_pathIds);
+	bba_free(s_bb_threadIds);
 	if(s_bb_trace_packet_buffer) {
 		free(s_bb_trace_packet_buffer);
 		s_bb_trace_packet_buffer = NULL;
@@ -608,6 +642,11 @@ void bb_set_initial_buffer(void *buffer, uint32_t bufferSize)
 	s_initial_buffer.size = bufferSize;
 	s_initial_buffer.used = 0u;
 	bb_critical_section_unlock(&s_initial_buffer.cs);
+}
+
+void bb_enable_stored_thread_ids(int store)
+{
+	s_bStoreThreadIds = store;
 }
 
 int bb_is_connected(void)
@@ -731,11 +770,30 @@ void bb_set_incoming_packet_handler(bb_incoming_packet_handler handler, void *co
 	s_bb_incoming_packet_context = context;
 }
 
+static void bb_thread_store_id_packet(bb_decoded_packet_t* decoded)
+{
+	if(!s_id_cs.initialized || !s_bStoreThreadIds)
+		return;
+	bb_critical_section_lock(&s_id_cs);
+	bb_thread_id_t *newIdData = bba_add(s_bb_threadIds, 1);
+	if(newIdData) {
+		newIdData->packetType = decoded->type;
+		newIdData->header = decoded->header;
+		if(decoded->type == kBBPacketType_ThreadStart) {
+			bb_strncpy(newIdData->text, decoded->packet.threadStart.text, sizeof(newIdData->text));
+		} else if(decoded->type == kBBPacketType_ThreadName) {
+			bb_strncpy(newIdData->text, decoded->packet.threadName.text, sizeof(newIdData->text));
+		}
+	}
+	bb_critical_section_unlock(&s_id_cs);
+}
+
 void bb_thread_start(uint32_t pathId, uint32_t line, const char *name)
 {
 	bb_decoded_packet_t decoded;
 	bb_fill_header(&decoded, kBBPacketType_ThreadStart, pathId, line);
 	bb_strncpy(decoded.packet.threadStart.text, name, sizeof(decoded.packet.threadStart.text));
+	bb_thread_store_id_packet(&decoded);
 	bb_send(&decoded);
 }
 
@@ -751,6 +809,7 @@ void bb_thread_set_name(uint32_t pathId, uint32_t line, const char *name)
 	bb_decoded_packet_t decoded;
 	bb_fill_header(&decoded, kBBPacketType_ThreadName, pathId, line);
 	bb_strncpy(decoded.packet.threadName.text, name, sizeof(decoded.packet.threadName.text));
+	bb_thread_store_id_packet(&decoded);
 	bb_send(&decoded);
 }
 
@@ -766,6 +825,7 @@ void bb_thread_end(uint32_t pathId, uint32_t line)
 	bb_decoded_packet_t decoded;
 	bb_fill_header(&decoded, kBBPacketType_ThreadEnd, pathId, line);
 	bb_send(&decoded);
+	bb_thread_store_id_packet(&decoded);
 	if(s_bb_trace_packet_buffer) {
 		free(s_bb_trace_packet_buffer);
 		s_bb_trace_packet_buffer = NULL;
