@@ -99,6 +99,7 @@ typedef enum {
 bb_platform_e bb_platform(void);
 const char *bb_platform_name(bb_platform_e platform);
 
+void bb_init_critical_sections(void); // can be called to enable queuing data before bb_init
 void bb_init(const char *applicationName, const char *sourceApplicationName, const char *deviceCode, uint32_t sourceIp, bb_init_flags_t initFlags);
 void bb_init_file(const char *path);
 void bb_shutdown(const char *file, int line);

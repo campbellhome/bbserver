@@ -92,8 +92,8 @@ static const char *s_pathNames[] = {
 
 static b32 s_bQuit = false;
 
-enum { InitialBufferLen = 1 };
-//enum { InitialBufferLen = 1024 * 1024 };
+//enum { InitialBufferLen = 1 };
+enum { InitialBufferLen = 1024 * 1024 };
 static uint8_t s_initialBuffer[InitialBufferLen];
 
 static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *context)
@@ -152,10 +152,13 @@ int main(int argc, const char **argv)
 	(void)argc;
 	(void)argv;
 
-	bb_set_initial_buffer(s_initialBuffer, InitialBufferLen);
-	//bb_enable_stored_thread_ids(false);
+	bb_init_critical_sections();
 
 	bbthread_create(before_connect_thread_proc, nullptr);
+	bb_sleep_ms(1000);
+
+	bb_set_initial_buffer(s_initialBuffer, InitialBufferLen);
+	//bb_enable_stored_thread_ids(false);
 
 	//bb_init_file_w(L"bbclient.bbox");
 	//BB_INIT(L"bbclient: matt");

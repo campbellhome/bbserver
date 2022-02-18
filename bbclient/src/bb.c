@@ -102,6 +102,8 @@ typedef struct bbInitialBuffer_s {
 	void *data;
 	u32 size;
 	u32 used;
+	u32 start;
+	u32 pad;
 } bbInitialBuffer_t;
 static bbInitialBuffer_t s_initial_buffer;
 
@@ -387,26 +389,17 @@ static void bb_save_initial_appinfo(void)
 	if(s_initial_buffer.cs.initialized) {
 		bb_critical_section_lock(&s_initial_buffer.cs);
 		if(s_initial_buffer.data != NULL) {
-			if(s_initial_buffer.used == 0) {
-				bb_decoded_packet_t decoded = bb_build_appinfo();
-				u8 buf[BB_MAX_PACKET_BUFFER_SIZE];
-				u16 serializedLen = bbpacket_serialize(&decoded, buf + 2, sizeof(buf) - 2);
-				if(serializedLen) {
-					serializedLen += 2;
-					buf[0] = (u8)(serializedLen >> 8);
-					buf[1] = (u8)(serializedLen & 0xFF);
-				}
-
-				if(s_initial_buffer.used + serializedLen <= s_initial_buffer.size) {
-					memcpy((u8 *)s_initial_buffer.data + s_initial_buffer.used, buf, serializedLen);
-					s_initial_buffer.used += serializedLen;
-				} else {
-					bb_log("bb_send_initial filled initial buffer of size %u - discarding", s_initial_buffer.size);
-					s_initial_buffer.data = NULL;
-					s_initial_buffer.size = 0u;
-					s_initial_buffer.used = 0u;
-				}
+			bb_decoded_packet_t decoded = bb_build_appinfo();
+			u8 buf[BB_MAX_PACKET_BUFFER_SIZE];
+			u16 serializedLen = bbpacket_serialize(&decoded, buf + 2, sizeof(buf) - 2);
+			if(serializedLen) {
+				serializedLen += 2;
+				buf[0] = (u8)(serializedLen >> 8);
+				buf[1] = (u8)(serializedLen & 0xFF);
 			}
+
+			s_initial_buffer.start = sizeof(bb_decoded_packet_t) - serializedLen;
+			memcpy((u8 *)s_initial_buffer.data + s_initial_buffer.start, buf, serializedLen);
 		}
 		bb_critical_section_unlock(&s_initial_buffer.cs);
 	}
@@ -417,7 +410,7 @@ static void bb_send_initial(b32 bCallbacks, b32 bSocket, b32 bFile)
 	if(bSocket && s_initial_buffer.cs.initialized) {
 		bb_critical_section_lock(&s_initial_buffer.cs);
 		if(s_initial_buffer.data != NULL && s_initial_buffer.used > 0) {
-			bbcon_send_raw(&s_con, s_initial_buffer.data, s_initial_buffer.used);
+			bbcon_send_raw(&s_con, (u8 *)s_initial_buffer.data + s_initial_buffer.start, s_initial_buffer.used - s_initial_buffer.start);
 			bSocket = false;
 		}
 		bb_critical_section_unlock(&s_initial_buffer.cs);
@@ -555,6 +548,16 @@ void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort)
 	bb_critical_section_unlock(&s_id_cs);
 }
 
+void bb_init_critical_sections(void)
+{
+	if(!s_id_cs.initialized) {
+		bb_critical_section_init(&s_id_cs);
+	}
+	if(!s_initial_buffer.cs.initialized) {
+		bb_critical_section_init(&s_initial_buffer.cs);
+	}
+}
+
 void bb_init(const char *applicationName, const char *sourceApplicationName, const char *deviceCode, uint32_t sourceIp, bb_init_flags_t initFlags)
 {
 	bb_init_locale();
@@ -568,7 +571,7 @@ void bb_init(const char *applicationName, const char *sourceApplicationName, con
 	bb_strncpy(s_applicationName, applicationName, sizeof(s_applicationName));
 	bb_strncpy(s_sourceApplicationName, sourceApplicationName, sizeof(s_sourceApplicationName));
 	g_bb_initFlags = initFlags;
-	bb_critical_section_init(&s_id_cs);
+	bb_init_critical_sections();
 	bb_log_init();
 	bbnet_init();
 	bbcon_init(&s_con);
@@ -637,11 +640,13 @@ void bb_set_initial_buffer(void *buffer, uint32_t bufferSize)
 		bb_critical_section_init(&s_initial_buffer.cs);
 	}
 
-	bb_critical_section_lock(&s_initial_buffer.cs);
-	s_initial_buffer.data = buffer;
-	s_initial_buffer.size = bufferSize;
-	s_initial_buffer.used = 0u;
-	bb_critical_section_unlock(&s_initial_buffer.cs);
+	if(bufferSize < sizeof(bb_decoded_packet_t)) {
+		bb_critical_section_lock(&s_initial_buffer.cs);
+		s_initial_buffer.data = buffer;
+		s_initial_buffer.size = bufferSize;
+		s_initial_buffer.used = sizeof(bb_decoded_packet_t);
+		bb_critical_section_unlock(&s_initial_buffer.cs);
+	}
 }
 
 void bb_enable_stored_thread_ids(int store)
