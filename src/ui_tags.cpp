@@ -546,6 +546,24 @@ void UITags_Update(view_t *view)
 			}
 			if(ImGui::Checkbox("", &allChecked)) {
 				view_set_all_category_visibility(view, allChecked);
+				if(allChecked) {
+					u32 newCheckedCount = 0;
+					u32 newUncheckedCount = 0;
+					for(u32 index = 0; index < viewCategories->count; ++index) {
+						view_category_t *category = viewCategories->data + index;
+						if(category->visible) {
+							++newCheckedCount;
+						} else {
+							++newUncheckedCount;
+						}
+					}
+
+					// if we failed to check any remaining categories, that means they are being held
+					// unchecked by tag visibility.  In that case, treat it like they're all checked.
+					if(newUncheckedCount && checkedCount == newCheckedCount) {
+						view_set_all_category_visibility(view, false);
+					}
+				}
 			}
 			if(checkedCount && uncheckedCount) {
 				ImGui::PopItemFlag();
