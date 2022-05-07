@@ -7,6 +7,7 @@
 #include "bb_string.h"
 #include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
+#include "bbserver_main.h"
 #include "bbserver_utils.h"
 #include "fonts.h"
 #include "imgui_core.h"
@@ -1632,10 +1633,15 @@ static bool UIRecordedView_UpdateFilter(view_t *view)
 
 static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 {
+	if(!view->initialized) {
+		if(BBServer_GetMainWindowShowState() == SW_SHOWMINIMIZED) {
+			return;
+		}
+	}
+
 	recorded_session_t *session = view->session;
 	const char *applicationName = session->appInfo.packet.appInfo.applicationName;
 	char *viewId = UIRecordedView_GetViewId(view, autoTileViews);
-	bool initializedLogColumns = false;
 	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoBringToFrontOnFocus;
 	b32 roundingPushed = false;
 	if(autoTileViews) {
@@ -2213,9 +2219,7 @@ static void UIRecordedView_Update(view_t *view, bool autoTileViews)
 	}
 
 	if(view->open) {
-		if(initializedLogColumns) {
-			view->initialized = true;
-		}
+		view->initialized = true;
 	}
 }
 

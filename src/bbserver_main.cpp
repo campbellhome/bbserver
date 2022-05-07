@@ -54,6 +54,12 @@ static char s_bbLogPath[kBBSize_MaxPath];
 static UINT s_bringToFrontMessage;
 static updateData s_updateData;
 static b32 s_bMaximizeOnShow;
+static u32 s_windowShowState;
+
+extern "C" unsigned int BBServer_GetMainWindowShowState(void)
+{
+	return s_windowShowState;
+}
 
 static void BBServer_SetImguiPath(void)
 {
@@ -441,7 +447,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 						}
 						while(!Imgui_Core_IsShuttingDown()) {
 							if(Imgui_Core_GetAndClearDirtyWindowPlacement()) {
-								config_getwindowplacement(hwnd);
+								s_windowShowState = config_getwindowplacement(hwnd);
 							}
 							if(Imgui_Core_BeginFrame()) {
 								BBServer_Update();

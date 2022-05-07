@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "config.h"
@@ -23,7 +23,7 @@
 
 config_t g_config;
 
-void config_getwindowplacement(HWND hwnd)
+u32 config_getwindowplacement(HWND hwnd)
 {
 	UINT oldShowCmd = g_config.wp.showCmd;
 	memset(&g_config.wp, 0, sizeof(g_config.wp));
@@ -31,6 +31,9 @@ void config_getwindowplacement(HWND hwnd)
 	GetWindowPlacement(hwnd, &g_config.wp);
 	if(g_config.wp.showCmd == SW_SHOWMINIMIZED) {
 		g_config.wp.showCmd = oldShowCmd;
+		return SW_SHOWMINIMIZED;
+	} else {
+		return g_config.wp.showCmd;
 	}
 }
 

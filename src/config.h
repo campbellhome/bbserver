@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -160,7 +160,7 @@ void config_validate_whitelist(configWhitelist_t *whitelist);
 void open_target_move_entry(openTargetList_t *openTargets, u32 indexA, u32 indexB);
 void config_validate_open_targets(openTargetList_t *openTargets);
 void path_fixup_move_entry(pathFixupList_t *pathFixups, u32 indexA, u32 indexB);
-void config_getwindowplacement(HWND hwnd);
+u32 config_getwindowplacement(HWND hwnd);
 float config_get_resizeBarSize(config_t *config);
 
 #if defined(__cplusplus)

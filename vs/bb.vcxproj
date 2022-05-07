@@ -121,6 +121,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\bbserver_asserts.h" />
     <ClInclude Include="..\src\bbserver_fileopendialog.h" />
+    <ClInclude Include="..\src\bbserver_main.h" />
     <ClInclude Include="..\src\bbserver_update.h" />
     <ClInclude Include="..\src\bbserver_utils.h" />
     <ClInclude Include="..\src\bb_json_generated.h" />
