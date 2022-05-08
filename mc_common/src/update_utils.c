@@ -13,6 +13,8 @@ static int update_version_compare(const void *_a, const void *_b)
 {
 	const updateVersion_t *a = _a;
 	const updateVersion_t *b = _b;
+	if(a->name.count != b->name.count)
+		return a->name.count < b->name.count;
 	return -strcmp(sb_get(&a->name), sb_get(&b->name));
 }
 
