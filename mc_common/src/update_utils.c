@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "update_utils.h"
@@ -13,9 +13,10 @@ static int update_version_compare(const void *_a, const void *_b)
 {
 	const updateVersion_t *a = _a;
 	const updateVersion_t *b = _b;
-	if(a->name.count != b->name.count)
-		return a->name.count < b->name.count;
-	return -strcmp(sb_get(&a->name), sb_get(&b->name));
+	int aver = atoi(sb_get(&a->name));
+	int bver = atoi(sb_get(&b->name));
+	int result = bver - aver;
+	return result;
 }
 
 sb_t update_get_archive_name(const char *rootDir, const char *appName, const char *name)
