@@ -17,6 +17,8 @@
 #include "view.h"
 
 #include "bb_wrap_stdio.h"
+#include <locale.h>
+#include <stdlib.h>
 
 static void recorded_session_queue(recorded_session_t *session, bb_decoded_packet_t *decoded)
 {
@@ -95,6 +97,16 @@ static void recorded_session_queue_log_appinfo(recorded_session_t *session, cons
 
 static void recorded_session_read_log(recorded_session_t *session, const char *filename)
 {
+	_locale_t utf8_locale = _create_locale(LC_ALL, ".utf8");
+	u8 recvBuffer[32768 + 1];
+	char mbsBuffer[32768 + 1];
+	memset(recvBuffer, 0, sizeof(recvBuffer));
+	memset(mbsBuffer, 0, sizeof(mbsBuffer));
+
+	b32 bEncodingTested = false;
+	b32 bUTF16 = false;
+	b32 bByteSwap = false;
+
 	bb_file_handle_t fp = bb_file_open_for_read(session->path);
 	if(fp != BB_INVALID_FILE_HANDLE) {
 		recorded_session_queue_log_appinfo(session, filename);
@@ -104,7 +116,60 @@ static void recorded_session_read_log(recorded_session_t *session, const char *f
 		u32 fileSize = 0;
 		while(fp != BB_INVALID_FILE_HANDLE && session->threadDesiredActive && !session->failedToDeserialize) {
 			b32 done = false;
-			u32 bytesRead = bb_file_read(fp, session->recvBuffer + recvCursor, sizeof(session->recvBuffer) - recvCursor);
+			u32 bytesToRead = sizeof(recvBuffer) - recvCursor - 2;
+			if(bytesToRead % 2) {
+				--bytesToRead;
+			}
+			u32 bytesRead = bb_file_read(fp, recvBuffer, bytesToRead);
+			recvBuffer[bytesRead] = '\0';
+			recvBuffer[bytesRead + 1] = '\0';
+
+			if(!bEncodingTested) {
+				bEncodingTested = true;
+				if(bytesRead >= 2) {
+					if(recvBuffer[0] == 0xFF && recvBuffer[1] == 0xFE) {
+						bUTF16 = true;
+					} else if(recvBuffer[0] == 0xFE && recvBuffer[1] == 0xFF) {
+						bUTF16 = true;
+						bByteSwap = true;
+					} else if(recvBuffer[0] == 0 && recvBuffer[1] != 0) {
+						bUTF16 = true;
+						bByteSwap = true;
+					} else if(recvBuffer[0] != 0 && recvBuffer[1] == 0) {
+						bUTF16 = true;
+					}
+				}
+			}
+
+			if (bByteSwap) {
+				for(u32 index = 0; index < bytesRead; index += 2) {
+					u8 tmp = recvBuffer[index];
+					recvBuffer[index] = recvBuffer[index + 1];
+					recvBuffer[index + 1] = tmp;
+				}
+			}
+
+			if(bUTF16) {
+				size_t numCharsConverted;
+				size_t mbsBufferSize = sizeof(mbsBuffer) - 1;
+				mbsBuffer[0] = '\0';
+				errno_t ret = _wcstombs_s_l(&numCharsConverted, mbsBuffer, mbsBufferSize, (const wchar_t *)recvBuffer, _TRUNCATE, utf8_locale);
+				if(ret) {
+					break;
+				}
+
+				mbsBuffer[numCharsConverted] = '\0';
+				if(numCharsConverted > 0) {
+					if(numCharsConverted - 1 >= sizeof(session->recvBuffer) + recvCursor) {
+						break;
+					}
+					memcpy(session->recvBuffer + recvCursor, mbsBuffer, numCharsConverted);
+					bytesRead = (u32)numCharsConverted - 1;
+				}
+			} else {
+				memcpy(session->recvBuffer + recvCursor, recvBuffer, bytesRead);
+			}
+
 			if(bytesRead) {
 				recvCursor += bytesRead;
 			} else {
@@ -197,6 +262,8 @@ static void recorded_session_read_log(recorded_session_t *session, const char *f
 			bb_file_close(fp);
 		}
 	}
+
+	_free_locale(utf8_locale);
 }
 
 bb_thread_return_t recorded_session_read_thread(void *args)
