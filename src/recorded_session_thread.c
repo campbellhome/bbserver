@@ -127,16 +127,11 @@ static void recorded_session_read_log(recorded_session_t *session, const char *f
 			if(!bEncodingTested) {
 				bEncodingTested = true;
 				if(bytesRead >= 2) {
-					if(recvBuffer[0] == 0xFF && recvBuffer[1] == 0xFE) {
+					if((recvBuffer[0] == 0xFF && recvBuffer[1] == 0xFE) || (recvBuffer[0] != 0 && recvBuffer[1] == 0)) {
 						bUTF16 = true;
-					} else if(recvBuffer[0] == 0xFE && recvBuffer[1] == 0xFF) {
-						bUTF16 = true;
-						bByteSwap = true;
-					} else if(recvBuffer[0] == 0 && recvBuffer[1] != 0) {
+					} else if((recvBuffer[0] == 0xFE && recvBuffer[1] == 0xFF) || (recvBuffer[0] == 0 && recvBuffer[1] != 0)) {
 						bUTF16 = true;
 						bByteSwap = true;
-					} else if(recvBuffer[0] != 0 && recvBuffer[1] == 0) {
-						bUTF16 = true;
 					}
 				}
 			}
