@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "recorder_thread.h"
@@ -12,6 +12,7 @@
 #include "bb_time.h"
 #include "uuid_rfc4122/uuid.h"
 
+#include "bb_wrap_process.h"
 #include "bb_wrap_stdio.h"
 #include <string.h>
 

@@ -1,7 +1,10 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
+#include "bb_wrap_windows.h"
+
 #include "recordings.h"
+#include "bb_assert.h"
 #include "bb_json_generated.h"
 #include "bb_structs_generated.h"
 #include "config.h"
@@ -18,6 +21,7 @@
 #include "bb_string.h"
 #include "bb_thread.h"
 
+#include "bb_wrap_process.h"
 #include "bb_wrap_stdio.h"
 #include "parson/parson.h"
 #include <stdlib.h>

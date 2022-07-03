@@ -81,6 +81,15 @@
     <ClInclude Include="..\include\bbclient\bb_socket_errors.h">
       <Filter>Header Files\bbclient</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\bbclient\bb_wrap_windows.h">
+      <Filter>Header Files\bbclient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\bbclient\bb_wrap_winsock2.h">
+      <Filter>Header Files\bbclient</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\bbclient\bb_wrap_process.h">
+      <Filter>Header Files\bbclient</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\bb.c">

@@ -139,6 +139,7 @@
     <ClInclude Include="..\include\forkawesome-webfont.h" />
     <ClInclude Include="..\include\imgui_core.h" />
     <ClInclude Include="..\include\imgui_core_freetype.h" />
+    <ClInclude Include="..\include\imgui_core_windows.h" />
     <ClInclude Include="..\include\imgui_image.h" />
     <ClInclude Include="..\include\imgui_input_text.h" />
     <ClInclude Include="..\include\imgui_themes.h" />
@@ -146,6 +147,7 @@
     <ClInclude Include="..\include\mc_imgui_json_generated.h" />
     <ClInclude Include="..\include\mc_imgui_structs_generated.h" />
     <ClInclude Include="..\include\ui_message_box.h" />
+    <ClInclude Include="..\include\wrap_dx9.h" />
     <ClInclude Include="..\include\wrap_imgui.h" />
     <ClInclude Include="..\include\wrap_imgui_internal.h" />
     <ClInclude Include="..\include\wrap_shellscalingapi.h" />

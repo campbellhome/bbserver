@@ -17,6 +17,7 @@ BB_WARNING_DISABLE(4710)
 #endif
 
 #include "bbclient/bb_wrap_stdio.h"
+#include "bbclient/bb_wrap_windows.h"
 
 #if defined(__cplusplus)
 extern "C" { // needed to allow inclusion in .cpp unity files

@@ -16,6 +16,9 @@
 
 #if BB_USING(BB_COMPILER_MSVC)
 
+#include "bb_wrap_windows.h"
+#include "bb_wrap_winsock2.h"
+
 #else // #if BB_USING(BB_COMPILER_MSVC)
 
 #include <arpa/inet.h>

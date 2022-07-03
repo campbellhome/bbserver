@@ -1,8 +1,9 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bbserver_update.h"
 #include "app_update.h"
+#include "bb_assert.h"
 #include "bb_array.h"
 #include "bb_colors.h"
 #include "bb_log.h"

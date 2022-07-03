@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "mc_imgui_example.h"
@@ -6,6 +6,7 @@
 #include "crt_leak_check.h"
 #include "fonts.h"
 #include "imgui_core.h"
+#include "imgui_core_windows.h"
 #include "imgui_image.h"
 #include "imgui_input_text.h"
 #include "message_box.h"

@@ -1,8 +1,9 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "view_filter.h"
 #include "bb_array.h"
+#include "bb_assert.h"
 #include "bb_json_generated.h"
 #include "bb_string.h"
 #include "bb_structs_generated.h"

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-202 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #if !defined(BB_ENABLED) || BB_ENABLED
@@ -7,6 +7,7 @@
 
 #include "bbclient/bb_discovery_server.h"
 
+#include "bbclient/bb_assert.h"
 #include "bbclient/bb_connection.h"
 #include "bbclient/bb_log.h"
 #include "bbclient/bb_string.h"

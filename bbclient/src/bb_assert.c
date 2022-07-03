@@ -12,6 +12,7 @@
 #if BB_USING(BB_ASSERTS)
 
 #include "bbclient/bb_wrap_stdio.h"
+#include "bbclient/bb_wrap_windows.h"
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
 BB_WARNING_DISABLE(4710) // snprintf not inlined - can't push/pop because it happens later
@@ -20,6 +21,11 @@ BB_WARNING_DISABLE(4710) // snprintf not inlined - can't push/pop because it hap
 static bbassert_action_e default_assert_handler(const char *condition, const char *message, const char *file, const int line);
 static bbassert_handler s_assert_func = &default_assert_handler;
 static b32 s_break_on_assert = true;
+
+b32 bbassert_is_debugger_present(void)
+{
+	return IsDebuggerPresent();
+}
 
 static bbassert_action_e default_assert_handler(const char *condition, const char *message, const char *file, const int line)
 {

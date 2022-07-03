@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "config.h"
@@ -17,6 +17,7 @@
 #include "bb_string.h"
 #include "bb_thread.h"
 #include "bb_time.h"
+#include "bb_wrap_process.h"
 #include "device_codes.h"
 #include "parson/parson.h"
 #include <stdlib.h>

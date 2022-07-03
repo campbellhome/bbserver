@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "sdict.h"
@@ -6,6 +6,7 @@
 #include "bb_wrap_stdio.h"
 #include "parson/parson.h"
 #include <stdlib.h>
+#include <string.h>
 
 void sdict_init(sdict_t *sd)
 {

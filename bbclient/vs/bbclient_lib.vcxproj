@@ -37,7 +37,10 @@
     <ClInclude Include="..\include\bbclient\bb_time.h" />
     <ClInclude Include="..\include\bbclient\bb_types.h" />
     <ClInclude Include="..\include\bbclient\bb_wrap_malloc.h" />
+    <ClInclude Include="..\include\bbclient\bb_wrap_process.h" />
     <ClInclude Include="..\include\bbclient\bb_wrap_stdio.h" />
+    <ClInclude Include="..\include\bbclient\bb_wrap_windows.h" />
+    <ClInclude Include="..\include\bbclient\bb_wrap_winsock2.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\bb.c" />

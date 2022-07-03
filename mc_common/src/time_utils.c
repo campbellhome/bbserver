@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "time_utils.h"
@@ -6,6 +6,8 @@
 #include "va.h"
 
 #if BB_USING(BB_COMPILER_MSVC)
+
+#include "bb_wrap_windows.h"
 
 static u64 s_frameStartCounter;
 static u64 s_counterFrequency;

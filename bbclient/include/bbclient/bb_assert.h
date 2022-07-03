@@ -31,9 +31,10 @@ void bbassert_set_handler(bbassert_handler func);
 bbassert_action_e bbassert_dispatch(const char *condition, const char *file, int line, const char *fmt, ...);
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
+b32 bbassert_is_debugger_present(void);
 #define BB_BREAK()              \
 	{                           \
-		if(IsDebuggerPresent()) \
+		if(bbassert_is_debugger_present()) \
 			__debugbreak();     \
 	}
 #else // #if BB_USING( BB_PLATFORM_WINDOWS )

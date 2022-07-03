@@ -7,6 +7,8 @@
 #include "fonts.h"
 #include "sb.h"
 
+#include "bb_wrap_windows.h"
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

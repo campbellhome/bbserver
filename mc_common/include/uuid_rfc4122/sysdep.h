@@ -10,7 +10,7 @@
 
 #ifdef WININC
 __pragma(warning(disable : 4820 4255 4668 4574));
-#include <windows.h>
+#include "bb_wrap_windows.h"
 #else
 #include <sys/sysinfo.h>
 #include <sys/time.h>

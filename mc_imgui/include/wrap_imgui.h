@@ -28,10 +28,7 @@ BB_WARNING_PUSH(4820 4255 4668 4574 4365)
 #include "misc/freetype/imgui_freetype.h"
 #endif // #if BB_USING(FEATURE_FREETYPE)
 
-#include <d3d9.h>
-#define DIRECTINPUT_VERSION 0x0800
-#include <dinput.h>
-#include <tchar.h>
+//#include <tchar.h>
 
 BB_WARNING_POP
 

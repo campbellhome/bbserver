@@ -1,9 +1,10 @@
-﻿// Copyright (c) 2012-2019 Matt Campbell
+﻿// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #define BB_WIDECHAR 1
 
 #include "bb.h"
+#include "bbclient/bb_assert.h"
 #include "bbclient/bb_common.h"
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
@@ -12,10 +13,10 @@
 BB_WARNING_DISABLE(4514) // unreferenced inline function has been removed
 BB_WARNING_DISABLE(4710) // function not inlined
 
+#include "bbclient/bb_wrap_process.h"
 #include "bbclient/bb_wrap_stdio.h"
-#if defined(_MSC_VER)
-#include <windows.h>
-#else
+#include "bbclient/bb_wrap_windows.h"
+#if !defined(_MSC_VER)
 #include <stdint.h>
 #endif
 

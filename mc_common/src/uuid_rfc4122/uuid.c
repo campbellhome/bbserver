@@ -16,7 +16,10 @@ __pragma(warning(disable : 4711)); // warning C4711: function 'Decode' selected 
 #include <string.h>
 #include <time.h>
 
-#if !defined(_MSC_VER)
+#if defined(_MSC_VER)
+#include "bb_wrap_windows.h"
+#include "bb_wrap_winsock2.h"
+#else
 #include <arpa/inet.h>
 static void fopen_s(FILE **fp, const char *filename, const char *mode)
 {

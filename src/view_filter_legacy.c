@@ -1,10 +1,11 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "view_filter_legacy.h"
 #include "bb_string.h"
 #include "recorded_session.h"
 #include "view.h"
+#include <stdlib.h>
 
 typedef enum view_filter_comparison_e {
 	kViewFilterComparison_Equal,

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -6,6 +6,8 @@
 #include "common.h"
 #include "sb.h"
 #include "update_utils.h"
+
+#include "bb_wrap_windows.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -29,7 +31,7 @@ b32 Update_Init(updateData *data);
 void Update_Shutdown(void);
 void Update_Tick(void);
 void Update_Menu(void);
-updateData* Update_GetData(void);
+updateData *Update_GetData(void);
 updateManifest_t *Update_GetManifest(void);
 void Update_CheckForUpdates(b32 bUpdateImmediately);
 const char *Update_GetCurrentVersion(void);

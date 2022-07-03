@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bb.h"
@@ -11,6 +11,8 @@
 
 #if BB_USING(BB_COMPILER_MSVC)
 
+#include "bb_wrap_windows.h"
+#include "bb_wrap_process.h"
 #include <stdlib.h>
 
 bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)

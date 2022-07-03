@@ -8,6 +8,7 @@
 // warning C4820 : 'StructName' : '4' bytes padding added after data member 'MemberName'
 // warning C4255: 'FuncName': no function prototype given: converting '()' to '(void)'
 BB_WARNING_PUSH(4820 4255)
+#include "bb_wrap_windows.h"
 #include <ShlObj.h>
 #pragma comment(lib, "Shell32.lib")
 sb_t appdata_get(const char *appName)

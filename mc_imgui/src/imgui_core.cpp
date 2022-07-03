@@ -8,6 +8,7 @@
 #include "cmdline.h"
 #include "common.h"
 #include "fonts.h"
+#include "imgui_core_windows.h"
 #include "imgui_image.h"
 #include "imgui_input_text.h"
 #include "imgui_themes.h"
@@ -757,7 +758,7 @@ void Imgui_Core_EndFrame(ImVec4 clear_col)
 		}
 	}
 	if(!requestRender) {
-		for(const ImGuiKeyData& keyData : io.KeysData) {
+		for(const ImGuiKeyData &keyData : io.KeysData) {
 			if(keyData.Down) {
 				requestRender = true;
 				break;

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "appdata.h"
@@ -9,6 +9,8 @@
 #include "mc_updater/mc_updater.h"
 #include "path_utils.h"
 #include "sb.h"
+
+#include "bb_wrap_windows.h"
 
 int main(int argc, const char **argv)
 {

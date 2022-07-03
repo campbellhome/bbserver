@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "config_whitelist_push.h"
@@ -10,6 +10,9 @@
 #include "sdict.h"
 #include "va.h"
 #include <stdlib.h>
+
+#include "bb_wrap_windows.h"
+#include "bb_wrap_winsock2.h"
 
 static s32 s_lastWhitelistId = 0;
 
@@ -101,7 +104,8 @@ void config_push_whitelist(configWhitelist_t *configWhitelist)
 			u32 zeros;
 			*sep = '\0';
 			val = atoi(sep + 1);
-			zeros = (val < 0) ? 0 : (val > 32) ? 32 : val;
+			zeros = (val < 0) ? 0 : (val > 32) ? 32
+			                                   : val;
 			if(zeros == 32) {
 				mask = 0;
 			} else if(zeros > 0) {

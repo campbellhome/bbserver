@@ -19,6 +19,10 @@
 #include "tokenize.h"
 #include "va.h"
 
+#include "bb_wrap_windows.h"
+
+#include "bb_wrap_winsock2.h"
+
 BB_WARNING_PUSH(4820, 4668)
 #include <Iphlpapi.h>
 #pragma comment(lib, "Iphlpapi.lib")

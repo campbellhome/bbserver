@@ -5,6 +5,7 @@
 
 #include "bb.h"
 
+#include "bbclient/bb_assert.h"
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_serialize.h"
 #include <string.h>

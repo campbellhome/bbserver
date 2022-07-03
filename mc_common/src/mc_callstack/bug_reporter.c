@@ -1,12 +1,14 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "mc_callstack/bug_reporter.h"
 #include "appdata.h"
+#include "bb_assert.h"
 #include "bb_connection.h"
 #include "bb_file.h"
 #include "bb_serialize.h"
 #include "bb_thread.h"
+#include "bb_wrap_process.h"
 #include "cmdline.h"
 #include "path_utils.h"
 #include "uuid_rfc4122/uuid.h"

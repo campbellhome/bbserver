@@ -400,6 +400,7 @@ static void GenerateStructsSource(const char *prefix, const char *includePrefix,
 	InitialComments(s);
 	va(s, "\n");
 	va(s, "#include \"%s%sstructs_generated.h\"\n", includePrefix, prefix);
+	va(s, "#include \"bb_assert.h\"\n");
 	va(s, "#include \"bb_array.h\"\n");
 	va(s, "#include \"str.h\"\n");
 	va(s, "#include \"va.h\"\n");

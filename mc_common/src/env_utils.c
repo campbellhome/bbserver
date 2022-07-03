@@ -1,9 +1,12 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "env_utils.h"
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
+
+#include "bb_wrap_windows.h"
+
 sb_t env_get(const char *name)
 {
 	DWORD required = GetEnvironmentVariable(name, NULL, 0);
@@ -37,6 +40,7 @@ sb_t env_resolve(const char *src)
 
 	return ret;
 }
+
 #endif // #if BB_USING(BB_PLATFORM_WINDOWS)
 
 #if BB_USING(BB_PLATFORM_LINUX)

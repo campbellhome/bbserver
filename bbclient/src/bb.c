@@ -10,6 +10,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "bb.h"
 
 #include "bbclient/bb_array.h"
+#include "bbclient/bb_assert.h"
 #include "bbclient/bb_connection.h"
 #include "bbclient/bb_criticalsection.h"
 #include "bbclient/bb_discovery_client.h"
@@ -23,6 +24,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include <wchar.h>
 
 #if BB_USING(BB_COMPILER_MSVC)
+#include "bbclient/bb_wrap_windows.h"
 #define bb_thread_local __declspec(thread)
 u64 bb_get_current_thread_id(void)
 {

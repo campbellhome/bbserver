@@ -1,5 +1,7 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
+
+#pragma once
 
 #ifndef BB_H
 #define BB_H

@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "ui_view.h"
+#include "bb_assert.h"
 #include "bb_array.h"
 #include "bb_colors.h"
 #include "bb_string.h"

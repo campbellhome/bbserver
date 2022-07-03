@@ -57,6 +57,8 @@ static char *cmdline_resolve_exe_dir(const char *orig)
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
 
+#include "bb_wrap_windows.h"
+
 static char *s_argBuffer;
 static char **s_argvBuffer;
 static char s_argv0[_MAX_PATH];

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "mc_callstack/exception_handler.h"
@@ -6,6 +6,8 @@
 #include "common.h"
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
+
+#include "bb_wrap_windows.h"
 
 static b32 s_unhandledExceptionHandlerInstalled;
 static exception_handler_callback *s_callback;

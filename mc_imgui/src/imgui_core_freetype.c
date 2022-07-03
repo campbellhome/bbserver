@@ -5,6 +5,8 @@
 
 #if BB_USING(FEATURE_FREETYPE)
 
+#include "bb_wrap_windows.h"
+
 BB_WARNING_PUSH(4820)
 
 #include <ft2build.h>

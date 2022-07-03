@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bbserver_asserts.h"
@@ -9,6 +9,7 @@
 #if BB_USING(FEATURE_CALLSTACKS)
 
 #include "app_update.h"
+#include "bb_assert.h"
 #include "bb_file.h"
 #include "bb_thread.h"
 #include "cmdline.h"

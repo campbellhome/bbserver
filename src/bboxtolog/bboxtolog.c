@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #if defined(_MSC_VER)
@@ -14,6 +14,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "span.h"
 #include "tokenize.h"
 
+#include "bb_wrap_windows.h"
 #include "bbclient/bb_wrap_malloc.h"
 #include "bbclient/bb_wrap_stdio.h"
 #include "sqlite/wrap_sqlite3.h"

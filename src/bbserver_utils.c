@@ -1,11 +1,10 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bbserver_utils.h"
 #include "sb.h"
-BB_WARNING_PUSH(4577 4668 4820 4946)
-#include <windows.h> // For common windows data types and function headers
-BB_WARNING_POP
+
+#include "bb_wrap_windows.h"
 
 void BBServer_OpenDirInExplorer(const char *dir)
 {

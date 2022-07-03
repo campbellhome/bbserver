@@ -9,6 +9,8 @@
 
 #if BB_USING(BB_COMPILER_MSVC)
 
+#include "bbclient/bb_wrap_windows.h"
+
 u64 bb_current_ticks(void)
 {
 	LARGE_INTEGER li;

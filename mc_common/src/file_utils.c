@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "file_utils.h"
@@ -6,6 +6,8 @@
 #include "common.h"
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
+
+#include "bb_wrap_windows.h"
 
 void fileData_reset(fileData_t *result)
 {

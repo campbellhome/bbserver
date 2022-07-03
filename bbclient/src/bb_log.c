@@ -12,6 +12,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "bbclient/bb_log.h"
 #include "bbclient/bb_time.h"
 #include "bbclient/bb_wrap_stdio.h"
+#include "bbclient/bb_wrap_windows.h"
 
 extern u32 g_bb_initFlags;
 

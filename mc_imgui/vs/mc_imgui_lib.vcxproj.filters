@@ -119,6 +119,12 @@
     </ClInclude>
     <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.h" />
     <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\include\imgui_core_windows.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\wrap_dx9.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="imgui">

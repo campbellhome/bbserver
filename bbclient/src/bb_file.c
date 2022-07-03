@@ -9,7 +9,7 @@
 
 #if BB_USING(BB_COMPILER_MSVC)
 
-#include <Windows.h>
+#include "bbclient/bb_wrap_windows.h"
 
 bb_file_handle_t bb_file_open_for_write(const char *pathname)
 {

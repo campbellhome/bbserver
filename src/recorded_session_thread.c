@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "recorded_session_thread.h"
@@ -16,6 +16,7 @@
 #include "tokenize.h"
 #include "view.h"
 
+#include "bb_wrap_process.h"
 #include "bb_wrap_stdio.h"
 #include <locale.h>
 #include <stdlib.h>
@@ -136,7 +137,7 @@ static void recorded_session_read_log(recorded_session_t *session, const char *f
 				}
 			}
 
-			if (bByteSwap) {
+			if(bByteSwap) {
 				for(u32 index = 0; index < bytesRead; index += 2) {
 					u8 tmp = recvBuffer[index];
 					recvBuffer[index] = recvBuffer[index + 1];

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "system_tray.h"
@@ -6,6 +6,8 @@
 #include "bb_string.h"
 #include "imgui_core.h"
 #include "win32_resource.h"
+
+#include "bb_wrap_windows.h"
 #include <shellapi.h>
 
 int UISystemTray_Open(void);

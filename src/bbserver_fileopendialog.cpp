@@ -11,6 +11,7 @@
 
 #include "sb.h"
 BB_WARNING_PUSH(4577 4668 4820 4946)
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h> // For common windows data types and function headers
 #define STRICT_TYPED_ITEMIDS
 #include <knownfolders.h> // for KnownFolder APIs/datatypes/function headers

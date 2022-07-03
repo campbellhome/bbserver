@@ -1,8 +1,9 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "app_update.h"
 #include "appdata.h"
+#include "bb_assert.h"
 #include "bb_array.h"
 #include "bb_colors.h"
 #include "bb_common.h"
@@ -22,6 +23,7 @@
 #include "discovery_thread.h"
 #include "dragdrop.h"
 #include "imgui_core.h"
+#include "imgui_core_windows.h"
 #include "imgui_themes.h"
 #include "imgui_utils.h"
 #include "message_box.h"

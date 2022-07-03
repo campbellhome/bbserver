@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "fonts.h"
@@ -7,6 +7,7 @@
 #include "imgui_core.h"
 #include "imgui_utils.h"
 
+#include "bb_wrap_windows.h"
 #include <ShlObj.h>
 
 // warning C4820 : 'StructName' : '4' bytes padding added after data member 'MemberName'

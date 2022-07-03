@@ -4,6 +4,7 @@
 #include "va.h"
 #include "bb_thread.h"
 #include "bb_wrap_stdio.h"
+#include <stdarg.h>
 
 enum { kVA_NumSlots = 16 };
 typedef struct
