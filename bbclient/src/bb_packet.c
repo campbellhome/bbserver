@@ -144,7 +144,8 @@ static b32 bbpacket_serialize_console_autocomplete_response_header(bb_serialize_
 {
 	bb_packet_console_autocomplete_response_header_t *consoleAutocompleteResponseHeader = &decoded->packet.consoleAutocompleteResponseHeader;
 	bbserialize_u32(ser, &consoleAutocompleteResponseHeader->id);
-	return bbserialize_u32(ser, &consoleAutocompleteResponseHeader->total);
+	bbserialize_u32(ser, &consoleAutocompleteResponseHeader->total);
+	return bbserialize_s32(ser, &consoleAutocompleteResponseHeader->reuse);
 }
 
 static b32 bbpacket_serialize_console_autocomplete_response_entry(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
