@@ -24,7 +24,11 @@ static b32 s_break_on_assert = true;
 
 b32 bbassert_is_debugger_present(void)
 {
+#if BB_USING(BB_PLATFORM_WINDOWS)
 	return IsDebuggerPresent();
+#else
+	return 0;
+#endif
 }
 
 static bbassert_action_e default_assert_handler(const char *condition, const char *message, const char *file, const int line)
