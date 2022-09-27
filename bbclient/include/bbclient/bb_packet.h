@@ -112,6 +112,7 @@ typedef struct bb_packet_console_autocomplete_response_header_s {
 typedef struct bb_packet_console_autocomplete_response_entry_s {
 	u32 id;
 	b32 command;
+	u32 flags;
 	char text[kBBSize_ConsoleAutocompleteText];
 	char description[kBBSize_ConsoleAutocompleteDesc];
 } bb_packet_console_autocomplete_response_entry_t;

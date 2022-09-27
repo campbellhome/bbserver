@@ -152,6 +152,7 @@ static b32 bbpacket_serialize_console_autocomplete_response_entry(bb_serialize_t
 	bb_packet_console_autocomplete_response_entry_t *consoleAutocompleteResponseEntry = &decoded->packet.consoleAutocompleteResponseEntry;
 	bbserialize_u32(ser, &consoleAutocompleteResponseEntry->id);
 	bbserialize_s32(ser, &consoleAutocompleteResponseEntry->command);
+	bbserialize_u32(ser, &consoleAutocompleteResponseEntry->flags);
 	u16 len = 0;
 	bbserialize_text(ser, consoleAutocompleteResponseEntry->text, &len);
 	return bbserialize_text(ser, consoleAutocompleteResponseEntry->description, &len);
