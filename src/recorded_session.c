@@ -265,7 +265,9 @@ static void recorded_session_init_console_autocomplete_response(recorded_session
 {
 	session->consoleAutocomplete.id = decoded->packet.consoleAutocompleteResponseHeader.id;
 	session->consoleAutocomplete.expected = decoded->packet.consoleAutocompleteResponseHeader.total;
-	session->consoleAutocomplete.count = 0;
+	if(!decoded->packet.consoleAutocompleteResponseHeader.reuse) {
+		session->consoleAutocomplete.count = 0;
+	}
 }
 
 static void recorded_session_add_console_autocomplete_entry(recorded_session_t *session, bb_decoded_packet_t *decoded)

@@ -146,6 +146,7 @@ static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *co
 		out.type = kBBPacketType_ConsoleAutocompleteResponseHeader;
 		out.packet.consoleAutocompleteResponseHeader.id = decoded->packet.consoleAutocompleteRequest.id;
 		out.packet.consoleAutocompleteResponseHeader.total = total;
+		out.packet.consoleAutocompleteResponseHeader.reuse = false;
 		bb_send_raw_packet(&out);
 
 		out.type = kBBPacketType_ConsoleAutocompleteResponseEntry;

@@ -107,6 +107,7 @@ typedef struct bb_packet_console_autocomplete_request_s {
 typedef struct bb_packet_console_autocomplete_response_header_s {
 	u32 id;
 	u32 total;
+	b32 reuse;
 } bb_packet_console_autocomplete_response_header_t;
 
 typedef struct bb_packet_console_autocomplete_response_entry_s {
