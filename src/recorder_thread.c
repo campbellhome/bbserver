@@ -193,8 +193,8 @@ bb_thread_return_t recorder_thread(void *args)
 							bb_strncpy(outgoing.packet.consoleCommand.text, outgoingMessage->text, sizeof(outgoing.packet.consoleCommand.text));
 						} else if(outgoingMessage->command == kBBPacketType_ConsoleAutocompleteRequest) {
 							valid = true;
-							outgoing.packet.consoleAutocompleteEntry.id = outgoingMessage->userData;
-							bb_strncpy(outgoing.packet.consoleAutocompleteEntry.data, outgoingMessage->text, sizeof(outgoing.packet.consoleAutocompleteEntry.data));
+							outgoing.packet.consoleAutocompleteRequest.id = outgoingMessage->userData;
+							bb_strncpy(outgoing.packet.consoleAutocompleteRequest.text, outgoingMessage->text, sizeof(outgoing.packet.consoleAutocompleteRequest.text));
 						} else if(outgoingMessage->command == kBBPacketType_StopRecording) {
 							bbcon_disconnect(con);
 						}

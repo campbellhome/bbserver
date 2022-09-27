@@ -99,15 +99,22 @@ typedef struct bb_packet_recording_info_s {
 	char recordingName[kBBSize_RecordingName];
 } bb_packet_recording_info_t;
 
-typedef struct bb_packet_console_autocomplete_entry_s {
+typedef struct bb_packet_console_autocomplete_request_s {
 	u32 id;
-	char data[kBBSize_LogText];
-} bb_packet_console_autocomplete_entry_t;
+	char text[kBBSize_ConsoleAutocompleteText];
+} bb_packet_console_autocomplete_request_t;
 
 typedef struct bb_packet_console_autocomplete_response_header_s {
 	u32 id;
 	u32 total;
 } bb_packet_console_autocomplete_response_header_t;
+
+typedef struct bb_packet_console_autocomplete_response_entry_s {
+	u32 id;
+	b32 command;
+	char text[kBBSize_ConsoleAutocompleteText];
+	char description[kBBSize_ConsoleAutocompleteDesc];
+} bb_packet_console_autocomplete_response_entry_t;
 
 typedef struct bb_decoded_packet_s {
 	bb_packet_type_e type;
@@ -132,8 +139,9 @@ typedef struct bb_decoded_packet_s {
 
 		bb_packet_recording_info_t recordingInfo;
 
-		bb_packet_console_autocomplete_entry_t consoleAutocompleteEntry;
+		bb_packet_console_autocomplete_request_t consoleAutocompleteRequest;
 		bb_packet_console_autocomplete_response_header_t consoleAutocompleteResponseHeader;
+		bb_packet_console_autocomplete_response_entry_t consoleAutocompleteResponseEntry;
 	} packet;
 } bb_decoded_packet_t;
 

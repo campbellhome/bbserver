@@ -54,6 +54,8 @@ enum {
 	kBBSize_ApplicationName = 64,
 	kBBSize_ThreadName = 64,
 	kBBSize_Category = 128,
+	kBBSize_ConsoleAutocompleteText = 512,
+	kBBSize_ConsoleAutocompleteDesc = 1548,
 	kBBSize_MaxPath = 2048,
 	kBBSize_LogText = 2048,
 	kBBSize_MachineName = 256,

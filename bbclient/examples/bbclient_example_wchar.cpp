@@ -100,24 +100,26 @@ static uint8_t s_initialBuffer[InitialBufferLen];
 struct console_autocomplete_entry {
 	const char *command;
 	const char *description;
+	b32 bCommand;
+	u8 pad[4];
 };
 
 static console_autocomplete_entry s_autocompleteEntries[] = {
-	{ "quit", "" },
-	{ "log LogTemp", "" },
-	{ "log LogConsole", "" },
-	{ "log LogMatchmaking", "" },
-	{ "con.autocomplete", "" },
-	{ "map Evansburgh_A", "" },
-	{ "map Evansburgh_B", "" },
-	{ "map Evansburgh_C", "" },
-	{ "map Evansburgh_D", "" },
-	{ "map Evansburgh_E", "" },
-	{ "map BlueDog_A", "" },
-	{ "map BlueDog_B", "" },
-	{ "map BlueDog_C", "" },
-	{ "map BlueDog_D", "" },
-	{ "map BlueDog_E", "" },
+	{ "quit", "quit the application", true },
+	{ "log LogTemp", "set log category", true },
+	{ "log LogConsole", "set log category", true },
+	{ "log LogMatchmaking", "set log category", true },
+	{ "con.autocomplete", "a cvar!", false },
+	{ "map Evansburgh_A", "load a map", true },
+	{ "map Evansburgh_B", "load a map", true },
+	{ "map Evansburgh_C", "load a map", true },
+	{ "map Evansburgh_D", "load a map", true },
+	{ "map Evansburgh_E", "load a map", true },
+	{ "map BlueDog_A", "load a map", true },
+	{ "map BlueDog_B", "load a map", true },
+	{ "map BlueDog_C", "load a map", true },
+	{ "map BlueDog_D", "load a map", true },
+	{ "map BlueDog_E", "load a map", true },
 };
 
 static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *context)
@@ -130,27 +132,29 @@ static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *co
 			s_bQuit = true;
 		}
 	} else if(decoded->type == kBBPacketType_ConsoleAutocompleteRequest) {
-		size_t len = strlen(decoded->packet.consoleAutocompleteEntry.data);
+		size_t len = strlen(decoded->packet.consoleAutocompleteRequest.text);
 		u32 total = 0;
 		for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
-			if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteEntry.data, len)) {
+			if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len)) {
 				++total;
 			}
 		}
 
-		BB_LOG_A("Console", "^:autocomplete %u (%u)] %s\n", decoded->packet.consoleAutocompleteEntry.id, total, decoded->packet.consoleAutocompleteEntry.data);
+		BB_LOG_A("Console", "^:autocomplete %u (%u)] %s\n", decoded->packet.consoleAutocompleteRequest.id, total, decoded->packet.consoleAutocompleteRequest.text);
 
 		bb_decoded_packet_t out = { BB_EMPTY_INITIALIZER };
 		out.type = kBBPacketType_ConsoleAutocompleteResponseHeader;
-		out.packet.consoleAutocompleteResponseHeader.id = decoded->packet.consoleAutocompleteEntry.id;
+		out.packet.consoleAutocompleteResponseHeader.id = decoded->packet.consoleAutocompleteRequest.id;
 		out.packet.consoleAutocompleteResponseHeader.total = total;
 		bb_send_raw_packet(&out);
 
 		out.type = kBBPacketType_ConsoleAutocompleteResponseEntry;
-		out.packet.consoleAutocompleteEntry.id = decoded->packet.consoleAutocompleteEntry.id;
+		out.packet.consoleAutocompleteResponseEntry.id = decoded->packet.consoleAutocompleteRequest.id;
 		for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
-			if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteEntry.data, len)) {
-				bb_strncpy(out.packet.consoleAutocompleteEntry.data, s_autocompleteEntries[i].command, sizeof(out.packet.consoleAutocompleteEntry.data));
+			if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len)) {
+				out.packet.consoleAutocompleteResponseEntry.command = s_autocompleteEntries[i].bCommand;
+				bb_strncpy(out.packet.consoleAutocompleteResponseEntry.text, s_autocompleteEntries[i].command, sizeof(out.packet.consoleAutocompleteResponseEntry.text));
+				bb_strncpy(out.packet.consoleAutocompleteResponseEntry.description, s_autocompleteEntries[i].description, sizeof(out.packet.consoleAutocompleteResponseEntry.description));
 				bb_send_raw_packet(&out);
 			}
 		}

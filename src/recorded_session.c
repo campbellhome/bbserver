@@ -270,13 +270,15 @@ static void recorded_session_init_console_autocomplete_response(recorded_session
 
 static void recorded_session_add_console_autocomplete_entry(recorded_session_t *session, bb_decoded_packet_t *decoded)
 {
-	if(session->consoleAutocomplete.id != decoded->packet.consoleAutocompleteEntry.id)
+	if(session->consoleAutocomplete.id != decoded->packet.consoleAutocompleteResponseEntry.id)
 		return;
 
-	bb_packet_console_autocomplete_entry_t *entry = bba_add(session->consoleAutocomplete, 1);
+	bb_packet_console_autocomplete_response_entry_t *entry = bba_add(session->consoleAutocomplete, 1);
 	if(entry) {
-		entry->id = decoded->packet.consoleAutocompleteEntry.id;
-		bb_strncpy(entry->data, decoded->packet.consoleAutocompleteEntry.data, sizeof(entry->data));
+		entry->id = decoded->packet.consoleAutocompleteResponseEntry.id;
+		entry->command = decoded->packet.consoleAutocompleteResponseEntry.command;
+		bb_strncpy(entry->text, decoded->packet.consoleAutocompleteResponseEntry.text, sizeof(entry->text));
+		bb_strncpy(entry->description, decoded->packet.consoleAutocompleteResponseEntry.description, sizeof(entry->description));
 	}
 }
 

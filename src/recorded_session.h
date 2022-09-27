@@ -103,7 +103,7 @@ typedef struct recorded_console_autocomplete_s {
 	u32 count;
 	u32 allocated;
 	u64 lastRequestTime;
-	bb_packet_console_autocomplete_entry_t *data;
+	bb_packet_console_autocomplete_response_entry_t *data;
 	sb_t request;
 } recorded_console_autocomplete_t;
 

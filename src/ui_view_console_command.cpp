@@ -9,6 +9,7 @@
 #include "fonts.h"
 #include "imgui_core.h"
 #include "imgui_themes.h"
+#include "imgui_tooltips.h"
 #include "imgui_utils.h"
 #include "message_queue.h"
 #include "recorded_session.h"
@@ -209,6 +210,19 @@ void UIRecordedView_Console(view_t *view, bool bHasFocus)
 	}
 }
 
+// #TODO: move this somewhere else and share with ui_view.cpp:
+static void PushUIFont()
+{
+	ImFontAtlas *fonts = ImGui::GetIO().Fonts;
+	ImGui::PushFont(fonts->Fonts[0]);
+}
+
+// #TODO: move this somewhere else and share with ui_view.cpp:
+static void PopUIFont()
+{
+	ImGui::PopFont();
+}
+
 static void UIRecordedView_ConsoleAutocomplete(view_t *view)
 {
 	if((view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleAutocomplete) == 0) {
@@ -267,9 +281,16 @@ static void UIRecordedView_ConsoleAutocomplete(view_t *view)
 			}
 		} else {
 			for(u32 i = 0; i < view->session->consoleAutocomplete.count; ++i) {
-				const bb_packet_console_autocomplete_entry_t *entry = view->session->consoleAutocomplete.data + i;
-				if(ImGui::Selectable(entry->data)) {
-					selected = entry->data;
+				const bb_packet_console_autocomplete_response_entry_t *entry = view->session->consoleAutocomplete.data + i;
+				if(ImGui::Selectable(entry->text)) {
+					selected = entry->text;
+				}
+				if(ImGui::IsTooltipActive()) {
+					ImGui::BeginTooltip();
+					PushUIFont();
+					ImGui::TextShadowed(entry->description);
+					PopUIFont();
+					ImGui::EndTooltip();
 				}
 			}
 		}
