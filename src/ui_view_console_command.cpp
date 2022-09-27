@@ -246,12 +246,28 @@ static void UIRecordedView_ConsoleAutocomplete(view_t *view)
 		}
 	}
 
+	u32 numLines = 0;
+	if(view->consoleInputTime >= view->consoleHistoryTime) {
+		if(sb_len(&view->consoleInput) > 0) {
+			for(u32 i = 0; i < view->session->consoleAutocomplete.count; ++i) {
+				const bb_packet_console_autocomplete_response_entry_t *entry = view->session->consoleAutocomplete.data + i;
+				if(bb_strnicmp(entry->text, sb_get(&view->consoleInput), sb_len(&view->consoleInput)) == 0) {
+					++numLines;
+				}
+			}
+		}
+	} else {
+		numLines = view->consoleHistory.entries.count;
+	}
+	if(!numLines) {
+		return;
+	}
+
 	const ImVec2 cursorPos = ImGui::GetCursorPos();
 	const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
 
 	const ImGuiStyle &style = ImGui::GetStyle();
 
-	int numLines = 10;
 	float popupHeight = ImGui::GetTextLineHeightWithSpacing() * (float)numLines + style.ItemSpacing.y * 3;
 	ImVec2 contentRegionAvail;
 	contentRegionAvail.x = ImGui::GetContentRegionAvail().x - cursorPos.x - 10.0f;

@@ -134,9 +134,11 @@ static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *co
 	} else if(decoded->type == kBBPacketType_ConsoleAutocompleteRequest) {
 		size_t len = strlen(decoded->packet.consoleAutocompleteRequest.text);
 		u32 total = 0;
-		for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
-			if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len)) {
-				++total;
+		if(len) {
+			for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
+				if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len)) {
+					++total;
+				}
 			}
 		}
 
@@ -149,14 +151,16 @@ static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *co
 		out.packet.consoleAutocompleteResponseHeader.reuse = false;
 		bb_send_raw_packet(&out);
 
-		out.type = kBBPacketType_ConsoleAutocompleteResponseEntry;
-		out.packet.consoleAutocompleteResponseEntry.id = decoded->packet.consoleAutocompleteRequest.id;
-		for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
-			if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len)) {
-				out.packet.consoleAutocompleteResponseEntry.command = s_autocompleteEntries[i].bCommand;
-				bb_strncpy(out.packet.consoleAutocompleteResponseEntry.text, s_autocompleteEntries[i].command, sizeof(out.packet.consoleAutocompleteResponseEntry.text));
-				bb_strncpy(out.packet.consoleAutocompleteResponseEntry.description, s_autocompleteEntries[i].description, sizeof(out.packet.consoleAutocompleteResponseEntry.description));
-				bb_send_raw_packet(&out);
+		if(total) {
+			out.type = kBBPacketType_ConsoleAutocompleteResponseEntry;
+			out.packet.consoleAutocompleteResponseEntry.id = decoded->packet.consoleAutocompleteRequest.id;
+			for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
+				if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len)) {
+					out.packet.consoleAutocompleteResponseEntry.command = s_autocompleteEntries[i].bCommand;
+					bb_strncpy(out.packet.consoleAutocompleteResponseEntry.text, s_autocompleteEntries[i].command, sizeof(out.packet.consoleAutocompleteResponseEntry.text));
+					bb_strncpy(out.packet.consoleAutocompleteResponseEntry.description, s_autocompleteEntries[i].description, sizeof(out.packet.consoleAutocompleteResponseEntry.description));
+					bb_send_raw_packet(&out);
+				}
 			}
 		}
 	}
