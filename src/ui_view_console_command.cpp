@@ -262,6 +262,9 @@ static void UIRecordedView_ConsoleAutocomplete(view_t *view)
 	if(!numLines) {
 		return;
 	}
+	if(numLines > 20) {
+		numLines = 20;
+	}
 
 	const ImVec2 cursorPos = ImGui::GetCursorPos();
 	const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
@@ -272,7 +275,7 @@ static void UIRecordedView_ConsoleAutocomplete(view_t *view)
 	ImVec2 contentRegionAvail;
 	contentRegionAvail.x = ImGui::GetContentRegionAvail().x - cursorPos.x - 10.0f;
 	contentRegionAvail.y = cursorPos.y - ImGui::GetFrameHeightWithSpacing();
-	ImVec2 popupSize(contentRegionAvail.x, contentRegionAvail.y < popupHeight ? contentRegionAvail.y : popupHeight);
+	ImVec2 popupSize(0.0f, contentRegionAvail.y < popupHeight ? contentRegionAvail.y : popupHeight);
 	ImGui::SetNextWindowSize(popupSize);
 
 	ImGui::SetNextWindowPos(ImVec2(cursorScreenPos.x, cursorScreenPos.y - ImGui::GetFrameHeightWithSpacing() - popupSize.y), ImGuiCond_Always);
