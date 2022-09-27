@@ -360,6 +360,7 @@ message_queue_message_t message_queue_message_clone(const message_queue_message_
 	message_queue_message_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.command = src->command;
+		dst.userData = src->userData;
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->text); ++i) {
 			dst.text[i] = src->text[i];
 		}

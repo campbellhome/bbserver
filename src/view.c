@@ -215,6 +215,7 @@ void view_reset(view_t *view)
 	view_session_config_reset(&view->sessionConfig);
 	view_config_logs_reset(&view->configLogs);
 	sb_reset(&view->consoleInput);
+	sb_reset(&view->lastConsoleInput);
 	view_console_history_reset(&view->consoleHistory);
 	mb_shutdown(&view->messageboxes);
 	if(view->db) {

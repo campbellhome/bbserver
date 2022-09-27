@@ -1360,7 +1360,7 @@ static void view_filter_history_entry_add(view_t *view, const char *command)
 	sb_append(&newEntry.command, command);
 	bba_push(view->config.filterHistory.entries, newEntry);
 	sb_reset(&view->consoleInput);
-	view->consoleRequestActive = true;
+	++view->consoleRequestActive;
 }
 
 static void UIRecordedView_ApplyFilter(view_t *view, EViewFilterCategory category)

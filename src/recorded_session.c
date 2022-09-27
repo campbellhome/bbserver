@@ -134,6 +134,8 @@ void recorded_session_restart(recorded_session_t *session)
 	bba_free(session->filenames);
 	bba_free(session->threads);
 	bba_free(session->pieInstances);
+	bba_free(session->consoleAutocomplete);
+	sb_reset(&session->consoleAutocomplete.request);
 }
 
 void recorded_session_close(recorded_session_t *session)
@@ -156,6 +158,8 @@ void recorded_session_close(recorded_session_t *session)
 				bba_free(session->filenames);
 				bba_free(session->threads);
 				bba_free(session->pieInstances);
+				bba_free(session->consoleAutocomplete);
+				sb_reset(&session->consoleAutocomplete.request);
 				_aligned_free(session->incoming);
 				if(session->outgoingMqId != mq_invalid_id()) {
 					mq_releaseref(session->outgoingMqId);
@@ -257,6 +261,25 @@ static void recorded_session_init_appinfo(recorded_session_t *session, bb_decode
 	}
 }
 
+static void recorded_session_init_console_autocomplete_response(recorded_session_t *session, bb_decoded_packet_t *decoded)
+{
+	session->consoleAutocomplete.id = decoded->packet.consoleAutocompleteResponseHeader.id;
+	session->consoleAutocomplete.expected = decoded->packet.consoleAutocompleteResponseHeader.total;
+	session->consoleAutocomplete.count = 0;
+}
+
+static void recorded_session_add_console_autocomplete_entry(recorded_session_t *session, bb_decoded_packet_t *decoded)
+{
+	if(session->consoleAutocomplete.id != decoded->packet.consoleAutocompleteEntry.id)
+		return;
+
+	bb_packet_console_autocomplete_entry_t *entry = bba_add(session->consoleAutocomplete, 1);
+	if(entry) {
+		entry->id = decoded->packet.consoleAutocompleteEntry.id;
+		bb_strncpy(entry->data, decoded->packet.consoleAutocompleteEntry.data, sizeof(entry->data));
+	}
+}
+
 void recorded_session_update(recorded_session_t *session)
 {
 	u64 start = bb_current_time_ms();
@@ -296,6 +319,12 @@ void recorded_session_update(recorded_session_t *session)
 				t->endTime = decoded.header.timestamp;
 			}
 			break;
+		case kBBPacketType_ConsoleAutocompleteResponseHeader:
+			recorded_session_init_console_autocomplete_response(session, &decoded);
+			break;
+		case kBBPacketType_ConsoleAutocompleteResponseEntry:
+			recorded_session_add_console_autocomplete_entry(session, &decoded);
+			break;
 		case kBBPacketType_Invalid:
 		case kBBPacketType_FrameEnd:
 		case kBBPacketType_UserToServer:
@@ -303,6 +332,7 @@ void recorded_session_update(recorded_session_t *session)
 		case kBBPacketType_UserToClient:
 		case kBBPacketType_StopRecording:
 		case kBBPacketType_RecordingInfo:
+		case kBBPacketType_ConsoleAutocompleteRequest:
 		default:
 			break;
 		}

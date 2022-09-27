@@ -288,7 +288,10 @@ typedef struct view_s {
 	vfilter_t vfilter;
 	view_spans_t spans;
 	sb_t consoleInput;
+	sb_t lastConsoleInput;
+	u64 consoleInputTime;
 	view_console_history_t consoleHistory;
+	u64 consoleHistoryTime;
 	view_column_t columns[kColumn_Count];
 	b32 open;
 	b32 initialized;
@@ -311,13 +314,14 @@ typedef struct view_s {
 	int bookmarkThreshold;
 	int gotoTargetInput;
 	int gotoTarget;
+	u32 consoleRequestActive;
+	u32 consoleRequestActiveOld;
 	b8 gotoVisible;
 	b8 gotoViewRelative;
 	b8 visibleLogsDirty;
 	b8 tail;
 	b8 autoClose;
 	b8 consoleInputFocused;
-	b8 consoleRequestActive;
 	b8 consoleInputActive;
 	b8 spansActive;
 	b8 changedNonFavoriteColumnVisibility;
@@ -328,7 +332,6 @@ typedef struct view_s {
 	s8 redockCount;
 	b8 filterPopupOpen;
 	b8 filterContextPopupOpen;
-	u8 pad[7];
 } view_t;
 
 void view_init(view_t *view, recorded_session_t *session, b8 autoClose);

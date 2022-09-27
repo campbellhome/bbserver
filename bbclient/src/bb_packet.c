@@ -133,6 +133,20 @@ static b32 bbpacket_serialize_recording_info(bb_serialize_t *ser, bb_decoded_pac
 	return bbserialize_text(ser, decoded->packet.recordingInfo.recordingName, &len);
 }
 
+static b32 bbpacket_serialize_console_autocomplete_entry(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+{
+	bb_packet_console_autocomplete_entry_t *consoleAutocompleteEntry = &decoded->packet.consoleAutocompleteEntry;
+	bbserialize_u32(ser, &consoleAutocompleteEntry->id);
+	return bbserialize_remaining_text(ser, consoleAutocompleteEntry->data);
+}
+
+static b32 bbpacket_serialize_console_autocomplete_response_header(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+{
+	bb_packet_console_autocomplete_response_header_t *consoleAutocompleteResponseHeader = &decoded->packet.consoleAutocompleteResponseHeader;
+	bbserialize_u32(ser, &consoleAutocompleteResponseHeader->id);
+	return bbserialize_u32(ser, &consoleAutocompleteResponseHeader->total);
+}
+
 b32 bbpacket_deserialize(u8 *buffer, u16 len, bb_decoded_packet_t *decoded)
 {
 	u8 type;
@@ -186,6 +200,15 @@ b32 bbpacket_deserialize(u8 *buffer, u16 len, bb_decoded_packet_t *decoded)
 
 	case kBBPacketType_RecordingInfo:
 		return bbpacket_serialize_recording_info(&ser, decoded);
+
+	case kBBPacketType_ConsoleAutocompleteRequest:
+		return bbpacket_serialize_console_autocomplete_entry(&ser, decoded);
+
+	case kBBPacketType_ConsoleAutocompleteResponseHeader:
+		return bbpacket_serialize_console_autocomplete_response_header(&ser, decoded);
+
+	case kBBPacketType_ConsoleAutocompleteResponseEntry:
+		return bbpacket_serialize_console_autocomplete_entry(&ser, decoded);
 
 	case kBBPacketType_Invalid:
 	case kBBPacketType_Restart:
@@ -258,6 +281,18 @@ u16 bbpacket_serialize(bb_decoded_packet_t *source, u8 *buffer, u16 len)
 
 	case kBBPacketType_RecordingInfo:
 		bbpacket_serialize_recording_info(&ser, source);
+		break;
+
+	case kBBPacketType_ConsoleAutocompleteRequest:
+		bbpacket_serialize_console_autocomplete_entry(&ser, source);
+		break;
+
+	case kBBPacketType_ConsoleAutocompleteResponseHeader:
+		bbpacket_serialize_console_autocomplete_response_header(&ser, source);
+		break;
+
+	case kBBPacketType_ConsoleAutocompleteResponseEntry:
+		bbpacket_serialize_console_autocomplete_entry(&ser, source);
 		break;
 
 	case kBBPacketType_Invalid:

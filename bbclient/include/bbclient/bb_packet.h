@@ -46,6 +46,10 @@ typedef enum {
 
 	kBBPacketType_RecordingInfo, // Server --> Client
 
+	kBBPacketType_ConsoleAutocompleteRequest,        // Server --> Client
+	kBBPacketType_ConsoleAutocompleteResponseHeader, // Client --> Server
+	kBBPacketType_ConsoleAutocompleteResponseEntry,  // Client --> Server
+
 } bb_packet_type_e;
 
 typedef struct bb_packet_header_s {
@@ -95,6 +99,16 @@ typedef struct bb_packet_recording_info_s {
 	char recordingName[kBBSize_RecordingName];
 } bb_packet_recording_info_t;
 
+typedef struct bb_packet_console_autocomplete_entry_s {
+	u32 id;
+	char data[kBBSize_LogText];
+} bb_packet_console_autocomplete_entry_t;
+
+typedef struct bb_packet_console_autocomplete_response_header_s {
+	u32 id;
+	u32 total;
+} bb_packet_console_autocomplete_response_header_t;
+
 typedef struct bb_decoded_packet_s {
 	bb_packet_type_e type;
 	u8 pad[4];
@@ -117,6 +131,9 @@ typedef struct bb_decoded_packet_s {
 		bb_packet_user_t user;
 
 		bb_packet_recording_info_t recordingInfo;
+
+		bb_packet_console_autocomplete_entry_t consoleAutocompleteEntry;
+		bb_packet_console_autocomplete_response_header_t consoleAutocompleteResponseHeader;
 	} packet;
 } bb_decoded_packet_t;
 

@@ -82,6 +82,7 @@ typedef enum {
 	kBBInitFlag_ConsoleCommands = 0x4,
 	kBBInitFlag_NoDiscovery = 0x8,
 	kBBInitFlag_RecordingInfo = 0x10,
+	kBBInitFlag_ConsoleAutocomplete = 0x20,
 } bb_init_flag_e;
 typedef uint32_t bb_init_flags_t;
 
@@ -138,6 +139,8 @@ void bb_echo_to_stdout(void *context, bb_decoded_packet_t *decoded);
 typedef void (*bb_incoming_packet_handler)(const bb_decoded_packet_t *decoded, void *context);
 void bb_set_incoming_packet_handler(bb_incoming_packet_handler handler, void *context);
 #define BB_SET_INCOMING_PACKET_HANDLER(handler, context) bb_set_incoming_packet_handler((handler), (context))
+
+int bb_send_raw_packet(bb_decoded_packet_t* decoded); // only for specific console autocomplete etc packets
 
 void bb_thread_start(uint32_t pathId, uint32_t line, const char *name);
 void bb_thread_set_name(uint32_t pathId, uint32_t line, const char *name);

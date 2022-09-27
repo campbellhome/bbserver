@@ -190,7 +190,11 @@ bb_thread_return_t recorder_thread(void *args)
 						memset(&outgoing, 0, sizeof(outgoing));
 						if(outgoingMessage->command == kBBPacketType_ConsoleCommand) {
 							valid = true;
-							bb_strncpy(outgoing.packet.consoleCommand.text, outgoingMessage->text, sizeof(decoded.packet.consoleCommand.text));
+							bb_strncpy(outgoing.packet.consoleCommand.text, outgoingMessage->text, sizeof(outgoing.packet.consoleCommand.text));
+						} else if(outgoingMessage->command == kBBPacketType_ConsoleAutocompleteRequest) {
+							valid = true;
+							outgoing.packet.consoleAutocompleteEntry.id = outgoingMessage->userData;
+							bb_strncpy(outgoing.packet.consoleAutocompleteEntry.data, outgoingMessage->text, sizeof(outgoing.packet.consoleAutocompleteEntry.data));
 						} else if(outgoingMessage->command == kBBPacketType_StopRecording) {
 							bbcon_disconnect(con);
 						}

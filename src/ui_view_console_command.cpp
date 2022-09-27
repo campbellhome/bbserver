@@ -4,6 +4,7 @@
 #include "ui_view_console_command.h"
 #include "bb_array.h"
 #include "bb_string.h"
+#include "bb_time.h"
 #include "file_utils.h"
 #include "fonts.h"
 #include "imgui_core.h"
@@ -20,23 +21,27 @@
 #include "ui_recordings.h"
 #include "va.h"
 #include "view.h"
+#include "wrap_imgui_internal.h"
 
 extern "C" void view_console_history_entry_reset(view_console_history_entry_t *val);
+static void UIRecordedView_ConsoleAutocomplete(view_t *view);
 
 static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData *CallbackData)
 {
 	view_t *view = (view_t *)CallbackData->UserData;
-	switch(CallbackData->EventFlag) {
-	case ImGuiInputTextFlags_CallbackCharFilter:
+	if(CallbackData->EventFlag & ImGuiInputTextFlags_CallbackCharFilter) {
+		view->consoleInputTime = bb_current_time_ms();
 		if(CallbackData->EventChar == '`')
 			return 1;
-		break;
+	}
 
-	case ImGuiInputTextFlags_CallbackCompletion:
-		break;
+	if(CallbackData->EventFlag & ImGuiInputTextFlags_CallbackCompletion) {
+		view->consoleInputTime = bb_current_time_ms();
+	}
 
-	case ImGuiInputTextFlags_CallbackHistory:
+	if(CallbackData->EventFlag & ImGuiInputTextFlags_CallbackHistory) {
 		if(view->consoleHistory.entries.count) {
+			view->consoleHistoryTime = bb_current_time_ms();
 			u32 prevHistoryPos = view->consoleHistory.pos;
 			if(CallbackData->EventKey == ImGuiKey_UpArrow) {
 				if(view->consoleHistory.pos == ~0U) {
@@ -61,12 +66,16 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData *Callb
 				CallbackData->BufTextLen = len;
 				CallbackData->BufDirty = true;
 			}
-			break;
 		}
-
-	default:
-		break;
 	}
+
+	if(CallbackData->EventFlag & ImGuiInputTextFlags_CallbackAlways) {
+		if(view->consoleRequestActive != view->consoleRequestActiveOld) {
+			CallbackData->CursorPos = CallbackData->BufTextLen;
+			view->consoleRequestActiveOld = view->consoleRequestActive;
+		}
+	}
+
 	return 0;
 }
 
@@ -86,7 +95,7 @@ static void view_console_history_entry_add(view_t *view, const char *command)
 	sb_append(&newEntry.command, command);
 	bba_push(view->consoleHistory.entries, newEntry);
 	sb_reset(&view->consoleInput);
-	view->consoleRequestActive = true;
+	++view->consoleRequestActive;
 }
 
 static b32 view_console_send(view_t *view, const char *command)
@@ -107,7 +116,7 @@ static void view_console_command_exec(view_t *view, const char *filepath)
 		iniCategory category = iniCategory::Unknown;
 		span_t linesCursor = span_from_string((const char *)fileData.buffer);
 		for(span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor)) {
-			if (line.start == line.end)
+			if(line.start == line.end)
 				continue;
 
 			if(span_starts_with(line, "[", kSpanCaseSensitive) && span_ends_with(line, "]", kSpanCaseSensitive)) {
@@ -168,16 +177,24 @@ void UIRecordedView_Console(view_t *view, bool bHasFocus)
 			if(view->consoleInputActive) {
 				// TODO: remove input focus here
 			} else {
-				view->consoleRequestActive = true;
+				++view->consoleRequestActive;
 			}
 		}
-		if(bHasFocus && view->consoleRequestActive) {
+		if(bHasFocus && view->consoleRequestActive != view->consoleRequestActiveOld) {
 			ImGui::SetKeyboardFocusHere();
 		}
-		view->consoleRequestActive = false;
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		if(ImGui::InputText("###ConsoleInput", &view->consoleInput, sizeof(bb_packet_text_t), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter, &UIRecordedView_ConsoleInputCallback, view)) {
+		ImGuiInputTextFlags inputFlags = ImGuiInputTextFlags_EnterReturnsTrue |
+		                                 ImGuiInputTextFlags_CallbackAlways |
+		                                 ImGuiInputTextFlags_CallbackCompletion |
+		                                 ImGuiInputTextFlags_CallbackHistory |
+		                                 ImGuiInputTextFlags_CallbackCharFilter;
+		if(ImGui::InputText("###ConsoleInput", &view->consoleInput, sizeof(bb_packet_text_t), inputFlags, &UIRecordedView_ConsoleInputCallback, view)) {
 			UIRecordedView_Console_Dispatch(view);
+		}
+		if(strcmp(sb_get(&view->consoleInput), sb_get(&view->lastConsoleInput)) != 0) {
+			sb_reset(&view->lastConsoleInput);
+			view->lastConsoleInput = sb_clone(&view->consoleInput);
 		}
 		ImGui::PopItemWidth();
 		Fonts_CacheGlyphs(sb_get(&view->consoleInput));
@@ -186,8 +203,85 @@ void UIRecordedView_Console(view_t *view, bool bHasFocus)
 		}
 		view->consoleInputFocused = ImGui::IsWindowFocused();
 		view->consoleInputActive = ImGui::IsItemActive();
+		UIRecordedView_ConsoleAutocomplete(view);
 	} else {
 		view->consoleInputFocused = false;
-		view->consoleRequestActive = false;
+	}
+}
+
+static void UIRecordedView_ConsoleAutocomplete(view_t *view)
+{
+	if((view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleAutocomplete) == 0) {
+		return;
+	}
+
+	if(view->consoleInputFocused && view->consoleInputActive) {
+		ImGui::OpenPopup("###ConsolePopup", ImGuiPopupFlags_None);
+
+		if(view->consoleInputTime >= view->consoleHistoryTime) {
+			if(view->session->consoleAutocomplete.id == 0 || strcmp(sb_get(&view->session->consoleAutocomplete.request), sb_get(&view->consoleInput)) != 0) {
+				u64 now = bb_current_time_ms();
+				if(now > view->session->consoleAutocomplete.lastRequestTime + 200 && now > view->consoleInputTime + 100) {
+					view->session->consoleAutocomplete.lastRequestTime = now;
+					++view->session->consoleAutocomplete.id;
+					sb_reset(&view->session->consoleAutocomplete.request);
+					view->session->consoleAutocomplete.request = sb_clone(&view->consoleInput);
+					mq_queue_userData(view->session->outgoingMqId, kBBPacketType_ConsoleAutocompleteRequest, view->session->consoleAutocomplete.id, sb_get(&view->consoleInput), view->consoleInput.count);
+				}
+			}
+		}
+	}
+
+	const ImVec2 cursorPos = ImGui::GetCursorPos();
+	const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+
+	const ImGuiStyle &style = ImGui::GetStyle();
+
+	int numLines = 10;
+	float popupHeight = ImGui::GetTextLineHeightWithSpacing() * (float)numLines + style.ItemSpacing.y * 3;
+	ImVec2 contentRegionAvail;
+	contentRegionAvail.x = ImGui::GetContentRegionAvail().x - cursorPos.x - 10.0f;
+	contentRegionAvail.y = cursorPos.y - ImGui::GetFrameHeightWithSpacing();
+	ImVec2 popupSize(contentRegionAvail.x, contentRegionAvail.y < popupHeight ? contentRegionAvail.y : popupHeight);
+	ImGui::SetNextWindowSize(popupSize);
+
+	ImGui::SetNextWindowPos(ImVec2(cursorScreenPos.x, cursorScreenPos.y - ImGui::GetFrameHeightWithSpacing() - popupSize.y), ImGuiCond_Always);
+	ImGuiCond filterPopupFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
+	if(ImGui::BeginPopup("###ConsolePopup", filterPopupFlags)) {
+		if(ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+			ImGui::CloseCurrentPopup();
+		}
+		bool isPopupFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+		if(!isPopupFocused && !view->consoleInputFocused) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		const char *selected = nullptr;
+		if(view->consoleHistoryTime >= view->consoleInputTime) {
+			for(u32 i = 0; i < view->consoleHistory.entries.count; ++i) {
+				view_console_history_entry_t *entry = view->consoleHistory.entries.data + i;
+				const char *entryCommand = sb_get(&entry->command);
+				if(ImGui::Selectable(entryCommand)) {
+					selected = entryCommand;
+				}
+			}
+		} else {
+			for(u32 i = 0; i < view->session->consoleAutocomplete.count; ++i) {
+				const bb_packet_console_autocomplete_entry_t *entry = view->session->consoleAutocomplete.data + i;
+				if(ImGui::Selectable(entry->data)) {
+					selected = entry->data;
+				}
+			}
+		}
+
+		if(selected) {
+			sb_reset(&view->consoleInput);
+			sb_reset(&view->lastConsoleInput);
+			view->consoleInput = sb_from_c_string(selected);
+			view->lastConsoleInput = sb_clone(&view->consoleInput);
+			++view->consoleRequestActive;
+		}
+
+		ImGui::EndPopup();
 	}
 }

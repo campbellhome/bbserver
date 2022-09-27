@@ -62,6 +62,44 @@ void mq_shutdown(void)
 	bb_critical_section_shutdown(&s_mq_reserve_cs);
 }
 
+b32 mq_queue_userData(u32 queueId, u32 command, u32 userData, const char *text, u32 textLen)
+{
+	message_queue_t *mq;
+	b32 ret = false;
+	if(queueId >= kMessageQueue_Count)
+		return true;
+
+	if(textLen > kMessageQueue_MessageSize)
+		return true;
+
+	mq = s_mq + queueId;
+
+	bb_critical_section_lock(&mq->cs);
+
+	if(mq->bGrowable) {
+		message_queue_message_t *message = bba_add(mq->messages, 1);
+		if(message) {
+			message->command = command;
+			message->userData = userData;
+			memcpy(message->text, text, textLen);
+			ret = true;
+		}
+	} else {
+		u64 used = mq->writeCursor - mq->readCursor;
+		if(used < BB_ARRAYSIZE(mq->entries)) {
+			message_queue_message_t *message = mq->entries + (mq->writeCursor % BB_ARRAYSIZE(mq->entries));
+			message->command = command;
+			message->userData = userData;
+			memcpy(message->text, text, textLen);
+			++mq->writeCursor;
+			ret = true;
+		}
+	}
+
+	bb_critical_section_unlock(&mq->cs);
+	return ret;
+}
+
 b32 mq_vqueue(u32 queueId, u32 command, const char *fmt, va_list args)
 {
 	message_queue_t *mq;

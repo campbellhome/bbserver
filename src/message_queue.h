@@ -18,11 +18,12 @@ typedef enum {
 } to_ui_command_e;
 
 enum {
-	kMessageQueue_MessageSize = 1020
+	kMessageQueue_MessageSize = 2040
 };
 
 AUTOSTRUCT typedef struct message_queue_message_s {
 	u32 command;
+	u32 userData;
 	char text[kMessageQueue_MessageSize];
 } message_queue_message_t;
 
@@ -49,6 +50,7 @@ void mq_releaseref(u32 id);
 //
 b32 mq_vqueue(u32 queueId, u32 command, const char *fmt, va_list args);
 b32 mq_queue(u32 queueId, u32 command, const char *fmt, ...);
+b32 mq_queue_userData(u32 queueId, u32 command, u32 userData, const char* text, u32 textLen);
 b32 mq_consume(u32 queueId, message_queue_message_t *message);
 const message_queue_message_t *mq_peek(u32 queueId);
 void mq_consume_peek_result(u32 queueId);

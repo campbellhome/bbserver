@@ -777,6 +777,17 @@ void bb_set_incoming_packet_handler(bb_incoming_packet_handler handler, void *co
 	s_bb_incoming_packet_context = context;
 }
 
+int bb_send_raw_packet(bb_decoded_packet_t *decoded)
+{
+	if(decoded->type == kBBPacketType_ConsoleAutocompleteResponseHeader || decoded->type == kBBPacketType_ConsoleAutocompleteResponseEntry) {
+		bb_fill_header(decoded, decoded->type, 0, 0);
+		bb_send(decoded);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 static void bb_thread_store_id_packet(bb_decoded_packet_t *decoded)
 {
 	if(s_bDisableStoredThreadIds)

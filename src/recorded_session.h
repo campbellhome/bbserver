@@ -97,6 +97,16 @@ typedef struct recorded_pieInstances_s {
 	recorded_pieInstance_t *data;
 } recorded_pieInstances_t;
 
+typedef struct recorded_console_autocomplete_s {
+	u32 id;
+	u32 expected;
+	u32 count;
+	u32 allocated;
+	u64 lastRequestTime;
+	bb_packet_console_autocomplete_entry_t *data;
+	sb_t request;
+} recorded_console_autocomplete_t;
+
 typedef struct recorded_session_s {
 	u8 recvBuffer[32768];
 	u8 terminator;
@@ -117,6 +127,7 @@ typedef struct recorded_session_s {
 	recorded_filenames_t filenames;
 	recorded_threads_t threads;
 	recorded_pieInstances_t pieInstances;
+	recorded_console_autocomplete_t consoleAutocomplete;
 	bb_thread_handle_t threadHandle;
 	u32 nextViewId;
 	u32 outgoingMqId;

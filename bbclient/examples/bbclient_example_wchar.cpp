@@ -97,6 +97,29 @@ static b32 s_bQuit = false;
 enum { InitialBufferLen = 1024 * 1024 };
 static uint8_t s_initialBuffer[InitialBufferLen];
 
+struct console_autocomplete_entry {
+	const char *command;
+	const char *description;
+};
+
+static console_autocomplete_entry s_autocompleteEntries[] = {
+	{ "quit", "" },
+	{ "log LogTemp", "" },
+	{ "log LogConsole", "" },
+	{ "log LogMatchmaking", "" },
+	{ "con.autocomplete", "" },
+	{ "map Evansburgh_A", "" },
+	{ "map Evansburgh_B", "" },
+	{ "map Evansburgh_C", "" },
+	{ "map Evansburgh_D", "" },
+	{ "map Evansburgh_E", "" },
+	{ "map BlueDog_A", "" },
+	{ "map BlueDog_B", "" },
+	{ "map BlueDog_C", "" },
+	{ "map BlueDog_D", "" },
+	{ "map BlueDog_E", "" },
+};
+
 static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *context)
 {
 	(void)context;
@@ -105,6 +128,31 @@ static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *co
 		BB_LOG_A("Console", "^:] %s\n", text);
 		if(!bb_stricmp(text, "quit")) {
 			s_bQuit = true;
+		}
+	} else if(decoded->type == kBBPacketType_ConsoleAutocompleteRequest) {
+		size_t len = strlen(decoded->packet.consoleAutocompleteEntry.data);
+		u32 total = 0;
+		for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
+			if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteEntry.data, len)) {
+				++total;
+			}
+		}
+
+		BB_LOG_A("Console", "^:autocomplete %u (%u)] %s\n", decoded->packet.consoleAutocompleteEntry.id, total, decoded->packet.consoleAutocompleteEntry.data);
+
+		bb_decoded_packet_t out = { BB_EMPTY_INITIALIZER };
+		out.type = kBBPacketType_ConsoleAutocompleteResponseHeader;
+		out.packet.consoleAutocompleteResponseHeader.id = decoded->packet.consoleAutocompleteEntry.id;
+		out.packet.consoleAutocompleteResponseHeader.total = total;
+		bb_send_raw_packet(&out);
+
+		out.type = kBBPacketType_ConsoleAutocompleteResponseEntry;
+		out.packet.consoleAutocompleteEntry.id = decoded->packet.consoleAutocompleteEntry.id;
+		for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
+			if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteEntry.data, len)) {
+				bb_strncpy(out.packet.consoleAutocompleteEntry.data, s_autocompleteEntries[i].command, sizeof(out.packet.consoleAutocompleteEntry.data));
+				bb_send_raw_packet(&out);
+			}
 		}
 	}
 }
@@ -155,15 +203,15 @@ int main(int argc, const char **argv)
 
 	bb_init_critical_sections();
 
-	bbthread_create(before_connect_thread_proc, nullptr);
-	bb_sleep_ms(1000);
+	//bbthread_create(before_connect_thread_proc, nullptr);
+	//bb_sleep_ms(1000);
 
 	bb_set_initial_buffer(s_initialBuffer, InitialBufferLen);
 	//bb_enable_stored_thread_ids(false);
 
 	//bb_init_file_w(L"bbclient.bbox");
 	//BB_INIT(L"bbclient: matt");
-	BB_INIT_WITH_FLAGS(L"bbclient: matt", kBBInitFlag_ConsoleCommands | kBBInitFlag_DebugInit);
+	BB_INIT_WITH_FLAGS(L"bbclient: matt", kBBInitFlag_ConsoleCommands | kBBInitFlag_DebugInit | kBBInitFlag_ConsoleAutocomplete);
 	//BB_INIT_WITH_FLAGS(L"bbclient: matt (no view)", kBBInitFlag_NoOpenView | kBBInitFlag_DebugInit);
 	BB_THREAD_START(L"main thread!");
 	BB_LOG(L"startup", L"bbclient init took %llu ms", bb_current_time_ms() - start);
@@ -181,21 +229,34 @@ int main(int argc, const char **argv)
 	BB_LOG(L"testa::bob", L"george");
 	BB_ERROR(L"testa", L"chuck");
 	BB_LOG(L"standalone::nested::category", L"standalone::nested::category");
-	BB_LOG(L"test::unicode::wchar_t", L"Sofía");
-	BB_LOG(L"test::unicode::wchar_t", L"(╯°□°）╯︵ ┻━┻");
-	BB_LOG(L"test::unicode::wchar_t", L"✨✔");
-	BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"Sofía");
-	BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"(╯°□°）╯︵ ┻━┻");
-	BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"✨✔");
-	BB_LOG_A("test::unicode::utf8", u8"Sofía");
-	BB_LOG_A("test::unicode::utf8", u8"(╯°□°）╯︵ ┻━┻");
-	BB_LOG_A("test::unicode::utf8", u8"✨✔");
-	BB_LOG_A("test::unicode::utf8", u8"™");
-	BB_LOG_A("test::unicode::utf8", u8"\u2728\u2714"); // ✨✔
-	BB_LOG_A("test::unicode::utf8", u8"\uff09");       // ）
-	BB_LOG_A("test::unicode::utf8", u8"\ufe35");       // ︵
-	BB_LOG_A("test::unicode::utf8", u8"\u2728");       // ✨
-	BB_LOG_A("test::unicode::utf8", u8"\u2122");       // ™
+
+	// repeating connection test for iteration on bbserver console input
+	while(1) {
+		BB_LOG(L"test::unicode::wchar_t", L"Sofía");
+		BB_LOG(L"test::unicode::wchar_t", L"(╯°□°）╯︵ ┻━┻");
+		BB_LOG(L"test::unicode::wchar_t", L"✨✔");
+		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"Sofía");
+		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"(╯°□°）╯︵ ┻━┻");
+		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"✨✔");
+		BB_LOG_A("test::unicode::utf8", u8"Sofía");
+		BB_LOG_A("test::unicode::utf8", u8"(╯°□°）╯︵ ┻━┻");
+		BB_LOG_A("test::unicode::utf8", u8"✨✔");
+		BB_LOG_A("test::unicode::utf8", u8"™");
+		BB_LOG_A("test::unicode::utf8", u8"\u2728\u2714"); // ✨✔
+		BB_LOG_A("test::unicode::utf8", u8"\uff09");       // ）
+		BB_LOG_A("test::unicode::utf8", u8"\ufe35");       // ︵
+		BB_LOG_A("test::unicode::utf8", u8"\u2728");       // ✨
+		BB_LOG_A("test::unicode::utf8", u8"\u2122");       // ™
+
+		while(BB_IS_CONNECTED()) {
+			bb_sleep_ms(100);
+			BB_TICK();
+		}
+
+		bb_sleep_ms(1000);
+		bb_connect(127 << 24 | 1, 0);
+	}
+	bbthread_create(before_connect_thread_proc, nullptr); // fixes unused function warning/error
 
 	start = bb_current_time_ms();
 	while(BB_IS_CONNECTED()) {
