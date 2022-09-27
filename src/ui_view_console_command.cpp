@@ -282,15 +282,17 @@ static void UIRecordedView_ConsoleAutocomplete(view_t *view)
 		} else {
 			for(u32 i = 0; i < view->session->consoleAutocomplete.count; ++i) {
 				const bb_packet_console_autocomplete_response_entry_t *entry = view->session->consoleAutocomplete.data + i;
-				if(ImGui::Selectable(entry->text)) {
-					selected = entry->text;
-				}
-				if(ImGui::IsTooltipActive()) {
-					ImGui::BeginTooltip();
-					PushUIFont();
-					ImGui::TextShadowed(entry->description);
-					PopUIFont();
-					ImGui::EndTooltip();
+				if(bb_strnicmp(entry->text, sb_get(&view->consoleInput), sb_len(&view->consoleInput)) == 0) {
+					if(ImGui::Selectable(entry->text)) {
+						selected = entry->text;
+					}
+					if(ImGui::IsTooltipActive()) {
+						ImGui::BeginTooltip();
+						PushUIFont();
+						ImGui::TextShadowed(entry->description);
+						PopUIFont();
+						ImGui::EndTooltip();
+					}
 				}
 			}
 		}
