@@ -869,7 +869,7 @@ static u32 bb_find_id(const char *text, bb_ids_t *ids)
 static u32 bb_resolve_id(const char *name, bb_ids_t *ids, u32 pathId, u32 line, bb_packet_type_e packetType, size_t maxSize, b32 recurse)
 {
 	bb_decoded_packet_t decoded;
-	u32 existing = bb_find_id(name, ids);
+	u32 existing = bb_find_id((name = (name ? name : "")), ids);
 	if(existing) {
 		return existing;
 	} else {
