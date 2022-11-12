@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -8,6 +8,8 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
+typedef uint32_t output_init_flags_t;
 
 typedef enum output_level_e {
 	kOutput_Log,
@@ -27,29 +29,43 @@ typedef struct output_s {
 	output_line_t *data;
 } output_t;
 
+extern u32 g_outputFlags;
 extern output_t g_output;
 
-void output_init(void);
+typedef enum {
+	kOutputInit_None = 0x0,
+	kOutputInit_ToBlackbox = 0x1,
+	kOutputInit_ToStdout = 0x2,
+	kOutputInit_ToBuffer = 0x4, // stores output into g_output
+} output_init_flag_e;
+
+void output_init(output_init_flags_t flags);
 void output_shutdown(void);
 
 void output_log_impl(const char *fmt, ...);
 void output_warning_impl(const char *fmt, ...);
 void output_error_impl(const char *fmt, ...);
 
-#define output_log(...)                \
-	{                                  \
-		BB_LOG("output", __VA_ARGS__); \
-		output_log_impl(__VA_ARGS__);  \
+#define output_log(...)                                     \
+	{                                                       \
+		if((g_outputFlags & kOutputInit_ToBlackbox) != 0) { \
+			BB_LOG("output", __VA_ARGS__);                  \
+		}                                                   \
+		output_log_impl(__VA_ARGS__);                       \
 	}
-#define output_warning(...)                \
-	{                                      \
-		BB_WARNING("output", __VA_ARGS__); \
-		output_warning_impl(__VA_ARGS__);  \
+#define output_warning(...)                                 \
+	{                                                       \
+		if((g_outputFlags & kOutputInit_ToBlackbox) != 0) { \
+			BB_WARNING("output", __VA_ARGS__);              \
+		}                                                   \
+		output_warning_impl(__VA_ARGS__);                   \
 	}
-#define output_error(...)                \
-	{                                    \
-		BB_ERROR("output", __VA_ARGS__); \
-		output_error_impl(__VA_ARGS__);  \
+#define output_error(...)                                   \
+	{                                                       \
+		if((g_outputFlags & kOutputInit_ToBlackbox) != 0) { \
+			BB_ERROR("output", __VA_ARGS__);                \
+		}                                                   \
+		output_error_impl(__VA_ARGS__);                     \
 	}
 
 #if defined(__cplusplus)
