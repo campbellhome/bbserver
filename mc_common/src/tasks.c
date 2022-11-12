@@ -1,8 +1,9 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "tasks.h"
 #include "bb_array.h"
+#include "bb_time.h"
 #include "bb_wrap_stdio.h"
 #include "va.h"
 
@@ -164,7 +165,7 @@ void task_tick_subtasks(task *t)
 	}
 }
 
-void tasks_tick(void)
+u32 tasks_tick(void)
 {
 	u32 active = 0;
 	for(u32 i = 0; i < s_tasks.count;) {
@@ -190,5 +191,15 @@ void tasks_tick(void)
 				task_set_state(t, kTaskState_Running);
 			}
 		}
+	}
+
+	return s_tasks.count;
+}
+
+void tasks_flush(u32 sleepMillis)
+{
+	while(tasks_tick() > 0) {
+		BB_FLUSH();
+		bb_sleep_ms(sleepMillis);
 	}
 }

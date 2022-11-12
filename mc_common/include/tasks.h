@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -16,7 +16,8 @@ typedef struct tag_task task;
 
 void tasks_startup(void);
 void tasks_shutdown(void);
-void tasks_tick(void);
+u32 tasks_tick(void);
+void tasks_flush(u32 sleepMillis);
 
 typedef enum tag_taskState {
 	kTaskState_Pending,
