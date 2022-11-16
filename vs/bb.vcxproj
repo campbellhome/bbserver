@@ -26,7 +26,8 @@
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
-    <OutDir>..\bin\$(Configuration)_$(PlatformToolset)\</OutDir>
+    <OutputPath>..\bin\$(Configuration)_$(PlatformToolset)</OutputPath>
+    <OutDir>$(OutputPath)\</OutDir>
     <IntDir>..\obj\$(ProjectName)_$(Configuration)_$(PlatformToolset)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -234,7 +235,8 @@
   <ItemDefinitionGroup>
     <PreBuildEvent>
       <Command>..\mc_common\bin\mc_common_preproc_$(Configuration)_$(PlatformToolset)\mc_common_preproc.exe -config=..\bb_preproc.json
-if not exist "$(OutDir)freetype.dll" copy ..\thirdparty\freetype\win64\freetype.dll "$(OutDir)"</Command>
+if not exist "$(OutDir)freetype.dll" copy ..\thirdparty\freetype\win64\freetype.dll "$(OutDir)"
+if exist ..\publish\bb_site_config.json copy /y ..\publish\bb_site_config.json "$(OutDir)"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
