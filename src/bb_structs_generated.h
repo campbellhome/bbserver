@@ -17,6 +17,7 @@ struct sb_s;
 struct sbs_s;
 struct sdictEntry_s;
 struct sdict_s;
+struct tag_sdicts;
 struct uuid_node_s;
 struct fontConfig_s;
 struct fontConfigs_s;
@@ -89,6 +90,7 @@ typedef struct sb_s sb_t;
 typedef struct sbs_s sbs_t;
 typedef struct sdictEntry_s sdictEntry_t;
 typedef struct sdict_s sdict_t;
+typedef struct tag_sdicts sdicts;
 typedef struct uuid_node_s uuid_node_t;
 typedef struct fontConfig_s fontConfig_t;
 typedef struct fontConfigs_s fontConfigs_t;
@@ -161,6 +163,7 @@ void sb_reset_from_loc(const char *file, int line, sb_t *val);
 void sbs_reset_from_loc(const char *file, int line, sbs_t *val);
 void sdictEntry_reset(sdictEntry_t *val);
 void sdict_reset(sdict_t *val);
+void sdicts_reset(sdicts *val);
 void uuid_node_reset(uuid_node_t *val);
 void fontConfig_reset(fontConfig_t *val);
 void fontConfigs_reset(fontConfigs_t *val);
@@ -240,6 +243,9 @@ sdictEntry_t sdictEntry_clone(const sdictEntry_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_sdict_clone)
 sdict_t sdict_clone(const sdict_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_sdicts_clone)
+sdicts sdicts_clone(const sdicts *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_uuid_node_clone)
 uuid_node_t uuid_node_clone(const uuid_node_t *src);

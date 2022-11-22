@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "process_task.h"
@@ -19,7 +19,9 @@ void task_process_tick(task *_t)
 	} else {
 		task_set_state(_t, kTaskState_Failed);
 	}
-	task_tick_subtasks(_t);
+	if(_t->subtasks.count) {
+		task_tick_subtasks(_t);
+	}
 }
 
 void task_process_statechanged(task *_t)

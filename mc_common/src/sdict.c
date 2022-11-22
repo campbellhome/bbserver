@@ -188,6 +188,18 @@ void sdicts_reset(sdicts *sds)
 	bba_free(*sds);
 }
 
+sdicts sdicts_clone(const sdicts *src)
+{
+	sdicts ret = { BB_EMPTY_INITIALIZER };
+	for(u32 i = 0; i < src->count; ++i) {
+		sdict_t *target = bba_add(ret, 1);
+		if(target) {
+			sdict_copy(target, src->data + i);
+		}
+	}
+	return ret;
+}
+
 void sdicts_move(sdicts *target, sdicts *src)
 {
 	sdicts_reset(target);

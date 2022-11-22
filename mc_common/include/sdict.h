@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -22,7 +22,7 @@ AUTOJSON AUTOHEADERONLY typedef struct sdict_s {
 	u32 pad;
 } sdict_t;
 
-typedef struct tag_sdicts {
+AUTOJSON AUTOHEADERONLY typedef struct tag_sdicts {
 	u32 count;
 	u32 allocated;
 	sdict_t *data;
@@ -47,6 +47,7 @@ void sdict_sort(sdict_t *sd);
 
 void sdicts_init(sdicts *sds);
 void sdicts_reset(sdicts *sds);
+sdicts sdicts_clone(const sdicts *src);
 void sdicts_move(sdicts *target, sdicts *src);
 
 typedef struct json_value_t JSON_Value;

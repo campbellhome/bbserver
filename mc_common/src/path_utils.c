@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "path_utils.h"
@@ -7,7 +7,9 @@
 #include "bb_wrap_stdio.h"
 #include "va.h"
 
-char path_get_separator(void)
+static const char *errno_str(int e);
+
+    char path_get_separator(void)
 {
 #if BB_USING(BB_PLATFORM_WINDOWS)
 	return '\\';
@@ -180,7 +182,13 @@ b32 path_mkdir(const char *path)
 }
 b32 path_rmdir(const char *path)
 {
-	return _rmdir(path) == 0;
+	int ret = _rmdir(path);
+	if(ret == 0) {
+		return true;
+	}
+	int err = errno;
+	BB_WARNING("mkdir", "rmdir '%s' returned %d (errno %d %s)\n", path, ret, err, errno_str(err));
+	return false;
 }
 #else
 #include <errno.h>
@@ -188,27 +196,6 @@ b32 path_rmdir(const char *path)
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-static const char *errno_str(int e)
-{
-	switch(e) {
-#define CASE(x) \
-	case x:     \
-		return #x
-		CASE(EACCES);
-		CASE(EEXIST);
-		CASE(ELOOP);
-		CASE(EMLINK);
-		CASE(ENAMETOOLONG);
-		CASE(ENOENT);
-		CASE(ENOSPC);
-		CASE(ENOTDIR);
-		CASE(EROFS);
-	case 0:
-		return "success";
-	default:
-		return "???";
-	}
-}
 
 b32 path_mkdir_norecurse(const char *path)
 {
@@ -242,6 +229,34 @@ b32 path_mkdir(const char *path)
 }
 b32 path_rmdir(const char *path)
 {
-	return rmdir(path) == 0;
+	int ret = rmdir(path);
+	if(ret == 0) {
+		return true;
+	}
+	int err = errno;
+	BB_WARNING("mkdir", "rmdir '%s' returned %d (errno %d %s)\n", path, ret, err, errno_str(err));
+	return false;
 }
 #endif
+
+static const char *errno_str(int e)
+{
+	switch(e) {
+#define CASE(x) \
+	case x:     \
+		return #x
+		CASE(EACCES);
+		CASE(EEXIST);
+		CASE(ELOOP);
+		CASE(EMLINK);
+		CASE(ENAMETOOLONG);
+		CASE(ENOENT);
+		CASE(ENOSPC);
+		CASE(ENOTDIR);
+		CASE(EROFS);
+	case 0:
+		return "success";
+	default:
+		return "???";
+	}
+}

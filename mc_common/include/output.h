@@ -36,7 +36,8 @@ typedef enum {
 	kOutputInit_None = 0x0,
 	kOutputInit_ToBlackbox = 0x1,
 	kOutputInit_ToStdout = 0x2,
-	kOutputInit_ToBuffer = 0x4, // stores output into g_output
+	kOutputInit_ToOutputDebugString = 0x4,
+	kOutputInit_ToBuffer = 0x8, // stores output into g_output
 } output_init_flag_e;
 
 void output_init(output_init_flags_t flags);

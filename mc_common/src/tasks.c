@@ -125,13 +125,17 @@ task *task_queue(task t)
 task *task_queue_subtask(task *parent, task t)
 {
 	task *subtask = NULL;
-	if(bba_add_noclear(parent->subtasks, 1)) {
+	if(parent->id != 0 && bba_add_noclear(parent->subtasks, 1)) {
 		bba_last(parent->subtasks) = t;
 		subtask = &bba_last(parent->subtasks);
-		if(parent->id != 0) {
-			task_prep(subtask, sb_get(&parent->prefix));
-			subtask->parent = parent;
+		task_prep(subtask, sb_get(&parent->prefix));
+		subtask->parent = parent;
+		if(t.debug) {
+			BB_LOG("task::task_queue", "queued %s", task_get_name(subtask));
 		}
+	} else {
+		BB_ERROR("task::task_queue", "failed to queue %s", task_get_name(&t));
+		task_reset(&t, false);
 	}
 	return subtask;
 }
@@ -162,6 +166,8 @@ void task_tick_subtasks(task *t)
 				task_set_state(t, kTaskState_Succeeded);
 			}
 		}
+	} else {
+		task_set_state(t, kTaskState_Succeeded);
 	}
 }
 

@@ -546,7 +546,7 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	if(ImGui::GetCurrentContext() && ImGui::GetIO().BackendPlatformUserData) {
 		if(ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
 			return true;
-	} else {
+	} else if(s_wnd.hwnd) {
 		BB_WARNING("ImguiCore", "skipped ImGui_ImplWin32_WndProcHandler w/o BackendPlatformUserData");
 	}
 

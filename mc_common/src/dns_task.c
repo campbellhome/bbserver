@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "dns_task.h"
@@ -57,7 +57,9 @@ static void dns_task_tick(task *t)
 	} else {
 		task_set_state(t, kTaskState_Failed);
 	}
-	task_tick_subtasks(t);
+	if(t->subtasks.count) {
+		task_tick_subtasks(t);
+	}
 }
 
 static void dns_task_statechanged(task *t)
