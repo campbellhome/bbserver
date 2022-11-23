@@ -181,6 +181,7 @@ static void BBServer_Shutdown(void)
 	Style_ResetConfig();
 	mb_shutdown(nullptr);
 	tasks_shutdown();
+	process_shutdown();
 	devkit_autodetect_shutdown();
 	UITags_Shutdown();
 	UIConfig_Reset();

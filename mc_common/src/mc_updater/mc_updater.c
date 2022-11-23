@@ -193,6 +193,7 @@ static u32 get_p4_version(void)
 		sdicts_reset(&dicts);
 		process_free(spawnRes.process);
 	}
+	process_shutdown();
 	return version;
 }
 #endif

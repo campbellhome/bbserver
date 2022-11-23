@@ -47,9 +47,17 @@ typedef struct win32Process_s {
 } win32Process_t;
 win32Process_t sentinelSubprocess;
 
+bb_critical_section processListCs;
+
 void process_init(void)
 {
+	bb_critical_section_init(&processListCs);
 	DLIST_INIT(&sentinelSubprocess);
+}
+
+void process_shutdown(void)
+{
+	bb_critical_section_shutdown(&processListCs);
 }
 
 static void process_report_error(const char *apiName, const char *cmdline, processLogType_t processLogType)
@@ -164,7 +172,9 @@ processSpawnResult_t process_spawn(const char *dir, const char *cmdline, process
 
 										process->base.command = _strdup(cmdline);
 										process->base.dir = _strdup(dir);
+										bb_critical_section_lock(&processListCs);
 										DLIST_INSERT_AFTER(&sentinelSubprocess, process);
+										bb_critical_section_unlock(&processListCs);
 
 										process->startMS = GetTickCount64();
 										GetLocalTime(&process->startLocalTime);
@@ -346,7 +356,9 @@ void process_free(process_t *base)
 	CloseHandle(process->hInputWrite);
 	CloseHandle(process->hProcess);
 
+	bb_critical_section_lock(&processListCs);
 	DLIST_REMOVE(process);
+	bb_critical_section_unlock(&processListCs);
 	free(process->base.command);
 	free(process->base.dir);
 	free(process);

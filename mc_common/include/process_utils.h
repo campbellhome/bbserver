@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 void process_init(void);
+void process_shutdown(void);
 
 typedef struct tag_processIO {
 	u32 count;
