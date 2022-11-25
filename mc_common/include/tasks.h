@@ -22,6 +22,7 @@ void tasks_flush(u32 sleepMillis);
 typedef enum tag_taskState {
 	kTaskState_Pending,
 	kTaskState_Running,
+	kTaskState_Canceling,
 	kTaskState_Succeeded,
 	kTaskState_Failed,
 	kTaskState_Canceled,

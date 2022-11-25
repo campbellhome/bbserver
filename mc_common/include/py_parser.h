@@ -27,6 +27,7 @@ typedef struct tag_pyParser {
 } pyParser;
 
 b32 py_parser_tick(pyParser *parser, sdicts *dicts, b32 bDebug);
+void py_parser_reset(pyParser *parser);
 
 typedef struct tag_pyWriter {
 	u32 count;

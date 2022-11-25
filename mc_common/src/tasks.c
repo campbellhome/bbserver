@@ -13,6 +13,7 @@ static taskId s_lastId;
 static const char *s_taskStateNames[] = {
 	"kTaskState_Pending",
 	"kTaskState_Running",
+	"kTaskState_Canceling",
 	"kTaskState_Succeeded",
 	"kTaskState_Failed",
 	"kTaskState_Canceled",
@@ -27,7 +28,7 @@ b32 task_started(task *t)
 
 b32 task_done(task *t)
 {
-	return t->state > kTaskState_Running;
+	return t->state > kTaskState_Canceling;
 }
 
 static const char *task_get_name(task *t)
@@ -100,6 +101,8 @@ void task_set_state(task *t, taskState state)
 		t->state = state;
 		if(t->stateChanged) {
 			t->stateChanged(t);
+		} else if(state == kTaskState_Canceling) {
+			task_set_state(t, kTaskState_Canceled);
 		}
 	}
 }
@@ -147,7 +150,7 @@ void task_tick_subtasks(task *t)
 		for(u32 i = 0; i < t->subtasks.count; ++i) {
 			task *s = t->subtasks.data + i;
 			if(!task_started(s)) {
-				if(t->parallel || !states[kTaskState_Running]) {
+				if(t->parallel || !(states[kTaskState_Running] || states[kTaskState_Canceling])) {
 					task_set_state(s, kTaskState_Running);
 				}
 			}
@@ -156,7 +159,7 @@ void task_tick_subtasks(task *t)
 			}
 			states[s->state]++;
 		}
-		if(!states[kTaskState_Pending] && !states[kTaskState_Running]) {
+		if(!states[kTaskState_Pending] && !states[kTaskState_Running] && !states[kTaskState_Canceling]) {
 			// all children are done - finish current task too
 			if(states[kTaskState_Canceled]) {
 				task_set_state(t, kTaskState_Canceled);

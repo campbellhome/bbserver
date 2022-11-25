@@ -15,6 +15,8 @@ extern "C" {
 
 #if BB_USING(BB_COMPILER_MSVC)
 
+#include <bb_wrap_process.h>
+
 typedef uintptr_t bb_thread_handle_t;
 typedef unsigned bb_thread_return_t;
 typedef bb_thread_return_t (*bb_thread_func)(void *args);

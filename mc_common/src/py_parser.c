@@ -150,6 +150,12 @@ b32 py_parser_tick(pyParser *parser, sdicts *dicts, b32 bDebug)
 	return ret;
 }
 
+void py_parser_reset(pyParser *parser)
+{
+	bba_free(*parser);
+	sdict_reset(&parser->dict);
+}
+
 b32 py_write_char(pyWriter *pw, char c)
 {
 	b32 ret = true;
