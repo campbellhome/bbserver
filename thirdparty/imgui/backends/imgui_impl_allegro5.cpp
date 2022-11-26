@@ -17,7 +17,9 @@
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
-//  2022-01-26: Inputs: replaced short-lived io.AddKeyModsEvent() (added two weeks ago)with io.AddKeyEvent() using ImGuiKey_ModXXX flags. Sorry for the confusion.
+//  2022-10-11: Using 'nullptr' instead of 'NULL' as per our switch to C++11.
+//  2022-09-26: Inputs: Renamed ImGuiKey_ModXXX introduced in 1.87 to ImGuiMod_XXX (old names still supported).
+//  2022-01-26: Inputs: replaced short-lived io.AddKeyModsEvent() (added two weeks ago) with io.AddKeyEvent() using ImGuiKey_ModXXX flags. Sorry for the confusion.
 //  2022-01-17: Inputs: calling new io.AddMousePosEvent(), io.AddMouseButtonEvent(), io.AddMouseWheelEvent() API (1.87+).
 //  2022-01-17: Inputs: always calling io.AddKeyModsEvent() next and before key event (not in NewFrame) to fix input queue with very low framerates.
 //  2022-01-10: Inputs: calling new io.AddKeyEvent(), io.AddKeyModsEvent() + io.SetKeyEventNativeData() API (1.87+). Support for full ImGuiKey range.
@@ -71,13 +73,13 @@ struct ImGui_ImplAllegro5_Data
     ALLEGRO_VERTEX_DECL*        VertexDecl;
     char*                       ClipboardTextData;
 
-    ImGui_ImplAllegro5_Data()   { memset(this, 0, sizeof(*this)); }
+    ImGui_ImplAllegro5_Data()   { memset((void*)this, 0, sizeof(*this)); }
 };
 
 // Backend data stored in io.BackendPlatformUserData to allow support for multiple Dear ImGui contexts
 // It is STRONGLY preferred that you use docking branch with multi-viewports (== single Dear ImGui context + multiple windows) instead of multiple Dear ImGui contexts.
 // FIXME: multi-context support is not well tested and probably dysfunctional in this backend.
-static ImGui_ImplAllegro5_Data* ImGui_ImplAllegro5_GetBackendData()     { return ImGui::GetCurrentContext() ? (ImGui_ImplAllegro5_Data*)ImGui::GetIO().BackendPlatformUserData : NULL; }
+static ImGui_ImplAllegro5_Data* ImGui_ImplAllegro5_GetBackendData()     { return ImGui::GetCurrentContext() ? (ImGui_ImplAllegro5_Data*)ImGui::GetIO().BackendPlatformUserData : nullptr; }
 
 struct ImDrawVertAllegro
 {
@@ -144,7 +146,7 @@ void ImGui_ImplAllegro5_RenderDrawData(ImDrawData* draw_data)
             dst_v->col = al_map_rgba(c[0], c[1], c[2], c[3]);
         }
 
-        const int* indices = NULL;
+        const int* indices = nullptr;
         if (sizeof(ImDrawIdx) == 2)
         {
             // FIXME-OPT: Unfortunately Allegro doesn't support 16-bit indices.. You can '#define ImDrawIdx int' in imconfig.h to request Dear ImGui to output 32-bit indices.
@@ -207,6 +209,7 @@ bool ImGui_ImplAllegro5_CreateDeviceObjects()
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
     // Create texture
+    // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
     int flags = al_get_new_bitmap_flags();
     int fmt = al_get_new_bitmap_format();
     al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
@@ -233,7 +236,7 @@ bool ImGui_ImplAllegro5_CreateDeviceObjects()
         return false;
 
     // Store our identifier
-    io.Fonts->SetTexID((void*)cloned_img);
+    io.Fonts->SetTexID((ImTextureID)(intptr_t)cloned_img);
     bd->Texture = cloned_img;
 
     // Create an invisible mouse cursor
@@ -251,14 +254,14 @@ void ImGui_ImplAllegro5_InvalidateDeviceObjects()
     ImGui_ImplAllegro5_Data* bd = ImGui_ImplAllegro5_GetBackendData();
     if (bd->Texture)
     {
-        io.Fonts->SetTexID(NULL);
+        io.Fonts->SetTexID(0);
         al_destroy_bitmap(bd->Texture);
-        bd->Texture = NULL;
+        bd->Texture = nullptr;
     }
     if (bd->MouseCursorInvisible)
     {
         al_destroy_mouse_cursor(bd->MouseCursorInvisible);
-        bd->MouseCursorInvisible = NULL;
+        bd->MouseCursorInvisible = nullptr;
     }
 }
 
@@ -395,7 +398,7 @@ static ImGuiKey ImGui_ImplAllegro5_KeyCodeToImGuiKey(int key_code)
 bool ImGui_ImplAllegro5_Init(ALLEGRO_DISPLAY* display)
 {
     ImGuiIO& io = ImGui::GetIO();
-    IM_ASSERT(io.BackendPlatformUserData == NULL && "Already initialized a platform backend!");
+    IM_ASSERT(io.BackendPlatformUserData == nullptr && "Already initialized a platform backend!");
 
     // Setup backend capabilities flags
     ImGui_ImplAllegro5_Data* bd = IM_NEW(ImGui_ImplAllegro5_Data)();
@@ -420,7 +423,7 @@ bool ImGui_ImplAllegro5_Init(ALLEGRO_DISPLAY* display)
 #if ALLEGRO_HAS_CLIPBOARD
     io.SetClipboardTextFn = ImGui_ImplAllegro5_SetClipboardText;
     io.GetClipboardTextFn = ImGui_ImplAllegro5_GetClipboardText;
-    io.ClipboardUserData = NULL;
+    io.ClipboardUserData = nullptr;
 #endif
 
     return true;
@@ -429,7 +432,7 @@ bool ImGui_ImplAllegro5_Init(ALLEGRO_DISPLAY* display)
 void ImGui_ImplAllegro5_Shutdown()
 {
     ImGui_ImplAllegro5_Data* bd = ImGui_ImplAllegro5_GetBackendData();
-    IM_ASSERT(bd != NULL && "No platform backend to shutdown, or already shutdown?");
+    IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
 
     ImGui_ImplAllegro5_InvalidateDeviceObjects();
@@ -438,8 +441,8 @@ void ImGui_ImplAllegro5_Shutdown()
     if (bd->ClipboardTextData)
         al_free(bd->ClipboardTextData);
 
-    io.BackendPlatformUserData = NULL;
-    io.BackendPlatformName = io.BackendRendererName = NULL;
+    io.BackendPlatformUserData = nullptr;
+    io.BackendPlatformName = io.BackendRendererName = nullptr;
     IM_DELETE(bd);
 }
 
@@ -449,15 +452,15 @@ static void ImGui_ImplAllegro5_UpdateKeyModifiers()
     ImGuiIO& io = ImGui::GetIO();
     ALLEGRO_KEYBOARD_STATE keys;
     al_get_keyboard_state(&keys);
-    io.AddKeyEvent(ImGuiKey_ModCtrl, al_key_down(&keys, ALLEGRO_KEY_LCTRL) || al_key_down(&keys, ALLEGRO_KEY_RCTRL));
-    io.AddKeyEvent(ImGuiKey_ModShift, al_key_down(&keys, ALLEGRO_KEY_LSHIFT) || al_key_down(&keys, ALLEGRO_KEY_RSHIFT));
-    io.AddKeyEvent(ImGuiKey_ModAlt, al_key_down(&keys, ALLEGRO_KEY_ALT) || al_key_down(&keys, ALLEGRO_KEY_ALTGR));
-    io.AddKeyEvent(ImGuiKey_ModSuper, al_key_down(&keys, ALLEGRO_KEY_LWIN) || al_key_down(&keys, ALLEGRO_KEY_RWIN));
+    io.AddKeyEvent(ImGuiMod_Ctrl, al_key_down(&keys, ALLEGRO_KEY_LCTRL) || al_key_down(&keys, ALLEGRO_KEY_RCTRL));
+    io.AddKeyEvent(ImGuiMod_Shift, al_key_down(&keys, ALLEGRO_KEY_LSHIFT) || al_key_down(&keys, ALLEGRO_KEY_RSHIFT));
+    io.AddKeyEvent(ImGuiMod_Alt, al_key_down(&keys, ALLEGRO_KEY_ALT) || al_key_down(&keys, ALLEGRO_KEY_ALTGR));
+    io.AddKeyEvent(ImGuiMod_Super, al_key_down(&keys, ALLEGRO_KEY_LWIN) || al_key_down(&keys, ALLEGRO_KEY_RWIN));
 }
 
 // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
+// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
 // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
 bool ImGui_ImplAllegro5_ProcessEvent(ALLEGRO_EVENT* ev)
 {
@@ -557,7 +560,7 @@ static void ImGui_ImplAllegro5_UpdateMouseCursor()
 void ImGui_ImplAllegro5_NewFrame()
 {
     ImGui_ImplAllegro5_Data* bd = ImGui_ImplAllegro5_GetBackendData();
-    IM_ASSERT(bd != NULL && "Did you call ImGui_ImplAllegro5_Init()?");
+    IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplAllegro5_Init()?");
 
     if (!bd->Texture)
         ImGui_ImplAllegro5_CreateDeviceObjects();
