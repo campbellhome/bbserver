@@ -121,17 +121,16 @@ void Fonts_GetGlyphRanges(ImVector< ImWchar > *glyphRanges)
 	s_glyphs.BuildRanges(glyphRanges);
 }
 
+const ImWchar forkAwesomeRanges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 }; // must be static - from imgui: THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.
+
 static void Fonts_MergeIconFont(float fontSize)
 {
 	// merge in icons from Fork Awesome
 	ImGuiIO &io = ImGui::GetIO();
-	static const ImWchar ranges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
 	ImFontConfig config;
 	config.MergeMode = true;
 	config.PixelSnapH = true;
-	io.Fonts->AddFontFromMemoryCompressedTTF(ForkAwesome_compressed_data, ForkAwesome_compressed_size,
-	                                         fontSize, &config, ranges);
-	//io.Fonts->AddFontFromFileTTF(FONT_ICON_FILE_NAME_FA, 16.0f, &icons_config, icons_ranges);
+	io.Fonts->AddFontFromMemoryCompressedTTF(ForkAwesome_compressed_data, ForkAwesome_compressed_size, fontSize, &config, forkAwesomeRanges);
 }
 
 extern "C" void Fonts_ClearFonts(void)
@@ -154,6 +153,36 @@ void Fonts_Init(void)
 #endif
 }
 
+//const ImWchar fallbackRanges[] = { 0x2700, 0x2800, 0 };
+//const ImWchar fallbackRanges[] = { 0x100, 0xFFFF, 0 };
+
+const ImWchar allRanges[] = {
+	0x0020, 0x00FF, // Basic Latin + Latin Supplement
+	0x0370, 0x03FF, // Greek and Coptic
+	0x2000, 0x206F, // General Punctuation
+	0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
+	0x3131, 0x3163, // Korean alphabets
+	0x31F0, 0x31FF, // Katakana Phonetic Extensions
+	0x4e00, 0x9FAF, // CJK Ideograms
+	0xAC00, 0xD7A3, // Korean characters
+	0xFF00, 0xFFEF, // Half-width characters
+	0xFFFD, 0xFFFD, // Invalid
+	0
+};
+
+const ImWchar fallbackRanges[] = {
+	0x0100, 0x036F, // between Basic Latin + Latin Supplement and Greek and Coptic
+	0x0400, 0x1FFF, // between Greek and Coptic and General Punctuation
+	0x2070, 0x2FFF, // between General Punctuation and CJK Symbols and Punctuations, Hiragana, Katakana
+	0x3100, 0x3130, // between CJK Symbols and Punctuations, Hiragana, Katakana and Korean alphabets
+	0x3164, 0x31EF, // between Korean alphabets and Katakana Phonetic Extensions
+	0x3200, 0x4DFF, // between Katakana Phonetic Extensions and CJK Ideograms
+	0x9FB0, 0xABFF, // between CJK Ideograms and Korean characters
+	0xD7A2, 0xFEFF, // between Korean characters and Half-width characters
+	0xFFEE, 0xFFFC, // between Half-width characters and Invalid
+	0
+};
+
 void Fonts_InitFonts(void)
 {
 	static ImVector< ImWchar > glyphRanges;
@@ -171,8 +200,13 @@ void Fonts_InitFonts(void)
 		for(u32 i = 0; i < s_fontConfigs.count; ++i) {
 			fontConfig_t *fontConfig = s_fontConfigs.data + i;
 			if(fontConfig->enabled && fontConfig->size > 0 && *sb_get(&fontConfig->path)) {
-				io.Fonts->AddFontFromFileTTF(sb_get(&fontConfig->path), (float)fontConfig->size * dpiScale, nullptr, glyphRanges.Data);
-				Fonts_MergeIconFont((float)fontConfig->size * dpiScale);
+				float fontSize = (float)fontConfig->size * dpiScale;
+				io.Fonts->AddFontFromFileTTF(sb_get(&fontConfig->path), fontSize, nullptr, glyphRanges.Data);
+				Fonts_MergeIconFont(fontSize);
+
+				//io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\L_10646.ttf", fontSize, &config, fallbackRanges);
+				//io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\SEGUIEMJ.ttf", fontSize, &mergeConfig, fallbackRanges);
+
 			} else {
 				io.Fonts->AddFontDefault();
 				Fonts_MergeIconFont(12.0f);
