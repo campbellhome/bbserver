@@ -79,11 +79,13 @@ static void task_prep(task *t, const char *prefix)
 	if(!t->id) {
 		t->id = ++s_lastId;
 	}
-	const char *name = va("%s%u:%s", prefix, t->id, sb_get(&t->name));
-	sb_reset(&t->name);
-	sb_append(&t->name, name);
-	sb_reset(&t->prefix);
-	sb_va(&t->prefix, "%s%u:", prefix, t->id);
+	if(sb_len(&t->prefix) == 0) {
+		const char *name = va("%s%u:%s", prefix, t->id, sb_get(&t->name));
+		sb_reset(&t->name);
+		sb_append(&t->name, name);
+		sb_reset(&t->prefix);
+		sb_va(&t->prefix, "%s%u:", prefix, t->id);
+	}
 	for(u32 i = 0; i < t->subtasks.count; ++i) {
 		task_prep(t->subtasks.data + i, sb_get(&t->prefix));
 		t->subtasks.data[i].parent = t;
@@ -128,7 +130,10 @@ task *task_queue(task t)
 task *task_queue_subtask(task *parent, task t)
 {
 	task *subtask = NULL;
-	if(parent->id != 0 && bba_add_noclear(parent->subtasks, 1)) {
+	if(!parent->id) {
+		task_prep(parent, (parent->parent ? sb_get(&parent->parent->prefix) : ""));
+	}
+	if(bba_add_noclear(parent->subtasks, 1)) {
 		bba_last(parent->subtasks) = t;
 		subtask = &bba_last(parent->subtasks);
 		task_prep(subtask, sb_get(&parent->prefix));
