@@ -72,8 +72,6 @@ static program g_program;
 static u8 g_recvBuffer[1 * 1024 * 1024];
 
 static partial_logs_t g_partialLogs;
-static bb_decoded_packet_t g_tailPackets[10];
-static size_t g_nextTailPacketIndex;
 static b32 g_inTailCatchup;
 static b32 g_follow;
 static u32 g_numLines;

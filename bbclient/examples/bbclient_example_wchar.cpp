@@ -101,25 +101,25 @@ struct console_autocomplete_entry {
 	const char *command;
 	const char *description;
 	b32 bCommand;
-	u8 pad[4];
+	u32 pad;
 };
 
 static console_autocomplete_entry s_autocompleteEntries[] = {
-	{ "quit", "quit the application", true },
-	{ "log LogTemp", "set log category", true },
-	{ "log LogConsole", "set log category", true },
-	{ "log LogMatchmaking", "set log category", true },
-	{ "con.autocomplete", "a cvar!", false },
-	{ "map Evansburgh_A", "load a map", true },
-	{ "map Evansburgh_B", "load a map", true },
-	{ "map Evansburgh_C", "load a map", true },
-	{ "map Evansburgh_D", "load a map", true },
-	{ "map Evansburgh_E", "load a map", true },
-	{ "map BlueDog_A", "load a map", true },
-	{ "map BlueDog_B", "load a map", true },
-	{ "map BlueDog_C", "load a map", true },
-	{ "map BlueDog_D", "load a map", true },
-	{ "map BlueDog_E", "load a map", true },
+	{ "quit", "quit the application", true, 0 },
+	{ "log LogTemp", "set log category", true, 0 },
+	{ "log LogConsole", "set log category", true, 0 },
+	{ "log LogMatchmaking", "set log category", true, 0 },
+	{ "con.autocomplete", "a cvar!", false, 0 },
+	{ "map Evansburgh_A", "load a map", true, 0 },
+	{ "map Evansburgh_B", "load a map", true, 0 },
+	{ "map Evansburgh_C", "load a map", true, 0 },
+	{ "map Evansburgh_D", "load a map", true, 0 },
+	{ "map Evansburgh_E", "load a map", true, 0 },
+	{ "map BlueDog_A", "load a map", true, 0 },
+	{ "map BlueDog_B", "load a map", true, 0 },
+	{ "map BlueDog_C", "load a map", true, 0 },
+	{ "map BlueDog_D", "load a map", true, 0 },
+	{ "map BlueDog_E", "load a map", true, 0 },
 };
 
 static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *context)

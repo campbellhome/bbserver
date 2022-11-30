@@ -34,11 +34,13 @@ static void output_add(const char *fmt, va_list args, output_level_t level)
 		vfprintf(stream, fmt, args);
 	}
 
+#if BB_USING(BB_PLATFORM_WINDOWS)
 	if((g_outputFlags & kOutputInit_ToOutputDebugString) != 0) {
 		sb_va_list(&g_outputBuf, fmt, args);
 		OutputDebugStringA(sb_get(&g_outputBuf));
 		sb_clear(&g_outputBuf);
 	}
+#endif
 
 	if((g_outputFlags & kOutputInit_ToBuffer) != 0) {
 		if(bba_add_noclear(g_output, 1)) {
