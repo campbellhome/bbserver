@@ -49,6 +49,9 @@ typedef wchar_t bb_wchar_t;
 #define BB_WCHARS(x) BB_WCHARS_PASTE(x)
 #endif // #if BB_COMPILE_WIDECHAR
 
+// forward declare struct typedefs because C99 does not allow typedef struct redefinitions
+typedef struct bb_decoded_packet_s bb_decoded_packet_t;
+
 // buffer sizes, including null terminator
 enum {
 	kBBSize_ApplicationName = 64,

@@ -14,8 +14,6 @@
 extern "C" {
 #endif
 
-typedef struct bb_decoded_packet_s bb_decoded_packet_t;
-
 typedef enum {
 	kBBConnection_NotConnected,
 	kBBConnection_Listening,
