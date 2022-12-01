@@ -1077,7 +1077,7 @@ float UIRecordedView_LogLine(view_t *view, view_log_t *viewLog, float textOffset
 				// for a few weeks, we lose all fractional precision in float32, making sinf()
 				// stairstep.
 				const double rate = 2.5;
-				float s = (float)sin(Time_GetCurrentTime() * rate);
+				float s = (float)sin(Time_GetCurrentFrameStartTime() * rate);
 				float scale = fabsf(s);
 				color.Value.w *= scale;
 				Imgui_Core_RequestRender();

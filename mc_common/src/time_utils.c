@@ -18,9 +18,23 @@ static float s_frameTimeFloat;
 static double s_frameTimeDouble;
 static u64 s_frameNumber;
 
-double Time_GetCurrentTime(void)
+double Time_GetCurrentFrameStartTime(void)
 {
 	return s_currentTime;
+}
+
+double Time_GetCurrentTime(void)
+{
+	if(!s_counterToMilliseconds) {
+		LARGE_INTEGER li;
+		QueryPerformanceFrequency(&li);
+		s_counterFrequency = li.QuadPart;
+		s_counterToMilliseconds = 1.0 / s_counterFrequency;
+	}
+
+	LARGE_INTEGER li;
+	QueryPerformanceCounter(&li);
+	return li.QuadPart * s_counterToMilliseconds;
 }
 
 void Time_StartNewFrame(void)
@@ -51,12 +65,12 @@ float Time_GetCurrentFrameElapsed(void)
 	return (float)(deltaCounter * s_counterToMilliseconds);
 }
 
-float Time_GetDT(void)
+float Time_GetLastDT(void)
 {
 	return s_frameTimeFloat;
 }
 
-double Time_GetDTDouble(void)
+double Time_GetLastDTDouble(void)
 {
 	return s_frameTimeDouble;
 }
