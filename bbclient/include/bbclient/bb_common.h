@@ -28,7 +28,12 @@
 // warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 BB_WARNING_DISABLE(4711 5045)
 
+// MSVC C does not allow empty = {} initialization in legacy mode, C11, or C17
+#if defined(__cplusplus)
+#define BB_EMPTY_INITIALIZER
+#else
 #define BB_EMPTY_INITIALIZER 0
+#endif
 
 #else // #if BB_USING( BB_PLATFORM_WINDOWS )
 
