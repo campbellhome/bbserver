@@ -54,6 +54,21 @@ static void task_reset(task *t, b32 quiet)
 	sb_reset(&t->prefix);
 }
 
+static void task_update_parent_ptrs(task *t)
+{
+	for(u32 i = 0; i < t->subtasks.count; ++i) {
+		t->subtasks.data[i].parent = t;
+		task_update_parent_ptrs(t->subtasks.data + i);
+	}
+}
+
+void tasks_update_parent_ptrs(void)
+{
+	for(u32 i = 0; i < s_tasks.count; ++i) {
+		task_update_parent_ptrs(s_tasks.data + i);
+	}
+}
+
 void tasks_startup(void)
 {
 }
@@ -118,6 +133,7 @@ task *task_queue(task t)
 			if(t.debug) {
 				BB_LOG("task::task_queue", "queued %s", task_get_name(&t));
 			}
+			tasks_update_parent_ptrs();
 			return &bba_last(s_tasks);
 		}
 	}
@@ -138,9 +154,10 @@ task *task_queue_subtask(task *parent, task t)
 		subtask = &bba_last(parent->subtasks);
 		task_prep(subtask, sb_get(&parent->prefix));
 		subtask->parent = parent;
-		if(t.debug) {
+		if(t.debug || parent->debug) {
 			BB_LOG("task::task_queue", "queued %s", task_get_name(subtask));
 		}
+		task_update_parent_ptrs(parent);
 	} else {
 		BB_ERROR("task::task_queue", "failed to queue %s", task_get_name(&t));
 		task_reset(&t, false);
