@@ -154,6 +154,27 @@ float UIMessageBox_Update(messageBoxes *boxes)
 		ImGui::SameLine();
 	}
 
+	bool focused = false;
+
+	ImGui::PushItemWidth(120.0f * Imgui_Core_GetDpiScale());
+	sdictEntry_t *inputNumber = sdict_find_entry(sd, "inputNumber");
+	if(inputNumber) {
+		if(s_activeFrames < 3) {
+			ImGui::SetKeyboardFocusHere();
+		}
+		ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
+		bool entered = ImGui::InputText("##path", &inputNumber->value, 1024, flags);
+		focused = ImGui::IsItemFocused();
+		if(entered) {
+			if(mb->callback) {
+				mb->callback(mb, sb_get(&inputNumber->value));
+			}
+			bRemove = true;
+		}
+		ImGui::SameLine();
+	}
+	ImGui::PopItemWidth();
+
 	ImVec2 curPos = ImGui::GetWindowPos() + ImGui::GetCursorPos();
 	if(curPos.x - start.x >= region.x - 120 * Imgui_Core_GetDpiScale()) {
 		ImGui::NewLine();
@@ -172,15 +193,16 @@ float UIMessageBox_Update(messageBoxes *boxes)
 			bRemove = true;
 			break;
 		}
+		focused = focused || ImGui::IsItemFocused();
 	};
 
 	ImGui::Spacing();
 	ImGui::EndGroup();
 
-	ImDrawVert* bottomLeft = &DrawList->VtxBuffer[prevSize - 1];
-	ImDrawVert* bottomRight = bottomLeft - 1;
-	ImDrawVert* topRight = bottomLeft - 2;
-	ImDrawVert* topLeft = bottomLeft - 3;
+	ImDrawVert *bottomLeft = &DrawList->VtxBuffer[prevSize - 1];
+	ImDrawVert *bottomRight = bottomLeft - 1;
+	ImDrawVert *topRight = bottomLeft - 2;
+	ImDrawVert *topLeft = bottomLeft - 3;
 
 	// colors are ABGR
 	u32 colorLeft = boxes->bgColor[0];
@@ -196,8 +218,20 @@ float UIMessageBox_Update(messageBoxes *boxes)
 	bottomLeft->pos.y = endY - ImGui::GetStyle().ItemSpacing.y;
 	bottomRight->pos.y = endY - ImGui::GetStyle().ItemSpacing.y;
 
+	if(focused) {
+		if(ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+			if(mb->callback) {
+				mb->callback(mb, "escape");
+			}
+			bRemove = true;
+		}
+	}
+
 	if(bRemove) {
+		s_activeFrames = 0;
 		mb_remove_active(boxes);
+	} else {
+		++s_activeFrames;
 	}
 
 	return endY - start.y;

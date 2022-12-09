@@ -16,6 +16,7 @@ typedef void(messageBoxFunc)(messageBox *mb, const char *action);
 typedef struct tag_messageBox {
 	sdict_t data;
 	messageBoxFunc *callback;
+	void *userData;
 } messageBox;
 
 typedef struct tag_messageBoxes {
