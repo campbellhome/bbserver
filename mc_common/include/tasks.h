@@ -49,9 +49,8 @@ typedef struct tag_task {
 	taskState prevState;
 	b32 parallel;
 	b32 debug;
-	u8 pad[4];
+	taskId parentId;
 	tasks subtasks;
-	task *parent;
 	void *taskData;
 	void *userData;
 	sdict_t extraData;
@@ -66,6 +65,7 @@ void task_discard(task t);
 void task_set_state(task *t, taskState state);
 b32 task_started(task *t);
 b32 task_done(task *t);
+task *task_find(taskId id);
 
 #if defined(__cplusplus)
 }

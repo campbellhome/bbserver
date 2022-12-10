@@ -254,7 +254,7 @@ static void task_orbis_list_statechanged(task *t)
 	if(t->state == kTaskState_Succeeded) {
 		task_process *p = t->taskData;
 		sb_t dir = env_resolve("%SCE_ROOT_DIR%\\ORBIS\\Tools\\Target Manager Server\\bin");
-		task *groupTask = t->parent;
+		task *groupTask = task_find(t->parentId);
 		if(p->process) {
 			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t line = tokenize(&cursor, "\r\n");
@@ -319,7 +319,7 @@ static void task_xbconfig_statechanged(task *t)
 				size_t valTokenLen = valToken.end - valToken.start;
 				if(keyToken.start && valToken.start && keyTokenLen == strlen(key) && !strncmp(key, keyToken.start, keyTokenLen)) {
 					BB_LOG("Devkit", "Durango %s: %.*s", key, valTokenLen, valToken.start);
-					sdict_add_raw(&t->parent->extraData, key, va("%.*s", valTokenLen, valToken.start));
+					sdict_add_raw(&task_find(t->parentId)->extraData, key, va("%.*s", valTokenLen, valToken.start));
 				}
 			}
 		}
@@ -336,7 +336,7 @@ static void task_xbconnect_statechanged(task *t)
 			span_t token = tokenize(&cursor, " \r\n");
 			if(token.start && *token.start > '0' && *token.start <= '9') {
 				BB_LOG("Devkit", "Durango Game Addr: %.*s", token.end - token.start, token.start);
-				sdict_add_raw(&t->parent->extraData, "GameAddr", va("%.*s", token.end - token.start, token.start));
+				sdict_add_raw(&task_find(t->parentId)->extraData, "GameAddr", va("%.*s", token.end - token.start, token.start));
 
 				sb_t dir = env_resolve("%XboxOneXDKLatest%..\\bin");
 				sb_t path = { BB_EMPTY_INITIALIZER };
@@ -345,12 +345,12 @@ static void task_xbconnect_statechanged(task *t)
 				task subtask = process_task_create("xbconfig ConsoleType", kProcessSpawn_Tracked, sb_get(&dir), "\"%s\" ConsoleType", sb_get(&path));
 				sdict_add_raw(&subtask.extraData, "key", "ConsoleType");
 				subtask.stateChanged = task_xbconfig_statechanged;
-				task_queue_subtask(t->parent, subtask);
+				task_queue_subtask(task_find(t->parentId), subtask);
 
 				subtask = process_task_create("xbconfig HostName", kProcessSpawn_Tracked, sb_get(&dir), "\"%s\" HostName", sb_get(&path));
 				sdict_add_raw(&subtask.extraData, "key", "HostName");
 				subtask.stateChanged = task_xbconfig_statechanged;
-				task_queue_subtask(t->parent, subtask);
+				task_queue_subtask(task_find(t->parentId), subtask);
 
 				sb_reset(&dir);
 				sb_reset(&path);

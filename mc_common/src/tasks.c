@@ -54,21 +54,6 @@ static void task_reset(task *t, b32 quiet)
 	sb_reset(&t->prefix);
 }
 
-static void task_update_parent_ptrs(task *t)
-{
-	for(u32 i = 0; i < t->subtasks.count; ++i) {
-		t->subtasks.data[i].parent = t;
-		task_update_parent_ptrs(t->subtasks.data + i);
-	}
-}
-
-void tasks_update_parent_ptrs(void)
-{
-	for(u32 i = 0; i < s_tasks.count; ++i) {
-		task_update_parent_ptrs(s_tasks.data + i);
-	}
-}
-
 void tasks_startup(void)
 {
 }
@@ -80,6 +65,35 @@ void tasks_shutdown(void)
 		task_reset(t, false);
 	}
 	bba_free(s_tasks);
+}
+
+static task *task_find_recursive(task* parent, taskId id)
+{
+	if(parent->id == id) {
+		return parent;
+	}
+	for(u32 i = 0; i < parent->subtasks.count; ++i) {
+		task *t = parent->subtasks.data + i;
+		if(t->id == id) {
+			return t;
+		}
+		t = task_find_recursive(t, id);
+		if(t) {
+			return t;
+		}
+	}
+	return NULL;
+}
+
+task *task_find(taskId id)
+{
+	for(u32 i = 0; i < s_tasks.count; ++i) {
+		task *t = task_find_recursive(s_tasks.data + i, id);
+		if(t) {
+			return t;
+		}
+	}
+	return NULL;
 }
 
 void task_discard(task t)
@@ -103,7 +117,7 @@ static void task_prep(task *t, const char *prefix)
 	}
 	for(u32 i = 0; i < t->subtasks.count; ++i) {
 		task_prep(t->subtasks.data + i, sb_get(&t->prefix));
-		t->subtasks.data[i].parent = t;
+		t->subtasks.data[i].parentId = t->id;
 	}
 }
 
@@ -133,7 +147,6 @@ task *task_queue(task t)
 			if(t.debug) {
 				BB_LOG("task::task_queue", "queued %s", task_get_name(&t));
 			}
-			tasks_update_parent_ptrs();
 			return &bba_last(s_tasks);
 		}
 	}
@@ -147,17 +160,17 @@ task *task_queue_subtask(task *parent, task t)
 {
 	task *subtask = NULL;
 	if(!parent->id) {
-		task_prep(parent, (parent->parent ? sb_get(&parent->parent->prefix) : ""));
+		task *grandparent = task_find(parent->parentId);
+		task_prep(parent, (grandparent ? sb_get(&grandparent->prefix) : ""));
 	}
 	if(bba_add_noclear(parent->subtasks, 1)) {
 		bba_last(parent->subtasks) = t;
 		subtask = &bba_last(parent->subtasks);
 		task_prep(subtask, sb_get(&parent->prefix));
-		subtask->parent = parent;
+		subtask->parentId = parent->id;
 		if(t.debug || parent->debug) {
 			BB_LOG("task::task_queue", "queued %s", task_get_name(subtask));
 		}
-		task_update_parent_ptrs(parent);
 	} else {
 		BB_ERROR("task::task_queue", "failed to queue %s", task_get_name(&t));
 		task_reset(&t, false);
