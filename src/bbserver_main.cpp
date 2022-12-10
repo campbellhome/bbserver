@@ -8,6 +8,7 @@
 #include "bb_colors.h"
 #include "bb_common.h"
 #include "bb_log.h"
+#include "bb_malloc.h"
 #include "bb_sockets.h"
 #include "bb_string.h"
 #include "bb_thread.h"
@@ -406,6 +407,7 @@ static void LoggingFreeWrapper(void *ptr, void *user_data)
 int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
 {
 	crt_leak_check_init();
+	//bb_tracked_malloc_enable(true);
 	//bba_set_logging(true, true);
 
 	cmdline_init_composite(CommandLine);

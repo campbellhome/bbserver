@@ -5,6 +5,7 @@
 #include "appdata.h"
 #include "bb_array.h"
 #include "bb_json_generated.h"
+#include "bb_malloc.h"
 #include "bb_string.h"
 #include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
@@ -40,7 +41,7 @@ u32 config_getwindowplacement(HWND hwnd)
 void config_free(config_t *config)
 {
 	config_reset(config);
-	free(config);
+	bb_free(config);
 }
 
 static sb_t config_get_path(const char *appName)

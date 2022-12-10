@@ -121,7 +121,7 @@ int file_getTimestamps(const char *path, FILETIME *creationTime, FILETIME *acces
 void fileData_reset(fileData_t *result)
 {
 	if(result->buffer) {
-		free(result->buffer);
+		bb_free(result->buffer);
 	}
 	memset(result, 0, sizeof(*result));
 }
@@ -136,7 +136,7 @@ fileData_t fileData_read(const char *filename)
 		u32 fileSize32 = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
 
-		result.buffer = malloc(fileSize32 + 1);
+		result.buffer = bb_malloc(fileSize32 + 1);
 		if(result.buffer) {
 			size_t bytesRead = fread(result.buffer, 1, fileSize32, fp);
 			if(fileSize32 == bytesRead) {

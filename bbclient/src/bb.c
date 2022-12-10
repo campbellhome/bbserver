@@ -16,6 +16,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "bbclient/bb_discovery_client.h"
 #include "bbclient/bb_file.h"
 #include "bbclient/bb_log.h"
+#include "bbclient/bb_malloc.h"
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
 #include "bbclient/bb_time.h"
@@ -621,7 +622,7 @@ void bb_shutdown(const char *file, int line)
 	bba_free(s_bb_pathIds);
 	bba_free(s_bb_threadIds);
 	if(s_bb_trace_packet_buffer) {
-		free(s_bb_trace_packet_buffer);
+		bb_free(s_bb_trace_packet_buffer);
 		s_bb_trace_packet_buffer = NULL;
 	}
 	bb_shutdown_locale();
@@ -849,7 +850,7 @@ void bb_thread_end(uint32_t pathId, uint32_t line)
 	bb_send(&decoded);
 	bb_thread_store_id_packet(&decoded);
 	if(s_bb_trace_packet_buffer) {
-		free(s_bb_trace_packet_buffer);
+		bb_free(s_bb_trace_packet_buffer);
 		s_bb_trace_packet_buffer = NULL;
 	}
 }
@@ -1011,7 +1012,7 @@ typedef struct bb_trace_builder_s {
 static b32 bb_trace_begin(bb_trace_builder_t *builder, uint32_t pathId, uint32_t line)
 {
 	if(!s_bb_trace_packet_buffer) {
-		s_bb_trace_packet_buffer = (bbtraceBuffer_t *)malloc(sizeof(*s_bb_trace_packet_buffer));
+		s_bb_trace_packet_buffer = (bbtraceBuffer_t *)bb_malloc(sizeof(*s_bb_trace_packet_buffer));
 		if(!s_bb_trace_packet_buffer) {
 			return false;
 		}
@@ -1073,7 +1074,7 @@ typedef struct bb_trace_builder_w_s {
 static b32 bb_trace_begin_w(bb_trace_builder_w_t *builder, uint32_t pathId, uint32_t line)
 {
 	if(!s_bb_trace_packet_buffer) {
-		s_bb_trace_packet_buffer = (bbtraceBuffer_t *)malloc(sizeof(*s_bb_trace_packet_buffer));
+		s_bb_trace_packet_buffer = (bbtraceBuffer_t *)bb_malloc(sizeof(*s_bb_trace_packet_buffer));
 		if(!s_bb_trace_packet_buffer) {
 			return false;
 		}

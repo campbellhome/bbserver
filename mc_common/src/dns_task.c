@@ -3,6 +3,7 @@
 
 #include "dns_task.h"
 #include "bb_array.h"
+#include "bb_malloc.h"
 #include "bb_sockets.h"
 #include "bb_thread.h"
 #include "va.h"
@@ -90,7 +91,7 @@ void dns_task_reset(task *t)
 		}
 		sb_reset(&userdata->result.name);
 		bba_free(userdata->result.addrs);
-		free(t->taskData);
+		bb_free(t->taskData);
 		t->taskData = NULL;
 	}
 }
@@ -102,7 +103,7 @@ task dns_task_create(const char *name, DnsTask_Finished *finished)
 	t.tick = dns_task_tick;
 	t.stateChanged = dns_task_statechanged;
 	t.reset = dns_task_reset;
-	t.taskData = malloc(sizeof(dns_task_userdata));
+	t.taskData = bb_malloc(sizeof(dns_task_userdata));
 	if(t.taskData) {
 		dns_task_userdata *userdata = (dns_task_userdata *)t.taskData;
 		memset(userdata, 0, sizeof(*userdata));

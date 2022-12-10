@@ -7,6 +7,7 @@
 #include "recordings.h"
 
 #include "bb_log.h"
+#include "bb_malloc.h"
 #include "bb_packet.h"
 #include "bb_string.h"
 #include "bb_time.h"
@@ -30,7 +31,7 @@ BB_WARNING_PUSH(4820 4255)
 b32 mkdir_recursive(const char *path)
 {
 	b32 success = true;
-	char *temp = _strdup(path);
+	char *temp = bb_strdup(path);
 	char *s = temp;
 	while(*s) {
 		if(*s == '/' || *s == '\\') {
@@ -47,7 +48,7 @@ b32 mkdir_recursive(const char *path)
 		}
 		++s;
 	}
-	free(temp);
+	bb_free(temp);
 	if(_mkdir(path) == -1) {
 		if(errno != EEXIST) {
 			success = false;

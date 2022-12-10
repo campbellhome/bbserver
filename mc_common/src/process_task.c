@@ -3,6 +3,7 @@
 
 #include "process_task.h"
 #include "bb_array.h"
+#include "bb_malloc.h"
 
 void task_process_tick(task *_t)
 {
@@ -44,7 +45,7 @@ void task_process_reset(task *_t)
 		process_free(t->process);
 		t->process = NULL;
 	}
-	free(_t->taskData);
+	bb_free(_t->taskData);
 	_t->taskData = NULL;
 }
 
@@ -55,7 +56,7 @@ task process_task_create(const char *name, processSpawnType_t spawnType, const c
 	t.tick = task_process_tick;
 	t.stateChanged = task_process_statechanged;
 	t.reset = task_process_reset;
-	t.taskData = malloc(sizeof(task_process));
+	t.taskData = bb_malloc(sizeof(task_process));
 	if(t.taskData) {
 		task_process *p = t.taskData;
 		memset(p, 0, sizeof(*p));

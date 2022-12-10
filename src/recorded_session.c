@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "recorded_session.h"
@@ -17,6 +17,7 @@
 
 #include "bb.h"
 #include "bb_array.h"
+#include "bb_malloc.h"
 #include "bb_packet.h"
 #include "bb_string.h"
 #include "bb_thread.h"
@@ -44,7 +45,7 @@ static recorded_sessions_t s_sessions;
 static void recorded_logs_reset(recorded_logs_t *logs)
 {
 	for(u32 i = 0; i < logs->count; ++i) {
-		free(logs->data[i]);
+		bb_free(logs->data[i]);
 	}
 	bba_free(*logs);
 }
@@ -78,7 +79,7 @@ void recorded_session_open(const char *path, const char *applicationFilename, b8
 		recorded_session_t **holder = bba_add(s_sessions, 1);
 		if(!holder)
 			return;
-		*holder = session = (recorded_session_t *)malloc(sizeof(recorded_session_t));
+		*holder = session = (recorded_session_t *)bb_malloc(sizeof(recorded_session_t));
 		if(!session) {
 			--s_sessions.count;
 			return;
@@ -86,7 +87,7 @@ void recorded_session_open(const char *path, const char *applicationFilename, b8
 		memset(session, 0, sizeof(*session));
 		session->incoming = _aligned_malloc(sizeof(session_message_queue_t), 8);
 		if(!session->incoming) {
-			free(session);
+			bb_free(session);
 			--s_sessions.count;
 			return;
 		}
@@ -164,7 +165,7 @@ void recorded_session_close(recorded_session_t *session)
 				if(session->outgoingMqId != mq_invalid_id()) {
 					mq_releaseref(session->outgoingMqId);
 				}
-				free(session);
+				bb_free(session);
 				bba_erase(s_sessions, i);
 			}
 			if(s_sessions.count == 0) {
@@ -531,7 +532,7 @@ static void recorded_session_add_log(recorded_session_t *session, bb_decoded_pac
 		size_t preTextSize = (u8 *)decoded->packet.logText.text - (u8 *)decoded;
 		size_t decodedSize = preTextSize + textLen + 1;
 		size_t logSize = decodedSize + offsetof(recorded_log_t, packet);
-		*plog = malloc(logSize);
+		*plog = bb_malloc(logSize);
 		log = *plog;
 		if(log) {
 			Fonts_CacheGlyphs(text);

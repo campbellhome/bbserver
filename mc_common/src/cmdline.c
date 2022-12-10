@@ -1,8 +1,9 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "cmdline.h"
 #include "bb_array.h"
+#include "bb_malloc.h"
 #include "bb_string.h"
 #include "path_utils.h"
 #include "sb.h"
@@ -86,7 +87,7 @@ void cmdline_init_composite(const char *src)
 			token = tokenize(&cursor, " ");
 		}
 
-		s_argvBuffer = malloc(sizeof(char *) * s_argc);
+		s_argvBuffer = bb_malloc(sizeof(char *) * s_argc);
 		s_argv = (const char **)s_argvBuffer;
 		if(s_argv) {
 			s_argv[0] = s_argv0;
@@ -131,17 +132,17 @@ void cmdline_shutdown(void)
 {
 	sb_reset(&s_commandline);
 	if(s_exeDir) {
-		free(s_exeDir);
+		bb_free(s_exeDir);
 	}
 	if(s_exeFilename) {
-		free(s_exeFilename);
+		bb_free(s_exeFilename);
 	}
 #if BB_USING(BB_PLATFORM_WINDOWS)
 	if(s_argBuffer) {
-		free(s_argBuffer);
+		bb_free(s_argBuffer);
 	}
 	if(s_argvBuffer) {
-		free(s_argvBuffer);
+		bb_free(s_argvBuffer);
 	}
 #endif // #if BB_USING(BB_PLATFORM_WINDOWS)
 }

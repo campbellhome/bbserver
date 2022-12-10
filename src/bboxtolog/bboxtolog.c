@@ -7,6 +7,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 
 #include "bb.h"
 #include "bbclient/bb_array.h"
+#include "bbclient/bb_malloc.h"
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
 #include "bbclient/bb_time.h"
@@ -536,7 +537,7 @@ int main_loop(int argc, char **argv)
 	}
 
 	if(target) {
-		free(target);
+		bb_free(target);
 	}
 
 	return ret;

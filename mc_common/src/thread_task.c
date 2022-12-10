@@ -1,7 +1,8 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "thread_task.h"
+#include "bb_malloc.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -31,7 +32,7 @@ void task_thread_reset(task *t)
 			th->shouldTerminate = true;
 			bbthread_join(th->handle);
 		}
-		free(th);
+		bb_free(th);
 		t->taskData = NULL;
 	}
 }
@@ -43,7 +44,7 @@ task thread_task_create(const char *name, Task_StateChanged statechanged, bb_thr
 	t.tick = task_thread_tick;
 	t.stateChanged = statechanged ? statechanged : task_thread_statechanged;
 	t.reset = task_thread_reset;
-	t.taskData = malloc(sizeof(task_thread));
+	t.taskData = bb_malloc(sizeof(task_thread));
 	if(t.taskData) {
 		task_thread *th = t.taskData;
 		memset(th, 0, sizeof(*th));

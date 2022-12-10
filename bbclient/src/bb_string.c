@@ -6,6 +6,7 @@
 #include "bb.h"
 
 #include "bbclient/bb_defines.h"
+#include "bbclient/bb_malloc.h"
 #include "bbclient/bb_string.h"
 
 #include <stdlib.h> // for malloc
@@ -139,11 +140,11 @@ int bb_stricmp(const char *s1, const char *s2)
 	}
 }
 
-char *bb_strdup(const char *s)
+char *bb_strdup_loc(const char* file, int line, const char *s)
 {
 	size_t len = s ? strlen(s) : 0u;
 	size_t size = len + 1;
-	char *out = (size) ? (char *)malloc(size) : 0;
+	char *out = (size) ? (char *)bb_malloc_loc(file, line, size) : 0;
 	if(out) {
 		if(size) {
 			memcpy(out, s, len);

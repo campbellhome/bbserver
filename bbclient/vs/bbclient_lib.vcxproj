@@ -29,6 +29,7 @@
     <ClInclude Include="..\include\bbclient\bb_file.h" />
     <ClInclude Include="..\include\bbclient\bb_leak_detection.h" />
     <ClInclude Include="..\include\bbclient\bb_log.h" />
+    <ClInclude Include="..\include\bbclient\bb_malloc.h" />
     <ClInclude Include="..\include\bbclient\bb_packet.h" />
     <ClInclude Include="..\include\bbclient\bb_serialize.h" />
     <ClInclude Include="..\include\bbclient\bb_sockets.h" />
@@ -53,6 +54,7 @@
     <ClCompile Include="..\src\bb_discovery_server.c" />
     <ClCompile Include="..\src\bb_file.c" />
     <ClCompile Include="..\src\bb_log.c" />
+    <ClCompile Include="..\src\bb_malloc.c" />
     <ClCompile Include="..\src\bb_packet.c" />
     <ClCompile Include="..\src\bb_serialize.c" />
     <ClCompile Include="..\src\bb_sockets.c" />

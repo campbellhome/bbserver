@@ -1,9 +1,10 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "imgui_image.h"
 #include "bb_array.h"
+#include "bb_malloc.h"
 BB_WARNING_PUSH(4365 4820 4296 4619 5219)
 #include "stb/stb_image.h"
 BB_WARNING_POP
@@ -69,6 +70,7 @@ UserImageId ImGui_Image_CreateFromFile(const char *path)
 	int height = 0;
 	int channelsInFile = 0;
 	u8 *pixelData = stbi_load(path, &width, &height, &channelsInFile, 4);
+	bb_log_external_alloc(pixelData);
 	if(pixelData) {
 		for(s64 i = 0; i < width * height; ++i) {
 			u8 *pixel = pixelData + 4 * i;
@@ -99,7 +101,7 @@ void ImGui_Image_Modify(UserImageId userId, const u8 *pixelData, int width, int 
 	UserImageData *data = ImGui_Image_Find(userId);
 	if(data) {
 		if(data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0) {
-			free((void *)data->pixelData);
+			bb_free((void *)data->pixelData);
 			data->flags &= (~kImGui_Image_PixelDataOwnership);
 		}
 		data->pixelData = pixelData;
@@ -114,7 +116,7 @@ void ImGui_Image_MarkForDestroy(UserImageId userId)
 	UserImageData *data = ImGui_Image_Find(userId);
 	if(data) {
 		if(data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0) {
-			free((void *)data->pixelData);
+			bb_free((void *)data->pixelData);
 			data->flags &= (~kImGui_Image_PixelDataOwnership);
 		}
 		data->pixelData = nullptr;
@@ -198,7 +200,7 @@ void ImGui_Image_Shutdown()
 	for(u32 i = 0; i < s_userImages.count; ++i) {
 		UserImageData *data = s_userImages.data + i;
 		if(data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0) {
-			free((void *)data->pixelData);
+			bb_free((void *)data->pixelData);
 			data->flags &= (~kImGui_Image_PixelDataOwnership);
 		}
 		data->pixelData = nullptr;

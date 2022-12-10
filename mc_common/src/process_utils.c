@@ -1,9 +1,10 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2022 Matt Campbell
 // MIT license (see License.txt)
 
 #include "process_utils.h"
 #include "bb_array.h"
 #include "bb_criticalsection.h"
+#include "bb_malloc.h"
 #include "bb_string.h"
 #include "bb_thread.h"
 #include "bb_time.h"
@@ -85,9 +86,9 @@ processSpawnResult_t process_spawn(const char *dir, const char *cmdline, process
 		ZeroMemory(&si, sizeof(si));
 		si.cb = sizeof(si);
 
-		char *cmdlineDup = _strdup(cmdline);
+		char *cmdlineDup = bb_strdup(cmdline);
 		result.success = CreateProcessA(NULL, cmdlineDup, NULL, NULL, FALSE, 0, NULL, dir, &si, &pi);
-		free(cmdlineDup);
+		bb_free(cmdlineDup);
 
 		if(result.success) {
 			if(processLogType == kProcessLog_All) {
@@ -156,22 +157,22 @@ processSpawnResult_t process_spawn(const char *dir, const char *cmdline, process
 								si.hStdError = hErrorWrite;
 								si.wShowWindow = SW_HIDE;
 
-								char *cmdlineDup = _strdup(cmdline);
+								char *cmdlineDup = bb_strdup(cmdline);
 								result.success = CreateProcess(NULL, cmdlineDup, NULL, NULL, TRUE,
 								                               CREATE_NEW_CONSOLE, NULL, dir, &si, &pi);
-								free(cmdlineDup);
+								bb_free(cmdlineDup);
 								if(result.success) {
 									if(processLogType == kProcessLog_All) {
 										BB_LOG("process", "Created tracked process: %s\n", cmdline);
 									}
 									AllowSetForegroundWindow(pi.dwProcessId);
-									result.process = malloc(sizeof(win32Process_t));
+									result.process = bb_malloc(sizeof(win32Process_t));
 									win32Process_t *process = (win32Process_t *)result.process;
 									if(process) {
 										memset(process, 0, sizeof(*process));
 
-										process->base.command = _strdup(cmdline);
-										process->base.dir = _strdup(dir);
+										process->base.command = bb_strdup(cmdline);
+										process->base.dir = bb_strdup(dir);
 										bb_critical_section_lock(&processListCs);
 										DLIST_INSERT_AFTER(&sentinelSubprocess, process);
 										bb_critical_section_unlock(&processListCs);
@@ -359,9 +360,9 @@ void process_free(process_t *base)
 	bb_critical_section_lock(&processListCs);
 	DLIST_REMOVE(process);
 	bb_critical_section_unlock(&processListCs);
-	free(process->base.command);
-	free(process->base.dir);
-	free(process);
+	bb_free(process->base.command);
+	bb_free(process->base.dir);
+	bb_free(process);
 }
 
 void process_get_timings(process_t *base, const char **start, const char **end, u64 *elapsed)

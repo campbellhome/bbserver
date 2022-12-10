@@ -6,6 +6,7 @@
 #include "bb_assert.h"
 #include "bb_connection.h"
 #include "bb_file.h"
+#include "bb_malloc.h"
 #include "bb_serialize.h"
 #include "bb_thread.h"
 #include "bb_wrap_process.h"
@@ -43,12 +44,12 @@ static void bug_report_reset(bugReport *report)
 	sb_reset(&report->title);
 	sb_reset(&report->desc);
 	sb_reset(&report->version);
-	free(report);
+	bb_free(report);
 }
 
 bugReport *bug_report_init(void)
 {
-	bugReport *report = malloc(sizeof(bugReport));
+	bugReport *report = bb_malloc(sizeof(bugReport));
 	if(report) {
 		memset(report, 0, sizeof(bugReport));
 		if(s_project.data && *s_project.data) {

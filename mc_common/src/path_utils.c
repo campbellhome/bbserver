@@ -3,6 +3,7 @@
 
 #include "path_utils.h"
 #include "bb_array.h"
+#include "bb_malloc.h"
 #include "bb_string.h"
 #include "bb_wrap_stdio.h"
 #include "va.h"
@@ -155,7 +156,7 @@ void path_remove_filename(sb_t *path)
 b32 path_mkdir(const char *path)
 {
 	b32 success = true;
-	char *temp = _strdup(path);
+	char *temp = bb_strdup(path);
 	char *s = temp;
 	while(*s) {
 		if(*s == '/' || *s == '\\') {
@@ -172,7 +173,7 @@ b32 path_mkdir(const char *path)
 		}
 		++s;
 	}
-	free(temp);
+	bb_free(temp);
 	if(_mkdir(path) == -1) {
 		if(errno != EEXIST) {
 			success = false;
@@ -211,7 +212,7 @@ b32 path_mkdir_norecurse(const char *path)
 
 b32 path_mkdir(const char *path)
 {
-	char *temp = strdup(path);
+	char *temp = bb_strdup(path);
 	char *s = temp;
 	while(*s) {
 		if(*s == '/') {
@@ -224,7 +225,7 @@ b32 path_mkdir(const char *path)
 		}
 		++s;
 	}
-	free(temp);
+	bb_free(temp);
 	return path_mkdir_norecurse(path);
 }
 b32 path_rmdir(const char *path)
