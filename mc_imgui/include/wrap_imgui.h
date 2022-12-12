@@ -17,7 +17,8 @@ BB_WARNING_DISABLE(4710) // snprintf not inlined
 // warning C4668: '_WIN32_WINNT_WINTHRESHOLD' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 // warning C4574: 'INCL_WINSOCK_API_TYPEDEFS' is defined to be '0': did you mean to use '#if INCL_WINSOCK_API_TYPEDEFS'?
 // warning C4365: 'return': conversion from 'bool' to 'BOOLEAN', signed/unsigned mismatch
-BB_WARNING_PUSH(4820 4255 4668 4574 4365)
+// warning C4459: declaration of 'var' hides global declaration
+BB_WARNING_PUSH(4820 4255 4668 4574 4365 4459)
 
 #include "imgui.h"
 
