@@ -293,6 +293,13 @@ extern "C" void Imgui_Core_FlashWindow(b32 bFlash)
 	}
 }
 
+extern "C" void Imgui_Core_SetWindowText(const char *text)
+{
+	if(s_wnd.hwnd) {
+		SetWindowTextA(s_wnd.hwnd, text);
+	}
+}
+
 extern "C" void Imgui_Core_SetDpiScale(float dpiScale)
 {
 	if(g_dpiScale != dpiScale) {
