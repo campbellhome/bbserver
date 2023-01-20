@@ -39,6 +39,7 @@ __pragma(warning(pop));
 
 #if BB_COMPILE_WIDECHAR
 #if defined(BB_WIDE_CHAR16) && BB_WIDE_CHAR16
+#include <uchar.h>
 typedef char16_t bb_wchar_t;
 #define BB_WCHARS_PASTE(x) u##x
 #else // #if USING(BB_WIDE_CHAR16)
