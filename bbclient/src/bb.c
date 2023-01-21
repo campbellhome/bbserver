@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #if !defined(BB_ENABLED) || BB_ENABLED
@@ -130,7 +130,18 @@ enum {
 	kBBFile_FlushIntervalMillis = 500,
 };
 
-#if BB_COMPILE_WIDECHAR && !(defined(BB_USER_WCSTOMBCS) && BB_USER_WCSTOMBCS)
+#if BB_COMPILE_WIDECHAR
+
+#if defined(BB_USER_WCSTOMBCS) && BB_USER_WCSTOMBCS
+
+extern const char *bb_wcstombcs(const bb_wchar_t *wstr);
+extern const char *bb_wcstombcs_inline(const bb_wchar_t *wstr, char *buffer, size_t bufferSize, size_t *numCharsConverted);
+extern int bb_vswprintf(bb_wchar_t *dest, int count, const bb_wchar_t *fmt, va_list args);
+extern void bb_init_locale(void);
+extern void bb_shutdown_locale(void);
+
+#else // #if defined(BB_USER_WCSTOMBCS) && BB_USER_WCSTOMBCS
+
 #if BB_USING(BB_COMPILER_MSVC)
 #include <locale.h>
 static _locale_t s_utf8_locale;
@@ -192,7 +203,10 @@ static BB_INLINE void bb_shutdown_locale(void)
 	}
 #endif
 }
-#else // #if BB_COMPILE_WIDECHAR && !(defined(BB_USER_WCSTOMBCS) && BB_USER_WCSTOMBCS)
+
+#endif // #else // #if defined(BB_USER_WCSTOMBCS) && BB_USER_WCSTOMBCS
+
+#else  // #if BB_COMPILE_WIDECHAR
 static BB_INLINE void bb_init_locale(void)
 {
 }
@@ -200,7 +214,7 @@ static BB_INLINE void bb_init_locale(void)
 static BB_INLINE void bb_shutdown_locale(void)
 {
 }
-#endif // #else // #if BB_COMPILE_WIDECHAR && !(defined(BB_USER_WCSTOMBCS) && BB_USER_WCSTOMBCS)
+#endif // #else // #if BB_COMPILE_WIDECHAR
 
 static BB_INLINE void bb_fill_header(bb_decoded_packet_t *decoded, bb_packet_type_e packetType, u32 pathId, u32 line)
 {

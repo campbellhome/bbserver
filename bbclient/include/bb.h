@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -49,6 +49,33 @@ typedef wchar_t bb_wchar_t;
 #endif // #else // #if USING(BB_WIDE_CHAR16)
 #define BB_WCHARS(x) BB_WCHARS_PASTE(x)
 #endif // #if BB_COMPILE_WIDECHAR
+
+#if defined(BB_MODULAR) && BB_MODULAR
+
+#if defined(BB_EXPORT) && BB_EXPORT
+
+#if defined(_MSC_VER)
+#define BB_LINKAGE __declspec(dllexport)
+#else
+#error TODO: implement for non-msvc compilers
+#endif
+
+#else  // #if defined(BB_EXPORT) && BB_EXPORT
+
+#if defined(_MSC_VER)
+#define BB_LINKAGE __declspec(dllimport)
+#else
+#error TODO: implement for non-msvc compilers
+#endif
+
+#endif // #else // #if defined(BB_EXPORT) && BB_EXPORT
+
+#else // #if defined(BB_MODULAR) && BB_MODULAR
+
+// static lib/exe
+#define BB_LINKAGE
+
+#endif // #else // #if defined(BB_MODULAR) && BB_MODULAR
 
 // forward declare struct typedefs because C99 does not allow typedef struct redefinitions
 typedef struct bb_decoded_packet_s bb_decoded_packet_t;
@@ -105,76 +132,76 @@ typedef enum {
 	kBBPlatform_Count
 } bb_platform_e;
 
-bb_platform_e bb_platform(void);
-const char *bb_platform_name(bb_platform_e platform);
+BB_LINKAGE bb_platform_e bb_platform(void);
+BB_LINKAGE const char *bb_platform_name(bb_platform_e platform);
 
-void bb_init_critical_sections(void); // can be called to enable queuing data before bb_init
-void bb_init(const char *applicationName, const char *sourceApplicationName, const char *deviceCode, uint32_t sourceIp, bb_init_flags_t initFlags);
-void bb_init_file(const char *path);
-void bb_shutdown(const char *file, int line);
-void bb_set_initial_buffer(void *buffer, uint32_t bufferSize);
-void bb_enable_stored_thread_ids(int store);
+BB_LINKAGE void bb_init_critical_sections(void); // can be called to enable queuing data before bb_init
+BB_LINKAGE void bb_init(const char *applicationName, const char *sourceApplicationName, const char *deviceCode, uint32_t sourceIp, bb_init_flags_t initFlags);
+BB_LINKAGE void bb_init_file(const char *path);
+BB_LINKAGE void bb_shutdown(const char *file, int line);
+BB_LINKAGE void bb_set_initial_buffer(void *buffer, uint32_t bufferSize);
+BB_LINKAGE void bb_enable_stored_thread_ids(int store);
 #if BB_WIDECHAR
-void bb_init_w(const bb_wchar_t *applicationName, const bb_wchar_t *sourceApplicationName, const bb_wchar_t *deviceCode, uint32_t sourceIp, bb_init_flags_t initFlags);
-void bb_init_file_w(const bb_wchar_t *path);
+BB_LINKAGE void bb_init_w(const bb_wchar_t *applicationName, const bb_wchar_t *sourceApplicationName, const bb_wchar_t *deviceCode, uint32_t sourceIp, bb_init_flags_t initFlags);
+BB_LINKAGE void bb_init_file_w(const bb_wchar_t *path);
 #endif // #if BB_WIDECHAR
 
-void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort);
-void bb_connect_direct(uint32_t targetIp, uint16_t targetPort, const void *payload, uint32_t payloadBytes);
-void bb_disconnect(void);
-int bb_is_connected(void);
-uint32_t bb_get_server_ip(void);
-uint16_t bb_get_server_port(void);
-void bb_set_send_interval_ms(uint64_t sendInterval);
-void bb_tick(void);
-void bb_flush(void);
-uint64_t bb_get_total_bytes_sent(void);
-uint64_t bb_get_total_bytes_received(void);
+BB_LINKAGE void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort);
+BB_LINKAGE void bb_connect_direct(uint32_t targetIp, uint16_t targetPort, const void *payload, uint32_t payloadBytes);
+BB_LINKAGE void bb_disconnect(void);
+BB_LINKAGE int bb_is_connected(void);
+BB_LINKAGE uint32_t bb_get_server_ip(void);
+BB_LINKAGE uint16_t bb_get_server_port(void);
+BB_LINKAGE void bb_set_send_interval_ms(uint64_t sendInterval);
+BB_LINKAGE void bb_tick(void);
+BB_LINKAGE void bb_flush(void);
+BB_LINKAGE uint64_t bb_get_total_bytes_sent(void);
+BB_LINKAGE uint64_t bb_get_total_bytes_received(void);
 
 typedef void (*bb_write_callback)(void *context, void *data, uint32_t len);
-void bb_set_write_callback(bb_write_callback callback, void *context);
+BB_LINKAGE void bb_set_write_callback(bb_write_callback callback, void *context);
 
 typedef void (*bb_flush_callback)(void *context);
-void bb_set_flush_callback(bb_flush_callback callback, void *context);
+BB_LINKAGE void bb_set_flush_callback(bb_flush_callback callback, void *context);
 
 typedef struct bb_decoded_packet_s bb_decoded_packet_t;
 typedef void (*bb_send_callback)(void *context, bb_decoded_packet_t *decoded);
-void bb_set_send_callback(bb_send_callback callback, void *context);
-void bb_echo_to_stdout(void *context, bb_decoded_packet_t *decoded);
+BB_LINKAGE void bb_set_send_callback(bb_send_callback callback, void *context);
+BB_LINKAGE void bb_echo_to_stdout(void *context, bb_decoded_packet_t *decoded);
 
 typedef void (*bb_incoming_packet_handler)(const bb_decoded_packet_t *decoded, void *context);
-void bb_set_incoming_packet_handler(bb_incoming_packet_handler handler, void *context);
+BB_LINKAGE void bb_set_incoming_packet_handler(bb_incoming_packet_handler handler, void *context);
 #define BB_SET_INCOMING_PACKET_HANDLER(handler, context) bb_set_incoming_packet_handler((handler), (context))
 
-int bb_send_raw_packet(bb_decoded_packet_t* decoded); // only for specific console autocomplete etc packets
+BB_LINKAGE int bb_send_raw_packet(bb_decoded_packet_t *decoded); // only for specific console autocomplete etc packets
 
-void bb_thread_start(uint32_t pathId, uint32_t line, const char *name);
-void bb_thread_set_name(uint32_t pathId, uint32_t line, const char *name);
-void bb_thread_end(uint32_t pathId, uint32_t line);
+BB_LINKAGE void bb_thread_start(uint32_t pathId, uint32_t line, const char *name);
+BB_LINKAGE void bb_thread_set_name(uint32_t pathId, uint32_t line, const char *name);
+BB_LINKAGE void bb_thread_end(uint32_t pathId, uint32_t line);
 #if BB_WIDECHAR
-void bb_thread_start_w(uint32_t pathId, uint32_t line, const bb_wchar_t *name);
-void bb_thread_set_name_w(uint32_t pathId, uint32_t line, const bb_wchar_t *name);
+BB_LINKAGE void bb_thread_start_w(uint32_t pathId, uint32_t line, const bb_wchar_t *name);
+BB_LINKAGE void bb_thread_set_name_w(uint32_t pathId, uint32_t line, const bb_wchar_t *name);
 #endif // #if BB_WIDECHAR
 
-uint32_t bb_resolve_ids(const char *path, const char *category, uint32_t *pathId, uint32_t *categoryId, uint32_t line);
-void bb_resolve_path_id(const char *path, uint32_t *pathId, uint32_t line);
+BB_LINKAGE uint32_t bb_resolve_ids(const char *path, const char *category, uint32_t *pathId, uint32_t *categoryId, uint32_t line);
+BB_LINKAGE void bb_resolve_path_id(const char *path, uint32_t *pathId, uint32_t line);
 #if BB_WIDECHAR
-uint32_t bb_resolve_ids_w(const char *path, const bb_wchar_t *category, uint32_t *pathId, uint32_t *categoryId, uint32_t line);
+BB_LINKAGE uint32_t bb_resolve_ids_w(const char *path, const bb_wchar_t *category, uint32_t *pathId, uint32_t *categoryId, uint32_t line);
 #endif // #if BB_WIDECHAR
 
-void bb_trace(uint32_t pathId, uint32_t line, uint32_t categoryId, bb_log_level_e level, int32_t pieInstance, const char *fmt, ...);
-void bb_trace_dynamic(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *fmt, ...);
-void bb_trace_dynamic_preformatted(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *preformatted);
-void bb_trace_dynamic_preformatted_range(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *preformatted, const char *preformatted_end);
-void bb_trace_partial(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *fmt, ...);
-void bb_trace_partial_preformatted(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *preformatted, const char *preformatted_end);
-void bb_trace_partial_end(void);
+BB_LINKAGE void bb_trace(uint32_t pathId, uint32_t line, uint32_t categoryId, bb_log_level_e level, int32_t pieInstance, const char *fmt, ...);
+BB_LINKAGE void bb_trace_dynamic(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *fmt, ...);
+BB_LINKAGE void bb_trace_dynamic_preformatted(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *preformatted);
+BB_LINKAGE void bb_trace_dynamic_preformatted_range(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *preformatted, const char *preformatted_end);
+BB_LINKAGE void bb_trace_partial(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *fmt, ...);
+BB_LINKAGE void bb_trace_partial_preformatted(const char *path, uint32_t line, const char *category, bb_log_level_e level, int32_t pieInstance, const char *preformatted, const char *preformatted_end);
+BB_LINKAGE void bb_trace_partial_end(void);
 
 #if BB_WIDECHAR
-void bb_trace_w(uint32_t pathId, uint32_t line, uint32_t categoryId, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t *fmt, ...);
-void bb_trace_dynamic_w(const char *path, uint32_t line, const bb_wchar_t *category, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t *fmt, ...);
-void bb_trace_dynamic_preformatted_w(const char *path, uint32_t line, const bb_wchar_t *category, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t *preformatted);
-void bb_trace_partial_w(const char *path, uint32_t line, const bb_wchar_t *category, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t *fmt, ...);
+BB_LINKAGE void bb_trace_w(uint32_t pathId, uint32_t line, uint32_t categoryId, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t *fmt, ...);
+BB_LINKAGE void bb_trace_dynamic_w(const char *path, uint32_t line, const bb_wchar_t *category, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t *fmt, ...);
+BB_LINKAGE void bb_trace_dynamic_preformatted_w(const char *path, uint32_t line, const bb_wchar_t *category, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t *preformatted);
+BB_LINKAGE void bb_trace_partial_w(const char *path, uint32_t line, const bb_wchar_t *category, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t *fmt, ...);
 #endif // #if BB_WIDECHAR
 
 #if BB_WIDECHAR
@@ -325,7 +352,7 @@ typedef enum bb_color_e {
 	kBBColor_Count
 } bb_color_t;
 
-void bb_set_color(bb_color_t fg, bb_color_t bg);
+BB_LINKAGE void bb_set_color(bb_color_t fg, bb_color_t bg);
 #define BB_SET_COLOR(fg, bg) bb_set_color(fg, bg)
 
 typedef struct bb_colors_s {

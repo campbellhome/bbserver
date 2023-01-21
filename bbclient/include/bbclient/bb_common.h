@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -22,7 +22,7 @@
 #define bb_snprintf snprintf
 #endif
 
-#if BB_USING(BB_PLATFORM_WINDOWS)
+#if BB_USING(BB_COMPILER_MSVC)
 
 // warning C4711 : function 'bbpacket_serialize_user' selected for automatic inline expansion
 // warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
@@ -35,10 +35,10 @@ BB_WARNING_DISABLE(4711 5045)
 #define BB_EMPTY_INITIALIZER 0
 #endif
 
-#else // #if BB_USING( BB_PLATFORM_WINDOWS )
+#else // #if BB_USING( BB_COMPILER_MSVC )
 
 #define BB_EMPTY_INITIALIZER
 
-#endif // #else // #if BB_USING( BB_PLATFORM_WINDOWS )
+#endif // #else // #if BB_USING( BB_COMPILER_MSVC )
 
 #endif // #if BB_ENABLED
