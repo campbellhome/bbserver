@@ -76,8 +76,10 @@
 
 #define BB_MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define BB_MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define BB_CLAMP(x, xmin, xmax) ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) : (x))
-#define BB_CLAMP01(x) ((x) < 0.0f ? 0.0f : (x) > 1.0f ? 1.0f : (x))
+#define BB_CLAMP(x, xmin, xmax) ((x) < (xmin) ? (xmin) : (x) > (xmax) ? (xmax) \
+	                                                                  : (x))
+#define BB_CLAMP01(x) ((x) < 0.0f ? 0.0f : (x) > 1.0f ? 1.0f \
+	                                                  : (x))
 #define BB_ARRAYSIZE(x) (sizeof(x) / sizeof(0 [x]))
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
@@ -110,12 +112,13 @@
 #endif // #else // #if USING( BB_PLATFORM_WINDOWS )
 
 #define BB_MULTI_LINE_MACRO_BEGIN \
-	do {
+	do                            \
+	{
 
 #define BB_MULTI_LINE_MACRO_END    \
 	BB_WARNING_PUSH_CONSTANT_EXPR; \
 	}                              \
-	while(0)                       \
+	while (0)                      \
 	BB_WARNING_POP
 
 #define BB_UNUSED(x)           \

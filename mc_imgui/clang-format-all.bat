@@ -1,1 +1,1 @@
-wsl clang-format -i include/*.h src/*.c*
+clang-format -i include/*.h src/*.c* examples/*.h examples/*.c*

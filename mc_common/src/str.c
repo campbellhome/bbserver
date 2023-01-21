@@ -5,39 +5,47 @@
 
 #include <stdlib.h>
 
-u32 strtou32(const char *s)
+u32 strtou32(const char* s)
 {
 	return atoi(s);
 }
 
-s32 strtos32(const char *s)
+s32 strtos32(const char* s)
 {
 	return atoi(s);
 }
 
 // adapted from http://www.cs.yale.edu/homes/aspnes/pinewiki/C(2f)HashTables.html
-u64 strsimplehash(const char *s)
+u64 strsimplehash(const char* s)
 {
 	u64 h = 0;
-	for(unsigned const char *us = (unsigned const char *)s; *us; ++us) {
+	for (unsigned const char* us = (unsigned const char*)s; *us; ++us)
+	{
 		h = h * 97 + *us;
 	}
 	return h;
 }
 
-size_t strunescape(char *s)
+size_t strunescape(char* s)
 {
-	const char *src = s;
+	const char* src = s;
 	size_t len = 0;
-	if(src) {
-		while(*src) {
-			if(src[0] == '\\' && src[1] == '\\') {
+	if (src)
+	{
+		while (*src)
+		{
+			if (src[0] == '\\' && src[1] == '\\')
+			{
 				*s++ = '\\';
 				++src;
-			} else if(src[0] == '\\' && src[1] == '\"') {
+			}
+			else if (src[0] == '\\' && src[1] == '\"')
+			{
 				*s++ = '\"';
 				++src;
-			} else {
+			}
+			else
+			{
 				*s++ = *src;
 			}
 			++src;

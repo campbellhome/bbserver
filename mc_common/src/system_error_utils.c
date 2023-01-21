@@ -7,12 +7,13 @@
 
 #include "bb_wrap_windows.h"
 
-sb_t system_error_to_sb_from_loc(const char *file, int line, u32 err)
+sb_t system_error_to_sb_from_loc(const char* file, int line, u32 err)
 {
-	char *errorMessage = NULL;
+	char* errorMessage = NULL;
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errorMessage, 0, NULL);
 	sb_t ret = sb_from_c_string_from_loc(file, line, errorMessage ? errorMessage : "unable to format error message");
-	if(errorMessage) {
+	if (errorMessage)
+	{
 		LocalFree(errorMessage);
 	}
 	return ret;
@@ -24,10 +25,11 @@ sb_t system_error_to_sb_from_loc(const char *file, int line, u32 err)
 
 #include <errno.h>
 
-sb_t system_error_to_sb_from_loc(const char *file, int line, u32 err)
+sb_t system_error_to_sb_from_loc(const char* file, int line, u32 err)
 {
-	char *errorMessage = NULL;
-	switch(err) {
+	char* errorMessage = NULL;
+	switch (err)
+	{
 #define CASE(x) \
 	case x:     \
 		errorMessage = #x
@@ -52,7 +54,7 @@ sb_t system_error_to_sb_from_loc(const char *file, int line, u32 err)
 #endif // #if BB_USING(BB_PLATFORM_LINUX)
 
 #if BB_USING(BB_PLATFORM_WINDOWS) || BB_USING(BB_PLATFORM_LINUX)
-void system_error_to_log_from_loc(const char *file, int line, u32 err, const char *category, const char *text)
+void system_error_to_log_from_loc(const char* file, int line, u32 err, const char* category, const char* text)
 {
 	sb_t msg = system_error_to_sb_from_loc(file, line, err);
 	BB_ERROR_DYNAMIC(file, line, category, "%s:\n  Error %u (0x%8.8X): %s", text, err, err, sb_get(&msg));

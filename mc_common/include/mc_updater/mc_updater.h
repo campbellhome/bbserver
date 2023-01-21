@@ -9,22 +9,24 @@
 extern "C" {
 #endif
 
-typedef struct tag_mc_updater_filenames {
+typedef struct tag_mc_updater_filenames
+{
 	u32 count;
 	u32 allocated;
-	const char **data;
+	const char** data;
 } mc_updater_filenames;
 
-typedef struct tag_mc_updater_globals {
-	const char *appName;
-	const char *appdataName;
-	const char *currentVersionJsonFilename;
-	const char *p4VersionDir;
-	const char *manifestFilename;
+typedef struct tag_mc_updater_globals
+{
+	const char* appName;
+	const char* appdataName;
+	const char* currentVersionJsonFilename;
+	const char* p4VersionDir;
+	const char* manifestFilename;
 	mc_updater_filenames contentsFilenames;
 } mc_updater_globals;
 
-b32 mc_updater_main(mc_updater_globals *globals);
+b32 mc_updater_main(mc_updater_globals* globals);
 
 #if defined(__cplusplus)
 }

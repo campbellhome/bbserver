@@ -21,30 +21,35 @@ void output_init(output_init_flags_t flags)
 void output_shutdown(void)
 {
 	sb_reset(&g_outputBuf);
-	for(u32 i = 0; i < g_output.count; ++i) {
+	for (u32 i = 0; i < g_output.count; ++i)
+	{
 		sb_reset(&g_output.data[i].text);
 	}
 	bba_free(g_output);
 }
 
-static void output_add(const char *fmt, va_list args, output_level_t level)
+static void output_add(const char* fmt, va_list args, output_level_t level)
 {
-	if((g_outputFlags & kOutputInit_ToStdout) != 0) {
-		FILE *stream = (level == kOutput_Log) ? stdout : stderr;
+	if ((g_outputFlags & kOutputInit_ToStdout) != 0)
+	{
+		FILE* stream = (level == kOutput_Log) ? stdout : stderr;
 		vfprintf(stream, fmt, args);
 	}
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
-	if((g_outputFlags & kOutputInit_ToOutputDebugString) != 0) {
+	if ((g_outputFlags & kOutputInit_ToOutputDebugString) != 0)
+	{
 		sb_va_list(&g_outputBuf, fmt, args);
 		OutputDebugStringA(sb_get(&g_outputBuf));
 		sb_clear(&g_outputBuf);
 	}
 #endif
 
-	if((g_outputFlags & kOutputInit_ToBuffer) != 0) {
-		if(bba_add_noclear(g_output, 1)) {
-			output_line_t *line = &bba_last(g_output);
+	if ((g_outputFlags & kOutputInit_ToBuffer) != 0)
+	{
+		if (bba_add_noclear(g_output, 1))
+		{
+			output_line_t* line = &bba_last(g_output);
 			line->level = level;
 			sb_init(&line->text);
 			sb_va_list(&line->text, fmt, args);
@@ -52,7 +57,7 @@ static void output_add(const char *fmt, va_list args, output_level_t level)
 	}
 }
 
-void output_log_impl(const char *fmt, ...)
+void output_log_impl(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -60,7 +65,7 @@ void output_log_impl(const char *fmt, ...)
 	va_end(args);
 }
 
-void output_warning_impl(const char *fmt, ...)
+void output_warning_impl(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -68,7 +73,7 @@ void output_warning_impl(const char *fmt, ...)
 	va_end(args);
 }
 
-void output_error_impl(const char *fmt, ...)
+void output_error_impl(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);

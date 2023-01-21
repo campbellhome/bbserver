@@ -21,29 +21,29 @@ __pragma(warning(disable : 4711)); // warning C4711: function 'Decode' selected 
 #include "bb_wrap_winsock2.h"
 #else
 #include <arpa/inet.h>
-static void fopen_s(FILE **fp, const char *filename, const char *mode)
+static void fopen_s(FILE** fp, const char* filename, const char* mode)
 {
 	*fp = fopen(filename, mode);
 }
 #endif
 
 /* various forward declarations */
-static int read_state(unsigned16 *clockseq, uuid_time_t *timestamp,
-                      uuid_node_t *node);
+static int read_state(unsigned16* clockseq, uuid_time_t* timestamp,
+                      uuid_node_t* node);
 static void write_state(unsigned16 clockseq, uuid_time_t timestamp,
                         uuid_node_t node);
-static void format_uuid_v1(rfc_uuid *uuid, unsigned16 clockseq,
+static void format_uuid_v1(rfc_uuid* uuid, unsigned16 clockseq,
                            uuid_time_t timestamp, uuid_node_t node);
-static void format_uuid_v3or5(rfc_uuid *uuid, unsigned char hash[16],
+static void format_uuid_v3or5(rfc_uuid* uuid, unsigned char hash[16],
                               int v);
-static void get_current_time(uuid_time_t *timestamp);
+static void get_current_time(uuid_time_t* timestamp);
 static unsigned16 true_random(void);
 
 static bb_critical_section s_uuid_cs;
-static uuid_state_read_func *s_state_read;
-static uuid_state_write_func *s_state_write;
+static uuid_state_read_func* s_state_read;
+static uuid_state_write_func* s_state_write;
 
-void uuid_init(uuid_state_read_func *state_read, uuid_state_write_func *state_write)
+void uuid_init(uuid_state_read_func* state_read, uuid_state_write_func* state_write)
 {
 	s_state_read = state_read;
 	s_state_write = state_write;
@@ -61,7 +61,7 @@ b32 uuid_is_initialized(void)
 }
 
 /* uuid_create -- generate a UUID */
-int uuid_create(rfc_uuid *uuid)
+int uuid_create(rfc_uuid* uuid)
 {
 	uuid_time_t timestamp, last_time;
 	unsigned16 clockseq;
@@ -69,7 +69,7 @@ int uuid_create(rfc_uuid *uuid)
 	uuid_node_t last_node;
 	int f;
 
-	if(!s_uuid_cs.initialized)
+	if (!s_uuid_cs.initialized)
 		return 0;
 
 	/* acquire system-wide lock so we're alone */
@@ -78,23 +78,26 @@ int uuid_create(rfc_uuid *uuid)
 	/* get time, node ID, saved state from non-volatile storage */
 	get_current_time(&timestamp);
 
-	if(s_state_read) {
+	if (s_state_read)
+	{
 		u32 timestampLow = 0;
 		u32 timestampHigh = 0;
 		(*s_state_read)(&clockseq, &timestampLow, &timestampHigh, &last_node);
 		node = last_node;
 		last_time = (((unsigned64_t)timestampHigh) << 32) | (timestampLow);
 		f = last_time != 0;
-	} else {
+	}
+	else
+	{
 		get_ieee_node_identifier(&node);
 		f = read_state(&clockseq, &last_time, &last_node);
 	}
 
 	/* if no NV state, or if clock went backwards, or node ID
 	changed (e.g., new network card) change clockseq */
-	if(!f || memcmp(&node, &last_node, sizeof node))
+	if (!f || memcmp(&node, &last_node, sizeof node))
 		clockseq = true_random();
-	else if(timestamp < last_time)
+	else if (timestamp < last_time)
 		clockseq++;
 
 	/* save the state for next time */
@@ -109,7 +112,7 @@ int uuid_create(rfc_uuid *uuid)
 
 /* format_uuid_v1 -- make a UUID from the timestamp, clockseq,
 and node ID */
-void format_uuid_v1(rfc_uuid *uuid, unsigned16 clock_seq,
+void format_uuid_v1(rfc_uuid* uuid, unsigned16 clock_seq,
                     uuid_time_t timestamp, uuid_node_t node)
 {
 	/* Construct a version 1 uuid with the information we've gathered
@@ -125,7 +128,8 @@ void format_uuid_v1(rfc_uuid *uuid, unsigned16 clock_seq,
 }
 
 /* data type for UUID generator persistent state */
-typedef struct {
+typedef struct
+{
 	uuid_time_t ts;   /* saved timestamp */
 	uuid_node_t node; /* saved node ID */
 	unsigned16 cs;    /* saved clock sequence */
@@ -134,16 +138,17 @@ typedef struct {
 static uuid_state st;
 
 /* read_state -- read UUID generator state from non-volatile store */
-static int read_state(unsigned16 *clockseq, uuid_time_t *timestamp,
-                      uuid_node_t *node)
+static int read_state(unsigned16* clockseq, uuid_time_t* timestamp,
+                      uuid_node_t* node)
 {
 	static int inited = 0;
-	FILE *fp;
+	FILE* fp;
 
 	/* only need to read state once per boot */
-	if(!inited) {
+	if (!inited)
+	{
 		fopen_s(&fp, "state", "rb");
-		if(fp == NULL)
+		if (fp == NULL)
 			return 0;
 		fread(&st, sizeof st, 1, fp);
 		fclose(fp);
@@ -162,8 +167,9 @@ static void write_state(unsigned16 clockseq, uuid_time_t timestamp,
 {
 	static int inited = 0;
 	static uuid_time_t next_save;
-	FILE *fp;
-	if(!inited) {
+	FILE* fp;
+	if (!inited)
+	{
 		next_save = timestamp;
 		inited = 1;
 	}
@@ -172,12 +178,17 @@ static void write_state(unsigned16 clockseq, uuid_time_t timestamp,
 	st.cs = clockseq;
 	st.ts = timestamp;
 	st.node = node;
-	if(timestamp >= next_save) {
-		if(s_state_write) {
+	if (timestamp >= next_save)
+	{
+		if (s_state_write)
+		{
 			(*s_state_write)(clockseq, (u32)timestamp, (u32)(timestamp >> 32), node);
-		} else {
+		}
+		else
+		{
 			fopen_s(&fp, "state", "wb");
-			if(fp) {
+			if (fp)
+			{
 				fwrite(&st, sizeof st, 1, fp);
 				fclose(fp);
 			}
@@ -190,30 +201,34 @@ static void write_state(unsigned16 clockseq, uuid_time_t timestamp,
 /* get-current_time -- get time as 60-bit 100ns ticks since UUID epoch.
 Compensate for the fact that real clock resolution is
 less than 100ns. */
-void get_current_time(uuid_time_t *timestamp)
+void get_current_time(uuid_time_t* timestamp)
 {
 	static int inited = 0;
 	static uuid_time_t time_last;
 	static unsigned16 uuids_this_tick;
 	uuid_time_t time_now;
 
-	if(!inited) {
+	if (!inited)
+	{
 		get_system_time(&time_now);
 		uuids_this_tick = UUIDS_PER_TICK;
 		inited = 1;
 	}
 
-	for(;;) {
+	for (;;)
+	{
 		get_system_time(&time_now);
 
 		/* if clock reading changed since last UUID generated, */
-		if(time_last != time_now) {
+		if (time_last != time_now)
+		{
 			/* reset count of uuids gen'd with this clock reading */
 			uuids_this_tick = 0;
 			time_last = time_now;
 			break;
 		}
-		if(uuids_this_tick < UUIDS_PER_TICK) {
+		if (uuids_this_tick < UUIDS_PER_TICK)
+		{
 			uuids_this_tick++;
 			break;
 		}
@@ -231,7 +246,8 @@ static unsigned16 true_random(void)
 	static int inited = 0;
 	uuid_time_t time_now;
 
-	if(!inited) {
+	if (!inited)
+	{
 		get_system_time(&time_now);
 		time_now = time_now / UUIDS_PER_TICK;
 		srand((unsigned int)(((time_now >> 32) ^ time_now) & 0xffffffff));
@@ -243,7 +259,7 @@ static unsigned16 true_random(void)
 
 /* uuid_create_md5_from_name -- create a version 3 (MD5) UUID using a
 "name" from a "name space" */
-void uuid_create_md5_from_name(rfc_uuid *uuid, rfc_uuid nsid, void *name,
+void uuid_create_md5_from_name(rfc_uuid* uuid, rfc_uuid nsid, void* name,
                                int namelen)
 {
 	MD5_CTX c;
@@ -267,7 +283,7 @@ void uuid_create_md5_from_name(rfc_uuid *uuid, rfc_uuid nsid, void *name,
 }
 
 #ifdef USE_SHA1
-void uuid_create_sha1_from_name(rfc_uuid *uuid, rfc_uuid nsid, void *name,
+void uuid_create_sha1_from_name(rfc_uuid* uuid, rfc_uuid nsid, void* name,
                                 int namelen)
 {
 	SHA_CTX c;
@@ -293,7 +309,7 @@ void uuid_create_sha1_from_name(rfc_uuid *uuid, rfc_uuid nsid, void *name,
 
 /* format_uuid_v3or5 -- make a UUID from a (pseudo)random 128-bit
 number */
-void format_uuid_v3or5(rfc_uuid *uuid, unsigned char hash[16], int v)
+void format_uuid_v3or5(rfc_uuid* uuid, unsigned char hash[16], int v)
 {
 	/* convert UUID to local byte order */
 	memcpy(uuid, hash, sizeof *uuid);
@@ -310,9 +326,9 @@ void format_uuid_v3or5(rfc_uuid *uuid, unsigned char hash[16], int v)
 
 /* uuid_compare --  Compare two UUID's "lexically" and return */
 #define CHECK(f1, f2) \
-	if(f1 != f2)      \
+	if (f1 != f2)     \
 		return f1 < f2 ? -1 : 1;
-int uuid_compare(rfc_uuid *u1, rfc_uuid *u2)
+int uuid_compare(rfc_uuid* u1, rfc_uuid* u2)
 {
 	int i;
 
@@ -321,55 +337,63 @@ int uuid_compare(rfc_uuid *u1, rfc_uuid *u2)
 	CHECK(u1->time_hi_and_version, u2->time_hi_and_version);
 	CHECK(u1->clock_seq_hi_and_reserved, u2->clock_seq_hi_and_reserved);
 	CHECK(u1->clock_seq_low, u2->clock_seq_low)
-	for(i = 0; i < 6; i++) {
-		if(u1->node[i] < u2->node[i])
+	for (i = 0; i < 6; i++)
+	{
+		if (u1->node[i] < u2->node[i])
 			return -1;
-		if(u1->node[i] > u2->node[i])
+		if (u1->node[i] > u2->node[i])
 			return 1;
 	}
 	return 0;
 }
 #undef CHECK
 
-int format_uuid(rfc_uuid *uuid, char *buffer, int bufferSize)
+int format_uuid(rfc_uuid* uuid, char* buffer, int bufferSize)
 {
 	int len = bb_snprintf(buffer, bufferSize, "%8.8x-%4.4x-%4.4x-%2.2x%2.2x-%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x", (unsigned)uuid->time_low, uuid->time_mid,
 	                      uuid->time_hi_and_version, uuid->clock_seq_hi_and_reserved,
 	                      uuid->clock_seq_low,
 	                      uuid->node[0], uuid->node[1], uuid->node[2],
 	                      uuid->node[3], uuid->node[4], uuid->node[5]);
-	if(len < 0) {
+	if (len < 0)
+	{
 		len = bufferSize - 1;
 		buffer[len] = '\0';
 	}
 	return len;
 }
 
-void uuid_node_reset(uuid_node_t *val)
+void uuid_node_reset(uuid_node_t* val)
 {
-	if(val) {
+	if (val)
+	{
 	}
 }
 
-uuid_node_t uuid_node_clone(const uuid_node_t *src)
+uuid_node_t uuid_node_clone(const uuid_node_t* src)
 {
 	uuid_node_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->nodeID); ++i) {
+	if (src)
+	{
+		for (u32 i = 0; i < BB_ARRAYSIZE(src->nodeID); ++i)
+		{
 			dst.nodeID[i] = src->nodeID[i];
 		}
 	}
 	return dst;
 }
 
-uuid_node_t json_deserialize_uuid_node_t(JSON_Value *src)
+uuid_node_t json_deserialize_uuid_node_t(JSON_Value* src)
 {
 	uuid_node_t dst;
 	memset(&dst, 0, sizeof(dst));
-	if(src) {
-		JSON_Object *obj = json_value_get_object(src);
-		if(obj) {
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.nodeID); ++i) {
+	if (src)
+	{
+		JSON_Object* obj = json_value_get_object(src);
+		if (obj)
+		{
+			for (u32 i = 0; i < BB_ARRAYSIZE(dst.nodeID); ++i)
+			{
 				dst.nodeID[i] = (char)json_object_get_number(obj, va("nodeID.%u", i));
 			}
 		}
@@ -377,12 +401,14 @@ uuid_node_t json_deserialize_uuid_node_t(JSON_Value *src)
 	return dst;
 }
 
-JSON_Value *json_serialize_uuid_node_t(const uuid_node_t *src)
+JSON_Value* json_serialize_uuid_node_t(const uuid_node_t* src)
 {
-	JSON_Value *val = json_value_init_object();
-	JSON_Object *obj = json_value_get_object(val);
-	if(obj) {
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->nodeID); ++i) {
+	JSON_Value* val = json_value_init_object();
+	JSON_Object* obj = json_value_get_object(val);
+	if (obj)
+	{
+		for (u32 i = 0; i < BB_ARRAYSIZE(src->nodeID); ++i)
+		{
 			json_object_set_number(obj, va("nodeID.%u", i), src->nodeID[i]);
 		}
 	}

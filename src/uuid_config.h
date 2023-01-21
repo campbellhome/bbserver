@@ -11,14 +11,15 @@ extern "C" {
 
 #include "uuid_rfc4122/sysdep.h"
 
-AUTOJSON typedef struct uuidState_s {
+AUTOJSON typedef struct uuidState_s
+{
 	u32 timestampLow;
 	u32 timestampHi;
 	u16 clockSequence;
 	uuid_node_t nodeId;
 } uuidState_t;
 
-void uuid_read_state(u16 *clockSequence, u32 *timestampLow, u32 *timestampHi, uuid_node_t *nodeId);
+void uuid_read_state(u16* clockSequence, u32* timestampLow, u32* timestampHi, uuid_node_t* nodeId);
 void uuid_write_state(u16 clockSequence, u32 timestampLow, u32 timestampHi, uuid_node_t nodeId);
 
 #if defined(__cplusplus)

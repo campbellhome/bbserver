@@ -9,4 +9,4 @@ struct ImColor;
 struct ImVec4;
 
 ImVec4 MakeColor(styleColor_e idx);
-ImColor MakeBackgroundTintColor(styleColor_e idx, const ImColor &defaultColor);
+ImColor MakeBackgroundTintColor(styleColor_e idx, const ImColor& defaultColor);

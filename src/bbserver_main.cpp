@@ -3,8 +3,8 @@
 
 #include "app_update.h"
 #include "appdata.h"
-#include "bb_assert.h"
 #include "bb_array.h"
+#include "bb_assert.h"
 #include "bb_colors.h"
 #include "bb_common.h"
 #include "bb_log.h"
@@ -73,7 +73,7 @@ static void BBServer_SetImguiPath(void)
 	bb_strncpy(s_imguiPath, sb_get(&path), sizeof(s_imguiPath));
 	sb_reset(&path);
 
-	ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 	io.IniFilename = s_imguiPath;
 }
 
@@ -91,7 +91,7 @@ static void BBServer_SetLogPath(void)
 	bb_init_file(s_bbLogPath);
 }
 
-static b32 BBServer_Init(const char *commandLineRecording)
+static b32 BBServer_Init(const char* commandLineRecording)
 {
 	BB_UNUSED(commandLineRecording);
 	site_config_init();
@@ -99,7 +99,7 @@ static b32 BBServer_Init(const char *commandLineRecording)
 	BBServer_SetImguiPath();
 	BBServer_SetLogPath();
 
-	const char *applicationName = u8"Blackbox";
+	const char* applicationName = u8"Blackbox";
 	BB_INIT_WITH_FLAGS(applicationName, kBBInitFlag_NoOpenView | kBBInitFlag_NoDiscovery);
 	BB_THREAD_SET_NAME("main");
 	BB_LOG("Startup", "%s starting...\nPath: %s\n", applicationName, s_bbLogPath);
@@ -126,7 +126,8 @@ static b32 BBServer_Init(const char *commandLineRecording)
 	s_updateData.updateCheckMs = g_site_config.updates.updateCheckMs;
 	s_updateData.showUpdateManagement = g_config.updateManagement;
 	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing updates");
-	if(!Update_Init(&s_updateData)) {
+	if (!Update_Init(&s_updateData))
+	{
 		return false;
 	}
 
@@ -147,9 +148,11 @@ static b32 BBServer_Init(const char *commandLineRecording)
 	FileOpenDialog_Init();
 	mb_get_queue()->manualUpdate = true;
 	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing network");
-	if(bbnet_init()) {
+	if (bbnet_init())
+	{
 		_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing discovery thread");
-		if(discovery_thread_init() != 0) {
+		if (discovery_thread_init() != 0)
+		{
 			new_recording_t recording;
 			config_push_whitelist(&g_config.whitelist);
 			GetSystemTimeAsFileTime(&recording.filetime);
@@ -190,7 +193,8 @@ static void BBServer_Shutdown(void)
 	recordings_shutdown();
 	discovery_thread_shutdown();
 	recorded_session_shutdown();
-	if(g_config.version != 0) {
+	if (g_config.version != 0)
+	{
 		config_write(&g_config);
 	}
 	config_reset(&g_config);
@@ -198,7 +202,8 @@ static void BBServer_Shutdown(void)
 	site_config_shutdown();
 	bbnet_shutdown();
 	message_queue_message_t message;
-	while(mq_consume_to_ui(&message)) {
+	while (mq_consume_to_ui(&message))
+	{
 		bb_log("(shutdown) to_ui type:%d msg:%s", message.command, message.text);
 	}
 	mq_shutdown();
@@ -210,23 +215,28 @@ static void BBServer_Shutdown(void)
 static void BBServer_BringWindowToFront(HWND hwnd)
 {
 	DWORD processId;
-	if(GetWindowThreadProcessId(hwnd, &processId)) {
+	if (GetWindowThreadProcessId(hwnd, &processId))
+	{
 		AllowSetForegroundWindow(processId);
 	}
 	SendMessageA(hwnd, s_bringToFrontMessage, 0, 0);
 }
 
-static sb_t BBServer_GetCommandLineRecording(const char *cmdline)
+static sb_t BBServer_GetCommandLineRecording(const char* cmdline)
 {
 	sb_t result = { BB_EMPTY_INITIALIZER };
 	char viewerPath[kBBSize_MaxPath];
-	if(cmdline && *cmdline && *cmdline != '-') {
-		if(*cmdline == '\"') {
+	if (cmdline && *cmdline && *cmdline != '-')
+	{
+		if (*cmdline == '\"')
+		{
 			++cmdline;
 		}
 		size_t pathLen = bb_strncpy(viewerPath, cmdline, sizeof(viewerPath));
-		if(pathLen) {
-			if(viewerPath[pathLen - 1] == '\"') {
+		if (pathLen)
+		{
+			if (viewerPath[pathLen - 1] == '\"')
+			{
 				viewerPath[pathLen - 1] = '\0';
 			}
 			result = sb_from_c_string(viewerPath);
@@ -235,16 +245,19 @@ static sb_t BBServer_GetCommandLineRecording(const char *cmdline)
 	return result;
 }
 
-static b32 BBServer_SingleInstanceCheck(const char *classname, const char *cmdline)
+static b32 BBServer_SingleInstanceCheck(const char* classname, const char* cmdline)
 {
 	HWND hExisting = FindWindowA(classname, nullptr);
-	if(hExisting) {
-		if(cmdline_find("-hide") <= 0) {
+	if (hExisting)
+	{
+		if (cmdline_find("-hide") <= 0)
+		{
 			BBServer_BringWindowToFront(hExisting);
 		}
 
 		sb_t viewerPath = BBServer_GetCommandLineRecording(cmdline);
-		if(viewerPath.data) {
+		if (viewerPath.data)
+		{
 			COPYDATASTRUCT copyData = { BB_EMPTY_INITIALIZER };
 			copyData.lpData = viewerPath.data;
 			copyData.cbData = viewerPath.count;
@@ -261,22 +274,28 @@ static b32 BBServer_SingleInstanceCheck(const char *classname, const char *cmdli
 
 #pragma comment(lib, "Advapi32.lib")
 
-static void SetRegistryKeyValue(HKEY hkey, const char *subkey, const char *key, const char *value)
+static void SetRegistryKeyValue(HKEY hkey, const char* subkey, const char* key, const char* value)
 {
 	LONG result = RegSetKeyValueA(hkey, subkey, key, REG_SZ, value, 0);
-	if(result == ERROR_SUCCESS) {
+	if (result == ERROR_SUCCESS)
+	{
 		BB_LOG("Registry", "RegSetKeyValueA %s %s = %s", subkey, key, value);
-	} else {
+	}
+	else
+	{
 		BB_ERROR("Registry", "failed to RegSetKeyValueA %s %s = %s", subkey, key, value);
 	}
 }
 
-static void SetRegistryDefaultValue(HKEY hkey, const char *subkey, const char *value)
+static void SetRegistryDefaultValue(HKEY hkey, const char* subkey, const char* value)
 {
 	LONG result = RegSetValueA(hkey, subkey, REG_SZ, value, 0);
-	if(result == ERROR_SUCCESS) {
+	if (result == ERROR_SUCCESS)
+	{
 		_BB_LOG_INTERNAL(kBBLogLevel_Display, "Registry", "RegSetValueA %s (Default) = %s", subkey, value);
-	} else {
+	}
+	else
+	{
 		BB_ERROR("Registry", "failed to RegSetValueA %s (Default) = %s", subkey, value);
 	}
 }
@@ -285,13 +304,14 @@ static void BBServer_InitRegistry()
 {
 	char path[4096];
 	u32 pathLen = GetModuleFileNameA(NULL, path, BB_ARRAYSIZE(path));
-	if(!pathLen || pathLen >= BB_ARRAYSIZE(path) - 1)
+	if (!pathLen || pathLen >= BB_ARRAYSIZE(path) - 1)
 		return;
 
 	HKEY hkeyClassesRoot;
 	LONG result = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Classes", 0, KEY_ALL_ACCESS, &hkeyClassesRoot);
-	if(result == ERROR_SUCCESS) {
-		const char *progId = "Blackbox.bbox.1";
+	if (result == ERROR_SUCCESS)
+	{
+		const char* progId = "Blackbox.bbox.1";
 
 		SetRegistryKeyValue(hkeyClassesRoot, ".bbox\\OpenWithProgIds", progId, "");
 		SetRegistryDefaultValue(hkeyClassesRoot, ".bbox", progId);
@@ -307,54 +327,65 @@ static void BBServer_InitRegistry()
 LRESULT WINAPI BBServer_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	BB_UNUSED(hWnd);
-	if(msg && msg == s_bringToFrontMessage) {
+	if (msg && msg == s_bringToFrontMessage)
+	{
 		BB_LOG("IPC", "blackbox_bring_to_front received");
 		Imgui_Core_UnhideWindow();
 		Imgui_Core_BringWindowToFront();
 		return 0;
 	}
-	if(msg == WM_COPYDATA) {
-		COPYDATASTRUCT *copyData = (COPYDATASTRUCT *)lParam;
-		if(copyData && copyData->dwData == COPYDATA_MAGIC && copyData->cbData > 0) {
-			const char *copyText = (const char *)copyData->lpData;
-			if(copyText[copyData->cbData - 1] == '\0') {
+	if (msg == WM_COPYDATA)
+	{
+		COPYDATASTRUCT* copyData = (COPYDATASTRUCT*)lParam;
+		if (copyData && copyData->dwData == COPYDATA_MAGIC && copyData->cbData > 0)
+		{
+			const char* copyText = (const char*)copyData->lpData;
+			if (copyText[copyData->cbData - 1] == '\0')
+			{
 				BB_LOG("IPC", "WM_COPYDATA received %s", copyText);
 				DragDrop_ProcessPath(copyText);
-			} else {
+			}
+			else
+			{
 				BB_WARNING("IPC", "WM_COPYDATA ignored - %u bytes malformed data received", copyData->cbData);
 			}
 		}
 	}
-	if(msg == WM_DROPFILES) {
+	if (msg == WM_DROPFILES)
+	{
 		return DragDrop_OnDropFiles(wParam);
 	}
-	if(msg == WM_SHOWWINDOW && s_bMaximizeOnShow) {
+	if (msg == WM_SHOWWINDOW && s_bMaximizeOnShow)
+	{
 		s_bMaximizeOnShow = false;
 		ShowWindow(hWnd, SW_MAXIMIZE);
 	}
 	LRESULT ret = deviceCodes_HandleWindowMessage(hWnd, msg, wParam, lParam);
-	if(ret) {
+	if (ret)
+	{
 		return ret;
 	}
 	return 0;
 }
 
-struct ImGuiAlloc {
-	void *addr;
+struct ImGuiAlloc
+{
+	void* addr;
 	size_t bytes;
 };
 
-struct ImGuiAllocs {
+struct ImGuiAllocs
+{
 	u32 count;
 	u32 allocated;
-	ImGuiAlloc *data;
+	ImGuiAlloc* data;
 };
 
 static ImGuiAllocs s_imguiAllocs;
 s64 g_imgui_allocatedCount;
 s64 g_imgui_allocatedBytes;
 
-static void trackImGuiAlloc(void *addr, size_t bytes)
+static void trackImGuiAlloc(void* addr, size_t bytes)
 {
 	ImGuiAlloc alloc;
 	alloc.addr = addr;
@@ -364,11 +395,13 @@ static void trackImGuiAlloc(void *addr, size_t bytes)
 	g_imgui_allocatedBytes += bytes;
 }
 
-static void untrackImGuiAlloc(void *addr)
+static void untrackImGuiAlloc(void* addr)
 {
-	for(u32 i = 0; i < s_imguiAllocs.count; ++i) {
-		ImGuiAlloc *alloc = s_imguiAllocs.data + i;
-		if(alloc->addr == addr) {
+	for (u32 i = 0; i < s_imguiAllocs.count; ++i)
+	{
+		ImGuiAlloc* alloc = s_imguiAllocs.data + i;
+		if (alloc->addr == addr)
+		{
 			--g_imgui_allocatedCount;
 			g_imgui_allocatedBytes -= alloc->bytes;
 			bba_erase(s_imguiAllocs, i);
@@ -378,11 +411,11 @@ static void untrackImGuiAlloc(void *addr)
 	BB_ASSERT(addr == nullptr || Imgui_Core_IsShuttingDown());
 }
 
-static void *LoggingMallocWrapper(size_t size, void *user_data)
+static void* LoggingMallocWrapper(size_t size, void* user_data)
 {
 	IM_UNUSED(user_data);
 
-	void *out = malloc(size);
+	void* out = malloc(size);
 	//char buf[256];
 	//if(bb_snprintf(buf, sizeof(buf), "imMalloc(0x%p) %zu bytes\n", out, size) < 0) {
 	//	buf[sizeof(buf) - 1] = '\0';
@@ -391,7 +424,7 @@ static void *LoggingMallocWrapper(size_t size, void *user_data)
 	trackImGuiAlloc(out, size);
 	return out;
 }
-static void LoggingFreeWrapper(void *ptr, void *user_data)
+static void LoggingFreeWrapper(void* ptr, void* user_data)
 {
 	IM_UNUSED(user_data);
 
@@ -412,24 +445,30 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 
 	cmdline_init_composite(CommandLine);
 	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");
-	const char *classname = "BlackboxHost";
-	if(BBServer_SingleInstanceCheck(classname, CommandLine)) {
+	const char* classname = "BlackboxHost";
+	if (BBServer_SingleInstanceCheck(classname, CommandLine))
+	{
 		ImGui::SetAllocatorFunctions(&LoggingMallocWrapper, &LoggingFreeWrapper);
-		if(Imgui_Core_Init(CommandLine)) {
-			ImGuiIO &IO = ImGui::GetIO();
+		if (Imgui_Core_Init(CommandLine))
+		{
+			ImGuiIO& IO = ImGui::GetIO();
 			IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
 			IO.ConfigViewportsNoDecoration = false;
 			IO.ConfigWindowsMoveFromTitleBarOnly = true;
 			sb_t viewerPath = BBServer_GetCommandLineRecording(CommandLine);
-			if(BBServer_Init(sb_get(&viewerPath))) {
+			if (BBServer_Init(sb_get(&viewerPath)))
+			{
 				Imgui_Core_SetTextShadows(g_config.textShadows);
-				if(SystemTray_Init(Instance)) {
+				if (SystemTray_Init(Instance))
+				{
 					Fonts_ClearFonts();
-					const char *title = "Blackbox";
+					const char* title = "Blackbox";
 					HWND hwnd = Imgui_Core_InitWindow(classname, title, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), g_config.wp);
-					if(hwnd) {
+					if (hwnd)
+					{
 						HWND hExisting = FindWindowA(classname, nullptr);
-						if(hExisting != hwnd) {
+						if (hExisting != hwnd)
+						{
 							// there was a race condition with two instances starting at the same time, and
 							// we weren't the first to create our main window.
 							Imgui_Core_RequestShutDown();
@@ -443,18 +482,23 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 						Style_ReadConfig(Imgui_Core_GetColorScheme());
 						ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 						Imgui_Core_SetUserWndProc(&BBServer_HandleWindowMessage);
-						if(cmdline_find("-hide") > 0) {
+						if (cmdline_find("-hide") > 0)
+						{
 							s_bMaximizeOnShow = (g_config.wp.showCmd == SW_SHOWMAXIMIZED);
 							Imgui_Core_HideWindow();
 						}
-						if(viewerPath.data) {
+						if (viewerPath.data)
+						{
 							DragDrop_ProcessPath(viewerPath.data);
 						}
-						while(!Imgui_Core_IsShuttingDown()) {
-							if(Imgui_Core_GetAndClearDirtyWindowPlacement()) {
+						while (!Imgui_Core_IsShuttingDown())
+						{
+							if (Imgui_Core_GetAndClearDirtyWindowPlacement())
+							{
 								s_windowShowState = config_getwindowplacement(hwnd);
 							}
-							if(Imgui_Core_BeginFrame()) {
+							if (Imgui_Core_BeginFrame())
+							{
 								BBServer_Update();
 								ImVec4 clear_col = ImColor(34, 35, 34);
 								Imgui_Core_EndFrame(clear_col);

@@ -72,7 +72,8 @@ double bb_millis_per_tick(void)
 u64 bb_current_time_ms(void)
 {
 	struct timespec ts;
-	if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+	if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
+	{
 		return (ts.tv_sec) * 1000ULL + (ts.tv_nsec) / 1000000ULL;
 	}
 	return 0;
@@ -81,7 +82,8 @@ u64 bb_current_time_ms(void)
 u64 bb_current_time_microseconds_from_epoch(void)
 {
 	struct timespec ts;
-	if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+	if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
+	{
 		return (ts.tv_sec) * 1000000ULL + (ts.tv_nsec) / 1000ULL;
 	}
 	return 0;

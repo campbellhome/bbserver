@@ -9,13 +9,15 @@ extern "C" {
 
 #include "sb.h"
 
-typedef enum tag_bugType {
+typedef enum tag_bugType
+{
 	kBugType_Bug,
 	kBugType_Assert,
 	kBugType_Crash,
 } bugType;
 
-typedef struct tag_bugReport {
+typedef struct tag_bugReport
+{
 	b32 bSilent;
 	bugType type;
 	sb_t guid;
@@ -28,13 +30,13 @@ typedef struct tag_bugReport {
 	u8 pad[2];
 } bugReport;
 
-void bug_reporter_init(const char *project, const char *assignee);
+void bug_reporter_init(const char* project, const char* assignee);
 void bug_reporter_shutdown(void);
 
-bugReport *bug_report_init(void);
-void bug_report_dispatch_sync(bugReport *report);
-void bug_report_dispatch_async(bugReport *report);
-void bug_report_abandon(bugReport *report);
+bugReport* bug_report_init(void);
+void bug_report_dispatch_sync(bugReport* report);
+void bug_report_dispatch_async(bugReport* report);
+void bug_report_abandon(bugReport* report);
 
 #if defined(__cplusplus)
 }

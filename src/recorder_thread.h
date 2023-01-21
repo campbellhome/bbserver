@@ -12,15 +12,16 @@ extern "C" {
 #include "bb_connection.h"
 #include "bb_thread.h"
 
-typedef struct bb_server_connection_data_s {
+typedef struct bb_server_connection_data_s
+{
 	bb_connection_t con;
-	b32 *shutdownRequest;
+	b32* shutdownRequest;
 	char applicationName[kBBSize_ApplicationName];
 	b32 bInUse;
 	u8 pad[4];
 } bb_server_connection_data_t;
 
-bb_thread_return_t recorder_thread(void *args);
+bb_thread_return_t recorder_thread(void* args);
 
 #if defined(__cplusplus)
 }

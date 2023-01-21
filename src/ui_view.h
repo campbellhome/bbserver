@@ -8,17 +8,18 @@
 
 void UIRecordedView_UpdateAll();
 void UIRecordedView_Shutdown(void);
-void UIRecordedView_TooltipLevelText(const char *fmt, u32 count, bb_log_level_e logLevel);
+void UIRecordedView_TooltipLevelText(const char* fmt, u32 count, bb_log_level_e logLevel);
 
 const char kColorKeyPrefix = '^';
 const char kFirstColorKey = '0';
 const char kLastColorKey = '=';
-enum {
+enum
+{
 	kNumColorKeys = kLastColorKey - kFirstColorKey + 1,
 	kColorKeyOffset = 1
 };
 
-extern const char *textColorNames[];
-extern const char *normalColorStr;
-extern const char *warningColorStr;
-extern const char *errorColorStr;
+extern const char* textColorNames[];
+extern const char* normalColorStr;
+extern const char* warningColorStr;
+extern const char* errorColorStr;

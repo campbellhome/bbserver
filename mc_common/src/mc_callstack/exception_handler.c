@@ -10,7 +10,7 @@
 #include "bb_wrap_windows.h"
 
 static b32 s_unhandledExceptionHandlerInstalled;
-static exception_handler_callback *s_callback;
+static exception_handler_callback* s_callback;
 
 // see http://blog.kalmbach-software.de/2013/05/23/improvedpreventsetunhandledexceptionfilter/
 static b32 PreventSetUnhandledExceptionFilter(void)
@@ -18,7 +18,7 @@ static b32 PreventSetUnhandledExceptionFilter(void)
 	b32 bRet = false;
 #if _M_X64
 	BB_WARNING_PUSH(4152);
-	void *pOrgEntry = &SetUnhandledExceptionFilter;
+	void* pOrgEntry = &SetUnhandledExceptionFilter;
 	BB_WARNING_POP;
 
 	// 33 C0                xor         eax,eax
@@ -31,22 +31,25 @@ static b32 PreventSetUnhandledExceptionFilter(void)
 	return bRet;
 }
 
-static LONG __stdcall unhandled_exception_handler(EXCEPTION_POINTERS *pExPtrs)
+static LONG __stdcall unhandled_exception_handler(EXCEPTION_POINTERS* pExPtrs)
 {
-	if(s_callback) {
+	if (s_callback)
+	{
 		(*s_callback)(pExPtrs);
-	} else {
-		const char *errorStr = "Unhandled exception!  Calling FatalAppExit...";
+	}
+	else
+	{
+		const char* errorStr = "Unhandled exception!  Calling FatalAppExit...";
 		FatalAppExit(~0u, errorStr);
 	}
 	return EXCEPTION_CONTINUE_SEARCH;
 }
 
-void install_unhandled_exception_handler(exception_handler_callback *callback)
+void install_unhandled_exception_handler(exception_handler_callback* callback)
 {
 	s_callback = callback;
 
-	if(s_unhandledExceptionHandlerInstalled)
+	if (s_unhandledExceptionHandlerInstalled)
 		return;
 
 	SetUnhandledExceptionFilter(unhandled_exception_handler);

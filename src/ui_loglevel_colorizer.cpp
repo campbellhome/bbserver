@@ -11,19 +11,32 @@
 bb_log_level_e GetLogLevelBasedOnCounts(const u32 logCount[/*kBBLogLevel_Count*/])
 {
 	bb_log_level_e result = kBBLogLevel_VeryVerbose;
-	if(logCount[kBBLogLevel_Fatal]) {
+	if (logCount[kBBLogLevel_Fatal])
+	{
 		result = kBBLogLevel_Fatal;
-	} else if(logCount[kBBLogLevel_Error]) {
+	}
+	else if (logCount[kBBLogLevel_Error])
+	{
 		result = kBBLogLevel_Error;
-	} else if(logCount[kBBLogLevel_Warning]) {
+	}
+	else if (logCount[kBBLogLevel_Warning])
+	{
 		result = kBBLogLevel_Warning;
-	} else if(logCount[kBBLogLevel_Display]) {
+	}
+	else if (logCount[kBBLogLevel_Display])
+	{
 		result = kBBLogLevel_Display;
-	} else if(logCount[kBBLogLevel_Log]) {
+	}
+	else if (logCount[kBBLogLevel_Log])
+	{
 		result = kBBLogLevel_Log;
-	} else if(logCount[kBBLogLevel_Verbose]) {
+	}
+	else if (logCount[kBBLogLevel_Verbose])
+	{
 		result = kBBLogLevel_Verbose;
-	} else if(logCount[kBBLogLevel_VeryVerbose]) {
+	}
+	else if (logCount[kBBLogLevel_VeryVerbose])
+	{
 		result = kBBLogLevel_VeryVerbose;
 	}
 	return result;
@@ -31,7 +44,8 @@ bb_log_level_e GetLogLevelBasedOnCounts(const u32 logCount[/*kBBLogLevel_Count*/
 
 styleColor_e GetStyleColorForLogLevel(bb_log_level_e logLevel)
 {
-	switch(logLevel) {
+	switch (logLevel)
+	{
 	case kBBLogLevel_Error:
 		return kStyleColor_LogLevel_Error;
 	case kBBLogLevel_Warning:
@@ -60,9 +74,11 @@ ImVec4 GetTextColorForLogLevel(u32 logLevel) // bb_log_level_e, but u32 in packe
 LogLevelColorizer::LogLevelColorizer(bb_log_level_e logLevel, bool bCanShadow)
 {
 	styleColor_e styleColor = GetStyleColorForLogLevel(logLevel);
-	if(!bCanShadow) {
+	if (!bCanShadow)
+	{
 		const bool bRequireShadows = g_styleConfig.colors[styleColor].bTextShadows != 0;
-		if(!bb_stricmp(Imgui_Core_GetColorScheme(), "Light")) {
+		if (!bb_stricmp(Imgui_Core_GetColorScheme(), "Light"))
+		{
 			styleColor = GetStyleColorForLogLevel(kBBLogLevel_Log);
 		}
 	}

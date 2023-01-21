@@ -17,15 +17,17 @@
 #include "view.h"
 #include <stdlib.h>
 
-static b32 view_session_config_write(view_t *view);
-static b32 view_session_config_read(view_t *view);
+static b32 view_session_config_write(view_t* view);
+static b32 view_session_config_read(view_t* view);
 
-sb_t view_session_config_get_path(const char *sessionPath)
+sb_t view_session_config_get_path(const char* sessionPath)
 {
 	sb_t path = sb_from_c_string(sessionPath);
-	if(path.data) {
-		char *ext = strrchr(path.data, '.');
-		if(ext) {
+	if (path.data)
+	{
+		char* ext = strrchr(path.data, '.');
+		if (ext)
+		{
 			path.count = (u32)(ext + 1 - path.data);
 		}
 		sb_append(&path, ".config.json");
@@ -33,38 +35,53 @@ sb_t view_session_config_get_path(const char *sessionPath)
 	return path;
 }
 
-static sb_t view_config_get_path(recorded_session_t *session, b32 bExternalView, const char *appName)
+static sb_t view_config_get_path(recorded_session_t* session, b32 bExternalView, const char* appName)
 {
-	const char *filename = session->applicationFilename;
+	const char* filename = session->applicationFilename;
 	sb_t s = { BB_EMPTY_INITIALIZER };
-	if(bExternalView) {
+	if (bExternalView)
+	{
 		s = view_session_config_get_path(session->path);
-	} else {
+	}
+	else
+	{
 		s = appdata_get(appName);
 		sb_va(&s, "\\bb_view_%s.json", filename);
 	}
 	return s;
 }
 
-void get_appdata_folder(char *buffer, size_t bufferSize);
+void get_appdata_folder(char* buffer, size_t bufferSize);
 
-static char *escape_string(const char *src)
+static char* escape_string(const char* src)
 {
 	sb_t sb;
-	char *ret;
+	char* ret;
 	sb_init(&sb);
-	while(*src) {
-		if(*src == '\\') {
+	while (*src)
+	{
+		if (*src == '\\')
+		{
 			sb_append(&sb, "\\\\");
-		} else if(*src == '\r') {
+		}
+		else if (*src == '\r')
+		{
 			sb_append(&sb, "\\r");
-		} else if(*src == '\n') {
+		}
+		else if (*src == '\n')
+		{
 			sb_append(&sb, "\\n");
-		} else if(*src == '\t') {
+		}
+		else if (*src == '\t')
+		{
 			sb_append(&sb, "\\t");
-		} else if(*src == '\"') {
+		}
+		else if (*src == '\"')
+		{
 			sb_append(&sb, "\\'");
-		} else {
+		}
+		else
+		{
 			sb_append_char(&sb, *src);
 		}
 		++src;
@@ -74,15 +91,18 @@ static char *escape_string(const char *src)
 	return ret;
 }
 
-static char *unescape_string(const char *src)
+static char* unescape_string(const char* src)
 {
 	sb_t sb;
-	char *ret;
+	char* ret;
 	sb_init(&sb);
-	while(*src) {
-		if(*src == '\\') {
+	while (*src)
+	{
+		if (*src == '\\')
+		{
 			++src;
-			switch(*src) {
+			switch (*src)
+			{
 			case '\\':
 				sb_append_char(&sb, '\\');
 				break;
@@ -99,7 +119,9 @@ static char *unescape_string(const char *src)
 				sb_append_char(&sb, '\"');
 				break;
 			}
-		} else {
+		}
+		else
+		{
 			sb_append_char(&sb, *src);
 		}
 		++src;
@@ -109,26 +131,26 @@ static char *unescape_string(const char *src)
 	return ret;
 }
 
-static b32 view_get_config_path(view_t *view, char *buffer, size_t bufferSize)
+static b32 view_get_config_path(view_t* view, char* buffer, size_t bufferSize)
 {
-	const char *filename = view->session->applicationFilename;
+	const char* filename = view->session->applicationFilename;
 	size_t dirLen;
 	get_appdata_folder(buffer, bufferSize);
 	dirLen = strlen(buffer);
 
-	if(bb_snprintf(buffer + dirLen, bufferSize - dirLen, "\\%s.bbview", filename) < 0)
+	if (bb_snprintf(buffer + dirLen, bufferSize - dirLen, "\\%s.bbview", filename) < 0)
 		return false;
 
 	return true;
 }
 
-static int ViewConfigCategoryCompare(const void *_a, const void *_b)
+static int ViewConfigCategoryCompare(const void* _a, const void* _b)
 {
-	const view_config_category_t *a = (const view_config_category_t *)_a;
-	const view_config_category_t *b = (const view_config_category_t *)_b;
+	const view_config_category_t* a = (const view_config_category_t*)_a;
+	const view_config_category_t* b = (const view_config_category_t*)_b;
 	return strcmp(sb_get(&a->name), sb_get(&b->name));
 }
-void view_apply_config_category(const view_config_category_t *cc, view_category_t *vc)
+void view_apply_config_category(const view_config_category_t* cc, view_category_t* vc)
 {
 	vc->visible = cc->visible;
 	//vc->selected = cc->selected;
@@ -136,98 +158,110 @@ void view_apply_config_category(const view_config_category_t *cc, view_category_
 	//BB_LOG("Config::Category", "%s apply for '%s'", view->session->applicationFilename, vc->categoryName);
 }
 
-view_config_thread_t *view_find_config_thread(view_t *view, const char *name)
+view_config_thread_t* view_find_config_thread(view_t* view, const char* name)
 {
 	u32 i;
-	for(i = 0; i < view->config.configThreads.count; ++i) {
-		view_config_thread_t *t = view->config.configThreads.data + i;
-		if(!strcmp(sb_get(&t->name), name))
+	for (i = 0; i < view->config.configThreads.count; ++i)
+	{
+		view_config_thread_t* t = view->config.configThreads.data + i;
+		if (!strcmp(sb_get(&t->name), name))
 			return t;
 	}
 	return NULL;
 }
-static view_config_thread_t *view_find_or_add_config_thread(view_t *view, const char *name)
+static view_config_thread_t* view_find_or_add_config_thread(view_t* view, const char* name)
 {
-	view_config_thread_t *t = view_find_config_thread(view, name);
-	if(!t) {
+	view_config_thread_t* t = view_find_config_thread(view, name);
+	if (!t)
+	{
 		t = bba_add(view->config.configThreads, 1);
-		if(t) {
+		if (t)
+		{
 			sb_append(&t->name, name);
 		}
 	}
 	return t;
 }
-static int ViewConfigThreadCompare(const void *_a, const void *_b)
+static int ViewConfigThreadCompare(const void* _a, const void* _b)
 {
-	const view_config_thread_t *a = (const view_config_thread_t *)_a;
-	const view_config_thread_t *b = (const view_config_thread_t *)_b;
+	const view_config_thread_t* a = (const view_config_thread_t*)_a;
+	const view_config_thread_t* b = (const view_config_thread_t*)_b;
 	return strcmp(sb_get(&a->name), sb_get(&b->name));
 }
-void view_apply_config_thread(view_config_thread_t *ct, view_thread_t *vt)
+void view_apply_config_thread(view_config_thread_t* ct, view_thread_t* vt)
 {
 	vt->visible = ct->visible;
 	//vt->selected = ct->selected;
 }
 
-view_config_file_t *view_find_config_file(view_t *view, const char *name)
+view_config_file_t* view_find_config_file(view_t* view, const char* name)
 {
 	u32 i;
-	for(i = 0; i < view->config.configFiles.count; ++i) {
-		view_config_file_t *t = view->config.configFiles.data + i;
-		if(!strcmp(sb_get(&t->path), name))
+	for (i = 0; i < view->config.configFiles.count; ++i)
+	{
+		view_config_file_t* t = view->config.configFiles.data + i;
+		if (!strcmp(sb_get(&t->path), name))
 			return t;
 	}
 	return NULL;
 }
-static view_config_file_t *view_find_or_add_config_file(view_t *view, const char *name)
+static view_config_file_t* view_find_or_add_config_file(view_t* view, const char* name)
 {
-	view_config_file_t *t = view_find_config_file(view, name);
-	if(!t) {
+	view_config_file_t* t = view_find_config_file(view, name);
+	if (!t)
+	{
 		t = bba_add(view->config.configFiles, 1);
-		if(t) {
+		if (t)
+		{
 			sb_append(&t->path, name);
 		}
 	}
 	return t;
 }
-static int ViewConfigFileCompare(const void *_a, const void *_b)
+static int ViewConfigFileCompare(const void* _a, const void* _b)
 {
-	const view_config_file_t *a = (const view_config_file_t *)_a;
-	const view_config_file_t *b = (const view_config_file_t *)_b;
+	const view_config_file_t* a = (const view_config_file_t*)_a;
+	const view_config_file_t* b = (const view_config_file_t*)_b;
 	return strcmp(sb_get(&a->path), sb_get(&b->path));
 }
-void view_apply_config_file(view_config_file_t *ct, view_file_t *vt)
+void view_apply_config_file(view_config_file_t* ct, view_file_t* vt)
 {
 	vt->visible = ct->visible;
 	//vt->selected = ct->selected;
 }
 
-static void view_config_update_category_depth(view_t *view)
+static void view_config_update_category_depth(view_t* view)
 {
-	for(u32 i = 0; i < view->config.configCategories.count; ++i) {
-		view_config_category_t *c = view->config.configCategories.data + i;
+	for (u32 i = 0; i < view->config.configCategories.count; ++i)
+	{
+		view_config_category_t* c = view->config.configCategories.data + i;
 		c->depth = 0;
-		for(const char *s = c->name.data; s && *s; ++s) {
-			if(s[0] == ':' && s[1] == ':') {
+		for (const char* s = c->name.data; s && *s; ++s)
+		{
+			if (s[0] == ':' && s[1] == ':')
+			{
 				++c->depth;
 				++s; // ::: only counts as 1 match
 			}
 		}
 	}
 }
-static void view_config_write_prep(view_t *view)
+static void view_config_write_prep(view_t* view)
 {
 	view_console_history_reset(&view->config.consoleHistory);
 	view->config.consoleHistory = view_console_history_clone(&view->consoleHistory);
 
 	view_config_categories_reset(&view->config.configCategories);
-	for(u32 i = 0; i < view->categories.count; ++i) {
-		view_category_t *vc = view->categories.data + i;
-		if(vc->removed && vc->id == 0) {
+	for (u32 i = 0; i < view->categories.count; ++i)
+	{
+		view_category_t* vc = view->categories.data + i;
+		if (vc->removed && vc->id == 0)
+		{
 			continue;
 		}
-		view_config_category_t *cc = bba_add(view->config.configCategories, 1);
-		if(cc) {
+		view_config_category_t* cc = bba_add(view->config.configCategories, 1);
+		if (cc)
+		{
 			sb_append(&cc->name, vc->categoryName);
 			cc->selected = vc->selected;
 			cc->visible = vc->visible;
@@ -236,48 +270,64 @@ static void view_config_write_prep(view_t *view)
 	}
 	qsort(view->config.configCategories.data, view->config.configCategories.count, sizeof(view->config.configCategories.data[0]), ViewConfigCategoryCompare);
 	view_config_update_category_depth(view);
-	for(u32 i = 0; i < view->threads.count; ++i) {
-		view_thread_t *vt = view->threads.data + i;
-		if(!vt->visible) {
-			view_config_thread_t *ct = view_find_or_add_config_thread(view, vt->threadName);
-			if(ct) {
+	for (u32 i = 0; i < view->threads.count; ++i)
+	{
+		view_thread_t* vt = view->threads.data + i;
+		if (!vt->visible)
+		{
+			view_config_thread_t* ct = view_find_or_add_config_thread(view, vt->threadName);
+			if (ct)
+			{
 				ct->selected = vt->selected;
 				ct->visible = vt->visible;
 			}
 		}
 	}
-	for(u32 i = 0; i < view->config.configThreads.count;) {
-		view_config_thread_t *ct = view->config.configThreads.data + i;
-		if(ct->visible) {
+	for (u32 i = 0; i < view->config.configThreads.count;)
+	{
+		view_config_thread_t* ct = view->config.configThreads.data + i;
+		if (ct->visible)
+		{
 			sb_reset(&ct->name);
 			bba_erase(view->config.configThreads, i);
-		} else {
+		}
+		else
+		{
 			++i;
 		}
 	}
-	for(u32 i = 0; i < view->files.count; ++i) {
-		view_file_t *vf = view->files.data + i;
-		if(!vf->visible) {
-			view_config_file_t *ct = view_find_or_add_config_file(view, vf->path);
-			if(ct) {
+	for (u32 i = 0; i < view->files.count; ++i)
+	{
+		view_file_t* vf = view->files.data + i;
+		if (!vf->visible)
+		{
+			view_config_file_t* ct = view_find_or_add_config_file(view, vf->path);
+			if (ct)
+			{
 				ct->selected = vf->selected;
 				ct->visible = vf->visible;
 			}
 		}
 	}
-	for(u32 i = 0; i < view->config.configFiles.count;) {
-		view_config_file_t *cf = view->config.configFiles.data + i;
-		if(cf->visible) {
+	for (u32 i = 0; i < view->config.configFiles.count;)
+	{
+		view_config_file_t* cf = view->config.configFiles.data + i;
+		if (cf->visible)
+		{
 			sb_reset(&cf->path);
 			bba_erase(view->config.configFiles, i);
-		} else {
+		}
+		else
+		{
 			++i;
 		}
 	}
 	view_config_columns_reset(&view->config.configColumns);
-	for(u32 i = 0; i < kColumn_Count; ++i) {
-		if(bba_add(view->config.configColumns, 1)) {
-			view_config_column_t *cc = &bba_last(view->config.configColumns);
+	for (u32 i = 0; i < kColumn_Count; ++i)
+	{
+		if (bba_add(view->config.configColumns, 1))
+		{
+			view_config_column_t* cc = &bba_last(view->config.configColumns);
 			sb_append(&cc->name, g_view_column_config_names[i]);
 			cc->visible = view->columns[i].visible;
 			cc->width = view->columns[i].width;
@@ -285,7 +335,7 @@ static void view_config_write_prep(view_t *view)
 	}
 }
 
-static void view_config_read_fixup(view_t *view)
+static void view_config_read_fixup(view_t* view)
 {
 	view_console_history_reset(&view->consoleHistory);
 	view->consoleHistory = view_console_history_clone(&view->config.consoleHistory);
@@ -294,11 +344,14 @@ static void view_config_read_fixup(view_t *view)
 
 	BB_LOG("view::config", "read fixup sort configFiles");
 	qsort(view->config.configFiles.data, view->config.configFiles.count, sizeof(view->config.configFiles.data[0]), ViewConfigFileCompare);
-	for(u32 vfi = 0; vfi < view->files.count; ++vfi) {
-		view_file_t *vf = view->files.data + vfi;
-		for(u32 cfi = 0; cfi < view->config.configFiles.count; ++cfi) {
-			view_config_file_t *cf = view->config.configFiles.data + cfi;
-			if(!strcmp(vf->path, sb_get(&cf->path))) {
+	for (u32 vfi = 0; vfi < view->files.count; ++vfi)
+	{
+		view_file_t* vf = view->files.data + vfi;
+		for (u32 cfi = 0; cfi < view->config.configFiles.count; ++cfi)
+		{
+			view_config_file_t* cf = view->config.configFiles.data + cfi;
+			if (!strcmp(vf->path, sb_get(&cf->path)))
+			{
 				BB_LOG("view::config", "read fixup apply configFile %s", vf->path);
 				view_apply_config_file(cf, vf);
 				break;
@@ -308,11 +361,14 @@ static void view_config_read_fixup(view_t *view)
 
 	BB_LOG("view::config", "read fixup sort configThreads");
 	qsort(view->config.configThreads.data, view->config.configThreads.count, sizeof(view->config.configThreads.data[0]), ViewConfigThreadCompare);
-	for(u32 vci = 0; vci < view->threads.count; ++vci) {
-		view_thread_t *vt = view->threads.data + vci;
-		for(u32 cti = 0; cti < view->config.configThreads.count; ++cti) {
-			view_config_thread_t *ct = view->config.configThreads.data + cti;
-			if(!strcmp(vt->threadName, sb_get(&ct->name))) {
+	for (u32 vci = 0; vci < view->threads.count; ++vci)
+	{
+		view_thread_t* vt = view->threads.data + vci;
+		for (u32 cti = 0; cti < view->config.configThreads.count; ++cti)
+		{
+			view_config_thread_t* ct = view->config.configThreads.data + cti;
+			if (!strcmp(vt->threadName, sb_get(&ct->name)))
+			{
 				BB_LOG("view::config", "read fixup apply configThread %s", vt->threadName);
 				view_apply_config_thread(ct, vt);
 				break;
@@ -323,11 +379,14 @@ static void view_config_read_fixup(view_t *view)
 	BB_LOG("view::config", "read fixup sort configCategories");
 	qsort(view->config.configCategories.data, view->config.configCategories.count, sizeof(view->config.configCategories.data[0]), ViewConfigCategoryCompare);
 	view_config_update_category_depth(view);
-	for(u32 vci = 0; vci < view->categories.count; ++vci) {
-		view_category_t *vc = view->categories.data + vci;
-		for(u32 cci = 0; cci < view->config.configCategories.count; ++cci) {
-			view_config_category_t *cc = view->config.configCategories.data + cci;
-			if(!strcmp(vc->categoryName, sb_get(&cc->name))) {
+	for (u32 vci = 0; vci < view->categories.count; ++vci)
+	{
+		view_category_t* vc = view->categories.data + vci;
+		for (u32 cci = 0; cci < view->config.configCategories.count; ++cci)
+		{
+			view_config_category_t* cc = view->config.configCategories.data + cci;
+			if (!strcmp(vc->categoryName, sb_get(&cc->name)))
+			{
 				BB_LOG("view::config", "read fixup apply configCategory %s", vc->categoryName);
 				view_apply_config_category(cc, vc);
 				break;
@@ -336,11 +395,14 @@ static void view_config_read_fixup(view_t *view)
 	}
 
 	BB_LOG("view::config", "read fixup columns");
-	for(u32 ci = 0; ci < view->config.configColumns.count; ++ci) {
-		view_config_column_t *cc = view->config.configColumns.data + ci;
-		const char *cname = sb_get(&cc->name);
-		for(u32 vi = 0; vi < kColumn_Count; ++vi) {
-			if(!strcmp(cname, g_view_column_config_names[vi])) {
+	for (u32 ci = 0; ci < view->config.configColumns.count; ++ci)
+	{
+		view_config_column_t* cc = view->config.configColumns.data + ci;
+		const char* cname = sb_get(&cc->name);
+		for (u32 vi = 0; vi < kColumn_Count; ++vi)
+		{
+			if (!strcmp(cname, g_view_column_config_names[vi]))
+			{
 				view->columns[vi].visible = cc->visible;
 				view->columns[vi].width = cc->width;
 				break;
@@ -349,7 +411,7 @@ static void view_config_read_fixup(view_t *view)
 	}
 }
 
-b32 view_config_write(view_t *view)
+b32 view_config_write(view_t* view)
 {
 	sb_t path = view_config_get_path(view->session, view->externalView, "bb");
 	BB_LOG("view::config", "write config to %s", sb_get(&path));
@@ -359,12 +421,15 @@ b32 view_config_write(view_t *view)
 	view->sessionConfig.viewConfig = view_config_clone(&view->config);
 	b32 result = view_session_config_write(view);
 
-	if(!view->externalView) {
-		JSON_Value *val = json_serialize_view_config_t(&view->config);
-		if(val) {
-			FILE *fp = fopen(sb_get(&path), "wb");
-			if(fp) {
-				char *serialized_string = json_serialize_to_string_pretty(val);
+	if (!view->externalView)
+	{
+		JSON_Value* val = json_serialize_view_config_t(&view->config);
+		if (val)
+		{
+			FILE* fp = fopen(sb_get(&path), "wb");
+			if (fp)
+			{
+				char* serialized_string = json_serialize_to_string_pretty(val);
 				fputs(serialized_string, fp);
 				fclose(fp);
 				json_free_serialized_string(serialized_string);
@@ -378,19 +443,23 @@ b32 view_config_write(view_t *view)
 	return result;
 }
 
-b32 view_config_read(view_t *view)
+b32 view_config_read(view_t* view)
 {
-	recording_t *recording = recordings_find_by_path(view->session->path);
+	recording_t* recording = recordings_find_by_path(view->session->path);
 	view->externalView = recording && recording->recordingType == kRecordingType_ExternalFile;
 
 	b32 ret = view_session_config_read(view);
-	if(ret) {
+	if (ret)
+	{
 		view->config = view_config_clone(&view->sessionConfig.viewConfig);
 		view_config_reset(&view->sessionConfig.viewConfig);
-	} else {
+	}
+	else
+	{
 		sb_t path = view_config_get_path(view->session, view->externalView, "bb");
-		JSON_Value *val = json_parse_file(sb_get(&path));
-		if(val) {
+		JSON_Value* val = json_parse_file(sb_get(&path));
+		if (val)
+		{
 			BB_LOG("view::config", "read config from %s", sb_get(&path));
 			view->config = json_deserialize_view_config_t(val);
 			json_value_free(val);
@@ -405,26 +474,32 @@ b32 view_config_read(view_t *view)
 	return ret;
 }
 
-void view_config_add_categories_to_session(recorded_session_t *session)
+void view_config_add_categories_to_session(recorded_session_t* session)
 {
-	recording_t *recording = recordings_find_by_path(session->path);
+	recording_t* recording = recordings_find_by_path(session->path);
 	b32 bExternalView = recording && recording->recordingType == kRecordingType_ExternalFile;
 	sb_t path = view_config_get_path(session, bExternalView, "bb");
-	JSON_Value *val = json_parse_file(sb_get(&path));
-	if(val) {
+	JSON_Value* val = json_parse_file(sb_get(&path));
+	if (val)
+	{
 		BB_LOG("view::config", "read config from %s for session categories", sb_get(&path));
-		if(bExternalView) {
+		if (bExternalView)
+		{
 			view_session_config_t sessionConfig = json_deserialize_view_session_config_t(val);
 
-			for(u32 i = 0; i < sessionConfig.viewConfig.configCategories.count; ++i) {
+			for (u32 i = 0; i < sessionConfig.viewConfig.configCategories.count; ++i)
+			{
 				recorded_session_add_config_category(session, sessionConfig.viewConfig.configCategories.data + i);
 			}
 
 			view_session_config_reset(&sessionConfig);
-		} else {
+		}
+		else
+		{
 			view_config_t config = json_deserialize_view_config_t(val);
 
-			for(u32 i = 0; i < config.configCategories.count; ++i) {
+			for (u32 i = 0; i < config.configCategories.count; ++i)
+			{
 				recorded_session_add_config_category(session, config.configCategories.data + i);
 			}
 
@@ -435,15 +510,17 @@ void view_config_add_categories_to_session(recorded_session_t *session)
 	sb_reset(&path);
 }
 
-static void view_session_config_write_prep(view_t *view)
+static void view_session_config_write_prep(view_t* view)
 {
 	view_config_logs_reset(&view->configLogs);
 
-	for(u32 i = 0; i < view->persistentLogs.count; ++i) {
-		view_persistent_log_t *persistentLog = view->persistentLogs.data + i;
+	for (u32 i = 0; i < view->persistentLogs.count; ++i)
+	{
+		view_persistent_log_t* persistentLog = view->persistentLogs.data + i;
 
-		view_config_log_t *configLog = bba_add(view->configLogs, 1);
-		if(configLog) {
+		view_config_log_t* configLog = bba_add(view->configLogs, 1);
+		if (configLog)
+		{
 			configLog->sessionLogIndex = persistentLog->sessionLogIndex;
 			configLog->subLine = persistentLog->subLine;
 			configLog->bookmarked = persistentLog->bookmarked;
@@ -451,30 +528,38 @@ static void view_session_config_write_prep(view_t *view)
 		}
 	}
 
-	for(u32 i = 0; i < view->visibleLogs.count; ++i) {
-		view_log_t *visibleLog = view->visibleLogs.data + i;
-		if(visibleLog->persistentLogIndex < view->configLogs.count) {
-			view_config_log_t *configLog = view->configLogs.data + visibleLog->persistentLogIndex;
+	for (u32 i = 0; i < view->visibleLogs.count; ++i)
+	{
+		view_log_t* visibleLog = view->visibleLogs.data + i;
+		if (visibleLog->persistentLogIndex < view->configLogs.count)
+		{
+			view_config_log_t* configLog = view->configLogs.data + visibleLog->persistentLogIndex;
 
 			// allocation failure in above loop could lead to mismatch, so guard against that
-			if(configLog->sessionLogIndex == visibleLog->sessionLogIndex && configLog->subLine == visibleLog->subLine) {
+			if (configLog->sessionLogIndex == visibleLog->sessionLogIndex && configLog->subLine == visibleLog->subLine)
+			{
 				configLog->selected = visibleLog->selected;
 			}
 		}
 	}
 
-	for(u32 i = 0; i < view->configLogs.count; ++i) {
-		view_config_log_t *configLog = view->configLogs.data + i;
-		if(configLog->bookmarked) {
-			view_config_log_index_t *configLogIndex = bba_add(view->sessionConfig.bookmarkedLogs, 1);
-			if(configLogIndex) {
+	for (u32 i = 0; i < view->configLogs.count; ++i)
+	{
+		view_config_log_t* configLog = view->configLogs.data + i;
+		if (configLog->bookmarked)
+		{
+			view_config_log_index_t* configLogIndex = bba_add(view->sessionConfig.bookmarkedLogs, 1);
+			if (configLogIndex)
+			{
 				configLogIndex->sessionLogIndex = configLog->sessionLogIndex;
 				configLogIndex->subLine = configLog->subLine;
 			}
 		}
-		if(configLog->selected) {
-			view_config_log_index_t *configLogIndex = bba_add(view->sessionConfig.selectedLogs, 1);
-			if(configLogIndex) {
+		if (configLog->selected)
+		{
+			view_config_log_index_t* configLogIndex = bba_add(view->sessionConfig.selectedLogs, 1);
+			if (configLogIndex)
+			{
 				configLogIndex->sessionLogIndex = configLog->sessionLogIndex;
 				configLogIndex->subLine = configLog->subLine;
 			}
@@ -482,22 +567,24 @@ static void view_session_config_write_prep(view_t *view)
 	}
 }
 
-static void view_session_config_read_fixup(view_t *view)
+static void view_session_config_read_fixup(view_t* view)
 {
 	BB_UNUSED(view);
 }
 
-b32 view_session_config_write(view_t *view)
+b32 view_session_config_write(view_t* view)
 {
 	sb_t path = view_session_config_get_path(view->session->path);
 	BB_LOG("view::config", "write session config to %s", sb_get(&path));
 	view_session_config_write_prep(view);
 	b32 result = false;
-	JSON_Value *val = json_serialize_view_session_config_t(&view->sessionConfig);
-	if(val) {
-		FILE *fp = fopen(sb_get(&path), "wb");
-		if(fp) {
-			char *serialized_string = json_serialize_to_string_pretty(val);
+	JSON_Value* val = json_serialize_view_session_config_t(&view->sessionConfig);
+	if (val)
+	{
+		FILE* fp = fopen(sb_get(&path), "wb");
+		if (fp)
+		{
+			char* serialized_string = json_serialize_to_string_pretty(val);
 			fputs(serialized_string, fp);
 			fclose(fp);
 			json_free_serialized_string(serialized_string);
@@ -510,13 +597,14 @@ b32 view_session_config_write(view_t *view)
 	return result;
 }
 
-b32 view_session_config_read(view_t *view)
+b32 view_session_config_read(view_t* view)
 {
 	b32 ret = false;
 	view_session_config_reset(&view->sessionConfig);
 	sb_t path = view_session_config_get_path(view->session->path);
-	JSON_Value *val = json_parse_file(sb_get(&path));
-	if(val) {
+	JSON_Value* val = json_parse_file(sb_get(&path));
+	if (val)
+	{
 		BB_LOG("view::config", "read session config from %s", sb_get(&path));
 		view->sessionConfig = json_deserialize_view_session_config_t(val);
 		json_value_free(val);

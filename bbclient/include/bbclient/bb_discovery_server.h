@@ -16,7 +16,8 @@
 extern "C" {
 #endif
 
-typedef struct bb_discovery_response_s {
+typedef struct bb_discovery_response_s
+{
 	struct sockaddr_in clientAddr;
 	u64 nextSendTime;
 	int nTimesSent;
@@ -26,7 +27,8 @@ typedef struct bb_discovery_response_s {
 	u8 pad[2];
 } bb_discovery_response_t;
 
-typedef struct bb_discovery_pending_connection_s {
+typedef struct bb_discovery_pending_connection_s
+{
 	bb_socket socket;
 	u32 localIp;
 	u16 localPort;
@@ -34,7 +36,8 @@ typedef struct bb_discovery_pending_connection_s {
 	u8 pad[2];
 } bb_discovery_pending_connection_t;
 
-typedef struct bb_discovery_server_s {
+typedef struct bb_discovery_server_s
+{
 	bb_socket socket;
 	bb_discovery_response_t responses[64];
 	bb_discovery_pending_connection_t pendingConnections[64];
@@ -42,14 +45,14 @@ typedef struct bb_discovery_server_s {
 	u32 numPendingConnections;
 } bb_discovery_server_t;
 
-b32 bb_discovery_server_init(bb_discovery_server_t *ds);
-void bb_discovery_server_shutdown(bb_discovery_server_t *ds);
+b32 bb_discovery_server_init(bb_discovery_server_t* ds);
+void bb_discovery_server_shutdown(bb_discovery_server_t* ds);
 
-void bb_discovery_server_tick_responses(bb_discovery_server_t *ds);
-int bb_discovery_server_recv_request(bb_discovery_server_t *ds, s8 *buf, size_t bufSize,
-                                     struct sockaddr_in *sin);
-void bb_discovery_process_request(bb_discovery_server_t *ds, struct sockaddr_in *sin,
-                                  bb_decoded_discovery_packet_t *decoded,
+void bb_discovery_server_tick_responses(bb_discovery_server_t* ds);
+int bb_discovery_server_recv_request(bb_discovery_server_t* ds, s8* buf, size_t bufSize,
+                                     struct sockaddr_in* sin);
+void bb_discovery_process_request(bb_discovery_server_t* ds, struct sockaddr_in* sin,
+                                  bb_decoded_discovery_packet_t* decoded,
                                   bb_discovery_packet_type_e responseType, u64 delay);
 
 #if defined(__cplusplus)

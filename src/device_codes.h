@@ -11,11 +11,12 @@ extern "C" {
 #include "bb_criticalsection.h"
 #include "sb.h"
 
-AUTOJSON typedef struct deviceCodes_s {
+AUTOJSON typedef struct deviceCodes_s
+{
 	sbs_t deviceCodes;
 } deviceCodes_t;
 
-const sbs_t *deviceCodes_lock(void);
+const sbs_t* deviceCodes_lock(void);
 void deviceCodes_unlock(void);
 
 void deviceCodes_init(void);

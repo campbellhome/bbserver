@@ -17,61 +17,71 @@ typedef struct span_s span_t;
 typedef struct view_s view_t;
 typedef struct view_config_category_s view_config_category_t;
 
-typedef struct session_message_queue_s {
+typedef struct session_message_queue_s
+{
 	volatile s64 readCursor;
 	volatile s64 writeCursor;
 	bb_critical_section cs; // #TODO: single producer, single consumer shouldn't lock - just use InterlockedIncrement, InterlockedCompare
 	bb_decoded_packet_t entries[512];
 } session_message_queue_t;
 
-typedef struct views_s {
+typedef struct views_s
+{
 	u32 count;
 	u32 allocated;
-	view_t *data;
+	view_t* data;
 } views_t;
 
-typedef struct recorded_log_s {
+typedef struct recorded_log_s
+{
 	u32 sessionLogIndex;
 	u32 numLines;
 	bb_decoded_packet_t packet;
 } recorded_log_t;
-typedef struct recorded_logs_s {
+typedef struct recorded_logs_s
+{
 	u32 count;
 	u32 allocated;
-	recorded_log_t **data;
+	recorded_log_t** data;
 } recorded_logs_t;
 
-typedef struct partial_logs_s {
+typedef struct partial_logs_s
+{
 	u32 count;
 	u32 allocated;
-	bb_decoded_packet_t *data;
+	bb_decoded_packet_t* data;
 } partial_logs_t;
 
-typedef struct recorded_category_s {
+typedef struct recorded_category_s
+{
 	char categoryName[kBBSize_Category];
 	u32 id;
 	u32 logCount[kBBLogLevel_Count];
 } recorded_category_t;
 
-typedef struct recorded_categories_s {
+typedef struct recorded_categories_s
+{
 	u32 count;
 	u32 allocated;
-	recorded_category_t *data;
+	recorded_category_t* data;
 } recorded_categories_t;
 
-typedef struct recorded_filename_s {
+typedef struct recorded_filename_s
+{
 	char path[kBBSize_MaxPath];
 	u32 id;
 	u32 logCount[kBBLogLevel_Count];
 } recorded_filename_t;
 
-typedef struct recorded_filenames_s {
+typedef struct recorded_filenames_s
+{
 	u32 count;
 	u32 allocated;
-	recorded_filename_t *data;
+	recorded_filename_t* data;
 } recorded_filenames_t;
 
-typedef struct recorded_thread_s {
+typedef struct recorded_thread_s
+{
 	char threadName[kBBSize_ThreadName];
 	u64 id;
 	u64 startTime;
@@ -79,35 +89,40 @@ typedef struct recorded_thread_s {
 	u32 logCount[kBBLogLevel_Count];
 } recorded_thread_t;
 
-typedef struct recorded_threads_s {
+typedef struct recorded_threads_s
+{
 	u32 count;
 	u32 allocated;
-	recorded_thread_t *data;
+	recorded_thread_t* data;
 } recorded_threads_t;
 
-typedef struct recorded_pieInstance_s {
+typedef struct recorded_pieInstance_s
+{
 	u32 logCount[kBBLogLevel_Count];
 	s32 pieInstance;
 	u8 pad[4];
 } recorded_pieInstance_t;
 
-typedef struct recorded_pieInstances_s {
+typedef struct recorded_pieInstances_s
+{
 	u32 count;
 	u32 allocated;
-	recorded_pieInstance_t *data;
+	recorded_pieInstance_t* data;
 } recorded_pieInstances_t;
 
-typedef struct recorded_console_autocomplete_s {
+typedef struct recorded_console_autocomplete_s
+{
 	u32 id;
 	u32 expected;
 	u32 count;
 	u32 allocated;
 	u64 lastRequestTime;
-	bb_packet_console_autocomplete_response_entry_t *data;
+	bb_packet_console_autocomplete_response_entry_t* data;
 	sb_t request;
 } recorded_console_autocomplete_t;
 
-typedef struct recorded_session_s {
+typedef struct recorded_session_s
+{
 	u8 recvBuffer[32768];
 	u8 terminator;
 	char path[kBBSize_MaxPath];
@@ -131,28 +146,28 @@ typedef struct recorded_session_s {
 	bb_thread_handle_t threadHandle;
 	u32 nextViewId;
 	u32 outgoingMqId;
-	session_message_queue_t *incoming;
+	session_message_queue_t* incoming;
 } recorded_session_t;
 
 void recorded_session_shutdown(void);
-void recorded_session_open(const char *path, const char *applicationFilename, b8 autoClose, b32 recordingActive, u32 outgoingMqId);
-void recorded_session_close(recorded_session_t *session);
-void recorded_session_update(recorded_session_t *session);
-void recorded_session_auto_close(const char *applicationName);
+void recorded_session_open(const char* path, const char* applicationFilename, b8 autoClose, b32 recordingActive, u32 outgoingMqId);
+void recorded_session_close(recorded_session_t* session);
+void recorded_session_update(recorded_session_t* session);
+void recorded_session_auto_close(const char* applicationName);
 void recorded_session_auto_close_all(void);
-void recorded_session_recording_stopped(const char *path);
-void recorded_session_add_config_category(recorded_session_t *session, const view_config_category_t *configCategory);
-recorded_session_t *recorded_session_find(const char *path);
+void recorded_session_recording_stopped(const char* path);
+void recorded_session_add_config_category(recorded_session_t* session, const view_config_category_t* configCategory);
+recorded_session_t* recorded_session_find(const char* path);
 u32 recorded_session_count(void);
-recorded_session_t *recorded_session_get(u32 index);
-recorded_category_t *recorded_session_find_category_by_name(recorded_session_t *session, const char *categoryName);
-recorded_category_t *recorded_session_find_category(recorded_session_t *session, u32 categoryId);
-recorded_filename_t *recorded_session_find_filename(recorded_session_t *session, u32 fileId);
-recorded_thread_t *recorded_session_find_thread(recorded_session_t *session, u64 threadId);
-recorded_pieInstance_t *recorded_session_find_pieInstance(recorded_session_t *session, s32 pieInstance);
-char *recorded_session_get_thread_name(recorded_session_t *session, u64 threadId);
-const char *recorded_session_get_filename(recorded_session_t *session, u32 fileId);
-const char *recorded_session_get_category_name(recorded_session_t *session, u32 categoryId);
+recorded_session_t* recorded_session_get(u32 index);
+recorded_category_t* recorded_session_find_category_by_name(recorded_session_t* session, const char* categoryName);
+recorded_category_t* recorded_session_find_category(recorded_session_t* session, u32 categoryId);
+recorded_filename_t* recorded_session_find_filename(recorded_session_t* session, u32 fileId);
+recorded_thread_t* recorded_session_find_thread(recorded_session_t* session, u64 threadId);
+recorded_pieInstance_t* recorded_session_find_pieInstance(recorded_session_t* session, s32 pieInstance);
+char* recorded_session_get_thread_name(recorded_session_t* session, u64 threadId);
+const char* recorded_session_get_filename(recorded_session_t* session, u32 fileId);
+const char* recorded_session_get_category_name(recorded_session_t* session, u32 categoryId);
 
 #if defined(__cplusplus)
 }

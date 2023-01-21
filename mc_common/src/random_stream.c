@@ -13,7 +13,7 @@ BB_WARNING_POP
 // *Really* minimal PCG32 code / (c) 2014 M.E. O'Neill / pcg-random.org
 // Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
 
-static u32 pcg32_random_r(pcg32_random *rng)
+static u32 pcg32_random_r(pcg32_random* rng)
 {
 	u64 oldstate = rng->state;
 	// Advance internal state
@@ -66,16 +66,17 @@ RandomStream random_make_lcg(u32 seed)
 	return s;
 }
 
-static u32 lcg_random_r(u32 *rng)
+static u32 lcg_random_r(u32* rng)
 {
 	*rng = (*rng * 196314165) + 907633515;
 	return *rng;
 }
 
-u32 random_get_u32(RandomStream *s)
+u32 random_get_u32(RandomStream* s)
 {
 	u32 result = 0;
-	switch(s->type) {
+	switch (s->type)
+	{
 	case kRandomStream_PCG32:
 		result = pcg32_random_r(&s->state.pcg32);
 		break;
@@ -89,48 +90,52 @@ u32 random_get_u32(RandomStream *s)
 	return result;
 }
 
-u32 random_get_u32_range(RandomStream *s, u32 minVal, u32 maxVal)
+u32 random_get_u32_range(RandomStream* s, u32 minVal, u32 maxVal)
 {
 	// algorithm taken from pcg32_boundedrand_r in https://github.com/imneme/pcg-c-basic/blob/master/pcg_basic.c
 	u32 range = maxVal - minVal;
 	u32 threshold = ((u32)(-(s32)range)) % range;
-	for(;;) {
+	for (;;)
+	{
 		u32 r = random_get_u32(s);
-		if(r >= threshold) {
+		if (r >= threshold)
+		{
 			return minVal + r % range;
 		}
 	}
 }
 
-s32 random_get_s32_range(RandomStream *s, s32 minVal, s32 maxVal)
+s32 random_get_s32_range(RandomStream* s, s32 minVal, s32 maxVal)
 {
 	s32 range = maxVal - minVal;
-	if(range <= 0)
+	if (range <= 0)
 		return minVal;
 	u32 val = random_get_u32_range(s, 0, (u32)range);
 	return minVal + val;
 }
 
-float random_get_float_01(RandomStream *s)
+float random_get_float_01(RandomStream* s)
 {
 	float result;
-	do {
+	do
+	{
 		u32 val = random_get_u32(s);
 
 		const float fOne = 1.0f;
-		*(s32 *)&result = (*(s32 *)&fOne & 0xff800000) | (val & 0x007fffff);
-	} while(result >= 2.0f);
+		*(s32*)&result = (*(s32*)&fOne & 0xff800000) | (val & 0x007fffff);
+	} while (result >= 2.0f);
 	return result - 1.0f;
 }
 
-float random_get_float_range(RandomStream *s, float minVal, float maxVal)
+float random_get_float_range(RandomStream* s, float minVal, float maxVal)
 {
 	float result;
-	do {
+	do
+	{
 		u32 val = random_get_u32(s);
 
 		const float fOne = 1.0f;
-		*(s32 *)&result = (*(s32 *)&fOne & 0xff800000) | (val & 0x007fffff);
-	} while(result >= 2.0f);
+		*(s32*)&result = (*(s32*)&fOne & 0xff800000) | (val & 0x007fffff);
+	} while (result >= 2.0f);
 	return minVal + (maxVal - minVal) * (result - 1.0f);
 }

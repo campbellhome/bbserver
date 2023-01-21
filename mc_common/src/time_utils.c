@@ -25,7 +25,8 @@ double Time_GetCurrentFrameStartTime(void)
 
 double Time_GetCurrentTime(void)
 {
-	if(!s_counterToMilliseconds) {
+	if (!s_counterToMilliseconds)
+	{
 		LARGE_INTEGER li;
 		QueryPerformanceFrequency(&li);
 		s_counterFrequency = li.QuadPart;
@@ -94,7 +95,7 @@ static SYSTEMTIME Time_SystemTimeFromEpochTime(u32 epochTime)
 	return st;
 }
 
-const char *Time_StringFromEpochTime(u32 epochTime)
+const char* Time_StringFromEpochTime(u32 epochTime)
 {
 	SYSTEMTIME st = Time_SystemTimeFromEpochTime(epochTime);
 	char dateBuffer[64] = "";

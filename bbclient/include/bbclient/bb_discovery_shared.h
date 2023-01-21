@@ -9,6 +9,7 @@
 #define BB_DISCOVERY_PORT 1492u
 #define BB_PROTOCOL_IDENTIFIER "BBX2"
 
-enum {
+enum
+{
 	kBBDiscoveryRetries = 1
 };

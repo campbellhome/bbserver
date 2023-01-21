@@ -16,33 +16,34 @@
 
 using namespace ImGui;
 
-static void CheckboxFileVisiblity(view_t *view, u32 startIndex)
+static void CheckboxFileVisiblity(view_t* view, u32 startIndex)
 {
-	view_files_t *files = &view->files;
-	view_file_t *t = files->data + startIndex;
+	view_files_t* files = &view->files;
+	view_file_t* t = files->data + startIndex;
 	PushID((int)startIndex);
-	if(Checkbox("", &t->visible)) {
+	if (Checkbox("", &t->visible))
+	{
 		view->visibleLogsDirty = true;
 	}
 	PopID();
 }
 
-static const char *GetFilenameFromPath(const char *path)
+static const char* GetFilenameFromPath(const char* path)
 {
-	const char *sep = strrchr(path, '/');
-	if(sep)
+	const char* sep = strrchr(path, '/');
+	if (sep)
 		return sep + 1;
 	sep = strrchr(path, '\\');
-	if(sep)
+	if (sep)
 		return sep + 1;
 	return path;
 }
 
-void UIRecordedView_FileTreeNode(view_t *view, u32 startIndex)
+void UIRecordedView_FileTreeNode(view_t* view, u32 startIndex)
 {
-	view_file_t *vf = view->files.data + startIndex;
-	recorded_filename_t *rf = recorded_session_find_filename(view->session, vf->id);
-	const char *fileName = GetFilenameFromPath(vf->path);
+	view_file_t* vf = view->files.data + startIndex;
+	recorded_filename_t* rf = recorded_session_find_filename(view->session, vf->id);
+	const char* fileName = GetFilenameFromPath(vf->path);
 	CheckboxFileVisiblity(view, startIndex);
 
 	ImGui::SameLine();
@@ -52,11 +53,13 @@ void UIRecordedView_FileTreeNode(view_t *view, u32 startIndex)
 	ScopedTextShadows shadows(logLevel);
 	ImVec2 pos = ImGui::GetIconPosForText();
 	ImGui::TextShadow(fileName);
-	if(ImGui::Selectable(fileName, vf->selected != 0)) {
+	if (ImGui::Selectable(fileName, vf->selected != 0))
+	{
 		// handle click
 	}
 
-	if(IsTooltipActive()) {
+	if (IsTooltipActive())
+	{
 		BeginTooltip();
 		Text("%s", rf->path);
 		UIRecordedView_TooltipLevelText("VeryVerbose: %u", rf->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
@@ -70,39 +73,49 @@ void UIRecordedView_FileTreeNode(view_t *view, u32 startIndex)
 	}
 }
 
-void UIViewFiles_Update(view_t *view)
+void UIViewFiles_Update(view_t* view)
 {
-	if(view->files.count > 1) {
-		if(ImGui::CollapsingHeader("Files", ImGuiTreeNodeFlags_None)) {
+	if (view->files.count > 1)
+	{
+		if (ImGui::CollapsingHeader("Files", ImGuiTreeNodeFlags_None))
+		{
 			ImGui::PushID("FilesHeader");
 
 			u32 checkedCount = 0;
 			u32 uncheckedCount = 0;
-			for(u32 index = 0; index < view->files.count; ++index) {
-				view_file_t *vf = view->files.data + index;
-				if(vf->visible) {
+			for (u32 index = 0; index < view->files.count; ++index)
+			{
+				view_file_t* vf = view->files.data + index;
+				if (vf->visible)
+				{
 					++checkedCount;
-				} else {
+				}
+				else
+				{
 					++uncheckedCount;
 				}
 			}
 
 			ImGui::PushID(-1);
 			bool allChecked = uncheckedCount == 0;
-			if(checkedCount && uncheckedCount) {
+			if (checkedCount && uncheckedCount)
+			{
 				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
-			if(ImGui::Checkbox("", &allChecked)) {
+			if (ImGui::Checkbox("", &allChecked))
+			{
 				view_set_all_file_visibility(view, allChecked);
 			}
-			if(checkedCount && uncheckedCount) {
+			if (checkedCount && uncheckedCount)
+			{
 				ImGui::PopItemFlag();
 			}
 			ImGui::SameLine();
 			ImGui::TextUnformatted("All Files");
 			ImGui::PopID();
 
-			for(u32 index = 0; index < view->files.count; ++index) {
+			for (u32 index = 0; index < view->files.count; ++index)
+			{
 				UIRecordedView_FileTreeNode(view, index);
 			}
 			ImGui::PopID();

@@ -16,55 +16,64 @@ AUTOJSON typedef enum tag_visibility_t {
 	kTagVisibility_Count
 } tag_visibility_t;
 
-AUTOJSON AUTOFROMLOC typedef struct sbsHashEntry {
+AUTOJSON AUTOFROMLOC typedef struct sbsHashEntry
+{
 	sb_t key;
 	sbs_t values;
 } sbsHashEntry;
 
-AUTOSTRUCT AUTOFROMLOC typedef struct sbsHashChain {
+AUTOSTRUCT AUTOFROMLOC typedef struct sbsHashChain
+{
 	u32 count;
 	u32 allocated;
-	sbsHashEntry *data;
+	sbsHashEntry* data;
 } sbsHashChain;
 
-AUTOSTRUCT AUTOFROMLOC AUTOSTRINGHASH typedef struct sbsHashTable {
+AUTOSTRUCT AUTOFROMLOC AUTOSTRINGHASH typedef struct sbsHashTable
+{
 	u32 count;
 	u32 allocated;
-	sbsHashChain *data;
+	sbsHashChain* data;
 } sbsHashTable;
 
-AUTOJSON AUTOFROMLOC typedef struct tag_s {
+AUTOJSON AUTOFROMLOC typedef struct tag_s
+{
 	sb_t name;
 	sbs_t categories;
 	tag_visibility_t visibility;
 	u8 pad[4];
 } tag_t;
 
-AUTOJSON AUTOFROMLOC typedef struct tags_s {
+AUTOJSON AUTOFROMLOC typedef struct tags_s
+{
 	u32 count;
 	u32 allocated;
-	tag_t *data;
+	tag_t* data;
 } tags_t;
 
-AUTOSTRUCT AUTOFROMLOC typedef struct tagCategory_s {
+AUTOSTRUCT AUTOFROMLOC typedef struct tagCategory_s
+{
 	sb_t name;
 	sbs_t tags;
 } tagCategory_t;
 
-AUTOSTRUCT AUTOFROMLOC typedef struct tagCategories_s {
+AUTOSTRUCT AUTOFROMLOC typedef struct tagCategories_s
+{
 	u32 count;
 	u32 allocated;
-	tagCategory_t *data;
+	tagCategory_t* data;
 } tagCategories_t;
 
-AUTOSTRUCT typedef struct tagData_s {
+AUTOSTRUCT typedef struct tagData_s
+{
 	sbsHashTable tagTable;
 	sbsHashTable categoryTable;
 	tags_t tags;
 	tagCategories_t categories;
 } tagData_t;
 
-AUTOJSON typedef struct tags_config_s {
+AUTOJSON typedef struct tags_config_s
+{
 	tags_t tags;
 } tags_config_t;
 
@@ -74,13 +83,13 @@ void tags_init(void);
 void tags_write(void);
 void tags_shutdown(void);
 
-tag_t *tag_find(const char *tagName);
-void tag_remove(tag_t *tag);
+tag_t* tag_find(const char* tagName);
+void tag_remove(tag_t* tag);
 
-tagCategory_t *tagCategory_find(const char *categoryName);
+tagCategory_t* tagCategory_find(const char* categoryName);
 
-void tag_add_category(const char *tagName, const char *categoryName);
-void tag_remove_category(const char *tagName, const char *categoryName);
+void tag_add_category(const char* tagName, const char* categoryName);
+void tag_remove_category(const char* tagName, const char* categoryName);
 
 void tag_apply_tag_visibility_to_all_views(void);
 

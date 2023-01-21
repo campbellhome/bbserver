@@ -15,27 +15,31 @@
 #include <string>
 #include <vector>
 
-struct enum_member_s {
+struct enum_member_s
+{
 	std::string name;
 };
-struct enum_s {
+struct enum_s
+{
 	std::string name;
 	std::string typedefBaseName;
 	std::string defaultVal;
-	std::vector< enum_member_s > members;
+	std::vector<enum_member_s> members;
 	bool headerOnly;
 };
-extern std::vector< enum_s > g_enums;
+extern std::vector<enum_s> g_enums;
 
-struct struct_member_s {
+struct struct_member_s
+{
 	std::string name;
 	std::string val;
 	std::string arr;
 	std::string typeStr;
-	std::vector< lexer_token > typeTokens;
+	std::vector<lexer_token> typeTokens;
 	bool parseempty = false;
 };
-struct struct_s {
+struct struct_s
+{
 	std::string name;
 	std::string typedefBaseName;
 	bool autovalidate;
@@ -43,29 +47,29 @@ struct struct_s {
 	bool fromLoc;
 	bool jsonSerialization;
 	bool bStringHash;
-	std::vector< struct_member_s > members;
+	std::vector<struct_member_s> members;
 };
-extern std::vector< struct_s > g_structs;
+extern std::vector<struct_s> g_structs;
 
-extern std::set< std::string > g_paths;
+extern std::set<std::string> g_paths;
 
-void GenerateJson(const char *prefix, const char *includePrefix, const char *srcDir, const char *includeDir);
-void GenerateStructs(const char *prefix, const char *includePrefix, const char *srcDir, const char *includeDir);
+void GenerateJson(const char* prefix, const char* includePrefix, const char* srcDir, const char* includeDir);
+void GenerateStructs(const char* prefix, const char* includePrefix, const char* srcDir, const char* includeDir);
 
-std::string &va(std::string &dst, const char *fmt, ...);
-const char *va(const char *fmt, ...);
+std::string& va(std::string& dst, const char* fmt, ...);
+const char* va(const char* fmt, ...);
 
-std::string ReplaceChar(const std::string &src, char test, const char *replacement);
+std::string ReplaceChar(const std::string& src, char test, const char* replacement);
 
-const char *GetPathFilename(const std::string &src);
-const char *GetPathFilename(const char *src);
-std::vector< std::string > TokenizePath(const std::string &src);
-void AddPathComponent(std::string &path, const std::string &component, char separator = 0);
-std::string ResolvePath(const std::string &src, char separator = 0);
+const char* GetPathFilename(const std::string& src);
+const char* GetPathFilename(const char* src);
+std::vector<std::string> TokenizePath(const std::string& src);
+void AddPathComponent(std::string& path, const std::string& component, char separator = 0);
+std::string ResolvePath(const std::string& src, char separator = 0);
 void TestResolvePath();
 
-std::string ReadFileContents(const std::string &path);
-void WriteAndReportFileData(const std::string &data, const char *srcDir, const char *prefix, const char *suffix);
+std::string ReadFileContents(const std::string& path);
+void WriteAndReportFileData(const std::string& data, const char* srcDir, const char* prefix, const char* suffix);
 
 void ForwardDeclarations(std::string& s);
 void InitialComments(std::string& s);

@@ -27,31 +27,36 @@ void bb_log_shutdown(void)
 {
 }
 
-static void bb_vlog(const char *fmt, va_list args)
+static void bb_vlog(const char* fmt, va_list args)
 {
 	int len;
 	char szBuffer[512];
 	int prefixLen;
 
-	if((g_bb_initFlags & kBBInitFlag_DebugInit) == 0)
+	if ((g_bb_initFlags & kBBInitFlag_DebugInit) == 0)
 		return;
 
 	prefixLen = bb_snprintf(szBuffer, sizeof(szBuffer), "%" PRIu64 " ms: ", bb_current_time_ms() - s_log_start_ms);
-	if(prefixLen < 0) {
+	if (prefixLen < 0)
+	{
 		prefixLen = 0;
 	}
 
 	len = vsnprintf(szBuffer + prefixLen, sizeof(szBuffer) - prefixLen, fmt, args);
-	if(len == 0)
+	if (len == 0)
 		return;
 
-	if(len < 0) {
+	if (len < 0)
+	{
 		len = sizeof(szBuffer) - 2;
-	} else {
+	}
+	else
+	{
 		len = BB_MIN(len + prefixLen, (int)sizeof(szBuffer) - 2);
 	}
 
-	if(szBuffer[len - 1] != '\n') {
+	if (szBuffer[len - 1] != '\n')
+	{
 		szBuffer[len++] = '\n';
 	}
 	szBuffer[len] = '\0';
@@ -62,7 +67,7 @@ static void bb_vlog(const char *fmt, va_list args)
 	fwrite(szBuffer, (size_t)len, 1, stdout);
 }
 
-void bb_log(const char *fmt, ...)
+void bb_log(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -70,7 +75,7 @@ void bb_log(const char *fmt, ...)
 	va_end(args);
 }
 
-void bb_warning(const char *fmt, ...)
+void bb_warning(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -78,7 +83,7 @@ void bb_warning(const char *fmt, ...)
 	va_end(args);
 }
 
-void bb_error(const char *fmt, ...)
+void bb_error(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -88,7 +93,7 @@ void bb_error(const char *fmt, ...)
 
 BB_WARNING_DISABLE(4710) // snprintf not inlined - can't push/pop because it happens later
 
-char *bb_format_ipport(char *buf, size_t len, u32 addr, u16 port)
+char* bb_format_ipport(char* buf, size_t len, u32 addr, u16 port)
 {
 	int ret = bb_snprintf(buf, len, "%u.%u.%u.%u:%u",
 	                      (addr & 0xFF000000) >> 24,
@@ -101,7 +106,7 @@ char *bb_format_ipport(char *buf, size_t len, u32 addr, u16 port)
 	return buf;
 }
 
-char *bb_format_ip(char *buf, size_t len, u32 addr)
+char* bb_format_ip(char* buf, size_t len, u32 addr)
 {
 	int ret = bb_snprintf(buf, len, "%u.%u.%u.%u",
 	                      (addr & 0xFF000000) >> 24,

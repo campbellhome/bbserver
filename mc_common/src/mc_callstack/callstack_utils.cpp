@@ -19,16 +19,19 @@ public:
 	b32 done = false;
 	b32 loadedModules = false;
 
-	sb_t *sb = nullptr;
-	sbs_t *sbs = nullptr;
+	sb_t* sb = nullptr;
+	sbs_t* sbs = nullptr;
 
 	bb_critical_section cs = { BB_EMPTY_INITIALIZER };
 
 	void SetSymbolServer(b32 bSymbolServer)
 	{
-		if(bSymbolServer) {
+		if (bSymbolServer)
+		{
 			m_options |= (StackWalker::StackWalkOptions::SymUseSymSrv | StackWalker::StackWalkOptions::SymBuildPath);
-		} else {
+		}
+		else
+		{
 			m_options &= (~StackWalker::StackWalkOptions::SymUseSymSrv | StackWalker::StackWalkOptions::SymBuildPath);
 		}
 		m_options = StackWalker::StackWalkOptions::RetrieveNone;
@@ -36,32 +39,42 @@ public:
 
 protected:
 	virtual void OnOutput(LPCSTR /*szText*/) override {}
-	virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry) override final
+	virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry& entry) override final
 	{
-		if(linesToSkip) {
+		if (linesToSkip)
+		{
 			--linesToSkip;
-		} else if(!done) {
-			if(!strcmp(entry.name, "invoke_main") ||
-			   !strcmp(entry.name, "BaseThreadInitThunk") ||
-			   !strcmp(entry.name, "RtlUserThreadStart")) {
+		}
+		else if (!done)
+		{
+			if (!strcmp(entry.name, "invoke_main") ||
+			    !strcmp(entry.name, "BaseThreadInitThunk") ||
+			    !strcmp(entry.name, "RtlUserThreadStart"))
+			{
 				done = true;
-			} else {
+			}
+			else
+			{
 				BB_UNUSED(eType);
 				sb_t line = { BB_EMPTY_INITIALIZER };
 				sb_va(&line, "0x%llx ", entry.offset);
-				const char *moduleNameSep = strrchr(entry.loadedImageName, '\\');
-				if(moduleNameSep) {
+				const char* moduleNameSep = strrchr(entry.loadedImageName, '\\');
+				if (moduleNameSep)
+				{
 					sb_va(&line, "%s!", moduleNameSep + 1);
 				}
 				sb_va(&line, "%s() [", entry.undFullName);
-				if(entry.lineFileName[0]) {
+				if (entry.lineFileName[0])
+				{
 					sb_va(&line, "%s:%d", entry.lineFileName, entry.lineNumber);
 				}
 				sb_append(&line, "]\n");
-				if(sb) {
+				if (sb)
+				{
 					sb_append(sb, sb_get(&line));
 				}
-				if(sbs) {
+				if (sbs)
+				{
 					bba_push(*sbs, line);
 					memset(&line, 0, sizeof(line));
 				}
@@ -88,7 +101,8 @@ extern "C" sb_t callstack_generate_sb(int linesToSkip)
 {
 	sb_t sb = { BB_EMPTY_INITIALIZER };
 	bb_critical_section_lock(&s_stackwalker.cs);
-	if(!s_stackwalker.loadedModules) {
+	if (!s_stackwalker.loadedModules)
+	{
 		s_stackwalker.loadedModules = true;
 		s_stackwalker.LoadModules();
 	}
@@ -105,7 +119,8 @@ extern "C" sbs_t callstack_generate_sbs(int linesToSkip)
 {
 	sbs_t sbs = { BB_EMPTY_INITIALIZER };
 	bb_critical_section_lock(&s_stackwalker.cs);
-	if(!s_stackwalker.loadedModules) {
+	if (!s_stackwalker.loadedModules)
+	{
 		s_stackwalker.loadedModules = true;
 		s_stackwalker.LoadModules();
 	}
@@ -123,11 +138,15 @@ extern "C" sb_t callstack_generate_crash_sb(void)
 	sbs_t lines = callstack_generate_sbs(0);
 	sb_t sb = { BB_EMPTY_INITIALIZER };
 	b32 sawDispatcher = false;
-	for(u32 i = 0; i < lines.count; ++i) {
-		const char *line = sb_get(lines.data + i);
-		if(strstr(line, "KiUserExceptionDispatcher")) {
+	for (u32 i = 0; i < lines.count; ++i)
+	{
+		const char* line = sb_get(lines.data + i);
+		if (strstr(line, "KiUserExceptionDispatcher"))
+		{
 			sawDispatcher = true;
-		} else if(sawDispatcher) {
+		}
+		else if (sawDispatcher)
+		{
 			sb_append(&sb, line);
 		}
 	}

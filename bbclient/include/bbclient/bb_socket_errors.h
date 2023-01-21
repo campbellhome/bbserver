@@ -99,7 +99,7 @@
 extern "C" {
 #endif
 
-const char *bbnet_error_to_string(int err);
+const char* bbnet_error_to_string(int err);
 
 #if defined(__cplusplus)
 }

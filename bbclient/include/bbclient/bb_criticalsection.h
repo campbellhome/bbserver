@@ -28,21 +28,22 @@ typedef CRITICAL_SECTION bb_critical_section_plat;
 typedef pthread_mutex_t bb_critical_section_plat;
 #endif // #else // #if BB_USING(BB_COMPILER_MSVC)
 
-typedef struct bb_critical_section_s {
+typedef struct bb_critical_section_s
+{
 	bb_critical_section_plat platform;
 	b32 initialized;
 	u8 pad[4];
 } bb_critical_section;
 
-void bb_critical_section_init(bb_critical_section *cs);
-void bb_critical_section_shutdown(bb_critical_section *cs);
+void bb_critical_section_init(bb_critical_section* cs);
+void bb_critical_section_shutdown(bb_critical_section* cs);
 
 #if BB_USING(BB_COMPILER_MSVC)
-_Acquires_lock_(cs->platform) void bb_critical_section_lock_impl(bb_critical_section *cs);
-_Releases_lock_(cs->platform) void bb_critical_section_unlock_impl(bb_critical_section *cs);
+_Acquires_lock_(cs->platform) void bb_critical_section_lock_impl(bb_critical_section* cs);
+_Releases_lock_(cs->platform) void bb_critical_section_unlock_impl(bb_critical_section* cs);
 #else  // #if BB_USING(BB_COMPILER_MSVC)
-void bb_critical_section_lock_impl(bb_critical_section *cs);
-void bb_critical_section_unlock_impl(bb_critical_section *cs);
+void bb_critical_section_lock_impl(bb_critical_section* cs);
+void bb_critical_section_unlock_impl(bb_critical_section* cs);
 #endif // #else // #if BB_USING(BB_COMPILER_MSVC)
 
 #if BB_USING(BB_DEBUG_LOCKS)

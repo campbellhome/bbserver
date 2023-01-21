@@ -40,17 +40,17 @@ extern "C" void FileOpenDialog_Init(void)
 
 extern "C" void FileOpenDialog_Shutdown(void)
 {
-	if(s_bInitialized) {
+	if (s_bInitialized)
+	{
 		CoUninitialize();
 	}
 }
 
-const COMDLG_FILTERSPEC c_rgSaveTypes[] =
-    {
-	    { L"Blackbox Logs (*.bbox)", L"*.bbox" },
-	    { L"Text Logs (*.txt; *.log)", L"*.txt;*.log" },
-	    { L"All Documents (*.*)", L"*.*" }
-    };
+const COMDLG_FILTERSPEC c_rgSaveTypes[] = {
+	{ L"Blackbox Logs (*.bbox)", L"*.bbox" },
+	{ L"Text Logs (*.txt; *.log)", L"*.txt;*.log" },
+	{ L"All Documents (*.*)", L"*.*" }
+};
 
 // Indices of file types
 #define INDEX_BLACKBOX 1
@@ -63,7 +63,7 @@ class CDialogEventHandler : public IFileDialogEvents,
 {
 public:
 	// IUnknown methods
-	IFACEMETHODIMP QueryInterface(REFIID riid, void **ppv)
+	IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv)
 	{
 		static const QITAB qit[] = {
 			QITABENT(CDialogEventHandler, IFileDialogEvents),
@@ -83,26 +83,26 @@ public:
 	Release()
 	{
 		long cRef = InterlockedDecrement(&_cRef);
-		if(!cRef)
+		if (!cRef)
 			delete this;
 		return (ULONG)cRef;
 	}
 
 	// IFileDialogEvents methods
-	IFACEMETHODIMP OnFileOk(IFileDialog *) { return S_OK; }
-	IFACEMETHODIMP OnFolderChange(IFileDialog *) { return S_OK; }
-	IFACEMETHODIMP OnFolderChanging(IFileDialog *, IShellItem *) { return S_OK; }
-	IFACEMETHODIMP OnHelp(IFileDialog *) { return S_OK; }
-	IFACEMETHODIMP OnSelectionChange(IFileDialog *) { return S_OK; }
-	IFACEMETHODIMP OnShareViolation(IFileDialog *, IShellItem *, FDE_SHAREVIOLATION_RESPONSE *) { return S_OK; }
-	IFACEMETHODIMP OnTypeChange(IFileDialog *) { return S_OK; }
-	IFACEMETHODIMP OnOverwrite(IFileDialog *, IShellItem *, FDE_OVERWRITE_RESPONSE *) { return S_OK; }
+	IFACEMETHODIMP OnFileOk(IFileDialog*) { return S_OK; }
+	IFACEMETHODIMP OnFolderChange(IFileDialog*) { return S_OK; }
+	IFACEMETHODIMP OnFolderChanging(IFileDialog*, IShellItem*) { return S_OK; }
+	IFACEMETHODIMP OnHelp(IFileDialog*) { return S_OK; }
+	IFACEMETHODIMP OnSelectionChange(IFileDialog*) { return S_OK; }
+	IFACEMETHODIMP OnShareViolation(IFileDialog*, IShellItem*, FDE_SHAREVIOLATION_RESPONSE*) { return S_OK; }
+	IFACEMETHODIMP OnTypeChange(IFileDialog*) { return S_OK; }
+	IFACEMETHODIMP OnOverwrite(IFileDialog*, IShellItem*, FDE_OVERWRITE_RESPONSE*) { return S_OK; }
 
 	// IFileDialogControlEvents methods
-	IFACEMETHODIMP OnItemSelected(IFileDialogCustomize *, DWORD, DWORD) { return S_OK; }
-	IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize *, DWORD) { return S_OK; }
-	IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize *, DWORD, BOOL) { return S_OK; }
-	IFACEMETHODIMP OnControlActivating(IFileDialogCustomize *, DWORD) { return S_OK; }
+	IFACEMETHODIMP OnItemSelected(IFileDialogCustomize*, DWORD, DWORD) { return S_OK; }
+	IFACEMETHODIMP OnButtonClicked(IFileDialogCustomize*, DWORD) { return S_OK; }
+	IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize*, DWORD, BOOL) { return S_OK; }
+	IFACEMETHODIMP OnControlActivating(IFileDialogCustomize*, DWORD) { return S_OK; }
 
 private:
 	virtual ~CDialogEventHandler() {}
@@ -111,12 +111,13 @@ private:
 };
 
 // Instance creation helper
-HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
+HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void** ppv)
 {
 	*ppv = NULL;
-	CDialogEventHandler *pDialogEventHandler = new(std::nothrow) CDialogEventHandler();
+	CDialogEventHandler* pDialogEventHandler = new (std::nothrow) CDialogEventHandler();
 	HRESULT hr = pDialogEventHandler ? S_OK : E_OUTOFMEMORY;
-	if(SUCCEEDED(hr)) {
+	if (SUCCEEDED(hr))
+	{
 		hr = pDialogEventHandler->QueryInterface(riid, ppv);
 		pDialogEventHandler->Release();
 	}
@@ -129,53 +130,65 @@ HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
 extern "C" sb_t FileOpenDialog_Show(void)
 {
 	sb_t result = { BB_EMPTY_INITIALIZER };
-	if(!s_bInitialized)
+	if (!s_bInitialized)
 		return result;
 
 	// CoCreate the File Open Dialog object.
-	IFileDialog *pfd = NULL;
+	IFileDialog* pfd = NULL;
 	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
-	if(SUCCEEDED(hr)) {
+	if (SUCCEEDED(hr))
+	{
 		// Create an event handling object, and hook it up to the dialog.
-		IFileDialogEvents *pfde = NULL;
+		IFileDialogEvents* pfde = NULL;
 		hr = CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde));
-		if(SUCCEEDED(hr)) {
+		if (SUCCEEDED(hr))
+		{
 			// Hook up the event handler.
 			DWORD dwCookie;
 			hr = pfd->Advise(pfde, &dwCookie);
-			if(SUCCEEDED(hr)) {
+			if (SUCCEEDED(hr))
+			{
 				// Set the options on the dialog.
 				DWORD dwFlags;
 
 				// Before setting, always get the options first in order not to override existing options.
 				hr = pfd->GetOptions(&dwFlags);
-				if(SUCCEEDED(hr)) {
+				if (SUCCEEDED(hr))
+				{
 					// In this case, get shell items only for file system items.
 					hr = pfd->SetOptions(dwFlags | FOS_FORCEFILESYSTEM);
-					if(SUCCEEDED(hr)) {
+					if (SUCCEEDED(hr))
+					{
 						// Set the file types to display only. Notice that, this is a 1-based array.
 						hr = pfd->SetFileTypes(ARRAYSIZE(c_rgSaveTypes), c_rgSaveTypes);
-						if(SUCCEEDED(hr)) {
+						if (SUCCEEDED(hr))
+						{
 							// Set the selected file type index to Word Docs for this example.
 							hr = pfd->SetFileTypeIndex(INDEX_BLACKBOX);
-							if(SUCCEEDED(hr)) {
+							if (SUCCEEDED(hr))
+							{
 								// Set the default extension to be ".doc" file.
 								hr = pfd->SetDefaultExtension(EXTENSION_BLACKBOX);
-								if(SUCCEEDED(hr)) {
+								if (SUCCEEDED(hr))
+								{
 									// Show the dialog
 									hr = pfd->Show(NULL);
-									if(SUCCEEDED(hr)) {
+									if (SUCCEEDED(hr))
+									{
 										// Obtain the result, once the user clicks the 'Open' button.
 										// The result is an IShellItem object.
-										IShellItem *psiResult;
+										IShellItem* psiResult;
 										hr = pfd->GetResult(&psiResult);
-										if(SUCCEEDED(hr)) {
+										if (SUCCEEDED(hr))
+										{
 											// We are just going to print out the name of the file for sample sake.
 											PWSTR pszFilePath = NULL;
 											hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
-											if(SUCCEEDED(hr)) {
+											if (SUCCEEDED(hr))
+											{
 												sb_reserve(&result, (u32)(wcslen(pszFilePath) * 2));
-												if(result.data) {
+												if (result.data)
+												{
 													size_t numCharsConverted = 0;
 													wcstombs_s(&numCharsConverted, result.data, result.allocated, pszFilePath, _TRUNCATE);
 													result.count = (u32)strlen(result.data) + 1;

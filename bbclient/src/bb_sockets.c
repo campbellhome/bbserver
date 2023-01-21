@@ -33,13 +33,13 @@ void bbnet_shutdown(void)
 #endif // #if BB_USING(BB_COMPILER_MSVC)
 }
 
-void bbnet_gracefulclose(bb_socket *socket)
+void bbnet_gracefulclose(bb_socket* socket)
 {
 	bb_socket sock;
 	fd_set set;
 	BB_TIMEVAL tv;
 	char buf[256];
-	if(!socket || *socket == BB_INVALID_SOCKET)
+	if (!socket || *socket == BB_INVALID_SOCKET)
 		return;
 
 	sock = *socket;
@@ -48,25 +48,29 @@ void bbnet_gracefulclose(bb_socket *socket)
 	shutdown(sock, BB_SHUTDOWN_SEND);
 
 	// Read any remaining data from the socket and discard.
-	for(;;) {
+	for (;;)
+	{
 		FD_ZERO(&set);
 		BB_FD_SET(sock, &set);
 
 		tv.tv_sec = 0;
 		tv.tv_usec = 5 * 1000;
 
-		if(1 != select((int)sock + 1, &set, 0, 0, &tv)) {
+		if (1 != select((int)sock + 1, &set, 0, 0, &tv))
+		{
 			break;
 		}
 
-		if(0 >= recv(sock, buf, sizeof(buf), 0)) {
+		if (0 >= recv(sock, buf, sizeof(buf), 0))
+		{
 			break;
 		}
 	}
 
 	shutdown(sock, BB_SHUTDOWN_BOTH);
 
-	if(BB_CLOSE(sock)) {
+	if (BB_CLOSE(sock))
+	{
 		BB_CLOSE(sock);
 	}
 }
@@ -74,7 +78,7 @@ void bbnet_gracefulclose(bb_socket *socket)
 int bbnet_socket_nodelay(bb_socket socket, b32 nodelay)
 {
 	int disableNagle = nodelay;
-	return setsockopt(socket, SOL_SOCKET, TCP_NODELAY, (char *)&disableNagle, sizeof(disableNagle));
+	return setsockopt(socket, SOL_SOCKET, TCP_NODELAY, (char*)&disableNagle, sizeof(disableNagle));
 }
 
 int bbnet_socket_linger(bb_socket socket, b32 enabled, u16 seconds)
@@ -82,12 +86,12 @@ int bbnet_socket_linger(bb_socket socket, b32 enabled, u16 seconds)
 	struct linger data = { BB_EMPTY_INITIALIZER };
 	data.l_linger = seconds;
 	data.l_onoff = enabled ? 1u : 0u;
-	return setsockopt(socket, SOL_SOCKET, SO_LINGER, (char *)&data, sizeof(data));
+	return setsockopt(socket, SOL_SOCKET, SO_LINGER, (char*)&data, sizeof(data));
 }
 
 int bbnet_socket_reuseaddr(bb_socket socket, int reuseAddr)
 {
-	return setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char *)&reuseAddr, sizeof(reuseAddr));
+	return setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, (char*)&reuseAddr, sizeof(reuseAddr));
 }
 
 int bbnet_socket_nonblocking(bb_socket socket, b32 nonblocking)

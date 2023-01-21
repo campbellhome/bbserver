@@ -26,7 +26,7 @@ BB_WARNING_DISABLE(4710) // function not inlined
 
 typedef uintptr_t bb_thread_handle_t;
 typedef unsigned bb_thread_return_t;
-typedef bb_thread_return_t (*bb_thread_func)(void *args);
+typedef bb_thread_return_t (*bb_thread_func)(void* args);
 #define bb_thread_local __declspec(thread)
 #define bb_thread_exit(ret) \
 	{                       \
@@ -36,7 +36,7 @@ typedef bb_thread_return_t (*bb_thread_func)(void *args);
 
 #include <stdlib.h>
 
-bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)
+bb_thread_handle_t bbthread_create(bb_thread_func func, void* arg)
 {
 	bb_thread_handle_t thread = _beginthreadex(
 	    NULL, // security,
@@ -53,8 +53,8 @@ bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)
 #include <pthread.h>
 
 typedef pthread_t bb_thread_handle_t;
-typedef void *bb_thread_return_t;
-typedef bb_thread_return_t (*bb_thread_func)(void *args);
+typedef void* bb_thread_return_t;
+typedef bb_thread_return_t (*bb_thread_func)(void* args);
 #define bb_thread_local __thread
 #define bb_thread_exit(ret) \
 	{                       \
@@ -65,7 +65,7 @@ typedef bb_thread_return_t (*bb_thread_func)(void *args);
 #include <sys/types.h>
 #include <unistd.h>
 
-bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)
+bb_thread_handle_t bbthread_create(bb_thread_func func, void* arg)
 {
 	bb_thread_handle_t thread = 0;
 	pthread_attr_t attr;
@@ -80,12 +80,12 @@ bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)
 }
 #endif
 
-static const wchar_t *s_categoryNames[] = {
+static const wchar_t* s_categoryNames[] = {
 	L"dynamic::category::thing",
 	L"dynamic::monkey::banana",
 };
 
-static const char *s_pathNames[] = {
+static const char* s_pathNames[] = {
 	"C:\\Windows\\System32\\user32.dll",
 	"C:\\Windows\\Fonts\\Consola.ttf",
 	"D:\\bin\\wsl-terminal\\vim.exe",
@@ -94,12 +94,16 @@ static const char *s_pathNames[] = {
 static b32 s_bQuit = false;
 
 //enum { InitialBufferLen = 1 };
-enum { InitialBufferLen = 1024 * 1024 };
+enum
+{
+	InitialBufferLen = 1024 * 1024
+};
 static uint8_t s_initialBuffer[InitialBufferLen];
 
-struct console_autocomplete_entry {
-	const char *command;
-	const char *description;
+struct console_autocomplete_entry
+{
+	const char* command;
+	const char* description;
 	b32 bCommand;
 	u32 pad;
 };
@@ -122,21 +126,28 @@ static console_autocomplete_entry s_autocompleteEntries[] = {
 	{ "map BlueDog_E", "load a map", true, 0 },
 };
 
-static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *context)
+static void incoming_packet_handler(const bb_decoded_packet_t* decoded, void* context)
 {
 	(void)context;
-	if(decoded->type == kBBPacketType_ConsoleCommand) {
-		const char *text = decoded->packet.consoleCommand.text;
+	if (decoded->type == kBBPacketType_ConsoleCommand)
+	{
+		const char* text = decoded->packet.consoleCommand.text;
 		BB_LOG_A("Console", "^:] %s\n", text);
-		if(!bb_stricmp(text, "quit")) {
+		if (!bb_stricmp(text, "quit"))
+		{
 			s_bQuit = true;
 		}
-	} else if(decoded->type == kBBPacketType_ConsoleAutocompleteRequest) {
+	}
+	else if (decoded->type == kBBPacketType_ConsoleAutocompleteRequest)
+	{
 		size_t len = strlen(decoded->packet.consoleAutocompleteRequest.text);
 		u32 total = 0;
-		if(len) {
-			for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
-				if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len)) {
+		if (len)
+		{
+			for (u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i)
+			{
+				if (!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len))
+				{
 					++total;
 				}
 			}
@@ -151,11 +162,14 @@ static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *co
 		out.packet.consoleAutocompleteResponseHeader.reuse = false;
 		bb_send_raw_packet(&out);
 
-		if(total) {
+		if (total)
+		{
 			out.type = kBBPacketType_ConsoleAutocompleteResponseEntry;
 			out.packet.consoleAutocompleteResponseEntry.id = decoded->packet.consoleAutocompleteRequest.id;
-			for(u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i) {
-				if(!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len)) {
+			for (u32 i = 0; i < BB_ARRAYSIZE(s_autocompleteEntries); ++i)
+			{
+				if (!bb_strnicmp(s_autocompleteEntries[i].command, decoded->packet.consoleAutocompleteRequest.text, len))
+				{
 					out.packet.consoleAutocompleteResponseEntry.command = s_autocompleteEntries[i].bCommand;
 					bb_strncpy(out.packet.consoleAutocompleteResponseEntry.text, s_autocompleteEntries[i].command, sizeof(out.packet.consoleAutocompleteResponseEntry.text));
 					bb_strncpy(out.packet.consoleAutocompleteResponseEntry.description, s_autocompleteEntries[i].description, sizeof(out.packet.consoleAutocompleteResponseEntry.description));
@@ -166,7 +180,7 @@ static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *co
 	}
 }
 
-static bb_thread_return_t before_connect_thread_proc(void *)
+static bb_thread_return_t before_connect_thread_proc(void*)
 {
 	BB_THREAD_SET_NAME(L"before_connect_thread_proc");
 
@@ -174,7 +188,8 @@ static bb_thread_return_t before_connect_thread_proc(void *)
 	u64 start = bb_current_time_ms();
 	u64 now = start;
 	u64 end = now + 1000000;
-	while(now < end && !s_bQuit) {
+	while (now < end && !s_bQuit)
+	{
 		BB_TRACE_A(kBBLogLevel_Verbose, "Thread::before_connect_thread_proc", "before_connect_thread_proc %llu dt %llu ms", ++count, now - start);
 		bb_sleep_ms(1000);
 		now = bb_current_time_ms();
@@ -184,7 +199,7 @@ static bb_thread_return_t before_connect_thread_proc(void *)
 	return 0;
 }
 
-static bb_thread_return_t after_connect_thread_proc(void *)
+static bb_thread_return_t after_connect_thread_proc(void*)
 {
 	BB_THREAD_SET_NAME(L"after_connect_thread_proc");
 
@@ -192,7 +207,8 @@ static bb_thread_return_t after_connect_thread_proc(void *)
 	u64 start = bb_current_time_ms();
 	u64 now = start;
 	u64 end = now + 1000000;
-	while(now < end && !s_bQuit) {
+	while (now < end && !s_bQuit)
+	{
 		BB_TRACE_A(kBBLogLevel_Verbose, "Thread::after_connect_thread_proc", "after_connect_thread_proc %llu dt %llu ms", ++count, now - start);
 		bb_sleep_ms(1000);
 		now = bb_current_time_ms();
@@ -202,7 +218,7 @@ static bb_thread_return_t after_connect_thread_proc(void *)
 	return 0;
 }
 
-int main(int argc, const char **argv)
+int main(int argc, const char** argv)
 {
 	uint64_t start = bb_current_time_ms();
 	uint32_t categoryIndex = 0;
@@ -242,13 +258,14 @@ int main(int argc, const char **argv)
 	BB_LOG(L"standalone::nested::category", L"standalone::nested::category");
 
 	// repeating connection test for iteration on bbserver console input
-	while(1) {
+	while (1)
+	{
 		BB_LOG(L"test::unicode::wchar_t", L"Sofía");
 		BB_LOG(L"test::unicode::wchar_t", L"(╯°□°）╯︵ ┻━┻");
 		BB_LOG(L"test::unicode::wchar_t", L"✨✔");
-		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"Sofía");
-		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"(╯°□°）╯︵ ┻━┻");
-		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t *)u"✨✔");
+		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t*)u"Sofía");
+		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t*)u"(╯°□°）╯︵ ┻━┻");
+		BB_LOG(L"test::unicode::utf16", (const bb_wchar_t*)u"✨✔");
 		BB_LOG_A("test::unicode::utf8", u8"Sofía");
 		BB_LOG_A("test::unicode::utf8", u8"(╯°□°）╯︵ ┻━┻");
 		BB_LOG_A("test::unicode::utf8", u8"✨✔");
@@ -259,7 +276,8 @@ int main(int argc, const char **argv)
 		BB_LOG_A("test::unicode::utf8", u8"\u2728");       // ✨
 		BB_LOG_A("test::unicode::utf8", u8"\u2122");       // ™
 
-		while(BB_IS_CONNECTED()) {
+		while (BB_IS_CONNECTED())
+		{
 			bb_sleep_ms(100);
 			BB_TICK();
 		}
@@ -270,27 +288,32 @@ int main(int argc, const char **argv)
 	bbthread_create(before_connect_thread_proc, nullptr); // fixes unused function warning/error
 
 	start = bb_current_time_ms();
-	while(BB_IS_CONNECTED()) {
+	while (BB_IS_CONNECTED())
+	{
 		bb_sleep_ms(160);
 		BB_TICK();
 
 		BB_LOG(L"test::category", L"new frame");
 
 		BB_LOG_DYNAMIC(s_pathNames[pathIndex++], 1001, s_categoryNames[categoryIndex++], L"This is a %s test!\n", L"**DYNAMIC**");
-		if(pathIndex >= BB_ARRAYSIZE(s_pathNames)) {
+		if (pathIndex >= BB_ARRAYSIZE(s_pathNames))
+		{
 			pathIndex = 0;
 		}
-		if(categoryIndex >= BB_ARRAYSIZE(s_categoryNames)) {
+		if (categoryIndex >= BB_ARRAYSIZE(s_categoryNames))
+		{
 			categoryIndex = 0;
 		}
 
-		if(bb_current_time_ms() - start > 300) {
+		if (bb_current_time_ms() - start > 300)
+		{
 			break;
 		}
 	}
 
 	s_bQuit = true;
-	while(BB_IS_CONNECTED() && !s_bQuit) {
+	while (BB_IS_CONNECTED() && !s_bQuit)
+	{
 		BB_TICK();
 		bb_sleep_ms(50);
 	}
@@ -302,7 +325,8 @@ int main(int argc, const char **argv)
 	bb_connect(127 << 24 | 1, 0);
 	bbthread_create(after_connect_thread_proc, nullptr);
 
-	while(BB_IS_CONNECTED() && !s_bQuit) {
+	while (BB_IS_CONNECTED() && !s_bQuit)
+	{
 		BB_TICK();
 		BB_LOG(L"test::frame", L"-----------------------------------------------------");
 		BB_LOG(L"test::spam1", L"some data");

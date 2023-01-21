@@ -20,13 +20,16 @@ static NOTIFYICONDATA g_sysTrayNotifyIconData;
 
 static LRESULT CALLBACK SystemTray_WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if(msg == WM_TASKBAR_CREATED) {
-		if(!Shell_NotifyIconA(NIM_ADD, &g_sysTrayNotifyIconData)) {
+	if (msg == WM_TASKBAR_CREATED)
+	{
+		if (!Shell_NotifyIconA(NIM_ADD, &g_sysTrayNotifyIconData))
+		{
 		}
 		return 0;
 	}
 
-	switch(msg) {
+	switch (msg)
+	{
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
@@ -34,32 +37,39 @@ static LRESULT CALLBACK SystemTray_WndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 	case WM_QUIT:
 		Imgui_Core_RequestShutDown();
 		return 0;
-	case WM_USER_NOTIFYICON: {
-		switch(LOWORD(lParam)) {
-		case WM_LBUTTONDOWN: {
+	case WM_USER_NOTIFYICON:
+	{
+		switch (LOWORD(lParam))
+		{
+		case WM_LBUTTONDOWN:
+		{
 			BB_LOG("SysTray", "Left click");
 			Imgui_Core_HideUnhideWindow();
 			break;
 		}
-		case WM_LBUTTONDBLCLK: {
+		case WM_LBUTTONDBLCLK:
+		{
 			BB_LOG("SysTray", "Double click");
 			Imgui_Core_UnhideWindow();
 			Imgui_Core_BringWindowToFront();
 			break;
 		}
-		case WM_RBUTTONUP: {
+		case WM_RBUTTONUP:
+		{
 			BB_LOG("SysTray", "Right click");
 			Imgui_Core_BringWindowToFront();
 			POINT point;
 			GetCursorPos(&point);
 
-			if(!UISystemTray_Open()) {
+			if (!UISystemTray_Open())
+			{
 				HMENU hMenu = LoadMenu(g_sysTrayHiddenWindowClass.hInstance, MAKEINTRESOURCE(IDR_SYSTRAY_MENU));
-				if(!hMenu)
+				if (!hMenu)
 					break;
 
 				HMENU hSubMenu = GetSubMenu(hMenu, 0);
-				if(!hSubMenu) {
+				if (!hSubMenu)
+				{
 					DestroyMenu(hMenu);
 					break;
 				}
@@ -77,8 +87,10 @@ static LRESULT CALLBACK SystemTray_WndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 		}
 		return 0;
 	}
-	case WM_COMMAND: {
-		switch(LOWORD(wParam)) {
+	case WM_COMMAND:
+	{
+		switch (LOWORD(wParam))
+		{
 		case ID_SYSTRAY_EXIT:
 			Imgui_Core_RequestShutDown();
 			break;
@@ -92,7 +104,7 @@ static LRESULT CALLBACK SystemTray_WndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 	}
 }
 
-b32 SystemTray_Init(void *hInstance)
+b32 SystemTray_Init(void* hInstance)
 {
 	WM_TASKBAR_CREATED = RegisterWindowMessageA("TaskbarCreated");
 
@@ -108,7 +120,7 @@ b32 SystemTray_Init(void *hInstance)
 	g_sysTrayHiddenWindowClass.lpszMenuName = NULL;
 	g_sysTrayHiddenWindowClass.lpszClassName = "Blackbox SystemTray";
 	g_sysTrayHiddenWindowClass.hIconSm = LoadIconA(hInstance, (LPCTSTR)MAKEINTRESOURCE(IDI_MAINICON));
-	if(!RegisterClassEx(&g_sysTrayHiddenWindowClass))
+	if (!RegisterClassEx(&g_sysTrayHiddenWindowClass))
 		return false;
 
 	g_sysTrayWnd = CreateWindowExA(
@@ -124,7 +136,7 @@ b32 SystemTray_Init(void *hInstance)
 	    NULL,
 	    hInstance,
 	    NULL);
-	if(!g_sysTrayWnd)
+	if (!g_sysTrayWnd)
 		return false;
 
 	g_sysTrayNotifyIconData.cbSize = sizeof(g_sysTrayNotifyIconData);
@@ -135,7 +147,7 @@ b32 SystemTray_Init(void *hInstance)
 	g_sysTrayNotifyIconData.hIcon = LoadIconA(hInstance, (LPCTSTR)MAKEINTRESOURCE(IDI_MAINICON));
 	g_sysTrayNotifyIconData.uCallbackMessage = WM_USER_NOTIFYICON;
 
-	if(!Shell_NotifyIconA(NIM_ADD, &g_sysTrayNotifyIconData))
+	if (!Shell_NotifyIconA(NIM_ADD, &g_sysTrayNotifyIconData))
 		return false;
 
 	return true;
@@ -143,13 +155,16 @@ b32 SystemTray_Init(void *hInstance)
 
 void SystemTray_Shutdown(void)
 {
-	if(g_sysTrayNotifyIconData.hWnd) {
+	if (g_sysTrayNotifyIconData.hWnd)
+	{
 		Shell_NotifyIconA(NIM_DELETE, &g_sysTrayNotifyIconData);
 	}
-	if(g_sysTrayWnd) {
+	if (g_sysTrayWnd)
+	{
 		DestroyWindow(g_sysTrayWnd);
 	}
-	if(g_sysTrayHiddenWindowClass.hInstance) {
+	if (g_sysTrayHiddenWindowClass.hInstance)
+	{
 		UnregisterClassA(g_sysTrayHiddenWindowClass.lpszClassName, g_sysTrayHiddenWindowClass.hInstance);
 	}
 }

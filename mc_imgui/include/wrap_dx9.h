@@ -13,7 +13,7 @@ __pragma(warning(disable : 4820 4255 4668 4574 4365))
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 #include <tchar.h>
-    __pragma(warning(pop))
+__pragma(warning(pop))
 #endif
 
 #endif // #ifndef WRAP_DX9_H

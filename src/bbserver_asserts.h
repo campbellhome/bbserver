@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void BBServer_InitAsserts(const char *logPath);
+void BBServer_InitAsserts(const char* logPath);
 void BBServer_ShutdownAsserts(void);
 
 #if defined(__cplusplus)

@@ -11,7 +11,7 @@ static deviceCodes_t g_deviceCodes;
 static bb_critical_section g_deviceCodes_cs;
 static UINT g_deviceCodes_reloadMessage;
 
-const sbs_t *deviceCodes_lock(void)
+const sbs_t* deviceCodes_lock(void)
 {
 	bb_critical_section_lock(&g_deviceCodes_cs);
 	return &g_deviceCodes.deviceCodes;
@@ -22,10 +22,11 @@ void deviceCodes_unlock(void)
 	bb_critical_section_unlock(&g_deviceCodes_cs);
 }
 
-static u32 deviceCodes_RegisterMessage(const char *message)
+static u32 deviceCodes_RegisterMessage(const char* message)
 {
 	u32 val = 0;
-	if(message && *message) {
+	if (message && *message)
+	{
 		val = RegisterWindowMessageA(message);
 		BB_LOG("deviceCodes", "%s registered as %u", message, val);
 	}
@@ -34,15 +35,16 @@ static u32 deviceCodes_RegisterMessage(const char *message)
 
 static void deviceCodes_reload(void)
 {
-	if(!g_deviceCodes_cs.initialized)
+	if (!g_deviceCodes_cs.initialized)
 		return;
 
 	deviceCodes_lock();
 
 	sb_t path = appdata_get("bb");
 	sb_append(&path, "\\bb_device_codes.json");
-	JSON_Value *val = json_parse_file(sb_get(&path));
-	if(val) {
+	JSON_Value* val = json_parse_file(sb_get(&path));
+	if (val)
+	{
 		sbs_reset(&g_deviceCodes.deviceCodes);
 		g_deviceCodes = json_deserialize_deviceCodes_t(val);
 		json_value_free(val);
@@ -70,7 +72,8 @@ LRESULT WINAPI deviceCodes_HandleWindowMessage(HWND hWnd, UINT msg, WPARAM wPara
 	BB_UNUSED(hWnd);
 	BB_UNUSED(wParam);
 	BB_UNUSED(lParam);
-	if(g_deviceCodes_reloadMessage && msg == g_deviceCodes_reloadMessage) {
+	if (g_deviceCodes_reloadMessage && msg == g_deviceCodes_reloadMessage)
+	{
 		deviceCodes_reload();
 		return 1;
 	}

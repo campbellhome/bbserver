@@ -5,43 +5,54 @@
 #include "bb_array.h"
 #include "bb_malloc.h"
 
-void task_process_tick(task *_t)
+void task_process_tick(task* _t)
 {
-	task_process *t = (task_process *)_t->taskData;
-	if(t->process) {
+	task_process* t = (task_process*)_t->taskData;
+	if (t->process)
+	{
 		processTickResult_t res = process_tick(t->process);
-		if(res.done) {
-			if(res.exitCode == 0) {
+		if (res.done)
+		{
+			if (res.exitCode == 0)
+			{
 				task_set_state(_t, kTaskState_Succeeded);
-			} else {
+			}
+			else
+			{
 				task_set_state(_t, kTaskState_Failed);
 			}
 		}
-	} else {
+	}
+	else
+	{
 		task_set_state(_t, kTaskState_Failed);
 	}
-	if(_t->subtasks.count) {
+	if (_t->subtasks.count)
+	{
 		task_tick_subtasks(_t);
 	}
 }
 
-void task_process_statechanged(task *_t)
+void task_process_statechanged(task* _t)
 {
-	task_process *t = (task_process *)_t->taskData;
-	if(_t->state == kTaskState_Running) {
+	task_process* t = (task_process*)_t->taskData;
+	if (_t->state == kTaskState_Running)
+	{
 		t->process = process_spawn(sb_get(&t->dir), sb_get(&t->cmdline), t->spawnType, _t->debug ? kProcessLog_All : kProcessLog_None).process;
-		if(!t->process) {
+		if (!t->process)
+		{
 			task_set_state(_t, kTaskState_Failed);
 		}
 	}
 }
 
-void task_process_reset(task *_t)
+void task_process_reset(task* _t)
 {
-	task_process *t = (task_process *)_t->taskData;
+	task_process* t = (task_process*)_t->taskData;
 	sb_reset(&t->dir);
 	sb_reset(&t->cmdline);
-	if(t->process) {
+	if (t->process)
+	{
 		process_free(t->process);
 		t->process = NULL;
 	}
@@ -49,7 +60,7 @@ void task_process_reset(task *_t)
 	_t->taskData = NULL;
 }
 
-task process_task_create(const char *name, processSpawnType_t spawnType, const char *dir, const char *cmdlineFmt, ...)
+task process_task_create(const char* name, processSpawnType_t spawnType, const char* dir, const char* cmdlineFmt, ...)
 {
 	task t = { BB_EMPTY_INITIALIZER };
 	sb_append(&t.name, name);
@@ -57,8 +68,9 @@ task process_task_create(const char *name, processSpawnType_t spawnType, const c
 	t.stateChanged = task_process_statechanged;
 	t.reset = task_process_reset;
 	t.taskData = bb_malloc(sizeof(task_process));
-	if(t.taskData) {
-		task_process *p = t.taskData;
+	if (t.taskData)
+	{
+		task_process* p = t.taskData;
 		memset(p, 0, sizeof(*p));
 		sb_append(&p->dir, dir);
 		va_list args;

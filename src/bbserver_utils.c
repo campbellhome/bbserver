@@ -6,7 +6,7 @@
 
 #include "bb_wrap_windows.h"
 
-void BBServer_OpenDirInExplorer(const char *dir)
+void BBServer_OpenDirInExplorer(const char* dir)
 {
 	sb_t sb;
 	sb_init(&sb);
@@ -20,9 +20,12 @@ void BBServer_OpenDirInExplorer(const char *dir)
 	PROCESS_INFORMATION procInfo;
 	memset(&procInfo, 0, sizeof(procInfo));
 	BOOL ret = CreateProcessA(NULL, sb.data, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupInfo, &procInfo);
-	if(!ret) {
+	if (!ret)
+	{
 		BB_ERROR("View", "Failed to create process for '%s'", sb.data);
-	} else {
+	}
+	else
+	{
 		BB_LOG("View", "Created process for '%s'", sb.data);
 	}
 	CloseHandle(procInfo.hThread);

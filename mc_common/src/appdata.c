@@ -11,14 +11,15 @@ BB_WARNING_PUSH(4820 4255)
 #include "bb_wrap_windows.h"
 #include <ShlObj.h>
 #pragma comment(lib, "Shell32.lib")
-sb_t appdata_get(const char *appName)
+sb_t appdata_get(const char* appName)
 {
 	sb_t ret;
 	sb_init(&ret);
 
 	//size_t len;
 	char appData[_MAX_PATH] = "C:";
-	if(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appData) == S_OK) {
+	if (SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appData) == S_OK)
+	{
 		sb_append(&ret, appData);
 	}
 	sb_append(&ret, "\\");
@@ -34,18 +35,22 @@ BB_WARNING_POP;
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-sb_t appdata_get(const char *appName)
+sb_t appdata_get(const char* appName)
 {
 	sb_t ret = {};
 	char temp[1024] = "~";
 	struct passwd pwd;
 	sb_t home = env_get("HOME");
-	if(!sb_len(&home)) {
-		struct passwd *ppwd = NULL;
+	if (!sb_len(&home))
+	{
+		struct passwd* ppwd = NULL;
 		getpwuid_r(getuid(), &pwd, temp, sizeof(temp), &ppwd);
-		if(ppwd) {
+		if (ppwd)
+		{
 			sb_append(&home, ppwd->pw_dir);
-		} else {
+		}
+		else
+		{
 			sb_append(&home, "~");
 		}
 	}

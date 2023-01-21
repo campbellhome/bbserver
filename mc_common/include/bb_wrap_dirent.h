@@ -7,7 +7,7 @@
 __pragma(warning(push));
 __pragma(warning(disable : 4464 4820 4255))
 #include "dirent/include/dirent.h"
-    __pragma(warning(pop))
+__pragma(warning(pop))
 #else
 #include <dirent.h>
 #endif

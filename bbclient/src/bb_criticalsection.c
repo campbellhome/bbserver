@@ -9,31 +9,31 @@
 
 #if BB_USING(BB_COMPILER_MSVC)
 
-void bb_critical_section_init(bb_critical_section *cs)
+void bb_critical_section_init(bb_critical_section* cs)
 {
 	InitializeCriticalSection(&cs->platform);
 	cs->initialized = true;
 }
 
-void bb_critical_section_shutdown(bb_critical_section *cs)
+void bb_critical_section_shutdown(bb_critical_section* cs)
 {
 	cs->initialized = false;
 	DeleteCriticalSection(&cs->platform);
 }
 
-_Acquires_lock_(cs->platform) void bb_critical_section_lock_impl(bb_critical_section *cs)
+_Acquires_lock_(cs->platform) void bb_critical_section_lock_impl(bb_critical_section* cs)
 {
 	EnterCriticalSection(&cs->platform);
 }
 
-_Releases_lock_(cs->platform) void bb_critical_section_unlock_impl(bb_critical_section *cs)
+_Releases_lock_(cs->platform) void bb_critical_section_unlock_impl(bb_critical_section* cs)
 {
 	LeaveCriticalSection(&cs->platform);
 }
 
 #else // #if BB_USING(BB_COMPILER_MSVC)
 
-void bb_critical_section_init(bb_critical_section *cs)
+void bb_critical_section_init(bb_critical_section* cs)
 {
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
@@ -43,18 +43,18 @@ void bb_critical_section_init(bb_critical_section *cs)
 	cs->initialized = true;
 }
 
-void bb_critical_section_shutdown(bb_critical_section *cs)
+void bb_critical_section_shutdown(bb_critical_section* cs)
 {
 	cs->initialized = false;
 	pthread_mutex_destroy(&cs->platform);
 }
 
-void bb_critical_section_lock_impl(bb_critical_section *cs)
+void bb_critical_section_lock_impl(bb_critical_section* cs)
 {
 	pthread_mutex_lock(&cs->platform);
 }
 
-void bb_critical_section_unlock_impl(bb_critical_section *cs)
+void bb_critical_section_unlock_impl(bb_critical_section* cs)
 {
 	pthread_mutex_unlock(&cs->platform);
 }

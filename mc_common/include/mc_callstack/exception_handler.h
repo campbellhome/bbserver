@@ -9,8 +9,8 @@ extern "C" {
 
 typedef struct _EXCEPTION_POINTERS EXCEPTION_POINTERS;
 
-typedef void(exception_handler_callback)(EXCEPTION_POINTERS *pExPtrs);
-void install_unhandled_exception_handler(exception_handler_callback *callback);
+typedef void(exception_handler_callback)(EXCEPTION_POINTERS* pExPtrs);
+void install_unhandled_exception_handler(exception_handler_callback* callback);
 
 #if defined(__cplusplus)
 }

@@ -15,8 +15,8 @@ extern "C" {
 #include "bb_common.h"
 
 typedef struct recordings_config_s recordings_config_t;
-b32 recordings_config_read(recordings_config_t *config);
-b32 recordings_config_write(recordings_config_t *config);
+b32 recordings_config_read(recordings_config_t* config);
+b32 recordings_config_write(recordings_config_t* config);
 
 #if defined(__cplusplus)
 }

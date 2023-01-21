@@ -12,7 +12,7 @@ extern "C" {
 typedef struct recorded_log_s recorded_log_t;
 typedef struct view_s view_t;
 
-b32 view_filter_visible_sql(view_t *view, recorded_log_t *log);
+b32 view_filter_visible_sql(view_t* view, recorded_log_t* log);
 
 #if defined(__cplusplus)
 }

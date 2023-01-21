@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-b32 SystemTray_Init(void *hInstance);
+b32 SystemTray_Init(void* hInstance);
 void SystemTray_Shutdown(void);
 
 #if defined(__cplusplus)

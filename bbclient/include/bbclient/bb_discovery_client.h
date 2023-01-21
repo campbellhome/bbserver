@@ -13,13 +13,14 @@
 extern "C" {
 #endif
 
-typedef struct bb_discovery_result_s {
+typedef struct bb_discovery_result_s
+{
 	u32 serverIp;
 	u16 serverPort;
 	u8 pad[2];
 } bb_discovery_result_t;
 
-bb_discovery_result_t bb_discovery_client_start(const char *applicationName, const char *sourceApplicationName, const char *deviceCode,
+bb_discovery_result_t bb_discovery_client_start(const char* applicationName, const char* sourceApplicationName, const char* deviceCode,
                                                 u32 sourceIp, u32 searchIp, u16 searchPort);
 
 #if defined(__cplusplus)

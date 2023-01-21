@@ -13,4 +13,4 @@ typedef struct tag_messageBoxes messageBoxes;
 }
 #endif
 
-float UIMessageBox_Update(messageBoxes *boxes);
+float UIMessageBox_Update(messageBoxes* boxes);

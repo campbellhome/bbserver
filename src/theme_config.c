@@ -10,9 +10,10 @@
 
 resolvedStyle g_styleConfig;
 
-typedef struct tag_defaultStyle {
-	const char *name;
-	const char *filename;
+typedef struct tag_defaultStyle
+{
+	const char* name;
+	const char* filename;
 	resolvedStyle colors;
 } defaultStyle;
 
@@ -301,16 +302,19 @@ const defaultStyle s_defaultStyleConfigs[] = {
 };
 // clang-format on
 
-static void Style_ReadConfigJson(const char *filename)
+static void Style_ReadConfigJson(const char* filename)
 {
 	sb_t path = appdata_get("bb");
 	sb_va(&path, "\\%s", filename);
-	JSON_Value *val = json_parse_file(sb_get(&path));
-	if(val) {
+	JSON_Value* val = json_parse_file(sb_get(&path));
+	if (val)
+	{
 		theme_config_t themeConfig = json_deserialize_theme_config_t(val);
-		for(u32 colorFileIndex = 0; colorFileIndex < themeConfig.colors.count; ++colorFileIndex) {
-			const color_config_t *colorConfig = themeConfig.colors.data + colorFileIndex;
-			if(colorConfig->colorName >= 0 && colorConfig->colorName < kStyleColor_Count) {
+		for (u32 colorFileIndex = 0; colorFileIndex < themeConfig.colors.count; ++colorFileIndex)
+		{
+			const color_config_t* colorConfig = themeConfig.colors.data + colorFileIndex;
+			if (colorConfig->colorName >= 0 && colorConfig->colorName < kStyleColor_Count)
+			{
 				g_styleConfig.colors[colorConfig->colorName].r = colorConfig->r;
 				g_styleConfig.colors[colorConfig->colorName].g = colorConfig->g;
 				g_styleConfig.colors[colorConfig->colorName].b = colorConfig->b;
@@ -324,13 +328,15 @@ static void Style_ReadConfigJson(const char *filename)
 	sb_reset(&path);
 }
 
-b32 Style_ReadConfig(const char *colorscheme)
+b32 Style_ReadConfig(const char* colorscheme)
 {
 	Style_ResetConfig();
 
 	b32 ret = false;
-	for(u32 i = 0; i < BB_ARRAYSIZE(s_defaultStyleConfigs); ++i) {
-		if(!bb_stricmp(colorscheme, s_defaultStyleConfigs[i].name)) {
+	for (u32 i = 0; i < BB_ARRAYSIZE(s_defaultStyleConfigs); ++i)
+	{
+		if (!bb_stricmp(colorscheme, s_defaultStyleConfigs[i].name))
+		{
 			g_styleConfig = s_defaultStyleConfigs[i].colors;
 			Style_ReadConfigJson(s_defaultStyleConfigs[i].filename);
 			ret = true;

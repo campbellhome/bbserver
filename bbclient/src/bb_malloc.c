@@ -22,12 +22,14 @@ void bb_tracked_malloc_enable(b32 enabled)
 	s_bbTrackMalloc = enabled;
 }
 
-void *bb_malloc_loc(const char *file, int line, size_t size)
+void* bb_malloc_loc(const char* file, int line, size_t size)
 {
-	void *ptr = malloc(size);
-	if(s_bbTrackMalloc) {
+	void* ptr = malloc(size);
+	if (s_bbTrackMalloc)
+	{
 		char buf[256];
-		if(bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_malloc(%zu) " BB_PTR_PREFIX "%p\n", file, line, size, ptr) < 0) {
+		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_malloc(%zu) " BB_PTR_PREFIX "%p\n", file, line, size, ptr) < 0)
+		{
 			buf[sizeof(buf) - 1] = '\0';
 		}
 #if BB_USING(BB_COMPILER_MSVC)
@@ -39,13 +41,15 @@ void *bb_malloc_loc(const char *file, int line, size_t size)
 	return ptr;
 }
 
-void *bb_realloc_loc(const char *file, int line, void *ptr, size_t size)
+void* bb_realloc_loc(const char* file, int line, void* ptr, size_t size)
 {
 	u64 oldPtr = (u64)ptr;
-	void *newPtr = realloc(ptr, size);
-	if(s_bbTrackMalloc) {
+	void* newPtr = realloc(ptr, size);
+	if (s_bbTrackMalloc)
+	{
 		char buf[256];
-		if(bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_realloc(0x%16.16llx, %zu) " BB_PTR_PREFIX "%p\n", file, line, oldPtr, size, newPtr) < 0) {
+		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_realloc(0x%16.16llx, %zu) " BB_PTR_PREFIX "%p\n", file, line, oldPtr, size, newPtr) < 0)
+		{
 			buf[sizeof(buf) - 1] = '\0';
 		}
 #if BB_USING(BB_COMPILER_MSVC)
@@ -57,11 +61,13 @@ void *bb_realloc_loc(const char *file, int line, void *ptr, size_t size)
 	return ptr;
 }
 
-void bb_free_loc(const char *file, int line, void *ptr)
+void bb_free_loc(const char* file, int line, void* ptr)
 {
-	if(s_bbTrackMalloc) {
+	if (s_bbTrackMalloc)
+	{
 		char buf[256];
-		if(bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_free(" BB_PTR_PREFIX "%p)\n", file, line, ptr) < 0) {
+		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_free(" BB_PTR_PREFIX "%p)\n", file, line, ptr) < 0)
+		{
 			buf[sizeof(buf) - 1] = '\0';
 		}
 #if BB_USING(BB_COMPILER_MSVC)
@@ -73,11 +79,13 @@ void bb_free_loc(const char *file, int line, void *ptr)
 	free(ptr);
 }
 
-void bb_log_external_alloc_loc(const char *file, int line, void *ptr)
+void bb_log_external_alloc_loc(const char* file, int line, void* ptr)
 {
-	if(s_bbTrackMalloc) {
+	if (s_bbTrackMalloc)
+	{
 		char buf[256];
-		if(bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_external_alloc(" BB_PTR_PREFIX "%p)\n", file, line, ptr) < 0) {
+		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_external_alloc(" BB_PTR_PREFIX "%p)\n", file, line, ptr) < 0)
+		{
 			buf[sizeof(buf) - 1] = '\0';
 		}
 #if BB_USING(BB_COMPILER_MSVC)

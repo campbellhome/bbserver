@@ -16,26 +16,27 @@
 
 using namespace ImGui;
 
-static void CheckboxThreadVisiblity(view_t *view, u32 startIndex)
+static void CheckboxThreadVisiblity(view_t* view, u32 startIndex)
 {
-	view_threads_t *threads = &view->threads;
-	view_thread_t *t = threads->data + startIndex;
+	view_threads_t* threads = &view->threads;
+	view_thread_t* t = threads->data + startIndex;
 	PushID((int)startIndex);
-	if(Checkbox("", &t->visible)) {
+	if (Checkbox("", &t->visible))
+	{
 		view->visibleLogsDirty = true;
 	}
 	PopID();
 }
 
-void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
+void UIRecordedView_ThreadTreeNode(view_t* view, u32 startIndex)
 {
-	recorded_threads_t *threads = &view->session->threads;
-	view_threads_t *viewThreads = &view->threads;
+	recorded_threads_t* threads = &view->session->threads;
+	view_threads_t* viewThreads = &view->threads;
 
-	recorded_thread_t *t = threads->data + startIndex;
-	view_thread_t *vt = viewThreads->data + startIndex;
+	recorded_thread_t* t = threads->data + startIndex;
+	view_thread_t* vt = viewThreads->data + startIndex;
 
-	const char *threadName = t->threadName;
+	const char* threadName = t->threadName;
 	CheckboxThreadVisiblity(view, startIndex);
 
 	ImGui::SameLine();
@@ -45,11 +46,13 @@ void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
 	ScopedTextShadows shadows(logLevel);
 	ImVec2 pos = ImGui::GetIconPosForText();
 	ImGui::TextShadow(threadName);
-	if(ImGui::Selectable(threadName, vt->selected != 0)) {
+	if (ImGui::Selectable(threadName, vt->selected != 0))
+	{
 		// handle click
 	}
 
-	if(IsTooltipActive()) {
+	if (IsTooltipActive())
+	{
 		BeginTooltip();
 		UIRecordedView_TooltipLevelText("VeryVerbose: %u", t->logCount[kBBLogLevel_VeryVerbose], kBBLogLevel_VeryVerbose);
 		UIRecordedView_TooltipLevelText("Verbose: %u", t->logCount[kBBLogLevel_Verbose], kBBLogLevel_Verbose);
@@ -62,39 +65,49 @@ void UIRecordedView_ThreadTreeNode(view_t *view, u32 startIndex)
 	}
 }
 
-void UIViewThreads_Update(view_t *view)
+void UIViewThreads_Update(view_t* view)
 {
-	if(view->threads.count > 1) {
-		if(ImGui::CollapsingHeader("Threads", ImGuiTreeNodeFlags_None)) {
+	if (view->threads.count > 1)
+	{
+		if (ImGui::CollapsingHeader("Threads", ImGuiTreeNodeFlags_None))
+		{
 			ImGui::PushID("ThreadsHeader");
 
 			u32 checkedCount = 0;
 			u32 uncheckedCount = 0;
-			for(u32 index = 0; index < view->threads.count; ++index) {
-				view_thread_t *vf = view->threads.data + index;
-				if(vf->visible) {
+			for (u32 index = 0; index < view->threads.count; ++index)
+			{
+				view_thread_t* vf = view->threads.data + index;
+				if (vf->visible)
+				{
 					++checkedCount;
-				} else {
+				}
+				else
+				{
 					++uncheckedCount;
 				}
 			}
 
 			ImGui::PushID(-1);
 			bool allChecked = uncheckedCount == 0;
-			if(checkedCount && uncheckedCount) {
+			if (checkedCount && uncheckedCount)
+			{
 				ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
 			}
-			if(ImGui::Checkbox("", &allChecked)) {
+			if (ImGui::Checkbox("", &allChecked))
+			{
 				view_set_all_thread_visibility(view, allChecked);
 			}
-			if(checkedCount && uncheckedCount) {
+			if (checkedCount && uncheckedCount)
+			{
 				ImGui::PopItemFlag();
 			}
 			ImGui::SameLine();
 			ImGui::TextUnformatted("All Threads");
 			ImGui::PopID();
 
-			for(u32 index = 0; index < view->threads.count; ++index) {
+			for (u32 index = 0; index < view->threads.count; ++index)
+			{
 				UIRecordedView_ThreadTreeNode(view, index);
 			}
 			ImGui::PopID();

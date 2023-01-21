@@ -19,6 +19,6 @@ __pragma(warning(disable : 4711 5045 4820 4255 4668 4574 4365))
 #define WIN32_LEAN_AND_MEAN 1
 #include <WS2tcpip.h>
 #include <winsock2.h>
-    __pragma(warning(pop))
+__pragma(warning(pop))
 
 #endif

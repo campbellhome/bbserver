@@ -1,35 +1,50 @@
-# Documentation - Overview: http://clang.llvm.org/docs/ClangFormat.html
-# Documentation - Style Options: http://clang.llvm.org/docs/ClangFormatStyleOptions.html
-
 AccessModifierOffset: -4
 TabWidth: 4
 IndentWidth: 4
-BreakBeforeBraces: Linux # work has Allman
 AllowShortIfStatementsOnASingleLine: false
-# not in 3.8 FixNamespaceComments: true
-# ForEachMacros: ['RANGES_FOR', 'FOREACH']
 IndentCaseLabels: false
-IndentWrappedFunctionNames: false
 ColumnLimit: 0
-Standard: Cpp11
+Standard: c++20
 NamespaceIndentation: All
-PointerAlignment: Right
+PointerAlignment: Left
 BreakConstructorInitializersBeforeComma: true
 Cpp11BracedListStyle: false
-SpaceAfterCStyleCast: false
-# not in 3.8 SpaceAfterTemplateKeyword: false
-SpaceBeforeParens: Never # Always, Never, ControlStatements
-SpacesInAngles: true
-SpacesInCStyleCastParentheses: false
-SpacesInParentheses: false # work has true
-SpacesInSquareBrackets: false
-UseTab: ForIndentation # Always, Never, ForIndentation, ForContinuationAndIndentation
+SpaceBeforeParens: ControlStatements
+#UseTab: Always
+UseTab: ForIndentation
 #AlignConsecutiveAssignments: true
 #AlignConsecutiveDeclarations: true
 AlignTrailingComments: true
 AllowShortCaseLabelsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: true
-ReflowComments: true
+WhitespaceSensitiveMacros: ['__pragma']
+StatementMacros: ['__pragma']
+IndentExternBlock: NoIndent
 
+# equivalent to BreakBeforeBraces: Allman except setting BeforeLambdaBody: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel:  true
+  AfterClass:      true
+  AfterControlStatement: Always
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  true
+  AfterObjCDeclaration: true
+  AfterStruct:     true
+  AfterUnion:      true
+  AfterExternBlock: true
+  BeforeCatch:     true
+  BeforeElse:      true
+  BeforeLambdaBody: false
+  BeforeWhile:     false
+  IndentBraces:    false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+IncludeCategories: 
+  - Regex:           '.*'
+    Priority:        1
+IncludeIsMainRegex: '$'
 SortIncludes: true
-# not in 3.8 SortUsingDeclarations: true

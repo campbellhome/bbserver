@@ -6,64 +6,81 @@
 
 #include <string.h>
 
-span_t tokenize(const char **bufferCursor, const char *delimiters)
+span_t tokenize(const char** bufferCursor, const char* delimiters)
 {
 	span_t ret = { BB_EMPTY_INITIALIZER };
 
-	if(!delimiters) {
+	if (!delimiters)
+	{
 		delimiters = " \t\r\n";
 	}
 
-	const char *buffer = *bufferCursor;
+	const char* buffer = *bufferCursor;
 
-	if(!buffer || !*buffer) {
+	if (!buffer || !*buffer)
+	{
 		return ret;
 	}
 
 	// skip whitespace
-	while(*buffer && strchr(delimiters, *buffer)) {
+	while (*buffer && strchr(delimiters, *buffer))
+	{
 		++buffer;
 	}
 
-	if(!*buffer) {
+	if (!*buffer)
+	{
 		return ret;
 	}
 
 	// look for '\"'
 	b32 isQuotedString = (*buffer == '\"');
-	if(isQuotedString) {
+	if (isQuotedString)
+	{
 		++buffer;
 	}
 
 	// step to end of string
-	const char *start = buffer;
+	const char* start = buffer;
 	b32 bBackslash = false;
-	if(isQuotedString) {
+	if (isQuotedString)
+	{
 		b32 bMultilineDelimiter = strchr(delimiters, '\n') != NULL;
-		while(*buffer) {
-			if(bMultilineDelimiter && *buffer == '\n')
+		while (*buffer)
+		{
+			if (bMultilineDelimiter && *buffer == '\n')
 				break;
 
-			if(bBackslash) {
+			if (bBackslash)
+			{
 				bBackslash = false;
-			} else {
-				if(*buffer == '\\') {
+			}
+			else
+			{
+				if (*buffer == '\\')
+				{
 					bBackslash = true;
-				} else if(*buffer == '\"') {
+				}
+				else if (*buffer == '\"')
+				{
 					break;
 				}
 			}
 			++buffer;
 		}
-	} else {
-		while(*buffer && !strchr(delimiters, *buffer)) {
+	}
+	else
+	{
+		while (*buffer && !strchr(delimiters, *buffer))
+		{
 			++buffer;
 		}
 	}
 
 	// remove trailing '\"'
-	const char *end = buffer;
-	if(isQuotedString && *end == '\"') {
+	const char* end = buffer;
+	if (isQuotedString && *end == '\"')
+	{
 		buffer++;
 	}
 
@@ -75,31 +92,43 @@ span_t tokenize(const char **bufferCursor, const char *delimiters)
 	return ret;
 }
 
-span_t tokenizeLine(span_t *cursor)
+span_t tokenizeLine(span_t* cursor)
 {
 	span_t ret = { BB_EMPTY_INITIALIZER };
-	if(cursor && cursor->start) {
+	if (cursor && cursor->start)
+	{
 		ret.start = cursor->start;
 		ret.end = ret.start;
-		while(ret.end <= cursor->end) {
-			if(*ret.end == '\n') {
+		while (ret.end <= cursor->end)
+		{
+			if (*ret.end == '\n')
+			{
 				break;
-			} else if(*ret.end == '\r' && !(ret.end < cursor->end && ret.end[1] == '\n')) {
+			}
+			else if (*ret.end == '\r' && !(ret.end < cursor->end && ret.end[1] == '\n'))
+			{
 				break;
-			} else {
+			}
+			else
+			{
 				++ret.end;
 			}
 		}
 
-		if(ret.end < cursor->end) {
+		if (ret.end < cursor->end)
+		{
 			cursor->start = ret.end + 1;
-		} else {
+		}
+		else
+		{
 			cursor->start = NULL;
 		}
-		if(!cursor->start && ret.end - ret.start == 1) {
+		if (!cursor->start && ret.end - ret.start == 1)
+		{
 			ret.start = ret.end = NULL;
 		}
-		if(ret.end > ret.start && ret.end[-1] == '\r') {
+		if (ret.end > ret.start && ret.end[-1] == '\r')
+		{
 			--ret.end;
 		}
 	}
@@ -110,8 +139,10 @@ span_t tokenizeNthLine(span_t span, u32 lineIndex)
 {
 	span_t subLineSpan = { BB_EMPTY_INITIALIZER };
 	u32 subLineIndex = 0;
-	for(span_t line = tokenizeLine(&span); line.start; line = tokenizeLine(&span)) {
-		if(subLineIndex == lineIndex) {
+	for (span_t line = tokenizeLine(&span); line.start; line = tokenizeLine(&span))
+	{
+		if (subLineIndex == lineIndex)
+		{
 			subLineSpan = line;
 			break;
 		}

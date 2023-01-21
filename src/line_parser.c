@@ -9,65 +9,83 @@
 
 #include <stdlib.h>
 
-static char *next_token_inplace(char **bufferCursor, const char *delimiters, u32 *lineIndex, char commentCharacter)
+static char* next_token_inplace(char** bufferCursor, const char* delimiters, u32* lineIndex, char commentCharacter)
 {
-	char *buffer = *bufferCursor;
-	char *original = buffer;
+	char* buffer = *bufferCursor;
+	char* original = buffer;
 	char *start, *end;
 	b32 isPastComments = false;
 	b32 isQuotedString;
-	while(!isPastComments) {
-		if(!buffer) {
+	while (!isPastComments)
+	{
+		if (!buffer)
+		{
 			return NULL;
 		}
 
 		// skip whitespace
-		while(*buffer && strchr(delimiters, *buffer)) {
+		while (*buffer && strchr(delimiters, *buffer))
+		{
 			++buffer;
 		}
 
-		if(!*buffer) {
+		if (!*buffer)
+		{
 			return NULL;
 		}
 
 		// skip comments
-		if(*buffer == commentCharacter) {
+		if (*buffer == commentCharacter)
+		{
 			buffer = strchr(buffer, '\n');
-			if(buffer) {
+			if (buffer)
+			{
 				++buffer;
 			}
-		} else {
+		}
+		else
+		{
 			isPastComments = true;
 		}
 	}
 
 	// look for '\"'
 	isQuotedString = (*buffer == '\"');
-	if(isQuotedString) {
+	if (isQuotedString)
+	{
 		++buffer;
 	}
 
 	// step to end of string
 	start = buffer;
-	if(isQuotedString) {
-		while(*buffer && *buffer != '\"' && *buffer != '\n') {
+	if (isQuotedString)
+	{
+		while (*buffer && *buffer != '\"' && *buffer != '\n')
+		{
 			++buffer;
 		}
-	} else {
-		while(*buffer && !strchr(delimiters, *buffer)) {
+	}
+	else
+	{
+		while (*buffer && !strchr(delimiters, *buffer))
+		{
 			++buffer;
 		}
 	}
 
 	// remove trailing '\"'
 	end = buffer;
-	if(isQuotedString && *end == '\"') {
+	if (isQuotedString && *end == '\"')
+	{
 		buffer++;
 	}
 
-	if(lineIndex) {
-		while(original <= buffer) {
-			if(*original++ == '\n') {
+	if (lineIndex)
+	{
+		while (original <= buffer)
+		{
+			if (*original++ == '\n')
+			{
 				++*lineIndex;
 			}
 		}
@@ -78,25 +96,25 @@ static char *next_token_inplace(char **bufferCursor, const char *delimiters, u32
 	return start;
 }
 
-char *line_parser_next_line(line_parser_t *parser)
+char* line_parser_next_line(line_parser_t* parser)
 {
-	char *line = next_token_inplace(&parser->buffer, "\r\n", &parser->lineIndex, parser->commentCharacter);
+	char* line = next_token_inplace(&parser->buffer, "\r\n", &parser->lineIndex, parser->commentCharacter);
 	parser->tokenCursor = line;
 	return line;
 }
 
-char *line_parser_next_token(line_parser_t *parser)
+char* line_parser_next_token(line_parser_t* parser)
 {
 	return next_token_inplace(&parser->tokenCursor, " \t", NULL, parser->commentCharacter);
 }
 
-b32 line_parser_error(line_parser_t *parser, const char *reason)
+b32 line_parser_error(line_parser_t* parser, const char* reason)
 {
 	BB_ERROR("Config::Parser", "%s:%u: %s\n", parser->source, parser->lineIndex, reason);
 	return 0;
 }
 
-void line_parser_init(line_parser_t *parser, const char *source, char *buffer)
+void line_parser_init(line_parser_t* parser, const char* source, char* buffer)
 {
 	memset(parser, 0, sizeof(*parser));
 	parser->source = source;
@@ -104,31 +122,38 @@ void line_parser_init(line_parser_t *parser, const char *source, char *buffer)
 	parser->commentCharacter = '#';
 }
 
-u32 line_parser_read_version(line_parser_t *parser)
+u32 line_parser_read_version(line_parser_t* parser)
 {
-	char *token;
+	char* token;
 	u32 version;
 	line_parser_next_line(parser);
 	token = line_parser_next_token(parser);
-	if(!token)
+	if (!token)
 		return line_parser_error(parser, "missing initial version");
-	if(*token != '[') {
+	if (*token != '[')
+	{
 		return line_parser_error(parser, va("expected initial version - instead saw '%s'", token));
-	} else {
-		char *end = token + 1;
-		while(*end && *end != ']') {
-			if(*end < '0' || *end > '9') {
+	}
+	else
+	{
+		char* end = token + 1;
+		while (*end && *end != ']')
+		{
+			if (*end < '0' || *end > '9')
+			{
 				return line_parser_error(parser, va("initial version format is [int] - instead saw '%s'", token));
 			}
 			++end;
 		}
-		if(*end != ']' || *(end + 1)) {
+		if (*end != ']' || *(end + 1))
+		{
 			return line_parser_error(parser, va("initial version format is [int] - instead saw '%s'", token));
 		}
 	}
 	version = (u32)atoi(token + 1);
 	token = line_parser_next_token(parser);
-	if(token) {
+	if (token)
+	{
 		return line_parser_error(parser, va("extra characters after version: '%s'", token));
 	}
 	return version;

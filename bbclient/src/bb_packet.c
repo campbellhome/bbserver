@@ -10,7 +10,7 @@
 #include "bbclient/bb_serialize.h"
 #include <string.h>
 
-static b32 bbpacket_serialize_header(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_header(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	bbserialize_u64(ser, &decoded->header.timestamp);
 	bbserialize_u64(ser, &decoded->header.threadId);
@@ -19,10 +19,11 @@ static b32 bbpacket_serialize_header(bb_serialize_t *ser, bb_decoded_packet_t *d
 	return ser->state == kBBSerialize_Ok;
 }
 
-static b32 bbpacket_serialize_app_info_v1(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_app_info_v1(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_app_info_t *packet = &decoded->packet.appInfo;
-	if(ser->reading) {
+	bb_packet_app_info_t* packet = &decoded->packet.appInfo;
+	if (ser->reading)
+	{
 		memset(packet, 0, sizeof(*packet));
 	}
 	bbserialize_u64(ser, &packet->initialTimestamp);
@@ -30,10 +31,11 @@ static b32 bbpacket_serialize_app_info_v1(bb_serialize_t *ser, bb_decoded_packet
 	return bbserialize_remaining_text(ser, packet->applicationName);
 }
 
-static b32 bbpacket_serialize_app_info_v2(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_app_info_v2(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_app_info_t *packet = &decoded->packet.appInfo;
-	if(ser->reading) {
+	bb_packet_app_info_t* packet = &decoded->packet.appInfo;
+	if (ser->reading)
+	{
 		memset(packet, 0, sizeof(*packet));
 	}
 	bbserialize_u64(ser, &packet->initialTimestamp);
@@ -42,10 +44,11 @@ static b32 bbpacket_serialize_app_info_v2(bb_serialize_t *ser, bb_decoded_packet
 	return bbserialize_remaining_text(ser, packet->applicationName);
 }
 
-static b32 bbpacket_serialize_app_info_v3(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_app_info_v3(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_app_info_t *packet = &decoded->packet.appInfo;
-	if(ser->reading) {
+	bb_packet_app_info_t* packet = &decoded->packet.appInfo;
+	if (ser->reading)
+	{
 		memset(packet, 0, sizeof(*packet));
 	}
 	bbserialize_u64(ser, &packet->initialTimestamp);
@@ -55,10 +58,11 @@ static b32 bbpacket_serialize_app_info_v3(bb_serialize_t *ser, bb_decoded_packet
 	return bbserialize_remaining_text(ser, packet->applicationName);
 }
 
-static b32 bbpacket_serialize_app_info(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_app_info(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_app_info_t *packet = &decoded->packet.appInfo;
-	if(ser->reading) {
+	bb_packet_app_info_t* packet = &decoded->packet.appInfo;
+	if (ser->reading)
+	{
 		memset(packet, 0, sizeof(*packet));
 	}
 	bbserialize_u64(ser, &packet->initialTimestamp);
@@ -69,27 +73,28 @@ static b32 bbpacket_serialize_app_info(bb_serialize_t *ser, bb_decoded_packet_t 
 	return bbserialize_remaining_text(ser, packet->applicationName);
 }
 
-static b32 bbpacket_serialize_user(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_user(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_user_t *user = &decoded->packet.user;
+	bb_packet_user_t* user = &decoded->packet.user;
 	return bbserialize_remaining_buffer(ser, user->data, user->len);
 }
 
-static b32 bbpacket_serialize_register_id(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_register_id(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_register_id_t *registerId = &decoded->packet.registerId;
+	bb_packet_register_id_t* registerId = &decoded->packet.registerId;
 	bbserialize_u32(ser, &registerId->id);
 	return bbserialize_remaining_text(ser, registerId->name);
 }
 
-static b32 bbpacket_serialize_text(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_text(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	return bbserialize_remaining_text(ser, decoded->packet.text.text);
 }
 
-static b32 bbpacket_serialize_log_text_v1(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_log_text_v1(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	if(ser->reading) {
+	if (ser->reading)
+	{
 		decoded->packet.logText.colors.fg = kBBColor_Default;
 		decoded->packet.logText.colors.bg = kBBColor_Default;
 		decoded->packet.logText.pieInstance = 0;
@@ -99,58 +104,59 @@ static b32 bbpacket_serialize_log_text_v1(bb_serialize_t *ser, bb_decoded_packet
 	return bbserialize_remaining_text(ser, decoded->packet.logText.text);
 }
 
-static b32 bbpacket_serialize_log_text_v2(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_log_text_v2(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	if(ser->reading) {
+	if (ser->reading)
+	{
 		decoded->packet.logText.pieInstance = 0;
 	}
 	bbserialize_u32(ser, &decoded->packet.logText.categoryId);
 	bbserialize_u32(ser, &decoded->packet.logText.level);
-	bbserialize_s32(ser, (s32 *)&decoded->packet.logText.colors.fg);
-	bbserialize_s32(ser, (s32 *)&decoded->packet.logText.colors.bg);
+	bbserialize_s32(ser, (s32*)&decoded->packet.logText.colors.fg);
+	bbserialize_s32(ser, (s32*)&decoded->packet.logText.colors.bg);
 	return bbserialize_remaining_text(ser, decoded->packet.logText.text);
 }
 
-static b32 bbpacket_serialize_log_text(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_log_text(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	bbserialize_u32(ser, &decoded->packet.logText.categoryId);
 	bbserialize_u32(ser, &decoded->packet.logText.level);
 	bbserialize_s32(ser, &decoded->packet.logText.pieInstance);
-	bbserialize_s32(ser, (s32 *)&decoded->packet.logText.colors.fg);
-	bbserialize_s32(ser, (s32 *)&decoded->packet.logText.colors.bg);
+	bbserialize_s32(ser, (s32*)&decoded->packet.logText.colors.fg);
+	bbserialize_s32(ser, (s32*)&decoded->packet.logText.colors.bg);
 	return bbserialize_remaining_text(ser, decoded->packet.logText.text);
 }
 
-static b32 bbpacket_serialize_frameend(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_frameend(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	return bbserialize_double(ser, &decoded->packet.frameEnd.milliseconds);
 }
 
-static b32 bbpacket_serialize_recording_info(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_recording_info(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	u16 len = 0;
 	bbserialize_text(ser, decoded->packet.recordingInfo.machineName, &len);
 	return bbserialize_text(ser, decoded->packet.recordingInfo.recordingName, &len);
 }
 
-static b32 bbpacket_serialize_console_autocomplete_request(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_console_autocomplete_request(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_console_autocomplete_request_t *consoleAutocompleteRequest = &decoded->packet.consoleAutocompleteRequest;
+	bb_packet_console_autocomplete_request_t* consoleAutocompleteRequest = &decoded->packet.consoleAutocompleteRequest;
 	bbserialize_u32(ser, &consoleAutocompleteRequest->id);
 	return bbserialize_remaining_text(ser, consoleAutocompleteRequest->text);
 }
 
-static b32 bbpacket_serialize_console_autocomplete_response_header(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_console_autocomplete_response_header(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_console_autocomplete_response_header_t *consoleAutocompleteResponseHeader = &decoded->packet.consoleAutocompleteResponseHeader;
+	bb_packet_console_autocomplete_response_header_t* consoleAutocompleteResponseHeader = &decoded->packet.consoleAutocompleteResponseHeader;
 	bbserialize_u32(ser, &consoleAutocompleteResponseHeader->id);
 	bbserialize_u32(ser, &consoleAutocompleteResponseHeader->total);
 	return bbserialize_s32(ser, &consoleAutocompleteResponseHeader->reuse);
 }
 
-static b32 bbpacket_serialize_console_autocomplete_response_entry(bb_serialize_t *ser, bb_decoded_packet_t *decoded)
+static b32 bbpacket_serialize_console_autocomplete_response_entry(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
-	bb_packet_console_autocomplete_response_entry_t *consoleAutocompleteResponseEntry = &decoded->packet.consoleAutocompleteResponseEntry;
+	bb_packet_console_autocomplete_response_entry_t* consoleAutocompleteResponseEntry = &decoded->packet.consoleAutocompleteResponseEntry;
 	bbserialize_u32(ser, &consoleAutocompleteResponseEntry->id);
 	bbserialize_s32(ser, &consoleAutocompleteResponseEntry->command);
 	bbserialize_u32(ser, &consoleAutocompleteResponseEntry->flags);
@@ -159,7 +165,7 @@ static b32 bbpacket_serialize_console_autocomplete_response_entry(bb_serialize_t
 	return bbserialize_text(ser, consoleAutocompleteResponseEntry->description, &len);
 }
 
-b32 bbpacket_deserialize(u8 *buffer, u16 len, bb_decoded_packet_t *decoded)
+b32 bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded)
 {
 	u8 type;
 	bb_serialize_t ser;
@@ -168,7 +174,8 @@ b32 bbpacket_deserialize(u8 *buffer, u16 len, bb_decoded_packet_t *decoded)
 	bbserialize_u8(&ser, &type);
 	bbpacket_serialize_header(&ser, decoded);
 	decoded->type = (bb_packet_type_e)type;
-	switch(decoded->type) {
+	switch (decoded->type)
+	{
 	case kBBPacketType_AppInfo_v1:
 		return bbpacket_serialize_app_info_v1(&ser, decoded);
 
@@ -230,7 +237,7 @@ b32 bbpacket_deserialize(u8 *buffer, u16 len, bb_decoded_packet_t *decoded)
 	}
 }
 
-u16 bbpacket_serialize(bb_decoded_packet_t *source, u8 *buffer, u16 len)
+u16 bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len)
 {
 	u8 type;
 	bb_serialize_t ser;
@@ -238,7 +245,8 @@ u16 bbpacket_serialize(bb_decoded_packet_t *source, u8 *buffer, u16 len)
 	type = (u8)source->type;
 	bbserialize_u8(&ser, &type);
 	bbpacket_serialize_header(&ser, source);
-	switch(source->type) {
+	switch (source->type)
+	{
 	case kBBPacketType_AppInfo_v1:
 		bbpacket_serialize_app_info_v1(&ser, source);
 		break;
@@ -315,9 +323,12 @@ u16 bbpacket_serialize(bb_decoded_packet_t *source, u8 *buffer, u16 len)
 		return 0;
 	}
 
-	if(ser.state == kBBSerialize_Ok) {
+	if (ser.state == kBBSerialize_Ok)
+	{
 		return (u16)ser.nCursorBytes; // #TODO: bb_serialize_t len should be u16 (or everything else should be u32)
-	} else {
+	}
+	else
+	{
 		return 0;
 	}
 }

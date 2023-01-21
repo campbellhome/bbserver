@@ -12,7 +12,7 @@ void Imgui_Core_EndFrame(ImVec4 clear_col);
 extern "C" {
 #endif
 
-b32 Imgui_Core_Init(const char *cmdline);
+b32 Imgui_Core_Init(const char* cmdline);
 void Imgui_Core_Shutdown(void);
 
 void Imgui_Core_ShutdownWindow(void);
@@ -24,7 +24,7 @@ void Imgui_Core_UnhideWindow(void);
 void Imgui_Core_MinimizeWindow(void);
 void Imgui_Core_BringWindowToFront(void);
 void Imgui_Core_FlashWindow(b32 bFlash);
-void Imgui_Core_SetWindowText(const char *text);
+void Imgui_Core_SetWindowText(const char* text);
 void Imgui_Core_SetDebugFocusChange(b32 bDebugFocusChange);
 
 void Imgui_Core_SetDpiScale(float dpiScale);
@@ -40,8 +40,8 @@ void Imgui_Core_RequestRender(void);
 void Imgui_Core_RequestShutDown(void);
 b32 Imgui_Core_IsShuttingDown(void);
 
-void Imgui_Core_SetColorScheme(const char *colorscheme);
-const char *Imgui_Core_GetColorScheme(void);
+void Imgui_Core_SetColorScheme(const char* colorscheme);
+const char* Imgui_Core_GetColorScheme(void);
 
 b32 Imgui_Core_GetAndClearDirtyWindowPlacement(void);
 

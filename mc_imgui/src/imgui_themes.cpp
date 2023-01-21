@@ -12,10 +12,10 @@ void Style_Init()
 	s_defaultStyle = ImGui::GetStyle();
 }
 
-void Style_Apply(const char *colorscheme)
+void Style_Apply(const char* colorscheme)
 {
 	float dpiScale = Imgui_Core_GetDpiScale();
-	ImGuiStyle &s = ImGui::GetStyle();
+	ImGuiStyle& s = ImGui::GetStyle();
 	s = s_defaultStyle;
 	s.WindowPadding.x *= dpiScale;
 	s.WindowPadding.y *= dpiScale;
@@ -43,19 +43,28 @@ void Style_Apply(const char *colorscheme)
 	s.DisplaySafeAreaPadding.x *= dpiScale;
 	s.DisplaySafeAreaPadding.y *= dpiScale;
 
-	if(!strcmp(colorscheme, "Visual Studio Dark")) {
+	if (!strcmp(colorscheme, "Visual Studio Dark"))
+	{
 		StyleColorsVSDark();
-	} else if(!strcmp(colorscheme, "Classic")) {
+	}
+	else if (!strcmp(colorscheme, "Classic"))
+	{
 		ImGui::StyleColorsClassic();
-	} else if(!strcmp(colorscheme, "Light")) {
+	}
+	else if (!strcmp(colorscheme, "Light"))
+	{
 		ImGui::StyleColorsLight();
 		s.ScrollbarSize = 18.0f * dpiScale;
 		s.ScrollbarRounding = 4.0f * dpiScale;
 		s.Colors[ImGuiCol_TitleBgActive] = s.Colors[ImGuiCol_TabActive];
 		s.Colors[ImGuiCol_PopupBg] = ImVec4(0.8f, 0.8f, 0.8f, 1.f);
-	} else if(!strcmp(colorscheme, "Windows")) {
+	}
+	else if (!strcmp(colorscheme, "Windows"))
+	{
 		StyleColorsWindows();
-	} else /*if(!strcmp(colorscheme, "Dark"))*/ {
+	}
+	else /*if(!strcmp(colorscheme, "Dark"))*/
+	{
 		ImGui::StyleColorsDark();
 		// modal background for default Dark theme looks like a non-responding Window
 		ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
@@ -65,8 +74,8 @@ void Style_Apply(const char *colorscheme)
 void StyleColorsVSDark()
 {
 	ImGui::StyleColorsClassic();
-	ImGuiStyle *style = &ImGui::GetStyle();
-	ImVec4 *colors = style->Colors;
+	ImGuiStyle* style = &ImGui::GetStyle();
+	ImVec4* colors = style->Colors;
 	colors[ImGuiCol_TitleBgActive] = ImColor(63, 63, 70, 255); // VS Dark Active Tab
 	colors[ImGuiCol_TitleBg] = ImColor(45, 45, 48, 255);       // VS Dark Inactive Tab
 	colors[ImGuiCol_WindowBg] = ImColor(42, 42, 44, 255);      // VS Dark Output Window
@@ -80,8 +89,8 @@ void StyleColorsVSDark()
 void StyleColorsWindows()
 {
 	ImGui::StyleColorsLight();
-	ImGuiStyle *style = &ImGui::GetStyle();
-	ImVec4 *colors = style->Colors;
+	ImGuiStyle* style = &ImGui::GetStyle();
+	ImVec4* colors = style->Colors;
 
 	float dpiScale = Imgui_Core_GetDpiScale();
 	float hspacing = 8 * dpiScale;

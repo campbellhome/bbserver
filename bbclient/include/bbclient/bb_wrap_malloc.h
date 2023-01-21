@@ -7,8 +7,8 @@
 __pragma(warning(push));
 __pragma(warning(disable : 4820))
 #include <malloc.h>
-    __pragma(warning(pop))
-#elif(defined(BB_FORCE_PLATFORM_ORBIS) && BB_FORCE_PLATFORM_ORBIS) || (defined(BB_FORCE_PLATFORM_PROSPERO) && BB_FORCE_PLATFORM_PROSPERO)
+__pragma(warning(pop))
+#elif (defined(BB_FORCE_PLATFORM_ORBIS) && BB_FORCE_PLATFORM_ORBIS) || (defined(BB_FORCE_PLATFORM_PROSPERO) && BB_FORCE_PLATFORM_PROSPERO)
 #include <stdlib.h>
 #else
 #include <malloc.h>

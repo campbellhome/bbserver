@@ -17,12 +17,12 @@ BB_WARNING_DISABLE(4710) // function not inlined
 #include <stdint.h>
 #endif
 
-static const char *s_categoryNames[] = {
+static const char* s_categoryNames[] = {
 	"dynamic::category::thing",
 	"dynamic::monkey::banana",
 };
 
-static const char *s_pathNames[] = {
+static const char* s_pathNames[] = {
 	"C:\\Windows\\System32\\user32.dll",
 	"C:\\Windows\\Fonts\\Consola.ttf",
 	"D:\\bin\\wsl-terminal\\vim.exe",
@@ -30,19 +30,21 @@ static const char *s_pathNames[] = {
 
 static b32 s_bQuit = false;
 
-static void incoming_packet_handler(const bb_decoded_packet_t *decoded, void *context)
+static void incoming_packet_handler(const bb_decoded_packet_t* decoded, void* context)
 {
 	(void)context;
-	if(decoded->type == kBBPacketType_ConsoleCommand) {
-		const char *text = decoded->packet.consoleCommand.text;
+	if (decoded->type == kBBPacketType_ConsoleCommand)
+	{
+		const char* text = decoded->packet.consoleCommand.text;
 		BB_LOG_A("Console", "^:] %s\n", text);
-		if(!bb_stricmp(text, "quit")) {
+		if (!bb_stricmp(text, "quit"))
+		{
 			s_bQuit = true;
 		}
 	}
 }
 
-int main(int argc, const char **argv)
+int main(int argc, const char** argv)
 {
 	uint64_t start = bb_current_time_ms();
 	uint32_t categoryIndex = 0;
@@ -87,27 +89,32 @@ int main(int argc, const char **argv)
 	BB_LOG_A("test::unicode::utf8", u8"\u2122");       // ™
 
 	start = bb_current_time_ms();
-	while(BB_IS_CONNECTED()) {
+	while (BB_IS_CONNECTED())
+	{
 		bb_sleep_ms(160);
 		BB_TICK();
 
 		BB_LOG("test::category", "new frame");
 
 		BB_LOG_DYNAMIC(s_pathNames[pathIndex++], 1001, s_categoryNames[categoryIndex++], "This is a %s test!\n", "**DYNAMIC**");
-		if(pathIndex >= BB_ARRAYSIZE(s_pathNames)) {
+		if (pathIndex >= BB_ARRAYSIZE(s_pathNames))
+		{
 			pathIndex = 0;
 		}
-		if(categoryIndex >= BB_ARRAYSIZE(s_categoryNames)) {
+		if (categoryIndex >= BB_ARRAYSIZE(s_categoryNames))
+		{
 			categoryIndex = 0;
 		}
 
-		if(bb_current_time_ms() - start > 300) {
+		if (bb_current_time_ms() - start > 300)
+		{
 			break;
 		}
 	}
 
 	s_bQuit = true;
-	while(BB_IS_CONNECTED() && !s_bQuit) {
+	while (BB_IS_CONNECTED() && !s_bQuit)
+	{
 		BB_TICK();
 		bb_sleep_ms(50);
 	}
@@ -117,7 +124,8 @@ int main(int argc, const char **argv)
 	bb_disconnect();
 	bb_connect(0, 0);
 
-	while(BB_IS_CONNECTED() && !s_bQuit) {
+	while (BB_IS_CONNECTED() && !s_bQuit)
+	{
 		BB_TICK();
 		BB_LOG("test::frame", "-----------------------------------------------------");
 		BB_LOG("test::spam1", "some data");

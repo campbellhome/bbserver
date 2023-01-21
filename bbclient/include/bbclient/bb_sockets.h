@@ -102,7 +102,7 @@ extern "C" {
 
 b32 bbnet_init(void);
 void bbnet_shutdown(void);
-void bbnet_gracefulclose(bb_socket *socket);
+void bbnet_gracefulclose(bb_socket* socket);
 int bbnet_socket_nodelay(bb_socket socket, b32 nodelay);
 int bbnet_socket_linger(bb_socket socket, b32 enabled, u16 seconds);
 int bbnet_socket_reuseaddr(bb_socket socket, int reuseAddr);

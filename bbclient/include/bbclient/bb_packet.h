@@ -13,7 +13,8 @@
 extern "C" {
 #endif
 
-typedef enum {
+typedef enum
+{
 	kBBPacketType_Invalid,
 
 	//
@@ -52,14 +53,16 @@ typedef enum {
 
 } bb_packet_type_e;
 
-typedef struct bb_packet_header_s {
+typedef struct bb_packet_header_s
+{
 	u64 timestamp;
 	u64 threadId;
 	u32 fileId;
 	u32 line;
 } bb_packet_header_t;
 
-typedef struct bb_packet_app_info_s {
+typedef struct bb_packet_app_info_s
+{
 	u64 initialTimestamp;
 	double millisPerTick;
 	char applicationName[kBBSize_ApplicationName];
@@ -68,11 +71,13 @@ typedef struct bb_packet_app_info_s {
 	u64 microsecondsFromEpoch;
 } bb_packet_app_info_t;
 
-typedef struct bb_packet_text_s {
+typedef struct bb_packet_text_s
+{
 	char text[kBBSize_LogText];
 } bb_packet_text_t;
 
-typedef struct bb_packet_log_text_s {
+typedef struct bb_packet_log_text_s
+{
 	u32 categoryId;
 	u32 level;
 	s32 pieInstance;
@@ -80,37 +85,44 @@ typedef struct bb_packet_log_text_s {
 	char text[kBBSize_LogText];
 } bb_packet_log_text_t;
 
-typedef struct bb_packet_user_s {
+typedef struct bb_packet_user_s
+{
 	u8 data[kBBSize_LogText];
 	u16 len;
 } bb_packet_user_t;
 
-typedef struct bb_packet_register_id_s {
+typedef struct bb_packet_register_id_s
+{
 	u32 id;
 	char name[kBBSize_MaxPath];
 } bb_packet_register_id_t;
 
-typedef struct bb_packet_frame_end_s {
+typedef struct bb_packet_frame_end_s
+{
 	double milliseconds;
 } bb_packet_frame_end_t;
 
-typedef struct bb_packet_recording_info_s {
+typedef struct bb_packet_recording_info_s
+{
 	char machineName[kBBSize_MachineName];
 	char recordingName[kBBSize_RecordingName];
 } bb_packet_recording_info_t;
 
-typedef struct bb_packet_console_autocomplete_request_s {
+typedef struct bb_packet_console_autocomplete_request_s
+{
 	u32 id;
 	char text[kBBSize_ConsoleAutocompleteText];
 } bb_packet_console_autocomplete_request_t;
 
-typedef struct bb_packet_console_autocomplete_response_header_s {
+typedef struct bb_packet_console_autocomplete_response_header_s
+{
 	u32 id;
 	u32 total;
 	b32 reuse;
 } bb_packet_console_autocomplete_response_header_t;
 
-typedef struct bb_packet_console_autocomplete_response_entry_s {
+typedef struct bb_packet_console_autocomplete_response_entry_s
+{
 	u32 id;
 	b32 command;
 	u32 flags;
@@ -118,11 +130,13 @@ typedef struct bb_packet_console_autocomplete_response_entry_s {
 	char description[kBBSize_ConsoleAutocompleteDesc];
 } bb_packet_console_autocomplete_response_entry_t;
 
-typedef struct bb_decoded_packet_s {
+typedef struct bb_decoded_packet_s
+{
 	bb_packet_type_e type;
 	u8 pad[4];
 	bb_packet_header_t header;
-	union {
+	union
+	{
 		bb_packet_app_info_t appInfo;
 		bb_packet_text_t threadStart;
 		bb_packet_text_t threadName;
@@ -147,12 +161,13 @@ typedef struct bb_decoded_packet_s {
 	} packet;
 } bb_decoded_packet_t;
 
-enum {
+enum
+{
 	BB_MAX_PACKET_BUFFER_SIZE = sizeof(bb_decoded_packet_t)
 };
 
-b32 bbpacket_deserialize(u8 *buffer, u16 len, bb_decoded_packet_t *decoded);
-u16 bbpacket_serialize(bb_decoded_packet_t *source, u8 *buffer, u16 len);
+b32 bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded);
+u16 bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len);
 b32 bbpacket_is_app_info_type(bb_packet_type_e type);
 b32 bbpacket_is_log_text_type(bb_packet_type_e type);
 

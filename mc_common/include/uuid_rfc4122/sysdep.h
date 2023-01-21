@@ -46,10 +46,11 @@ typedef unsigned char   byte;
 #endif
 
 typedef unsigned64_t uuid_time_t;
-AUTOJSON AUTOHEADERONLY typedef struct uuid_node_s {
+AUTOJSON AUTOHEADERONLY typedef struct uuid_node_s
+{
 	char nodeID[6];
 } uuid_node_t;
 
 uuid_node_t generate_uuid_node_identifier(void);
-void get_ieee_node_identifier(uuid_node_t *node);
-void get_system_time(uuid_time_t *uuid_time);
+void get_ieee_node_identifier(uuid_node_t* node);
+void get_system_time(uuid_time_t* uuid_time);

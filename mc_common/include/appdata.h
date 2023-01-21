@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-sb_t appdata_get(const char *appName);
+sb_t appdata_get(const char* appName);
 
 #if defined(__cplusplus)
 }

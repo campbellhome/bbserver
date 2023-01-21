@@ -23,23 +23,25 @@ bool s_preferencesNeedFocus;
 
 using namespace ImGui;
 
-extern "C" void configWhitelistEntry_reset(configWhitelistEntry_t *val);
+extern "C" void configWhitelistEntry_reset(configWhitelistEntry_t* val);
 
-static void Preferences_WhitelistTooltipAndContextMenu(const char *contextMenuName, bool &bRemove)
+static void Preferences_WhitelistTooltipAndContextMenu(const char* contextMenuName, bool& bRemove)
 {
-	if(ImGui::BeginPopupContextItem(contextMenuName)) {
-		if(ImGui::Selectable("Delete row")) {
+	if (ImGui::BeginPopupContextItem(contextMenuName))
+	{
+		if (ImGui::Selectable("Delete row"))
+		{
 			bRemove = true;
 		}
 		ImGui::EndPopup();
 	}
 }
 
-static void Preferences_WhitelistEntry(u32 index, configWhitelist_t &whitelist)
+static void Preferences_WhitelistEntry(u32 index, configWhitelist_t& whitelist)
 {
 	bool bRemove = false;
 
-	configWhitelistEntry_t &entry = whitelist.data[index];
+	configWhitelistEntry_t& entry = whitelist.data[index];
 	PushID((int)index);
 
 	Checkbox("allow", &entry.allow);
@@ -50,7 +52,8 @@ static void Preferences_WhitelistEntry(u32 index, configWhitelist_t &whitelist)
 	PushItemWidth(-1.0f);
 	InputText("##addr", &entry.addressPlusMask, 128, flags);
 	Fonts_CacheGlyphs(sb_get(&entry.addressPlusMask));
-	if(IsItemActive() && Imgui_Core_HasFocus()) {
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
 		Imgui_Core_RequestRender();
 	}
 	Preferences_WhitelistTooltipAndContextMenu("whitelistEntryAddrContextMenu", bRemove);
@@ -59,7 +62,8 @@ static void Preferences_WhitelistEntry(u32 index, configWhitelist_t &whitelist)
 	PushItemWidth(-1.0f);
 	InputText("##applicationName", &entry.applicationName, kBBSize_ApplicationName, flags);
 	Fonts_CacheGlyphs(sb_get(&entry.applicationName));
-	if(IsItemActive() && Imgui_Core_HasFocus()) {
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
 		Imgui_Core_RequestRender();
 	}
 	Preferences_WhitelistTooltipAndContextMenu("whitelistEntryAppContextMenu", bRemove);
@@ -68,21 +72,26 @@ static void Preferences_WhitelistEntry(u32 index, configWhitelist_t &whitelist)
 	PushItemWidth(-1.0f);
 	InputText("##comment", &entry.comment, 128, flags);
 	Fonts_CacheGlyphs(sb_get(&entry.comment));
-	if(IsItemActive() && Imgui_Core_HasFocus()) {
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
 		Imgui_Core_RequestRender();
 	}
 	Preferences_WhitelistTooltipAndContextMenu("whitelistEntryCommentContextMenu", bRemove);
 	PopItemWidth();
 	NextColumn();
 
-	if(Button(" ^ ")) {
-		if(index > 0) {
+	if (Button(" ^ "))
+	{
+		if (index > 0)
+		{
 			whitelist_move_entry(&whitelist, index, index - 1);
 		}
 	}
 	SameLine();
-	if(Button(" v ")) {
-		if(index + 1 < whitelist.count) {
+	if (Button(" v "))
+	{
+		if (index + 1 < whitelist.count)
+		{
 			whitelist_move_entry(&whitelist, index, index + 1);
 		}
 	}
@@ -90,31 +99,36 @@ static void Preferences_WhitelistEntry(u32 index, configWhitelist_t &whitelist)
 
 	PopID();
 
-	if(bRemove) {
+	if (bRemove)
+	{
 		configWhitelistEntry_reset(whitelist.data + index);
 		bba_erase(whitelist, index);
 	}
 }
 
-static void Preferences_OpenTargetEntry(u32 index, openTargetList_t &openTargets)
+static void Preferences_OpenTargetEntry(u32 index, openTargetList_t& openTargets)
 {
 	bool bRemove = false;
 
-	openTargetEntry_t &entry = openTargets.data[index];
+	openTargetEntry_t& entry = openTargets.data[index];
 	PushID((int)index);
 
 	ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
 	PushItemWidth(-1.0f);
 	InputText("##name", &entry.displayName, kBBSize_ApplicationName, flags);
 	Fonts_CacheGlyphs(sb_get(&entry.displayName));
-	if(IsItemActive() && Imgui_Core_HasFocus()) {
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
 		Imgui_Core_RequestRender();
 	}
-	if(IsTooltipActive(&s_preferencesConfig.tooltips) && (entry.displayName.data || entry.commandLine.data)) {
+	if (IsTooltipActive(&s_preferencesConfig.tooltips) && (entry.displayName.data || entry.commandLine.data))
+	{
 		SetTooltip("%s\n%s", sb_get(&entry.displayName), sb_get(&entry.commandLine));
 	}
-	if(ImGui::BeginPopupContextItem("openTargetNameContextMenu")) {
-		if(ImGui::Selectable("Delete row")) {
+	if (ImGui::BeginPopupContextItem("openTargetNameContextMenu"))
+	{
+		if (ImGui::Selectable("Delete row"))
+		{
 			bRemove = true;
 		}
 		ImGui::EndPopup();
@@ -124,14 +138,18 @@ static void Preferences_OpenTargetEntry(u32 index, openTargetList_t &openTargets
 	PushItemWidth(-1.0f);
 	InputText("##commandLine", &entry.commandLine, kBBSize_MaxPath, flags);
 	Fonts_CacheGlyphs(sb_get(&entry.commandLine));
-	if(IsItemActive() && Imgui_Core_HasFocus()) {
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
 		Imgui_Core_RequestRender();
 	}
-	if(IsTooltipActive(&s_preferencesConfig.tooltips) && (entry.displayName.data || entry.commandLine.data)) {
+	if (IsTooltipActive(&s_preferencesConfig.tooltips) && (entry.displayName.data || entry.commandLine.data))
+	{
 		SetTooltip("%s\n%s", sb_get(&entry.displayName), sb_get(&entry.commandLine));
 	}
-	if(ImGui::BeginPopupContextItem("openTargetCommandLineContextMenu")) {
-		if(ImGui::Selectable("Delete row")) {
+	if (ImGui::BeginPopupContextItem("openTargetCommandLineContextMenu"))
+	{
+		if (ImGui::Selectable("Delete row"))
+		{
 			bRemove = true;
 		}
 		ImGui::EndPopup();
@@ -139,14 +157,18 @@ static void Preferences_OpenTargetEntry(u32 index, openTargetList_t &openTargets
 	PopItemWidth();
 	NextColumn();
 
-	if(Button(" ^ ")) {
-		if(index > 0) {
+	if (Button(" ^ "))
+	{
+		if (index > 0)
+		{
 			open_target_move_entry(&openTargets, index, index - 1);
 		}
 	}
 	SameLine();
-	if(Button(" v ")) {
-		if(index + 1 < openTargets.count) {
+	if (Button(" v "))
+	{
+		if (index + 1 < openTargets.count)
+		{
 			open_target_move_entry(&openTargets, index, index + 1);
 		}
 	}
@@ -154,30 +176,35 @@ static void Preferences_OpenTargetEntry(u32 index, openTargetList_t &openTargets
 
 	PopID();
 
-	if(bRemove) {
+	if (bRemove)
+	{
 		bba_erase(openTargets, index);
 	}
 }
 
-static void Preferences_PathFixupEntry(u32 index, pathFixupList_t &pathFixups)
+static void Preferences_PathFixupEntry(u32 index, pathFixupList_t& pathFixups)
 {
 	bool bRemove = false;
 
-	pathFixupEntry_t &entry = pathFixups.data[index];
+	pathFixupEntry_t& entry = pathFixups.data[index];
 	PushID((int)index);
 
 	ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
 	PushItemWidth(-1.0f);
 	InputText("##src", &entry.src, kBBSize_MaxPath, flags);
 	Fonts_CacheGlyphs(sb_get(&entry.src));
-	if(IsItemActive() && Imgui_Core_HasFocus()) {
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
 		Imgui_Core_RequestRender();
 	}
-	if(IsTooltipActive(&s_preferencesConfig.tooltips) && (entry.src.data || entry.dst.data)) {
+	if (IsTooltipActive(&s_preferencesConfig.tooltips) && (entry.src.data || entry.dst.data))
+	{
 		SetTooltip("%s\n%s", sb_get(&entry.src), sb_get(&entry.dst));
 	}
-	if(ImGui::BeginPopupContextItem("pathFixupSrcContextMenu")) {
-		if(ImGui::Selectable("Delete row")) {
+	if (ImGui::BeginPopupContextItem("pathFixupSrcContextMenu"))
+	{
+		if (ImGui::Selectable("Delete row"))
+		{
 			bRemove = true;
 		}
 		ImGui::EndPopup();
@@ -187,14 +214,18 @@ static void Preferences_PathFixupEntry(u32 index, pathFixupList_t &pathFixups)
 	PushItemWidth(-1.0f);
 	InputText("##dst", &entry.dst, kBBSize_MaxPath, flags);
 	Fonts_CacheGlyphs(sb_get(&entry.dst));
-	if(IsItemActive() && Imgui_Core_HasFocus()) {
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
 		Imgui_Core_RequestRender();
 	}
-	if(IsTooltipActive(&s_preferencesConfig.tooltips) && (entry.src.data || entry.dst.data)) {
+	if (IsTooltipActive(&s_preferencesConfig.tooltips) && (entry.src.data || entry.dst.data))
+	{
 		SetTooltip("%s\n%s", sb_get(&entry.src), sb_get(&entry.dst));
 	}
-	if(ImGui::BeginPopupContextItem("pathFixupDstContextMenu")) {
-		if(ImGui::Selectable("Delete row")) {
+	if (ImGui::BeginPopupContextItem("pathFixupDstContextMenu"))
+	{
+		if (ImGui::Selectable("Delete row"))
+		{
 			bRemove = true;
 		}
 		ImGui::EndPopup();
@@ -202,14 +233,18 @@ static void Preferences_PathFixupEntry(u32 index, pathFixupList_t &pathFixups)
 	PopItemWidth();
 	NextColumn();
 
-	if(Button(" ^ ")) {
-		if(index > 0) {
+	if (Button(" ^ "))
+	{
+		if (index > 0)
+		{
 			path_fixup_move_entry(&pathFixups, index, index - 1);
 		}
 	}
 	SameLine();
-	if(Button(" v ")) {
-		if(index + 1 < pathFixups.count) {
+	if (Button(" v "))
+	{
+		if (index + 1 < pathFixups.count)
+		{
 			path_fixup_move_entry(&pathFixups, index, index + 1);
 		}
 	}
@@ -217,14 +252,16 @@ static void Preferences_PathFixupEntry(u32 index, pathFixupList_t &pathFixups)
 
 	PopID();
 
-	if(bRemove) {
+	if (bRemove)
+	{
 		bba_erase(pathFixups, index);
 	}
 }
 
-void UIConfig_Open(config_t *config)
+void UIConfig_Open(config_t* config)
 {
-	if(s_preferencesValid) {
+	if (s_preferencesValid)
+	{
 		config_reset(&s_preferencesConfig);
 		s_preferencesValid = false;
 	}
@@ -238,7 +275,8 @@ void UIConfig_Open(config_t *config)
 
 void UIConfig_Reset()
 {
-	if(s_preferencesValid) {
+	if (s_preferencesValid)
+	{
 		config_reset(&s_preferencesConfig);
 		s_preferencesValid = false;
 		s_preferencesOpen = false;
@@ -251,7 +289,7 @@ bool UIConfig_IsOpen()
 	return s_preferencesOpen;
 }
 
-static const char *s_colorschemes[] = {
+static const char* s_colorschemes[] = {
 	"ImGui Dark",
 	"Light",
 	"Classic",
@@ -259,18 +297,19 @@ static const char *s_colorschemes[] = {
 	"Windows",
 };
 
-void UIConfig_ApplyColorscheme(config_t *config)
+void UIConfig_ApplyColorscheme(config_t* config)
 {
-	if(!config) {
+	if (!config)
+	{
 		config = &g_config;
 	}
-	const char *colorscheme = sb_get(&config->colorscheme);
+	const char* colorscheme = sb_get(&config->colorscheme);
 	Style_Apply(colorscheme);
 	Style_ReadConfig(colorscheme);
 	ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 }
 
-static const char *g_colorUsageNames[] = {
+static const char* g_colorUsageNames[] = {
 	"Full",
 	"Background as Foreground",
 	"Ignore Background",
@@ -288,26 +327,29 @@ static const char* g_viewTileModeNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(g_viewTileModeNames) == kViewTileMode_Count);
 
-void UIConfig_Update(config_t *config)
+void UIConfig_Update(config_t* config)
 {
-	if(!s_preferencesOpen)
+	if (!s_preferencesOpen)
 		return;
 
 	ImVec2 viewportPos(0.0f, 0.0f);
-	ImGuiViewport *viewport = ImGui::GetViewportForWindow("Config");
-	if(viewport) {
+	ImGuiViewport* viewport = ImGui::GetViewportForWindow("Config");
+	if (viewport)
+	{
 		viewportPos.x += viewport->Pos.x;
 		viewportPos.y += viewport->Pos.y;
 	}
 
 	float UIRecordings_Width();
 	float startY = ImGui::GetFrameHeight();
-	ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 	SetNextWindowSize(ImVec2(io.DisplaySize.x - UIRecordings_Width(), io.DisplaySize.y - startY), ImGuiCond_Appearing);
 	SetNextWindowPos(ImVec2(viewportPos.x, viewportPos.y + startY), ImGuiCond_Appearing);
 	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_HorizontalScrollbar;
-	if(Begin("Config", &s_preferencesOpen, windowFlags)) {
-		if(ImGui::CollapsingHeader("Interface", ImGuiTreeNodeFlags_DefaultOpen)) {
+	if (Begin("Config", &s_preferencesOpen, windowFlags))
+	{
+		if (ImGui::CollapsingHeader("Interface", ImGuiTreeNodeFlags_DefaultOpen))
+		{
 			PushItemWidth(200 * Imgui_Core_GetDpiScale());
 			ImGui::BeginGroup();
 			ImGui::Combo("View tile mode", (s32*)&s_preferencesConfig.viewTileMode, g_viewTileModeNames, BB_ARRAYSIZE(g_viewTileModeNames));
@@ -316,21 +358,27 @@ void UIConfig_Update(config_t *config)
 			Checkbox("Alternate row background colors", &s_preferencesConfig.alternateRowBackground);
 			SameLine(0.0f, 40.0f * Imgui_Core_GetDpiScale());
 			int colorUsageIndex = s_preferencesConfig.logColorUsage;
-			if(ImGui::Combo("Log colors", &colorUsageIndex, g_colorUsageNames, BB_ARRAYSIZE(g_colorUsageNames))) {
-				if(colorUsageIndex >= 0 && colorUsageIndex < BB_ARRAYSIZE(g_colorUsageNames)) {
+			if (ImGui::Combo("Log colors", &colorUsageIndex, g_colorUsageNames, BB_ARRAYSIZE(g_colorUsageNames)))
+			{
+				if (colorUsageIndex >= 0 && colorUsageIndex < BB_ARRAYSIZE(g_colorUsageNames))
+				{
 					s_preferencesConfig.logColorUsage = (configColorUsage)colorUsageIndex;
 				}
 			}
 
 			int colorschemeIndex = -1;
-			for(int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i) {
-				if(!strcmp(sb_get(&s_preferencesConfig.colorscheme), s_colorschemes[i])) {
+			for (int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i)
+			{
+				if (!strcmp(sb_get(&s_preferencesConfig.colorscheme), s_colorschemes[i]))
+				{
 					colorschemeIndex = i;
 					break;
 				}
 			}
-			if(ImGui::Combo("Colorscheme", &colorschemeIndex, s_colorschemes, BB_ARRAYSIZE(s_colorschemes))) {
-				if(colorschemeIndex >= 0 && colorschemeIndex < BB_ARRAYSIZE(s_colorschemes)) {
+			if (ImGui::Combo("Colorscheme", &colorschemeIndex, s_colorschemes, BB_ARRAYSIZE(s_colorschemes)))
+			{
+				if (colorschemeIndex >= 0 && colorschemeIndex < BB_ARRAYSIZE(s_colorschemes))
+				{
 					sb_reset(&s_preferencesConfig.colorscheme);
 					sb_append(&s_preferencesConfig.colorscheme, s_colorschemes[colorschemeIndex]);
 					UIConfig_ApplyColorscheme(&s_preferencesConfig);
@@ -339,7 +387,8 @@ void UIConfig_Update(config_t *config)
 			ImGui::SameLine(0.0f, 40.0f * Imgui_Core_GetDpiScale());
 			ImGui::Checkbox("Log text shadows", &s_preferencesConfig.textShadows);
 			ImGui::Checkbox("DPI Aware", &s_preferencesConfig.dpiAware);
-			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+			if (IsTooltipActive(&s_preferencesConfig.tooltips))
+			{
 				ImGui::SetTooltip("Requires restart.  Default font is not recommended if DPI Aware.");
 			}
 			ImGui::Checkbox("Ctrl+Scrollwheel scales UI", &s_preferencesConfig.dpiScrollwheel);
@@ -349,46 +398,55 @@ void UIConfig_Update(config_t *config)
 			PushItemWidth(200 * Imgui_Core_GetDpiScale());
 			ImGui::BeginGroup();
 			Checkbox("Tooltips", &s_preferencesConfig.tooltips.enabled);
-			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+			if (IsTooltipActive(&s_preferencesConfig.tooltips))
+			{
 				ImGui::SetTooltip("Show tooltips");
 			}
 			Checkbox("Over log text", &s_preferencesConfig.tooltips.overText);
-			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+			if (IsTooltipActive(&s_preferencesConfig.tooltips))
+			{
 				ImGui::SetTooltip("Show tooltips over log text");
 			}
 			Checkbox("Over log misc columns", &s_preferencesConfig.tooltips.overMisc);
-			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+			if (IsTooltipActive(&s_preferencesConfig.tooltips))
+			{
 				ImGui::SetTooltip("Show tooltips over misc log columns");
 			}
 			Checkbox("Only over selected log lines", &s_preferencesConfig.tooltips.onlyOverSelected);
-			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+			if (IsTooltipActive(&s_preferencesConfig.tooltips))
+			{
 				ImGui::SetTooltip("Show tooltips only over selected log lines");
 			}
 			InputFloat("Delay seconds", &s_preferencesConfig.tooltips.delay);
-			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+			if (IsTooltipActive(&s_preferencesConfig.tooltips))
+			{
 				ImGui::SetTooltip("Delay before showing tooltips");
 			}
 			ImGui::EndGroup();
 			PopItemWidth();
 			PushItemWidth(400 * Imgui_Core_GetDpiScale());
 			ImGui::SliderInt("Scrollbar Size", &s_preferencesConfig.sizes.scrollbarSize, 0, 20);
-			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+			if (IsTooltipActive(&s_preferencesConfig.tooltips))
+			{
 				ImGui::SetTooltip("Scrollbar width/height (0 for default)");
 			}
 			ImGui::SameLine();
 			ImGui::SliderInt("Resize Bar Size", &s_preferencesConfig.sizes.resizeBarSize, 0, 10);
-			if(IsTooltipActive(&s_preferencesConfig.tooltips)) {
+			if (IsTooltipActive(&s_preferencesConfig.tooltips))
+			{
 				ImGui::SetTooltip("Resize bar width/height (0 for default)");
 			}
 			PopItemWidth();
 		}
-		ImFont *uiFont = ImGui::GetFont();
+		ImFont* uiFont = ImGui::GetFont();
 		ImVec2 fontSizeDim = uiFont->CalcTextSizeA(uiFont->FontSize, FLT_MAX, 0.0f, "100 _+__-_ size");
-		if(ImGui::CollapsingHeader("Font", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (ImGui::CollapsingHeader("Font", ImGuiTreeNodeFlags_DefaultOpen))
+		{
 			BeginGroup();
 			PushID("UIFont");
 			Checkbox("Custom UI Font", &s_preferencesConfig.uiFontConfig.enabled);
-			if(s_preferencesConfig.uiFontConfig.enabled) {
+			if (s_preferencesConfig.uiFontConfig.enabled)
+			{
 				int val = (int)s_preferencesConfig.uiFontConfig.size;
 				PushItemWidth(fontSizeDim.x);
 				InputInt("size", &val, 1, 10);
@@ -401,7 +459,8 @@ void UIConfig_Update(config_t *config)
 				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
 				InputText("##path", &s_preferencesConfig.uiFontConfig.path, kBBSize_MaxPath, flags);
 				Fonts_CacheGlyphs(sb_get(&s_preferencesConfig.uiFontConfig.path));
-				if(IsItemActive() && Imgui_Core_HasFocus()) {
+				if (IsItemActive() && Imgui_Core_HasFocus())
+				{
 					Imgui_Core_RequestRender();
 				}
 				PopItemWidth();
@@ -412,7 +471,8 @@ void UIConfig_Update(config_t *config)
 			BeginGroup();
 			PushID("LogFont");
 			Checkbox("Custom Log Font", &s_preferencesConfig.logFontConfig.enabled);
-			if(s_preferencesConfig.logFontConfig.enabled) {
+			if (s_preferencesConfig.logFontConfig.enabled)
+			{
 				int val = (int)s_preferencesConfig.logFontConfig.size;
 				PushItemWidth(fontSizeDim.x);
 				InputInt("size", &val, 1, 10);
@@ -425,7 +485,8 @@ void UIConfig_Update(config_t *config)
 				ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
 				InputText("##path", &s_preferencesConfig.logFontConfig.path, kBBSize_MaxPath, flags);
 				Fonts_CacheGlyphs(sb_get(&s_preferencesConfig.logFontConfig.path));
-				if(IsItemActive() && Imgui_Core_HasFocus()) {
+				if (IsItemActive() && Imgui_Core_HasFocus())
+				{
 					Imgui_Core_RequestRender();
 				}
 				PopItemWidth();
@@ -433,7 +494,8 @@ void UIConfig_Update(config_t *config)
 			PopID();
 			EndGroup();
 		}
-		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Open Targets", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (s_preferencesAdvanced && ImGui::CollapsingHeader("Open Targets", ImGuiTreeNodeFlags_DefaultOpen))
+		{
 			Columns(3, "opentargetscolumns");
 			SetColumnOffset(1, 155.0f * Imgui_Core_GetDpiScale());
 			SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
@@ -445,16 +507,19 @@ void UIConfig_Update(config_t *config)
 			Text("Move");
 			NextColumn();
 			Separator();
-			for(u32 i = 0; i < s_preferencesConfig.openTargets.count; ++i) {
+			for (u32 i = 0; i < s_preferencesConfig.openTargets.count; ++i)
+			{
 				Preferences_OpenTargetEntry(i, s_preferencesConfig.openTargets);
 			}
 			Columns(1);
 			Separator();
-			if(Button("Add Entry###Add OpenTarget")) {
+			if (Button("Add Entry###Add OpenTarget"))
+			{
 				bba_add(s_preferencesConfig.openTargets, 1);
 			}
 		}
-		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Path Fixups", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (s_preferencesAdvanced && ImGui::CollapsingHeader("Path Fixups", ImGuiTreeNodeFlags_DefaultOpen))
+		{
 			Columns(3, "pathfixupscolumns");
 			SetColumnOffset(1, 240.0f * Imgui_Core_GetDpiScale());
 			SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
@@ -466,21 +531,26 @@ void UIConfig_Update(config_t *config)
 			Text("Move");
 			NextColumn();
 			Separator();
-			for(u32 i = 0; i < s_preferencesConfig.pathFixups.count; ++i) {
+			for (u32 i = 0; i < s_preferencesConfig.pathFixups.count; ++i)
+			{
 				Preferences_PathFixupEntry(i, s_preferencesConfig.pathFixups);
 			}
 			Columns(1);
 			Separator();
-			if(Button("Add Entry###Add PathFixup")) {
+			if (Button("Add Entry###Add PathFixup"))
+			{
 				bba_add(s_preferencesConfig.pathFixups, 1);
 			}
 		}
-		if(s_preferencesAdvanced && ImGui::CollapsingHeader("Allowed Connections", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (s_preferencesAdvanced && ImGui::CollapsingHeader("Allowed Connections", ImGuiTreeNodeFlags_DefaultOpen))
+		{
 			sb_clear(&s_tmpStr);
-			const sbs_t *deviceCodes = deviceCodes_lock();
+			const sbs_t* deviceCodes = deviceCodes_lock();
 			sb_va(&s_tmpStr, "%u Device Codes:", deviceCodes->count);
-			for(u32 i = 0; i < deviceCodes->count; ++i) {
-				if(i) {
+			for (u32 i = 0; i < deviceCodes->count; ++i)
+			{
+				if (i)
+				{
 					sb_append(&s_tmpStr, ",");
 				}
 				sb_va(&s_tmpStr, " %s", sb_get(deviceCodes->data + i));
@@ -504,20 +574,24 @@ void UIConfig_Update(config_t *config)
 			Text("Move");
 			NextColumn();
 			Separator();
-			for(u32 i = 0; i < s_preferencesConfig.whitelist.count; ++i) {
+			for (u32 i = 0; i < s_preferencesConfig.whitelist.count; ++i)
+			{
 				Preferences_WhitelistEntry(i, s_preferencesConfig.whitelist);
 			}
 			Columns(1);
 			Separator();
-			if(Button("Add Entry###Add Whitelist")) {
-				configWhitelistEntry_t *entry = bba_add(s_preferencesConfig.whitelist, 1);
-				if(entry) {
+			if (Button("Add Entry###Add Whitelist"))
+			{
+				configWhitelistEntry_t* entry = bba_add(s_preferencesConfig.whitelist, 1);
+				if (entry)
+				{
 					entry->allow = true;
 					sb_append(&entry->addressPlusMask, "localhost");
 				}
 			}
 		}
-		if(ImGui::CollapsingHeader("Miscellaneous", ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (ImGui::CollapsingHeader("Miscellaneous", ImGuiTreeNodeFlags_DefaultOpen))
+		{
 			int val = (int)s_preferencesConfig.autoDeleteAfterDays;
 			ImGui::Text("Auto-delete old sessions after");
 			SameLine();
@@ -535,7 +609,8 @@ void UIConfig_Update(config_t *config)
 		bool ok = Button("Ok");
 		SameLine();
 		bool apply = Button("Apply");
-		if(ok || apply) {
+		if (ok || apply)
+		{
 			WINDOWPLACEMENT wp = config->wp;
 			config_t tmp = *config;
 			*config = s_preferencesConfig;
@@ -549,13 +624,15 @@ void UIConfig_Update(config_t *config)
 			Fonts_AddFont(config->logFontConfig);
 			Imgui_Core_SetColorScheme(sb_get(&config->colorscheme));
 			Imgui_Core_SetTextShadows(config->textShadows);
-			if(apply) {
+			if (apply)
+			{
 				UIConfig_Open(config);
 			}
 			config_write(config);
 		}
 		SameLine();
-		if(Button("Cancel")) {
+		if (Button("Cancel"))
+		{
 			s_preferencesOpen = false;
 			Imgui_Core_QueueUpdateDpiDependentResources();
 			Style_Apply(Imgui_Core_GetColorScheme());
@@ -564,7 +641,8 @@ void UIConfig_Update(config_t *config)
 		}
 	}
 	End();
-	if(!s_preferencesOpen && s_preferencesValid) {
+	if (!s_preferencesOpen && s_preferencesValid)
+	{
 		config_reset(&s_preferencesConfig);
 		s_preferencesValid = false;
 	}

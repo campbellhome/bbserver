@@ -13,7 +13,7 @@
 
 #include "bb_wrap_windows.h"
 
-int main(int argc, const char **argv)
+int main(int argc, const char** argv)
 {
 	crt_leak_check_init();
 	cmdline_init(argc, argv);
@@ -25,7 +25,8 @@ int main(int argc, const char **argv)
 	globals.p4VersionDir = "..\\..";
 	globals.manifestFilename = "bb_build_manifest.json";
 
-	if(cmdline_find("-nolog") <= 0) {
+	if (cmdline_find("-nolog") <= 0)
+	{
 		sb_t logPath = appdata_get(globals.appdataName);
 		sb_append(&logPath, "/bbupdater");
 #if BB_USING(BB_PLATFORM_WINDOWS)
@@ -58,7 +59,7 @@ int main(int argc, const char **argv)
 
 	b32 success = mc_updater_main(&globals);
 
-	bb_free((void *)globals.contentsFilenames.data);
+	bb_free((void*)globals.contentsFilenames.data);
 
 	cmdline_shutdown();
 	BB_SHUTDOWN();

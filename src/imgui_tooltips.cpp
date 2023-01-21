@@ -16,15 +16,20 @@ BB_WARNING_POP
 namespace ImGui
 {
 
-	bool IsTooltipActive(tooltipConfig *tooltips)
+	bool IsTooltipActive(tooltipConfig* tooltips)
 	{
-		if(!tooltips) {
+		if (!tooltips)
+		{
 			tooltips = &g_config.tooltips;
 		}
-		if(IsItemHovered() && tooltips->enabled) {
-			if(GImGui->HoveredIdTimer >= tooltips->delay) {
+		if (IsItemHovered() && tooltips->enabled)
+		{
+			if (GImGui->HoveredIdTimer >= tooltips->delay)
+			{
 				return true;
-			} else {
+			}
+			else
+			{
 				Imgui_Core_RequestRender();
 			}
 		}

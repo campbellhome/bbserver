@@ -6,8 +6,8 @@
 #include "common.h"
 #include "config.h"
 
-void UIConfig_Open(config_t *config);
-void UIConfig_Update(config_t *config);
+void UIConfig_Open(config_t* config);
+void UIConfig_Update(config_t* config);
 void UIConfig_Reset();
 bool UIConfig_IsOpen();
-void UIConfig_ApplyColorscheme(config_t *config = nullptr);
+void UIConfig_ApplyColorscheme(config_t* config = nullptr);

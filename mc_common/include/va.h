@@ -9,8 +9,8 @@
 extern "C" {
 #endif
 
-char *va(const char *fmt, ...);
-void va_buffer(char **buffer, size_t *capacity);
+char* va(const char* fmt, ...);
+void va_buffer(char** buffer, size_t* capacity);
 
 #if defined(__cplusplus)
 }

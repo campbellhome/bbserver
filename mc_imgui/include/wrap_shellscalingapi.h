@@ -7,7 +7,7 @@
 __pragma(warning(push));
 __pragma(warning(disable : 4820))
 #include <ShellScalingApi.h>
-    __pragma(warning(pop))
+__pragma(warning(pop))
 #else
 #include <stdio.h>
 #endif

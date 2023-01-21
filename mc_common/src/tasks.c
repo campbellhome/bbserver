@@ -10,7 +10,7 @@
 static tasks s_tasks;
 static taskId s_lastId;
 
-static const char *s_taskStateNames[] = {
+static const char* s_taskStateNames[] = {
 	"kTaskState_Pending",
 	"kTaskState_Running",
 	"kTaskState_Canceling",
@@ -21,31 +21,34 @@ static const char *s_taskStateNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_taskStateNames) == kTaskState_Count + 1);
 
-b32 task_started(task *t)
+b32 task_started(task* t)
 {
 	return t->state > kTaskState_Pending;
 }
 
-b32 task_done(task *t)
+b32 task_done(task* t)
 {
 	return t->state > kTaskState_Canceling;
 }
 
-static const char *task_get_name(task *t)
+static const char* task_get_name(task* t)
 {
 	return va("^=%s^7", sb_get(&t->name));
 }
 
-static void task_reset(task *t, b32 quiet)
+static void task_reset(task* t, b32 quiet)
 {
-	if(!quiet && t->debug) {
+	if (!quiet && t->debug)
+	{
 		BB_LOG("task::task_reset", "reset %s", task_get_name(t));
 	}
-	if(t->reset) {
+	if (t->reset)
+	{
 		t->reset(t);
 	}
-	for(u32 i = 0; i < t->subtasks.count; ++i) {
-		task *s = t->subtasks.data + i;
+	for (u32 i = 0; i < t->subtasks.count; ++i)
+	{
+		task* s = t->subtasks.data + i;
 		task_reset(s, quiet);
 	}
 	bba_free(t->subtasks);
@@ -60,36 +63,43 @@ void tasks_startup(void)
 
 void tasks_shutdown(void)
 {
-	for(u32 i = 0; i < s_tasks.count; ++i) {
-		task *t = s_tasks.data + i;
+	for (u32 i = 0; i < s_tasks.count; ++i)
+	{
+		task* t = s_tasks.data + i;
 		task_reset(t, false);
 	}
 	bba_free(s_tasks);
 }
 
-static task *task_find_recursive(task* parent, taskId id)
+static task* task_find_recursive(task* parent, taskId id)
 {
-	if(parent->id == id) {
+	if (parent->id == id)
+	{
 		return parent;
 	}
-	for(u32 i = 0; i < parent->subtasks.count; ++i) {
-		task *t = parent->subtasks.data + i;
-		if(t->id == id) {
+	for (u32 i = 0; i < parent->subtasks.count; ++i)
+	{
+		task* t = parent->subtasks.data + i;
+		if (t->id == id)
+		{
 			return t;
 		}
 		t = task_find_recursive(t, id);
-		if(t) {
+		if (t)
+		{
 			return t;
 		}
 	}
 	return NULL;
 }
 
-task *task_find(taskId id)
+task* task_find(taskId id)
 {
-	for(u32 i = 0; i < s_tasks.count; ++i) {
-		task *t = task_find_recursive(s_tasks.data + i, id);
-		if(t) {
+	for (u32 i = 0; i < s_tasks.count; ++i)
+	{
+		task* t = task_find_recursive(s_tasks.data + i, id);
+		if (t)
+		{
 			return t;
 		}
 	}
@@ -98,53 +108,65 @@ task *task_find(taskId id)
 
 void task_discard(task t)
 {
-	if(t.state == kTaskState_Pending) {
+	if (t.state == kTaskState_Pending)
+	{
 		task_reset(&t, true);
 	}
 }
 
-static void task_prep(task *t, const char *prefix)
+static void task_prep(task* t, const char* prefix)
 {
-	if(!t->id) {
+	if (!t->id)
+	{
 		t->id = ++s_lastId;
 	}
-	if(sb_len(&t->prefix) == 0) {
-		const char *name = va("%s%u:%s", prefix, t->id, sb_get(&t->name));
+	if (sb_len(&t->prefix) == 0)
+	{
+		const char* name = va("%s%u:%s", prefix, t->id, sb_get(&t->name));
 		sb_reset(&t->name);
 		sb_append(&t->name, name);
 		sb_reset(&t->prefix);
 		sb_va(&t->prefix, "%s%u:", prefix, t->id);
 	}
-	for(u32 i = 0; i < t->subtasks.count; ++i) {
+	for (u32 i = 0; i < t->subtasks.count; ++i)
+	{
 		task_prep(t->subtasks.data + i, sb_get(&t->prefix));
 		t->subtasks.data[i].parentId = t->id;
 	}
 }
 
-void task_set_state(task *t, taskState state)
+void task_set_state(task* t, taskState state)
 {
-	if(t->state != state) {
-		if(t->debug) {
+	if (t->state != state)
+	{
+		if (t->debug)
+		{
 			BB_LOG("task::task_set_state", "^<%s^7 -> ^:%s^7 %s",
 			       s_taskStateNames[t->state], s_taskStateNames[state], task_get_name(t));
 		}
 		t->prevState = t->state;
 		t->state = state;
-		if(t->stateChanged) {
+		if (t->stateChanged)
+		{
 			t->stateChanged(t);
-		} else if(state == kTaskState_Canceling) {
+		}
+		else if (state == kTaskState_Canceling)
+		{
 			task_set_state(t, kTaskState_Canceled);
 		}
 	}
 }
 
-task *task_queue(task t)
+task* task_queue(task t)
 {
-	if(t.tick) {
-		if(bba_add_noclear(s_tasks, 1)) {
+	if (t.tick)
+	{
+		if (bba_add_noclear(s_tasks, 1))
+		{
 			task_prep(&t, "");
 			bba_last(s_tasks) = t;
-			if(t.debug) {
+			if (t.debug)
+			{
 				BB_LOG("task::task_queue", "queued %s", task_get_name(&t));
 			}
 			return &bba_last(s_tasks);
@@ -156,55 +178,73 @@ task *task_queue(task t)
 	return NULL;
 }
 
-task *task_queue_subtask(task *parent, task t)
+task* task_queue_subtask(task* parent, task t)
 {
-	task *subtask = NULL;
-	if(!parent->id) {
-		task *grandparent = task_find(parent->parentId);
+	task* subtask = NULL;
+	if (!parent->id)
+	{
+		task* grandparent = task_find(parent->parentId);
 		task_prep(parent, (grandparent ? sb_get(&grandparent->prefix) : ""));
 	}
-	if(bba_add_noclear(parent->subtasks, 1)) {
+	if (bba_add_noclear(parent->subtasks, 1))
+	{
 		bba_last(parent->subtasks) = t;
 		subtask = &bba_last(parent->subtasks);
 		task_prep(subtask, sb_get(&parent->prefix));
 		subtask->parentId = parent->id;
-		if(t.debug || parent->debug) {
+		if (t.debug || parent->debug)
+		{
 			BB_LOG("task::task_queue", "queued %s", task_get_name(subtask));
 		}
-	} else {
+	}
+	else
+	{
 		BB_ERROR("task::task_queue", "failed to queue %s", task_get_name(&t));
 		task_reset(&t, false);
 	}
 	return subtask;
 }
 
-void task_tick_subtasks(task *t)
+void task_tick_subtasks(task* t)
 {
-	if(t->subtasks.count) {
+	if (t->subtasks.count)
+	{
 		u32 states[kTaskState_Count] = { BB_EMPTY_INITIALIZER };
-		for(u32 i = 0; i < t->subtasks.count; ++i) {
-			task *s = t->subtasks.data + i;
-			if(!task_started(s)) {
-				if(t->parallel || !(states[kTaskState_Running] || states[kTaskState_Canceling])) {
+		for (u32 i = 0; i < t->subtasks.count; ++i)
+		{
+			task* s = t->subtasks.data + i;
+			if (!task_started(s))
+			{
+				if (t->parallel || !(states[kTaskState_Running] || states[kTaskState_Canceling]))
+				{
 					task_set_state(s, kTaskState_Running);
 				}
 			}
-			if(task_started(s) && !task_done(s)) {
+			if (task_started(s) && !task_done(s))
+			{
 				s->tick(s);
 			}
 			states[s->state]++;
 		}
-		if(!states[kTaskState_Pending] && !states[kTaskState_Running] && !states[kTaskState_Canceling]) {
+		if (!states[kTaskState_Pending] && !states[kTaskState_Running] && !states[kTaskState_Canceling])
+		{
 			// all children are done - finish current task too
-			if(states[kTaskState_Canceled]) {
+			if (states[kTaskState_Canceled])
+			{
 				task_set_state(t, kTaskState_Canceled);
-			} else if(states[kTaskState_Failed]) {
+			}
+			else if (states[kTaskState_Failed])
+			{
 				task_set_state(t, kTaskState_Failed);
-			} else if(states[kTaskState_Succeeded]) {
+			}
+			else if (states[kTaskState_Succeeded])
+			{
 				task_set_state(t, kTaskState_Succeeded);
 			}
 		}
-	} else {
+	}
+	else
+	{
 		task_set_state(t, kTaskState_Succeeded);
 	}
 }
@@ -212,26 +252,36 @@ void task_tick_subtasks(task *t)
 u32 tasks_tick(void)
 {
 	u32 active = 0;
-	for(u32 i = 0; i < s_tasks.count;) {
-		task *t = s_tasks.data + i;
-		if(task_started(t)) {
-			if(task_done(t)) {
+	for (u32 i = 0; i < s_tasks.count;)
+	{
+		task* t = s_tasks.data + i;
+		if (task_started(t))
+		{
+			if (task_done(t))
+			{
 				task_reset(t, false);
 				bba_erase(s_tasks, i);
-			} else {
+			}
+			else
+			{
 				t->tick(t);
 				++active;
 				++i;
 			}
-		} else {
+		}
+		else
+		{
 			++i;
 		}
 	}
 
-	if(!active || 1) {
-		for(u32 i = 0; i < s_tasks.count; ++i) {
-			task *t = s_tasks.data + i;
-			if(!task_started(t)) {
+	if (!active || 1)
+	{
+		for (u32 i = 0; i < s_tasks.count; ++i)
+		{
+			task* t = s_tasks.data + i;
+			if (!task_started(t))
+			{
 				task_set_state(t, kTaskState_Running);
 			}
 		}
@@ -242,7 +292,8 @@ u32 tasks_tick(void)
 
 void tasks_flush(u32 sleepMillis)
 {
-	while(tasks_tick() > 0) {
+	while (tasks_tick() > 0)
+	{
 		BB_FLUSH();
 		bb_sleep_ms(sleepMillis);
 	}

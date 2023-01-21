@@ -6,29 +6,34 @@
 #include <stdlib.h>
 #include <string.h>
 
-void task_thread_tick(task *t)
+void task_thread_tick(task* t)
 {
-	task_thread *th = t->taskData;
-	if(th && th->handle) {
-		if(th->threadDesiredState > kTaskState_Running && t->state != th->threadDesiredState) {
+	task_thread* th = t->taskData;
+	if (th && th->handle)
+	{
+		if (th->threadDesiredState > kTaskState_Running && t->state != th->threadDesiredState)
+		{
 			task_set_state(t, th->threadDesiredState);
 		}
 	}
 }
 
-void task_thread_statechanged(task *t)
+void task_thread_statechanged(task* t)
 {
-	if(t->state == kTaskState_Running) {
-		task_thread *th = t->taskData;
+	if (t->state == kTaskState_Running)
+	{
+		task_thread* th = t->taskData;
 		th->handle = bbthread_create(th->func, th);
 	}
 }
 
-void task_thread_reset(task *t)
+void task_thread_reset(task* t)
 {
-	task_thread *th = t->taskData;
-	if(th) {
-		if(th->handle) {
+	task_thread* th = t->taskData;
+	if (th)
+	{
+		if (th->handle)
+		{
 			th->shouldTerminate = true;
 			bbthread_join(th->handle);
 		}
@@ -37,7 +42,7 @@ void task_thread_reset(task *t)
 	}
 }
 
-task thread_task_create(const char *name, Task_StateChanged statechanged, bb_thread_func func, void *data)
+task thread_task_create(const char* name, Task_StateChanged statechanged, bb_thread_func func, void* data)
 {
 	task t = { BB_EMPTY_INITIALIZER };
 	sb_append(&t.name, name);
@@ -45,8 +50,9 @@ task thread_task_create(const char *name, Task_StateChanged statechanged, bb_thr
 	t.stateChanged = statechanged ? statechanged : task_thread_statechanged;
 	t.reset = task_thread_reset;
 	t.taskData = bb_malloc(sizeof(task_thread));
-	if(t.taskData) {
-		task_thread *th = t.taskData;
+	if (t.taskData)
+	{
+		task_thread* th = t.taskData;
 		memset(th, 0, sizeof(*th));
 		th->func = func;
 		th->data = data;

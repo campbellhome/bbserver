@@ -26,7 +26,7 @@
 BB_WARNING_DISABLE(4710) // snprintf not inlined - can't push/pop because it happens later
 #endif                   // #if BB_USING( BB_PLATFORM_WINDOWS )
 
-const char *bb_discovery_packet_name(bb_discovery_packet_type_e type);
+const char* bb_discovery_packet_name(bb_discovery_packet_type_e type);
 
 typedef struct
 {
@@ -41,32 +41,36 @@ typedef struct
 
 static discovery_data_t s_discovery_data; // too large for stack
 
-static void discovery_init(discovery_data_t *host)
+static void discovery_init(discovery_data_t* host)
 {
 	bb_critical_section_init(&host->whitelist_cs);
 	host->shutdownRequest = false;
 }
 
-static void discovery_shutdown(discovery_data_t *host)
+static void discovery_shutdown(discovery_data_t* host)
 {
 	bba_free(host->whitelist);
 	bb_critical_section_shutdown(&host->whitelist_cs);
 }
 
-static resolved_whitelist_entry_t *find_whitelist_match(discovery_data_t *host, struct sockaddr_in *sin,
-                                                        bb_decoded_discovery_packet_t *decoded)
+static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, struct sockaddr_in* sin,
+                                                        bb_decoded_discovery_packet_t* decoded)
 {
-	if(decoded->packet.request.protocolVersion == BB_PROTOCOL_VERSION) {
-		const char *sourceApplicationName = decoded->packet.request.sourceApplicationName;
-		const char *applicationName = (*sourceApplicationName) ? sourceApplicationName : decoded->packet.request.applicationName;
+	if (decoded->packet.request.protocolVersion == BB_PROTOCOL_VERSION)
+	{
+		const char* sourceApplicationName = decoded->packet.request.sourceApplicationName;
+		const char* applicationName = (*sourceApplicationName) ? sourceApplicationName : decoded->packet.request.applicationName;
 		u32 sourceIp = decoded->packet.request.sourceIp;
 		u32 addr = (sourceIp) ? sourceIp : ntohl(BB_S_ADDR_UNION(*sin));
 		u32 i;
-		for(i = 0; i < host->whitelist.count; ++i) {
-			resolved_whitelist_entry_t *entry = host->whitelist.data + i;
-			if((addr & entry->mask) == (entry->ip & entry->mask)) {
-				if(!entry->applicationName[0] ||
-				   !strcmp(entry->applicationName, applicationName)) {
+		for (i = 0; i < host->whitelist.count; ++i)
+		{
+			resolved_whitelist_entry_t* entry = host->whitelist.data + i;
+			if ((addr & entry->mask) == (entry->ip & entry->mask))
+			{
+				if (!entry->applicationName[0] ||
+				    !strcmp(entry->applicationName, applicationName))
+				{
 					return entry;
 				}
 			}
@@ -75,22 +79,25 @@ static resolved_whitelist_entry_t *find_whitelist_match(discovery_data_t *host, 
 	return NULL;
 }
 
-static bb_discovery_packet_type_e get_discovery_response(discovery_data_t *host, struct sockaddr_in *sin,
-                                                         bb_decoded_discovery_packet_t *decoded, u64 *delay)
+static bb_discovery_packet_type_e get_discovery_response(discovery_data_t* host, struct sockaddr_in* sin,
+                                                         bb_decoded_discovery_packet_t* decoded, u64* delay)
 {
 	bb_discovery_packet_type_e result = kBBDiscoveryPacketType_Invalid;
 
 	bb_critical_section_lock(&s_discovery_data.whitelist_cs);
 
-	if(decoded->packet.request.protocolVersion == BB_PROTOCOL_VERSION) {
-		const char *applicationName = decoded->packet.request.applicationName;
-		resolved_whitelist_entry_t *entry = find_whitelist_match(host, sin, decoded);
+	if (decoded->packet.request.protocolVersion == BB_PROTOCOL_VERSION)
+	{
+		const char* applicationName = decoded->packet.request.applicationName;
+		resolved_whitelist_entry_t* entry = find_whitelist_match(host, sin, decoded);
 		u32 addr = ntohl(BB_S_ADDR_UNION(*sin));
 		char ip[32];
 		bb_format_ip(ip, sizeof(ip), addr);
-		if(entry && entry->allow) {
+		if (entry && entry->allow)
+		{
 			BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBDiscoveryPacketType_Invalid' in switch of enum 'bb_discovery_packet_type_e' is not explicitly handled by a case label
-			switch(decoded->type) {
+			switch (decoded->type)
+			{
 			case kBBDiscoveryPacketType_RequestDiscovery:
 			case kBBDiscoveryPacketType_RequestDiscovery_v1:
 			case kBBDiscoveryPacketType_RequestDiscovery_v2:
@@ -108,13 +115,17 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t *host,
 			BB_WARNING_POP;
 		}
 
-		if(result == kBBDiscoveryPacketType_Invalid && decoded->packet.request.deviceCode[0] != '\0') {
-			const sbs_t *deviceCodes = deviceCodes_lock();
-			for(u32 i = 0; i < deviceCodes->count; ++i) {
-				const char *deviceCode = sb_get(deviceCodes->data + i);
-				if(!strcmp(deviceCode, decoded->packet.request.deviceCode)) {
+		if (result == kBBDiscoveryPacketType_Invalid && decoded->packet.request.deviceCode[0] != '\0')
+		{
+			const sbs_t* deviceCodes = deviceCodes_lock();
+			for (u32 i = 0; i < deviceCodes->count; ++i)
+			{
+				const char* deviceCode = sb_get(deviceCodes->data + i);
+				if (!strcmp(deviceCode, decoded->packet.request.deviceCode))
+				{
 					BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBDiscoveryPacketType_Invalid' in switch of enum 'bb_discovery_packet_type_e' is not explicitly handled by a case label
-					switch(decoded->type) {
+					switch (decoded->type)
+					{
 					case kBBDiscoveryPacketType_RequestDiscovery:
 						result = kBBDiscoveryPacketType_AnnouncePresence;
 						break;
@@ -140,7 +151,7 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t *host,
 	return result;
 }
 
-void discovery_push_whitelist(resolved_whitelist_t *resolvedWhitelist)
+void discovery_push_whitelist(resolved_whitelist_t* resolvedWhitelist)
 {
 	u32 i;
 	resolved_whitelist_t oldWhitelist;
@@ -152,8 +163,9 @@ void discovery_push_whitelist(resolved_whitelist_t *resolvedWhitelist)
 	bba_free(oldWhitelist);
 
 	bb_log("whitelist has %u entries (%u allocated):", resolvedWhitelist->count, resolvedWhitelist->allocated);
-	for(i = 0; i < resolvedWhitelist->count; ++i) {
-		resolved_whitelist_entry_t *entry = resolvedWhitelist->data + i;
+	for (i = 0; i < resolvedWhitelist->count; ++i)
+	{
+		resolved_whitelist_entry_t* entry = resolvedWhitelist->data + i;
 		char ip[32], mask[32];
 		bb_format_ip(ip, sizeof(ip), entry->ip);
 		bb_format_ip(mask, sizeof(mask), entry->mask);
@@ -163,67 +175,78 @@ void discovery_push_whitelist(resolved_whitelist_t *resolvedWhitelist)
 	}
 }
 
-static bb_thread_return_t discovery_thread_func(void *args)
+static bb_thread_return_t discovery_thread_func(void* args)
 {
 	u32 i, c;
-	discovery_data_t *host = (discovery_data_t *)args;
-	bb_discovery_server_t *ds = &host->ds;
+	discovery_data_t* host = (discovery_data_t*)args;
+	bb_discovery_server_t* ds = &host->ds;
 
 	BB_THREAD_START("discovery");
 	bbthread_set_name("discovery_thread_func");
 
 	to_ui(kToUI_DiscoveryStatus, "Starting");
 
-	while(!host->shutdownRequest) {
-		if(bb_discovery_server_init(&host->ds))
+	while (!host->shutdownRequest)
+	{
+		if (bb_discovery_server_init(&host->ds))
 			break;
 
 		to_ui(kToUI_DiscoveryStatus, "Retrying");
 		bb_sleep_ms(1000);
 	}
 
-	if(!host->shutdownRequest) {
+	if (!host->shutdownRequest)
+	{
 		to_ui(kToUI_DiscoveryStatus, "Running");
 
-		for(i = 0; i < BB_ARRAYSIZE(host->con); ++i) {
+		for (i = 0; i < BB_ARRAYSIZE(host->con); ++i)
+		{
 			bbcon_init(&host->con[i].con);
 			host->con[i].shutdownRequest = &host->shutdownRequest;
 		}
 	}
 
-	while(!host->shutdownRequest) {
+	while (!host->shutdownRequest)
+	{
 		int nBytesRead;
 		s8 buf[BB_MAX_DISCOVERY_PACKET_BUFFER_SIZE];
 		struct sockaddr_in sin;
 
 		bb_discovery_server_tick_responses(ds);
 		nBytesRead = bb_discovery_server_recv_request(ds, buf, sizeof(buf), &sin);
-		if(nBytesRead > 0 && nBytesRead <= BB_MAX_DISCOVERY_PACKET_BUFFER_SIZE) {
+		if (nBytesRead > 0 && nBytesRead <= BB_MAX_DISCOVERY_PACKET_BUFFER_SIZE)
+		{
 			bb_decoded_discovery_packet_t decoded;
-			bb_discovery_response_t *response = ds->responses + ds->numResponses;
+			bb_discovery_response_t* response = ds->responses + ds->numResponses;
 			response->packet.type = kBBDiscoveryPacketType_Invalid;
-			if(bb_discovery_packet_deserialize(buf, (u16)nBytesRead, &decoded)) {
+			if (bb_discovery_packet_deserialize(buf, (u16)nBytesRead, &decoded))
+			{
 				u64 delay = 0;
 				bb_discovery_packet_type_e responsePacketType = get_discovery_response(host, &sin, &decoded, &delay);
 				bb_discovery_process_request(ds, &sin, &decoded, responsePacketType, delay);
 			}
 		}
 
-		if(ds->numPendingConnections) {
-			for(i = 0; i < ds->numPendingConnections; ++i) {
-				const bb_discovery_pending_connection_t *pending = ds->pendingConnections + i;
+		if (ds->numPendingConnections)
+		{
+			for (i = 0; i < ds->numPendingConnections; ++i)
+			{
+				const bb_discovery_pending_connection_t* pending = ds->pendingConnections + i;
 
 				b32 found = false;
-				for(c = 0; c < BB_ARRAYSIZE(host->con); ++c) {
-					bb_server_connection_data_t *data = host->con + c;
-					bb_connection_t *con = &data->con;
-					if(!bbcon_is_connected(con) && !bbcon_is_listening(con) && con->socket == BB_INVALID_SOCKET && !data->bInUse) {
+				for (c = 0; c < BB_ARRAYSIZE(host->con); ++c)
+				{
+					bb_server_connection_data_t* data = host->con + c;
+					bb_connection_t* con = &data->con;
+					if (!bbcon_is_connected(con) && !bbcon_is_listening(con) && con->socket == BB_INVALID_SOCKET && !data->bInUse)
+					{
 						data->bInUse = true;
 						found = true;
 						BB_LOG("bb:discovery", "pending con %u using con %u / %p with socket %d state %d", i, c, con, con->socket, con->state);
 						bbcon_init(con);
 						bb_strncpy(data->applicationName, pending->applicationName, sizeof(data->applicationName));
-						if(!bbcon_connect_server(con, pending->socket, pending->localIp, pending->localPort)) {
+						if (!bbcon_connect_server(con, pending->socket, pending->localIp, pending->localPort))
+						{
 							BB_ERROR("bb::discovery", "failed to start listening for client connection");
 						}
 						//BB_LOG("bb:discovery", "used con %p with socket %d state %d", con, con->socket, con->state);
@@ -231,7 +254,8 @@ static bb_thread_return_t discovery_thread_func(void *args)
 						break;
 					}
 				}
-				if(!found) {
+				if (!found)
+				{
 					bb_error("no free connections to start listening for client connection");
 				}
 			}
@@ -256,7 +280,8 @@ int discovery_thread_init(void)
 
 void discovery_thread_shutdown(void)
 {
-	if(s_discovery_data.thread_id != 0) {
+	if (s_discovery_data.thread_id != 0)
+	{
 		s_discovery_data.shutdownRequest = true;
 		bbthread_join(s_discovery_data.thread_id);
 		s_discovery_data.thread_id = 0;

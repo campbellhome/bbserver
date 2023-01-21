@@ -23,17 +23,20 @@
 
 #include "bb_wrap_stdio.h"
 
-static const char *s_logPath;
+static const char* s_logPath;
 
-static bbassert_action_e App_AssertHandler(const char *condition, const char *message, const char *file, const int line)
+static bbassert_action_e App_AssertHandler(const char* condition, const char* message, const char* file, const int line)
 {
 	// static buffers so we can safely assert in a memory allocator :)
 	static bb_thread_local char output[2048];
 	int len;
 	BB_WARNING_PUSH(4996);
-	if(message && *message) {
+	if (message && *message)
+	{
 		len = bb_snprintf(output, sizeof(output), "Assert Failure: '%s': %s [%s:%d]", condition, message, file, line);
-	} else {
+	}
+	else
+	{
 		len = bb_snprintf(output, sizeof(output), "Assert Failure: '%s' [%s:%d]", condition, file, line);
 	}
 	len = (len > 0 && len < (int)sizeof(output)) ? len : (int)sizeof(output) - 1;
@@ -41,16 +44,21 @@ static bbassert_action_e App_AssertHandler(const char *condition, const char *me
 	BB_WARNING_POP;
 
 	sb_t callstack = callstack_generate_sb(2); // skip App_AssertHandler and bbassert_dispatch
-	if(message && *message) {
+	if (message && *message)
+	{
 		BB_ERROR("Assert", "Assert Failure: '%s': %s\n\n%s", condition, message, sb_get(&callstack));
-	} else {
+	}
+	else
+	{
 		BB_ERROR("Assert", "Assert Failure: '%s'\n\n%s", condition, sb_get(&callstack));
 	}
 
 	bbassert_action_e action = kBBAssertAction_Break;
-	if(sb_len(&g_site_config.bugProject)) {
-		bugReport *report = bug_report_init();
-		if(report) {
+	if (sb_len(&g_site_config.bugProject))
+	{
+		bugReport* report = bug_report_init();
+		if (report)
+		{
 			report->type = kBugType_Assert;
 			report->bSilent = true;
 			report->addr = 127 << 24 | 1;
@@ -58,16 +66,19 @@ static bbassert_action_e App_AssertHandler(const char *condition, const char *me
 			sb_append(&report->version, Update_GetCurrentVersion());
 			sb_append(&report->title, output);
 			sb_t target = { BB_EMPTY_INITIALIZER };
-			if(s_logPath && *s_logPath) {
+			if (s_logPath && *s_logPath)
+			{
 				BB_FLUSH();
 				sb_va(&target, "%s\\bb.bbox", sb_get(&report->dir));
 				CopyFileA(s_logPath, sb_get(&target), false);
 				sb_reset(&target);
 			}
-			if(callstack.count > 1) {
+			if (callstack.count > 1)
+			{
 				sb_va(&target, "%s\\Callstack.txt", sb_get(&report->dir));
 				bb_file_handle_t fp = bb_file_open_for_write(sb_get(&target));
-				if(fp != BB_INVALID_FILE_HANDLE) {
+				if (fp != BB_INVALID_FILE_HANDLE)
+				{
 					bb_file_write(fp, callstack.data, callstack.count - 1);
 					bb_file_close(fp);
 				}
@@ -78,19 +89,26 @@ static bbassert_action_e App_AssertHandler(const char *condition, const char *me
 	}
 	BB_TRACE(kBBLogLevel_Verbose, "Assert", "Finished with assert handler");
 	BB_FLUSH();
-	if(g_config.assertMessageBox) {
-		const char *buttonDesc = "\nBreak in the debugger?";
-		if(message && *message) {
+	if (g_config.assertMessageBox)
+	{
+		const char* buttonDesc = "\nBreak in the debugger?";
+		if (message && *message)
+		{
 			len = bb_snprintf(output, sizeof(output), "%s(%d):\n\nAssert Failure: '%s': %s\n%s\n\n%s", file, line, condition, message, buttonDesc, sb_get(&callstack));
-		} else {
+		}
+		else
+		{
 			len = bb_snprintf(output, sizeof(output), "%s(%d):\n\nAssert Failure: '%s'\n%s\n\n%s", file, line, condition, buttonDesc, sb_get(&callstack));
 		}
 		len = (len > 0 && len < (int)sizeof(output)) ? len : (int)sizeof(output) - 1;
 		output[len] = '\0';
 
-		if(MessageBoxA(NULL, output, "Blackbox Assert Failure", MB_YESNO) == IDYES) {
+		if (MessageBoxA(NULL, output, "Blackbox Assert Failure", MB_YESNO) == IDYES)
+		{
 			action = kBBAssertAction_Break;
-		} else {
+		}
+		else
+		{
 			action = kBBAssertAction_Continue;
 		}
 	}
@@ -98,17 +116,22 @@ static bbassert_action_e App_AssertHandler(const char *condition, const char *me
 	return action;
 }
 
-static sb_t App_BuildExceptionInfo(EXCEPTION_POINTERS *pExPtrs)
+static sb_t App_BuildExceptionInfo(EXCEPTION_POINTERS* pExPtrs)
 {
 	sb_t out = { BB_EMPTY_INITIALIZER };
 	sb_append(&out, "Blackbox Unhandled Exception: ");
-	EXCEPTION_RECORD *record = pExPtrs->ExceptionRecord;
-	switch(record->ExceptionCode) {
-	case EXCEPTION_ACCESS_VIOLATION: {
+	EXCEPTION_RECORD* record = pExPtrs->ExceptionRecord;
+	switch (record->ExceptionCode)
+	{
+	case EXCEPTION_ACCESS_VIOLATION:
+	{
 		sb_append(&out, "EXCEPTION_ACCESS_VIOLATION ");
-		if(record->ExceptionInformation[0]) {
+		if (record->ExceptionInformation[0])
+		{
 			sb_append(&out, "writing");
-		} else {
+		}
+		else
+		{
 			sb_append(&out, "reading");
 		}
 		sb_va(&out, " address 0x%08X", record->ExceptionInformation[1]);
@@ -140,7 +163,7 @@ static sb_t App_BuildExceptionInfo(EXCEPTION_POINTERS *pExPtrs)
 	return out;
 }
 
-static void App_ExceptionHandler(EXCEPTION_POINTERS *pExPtrs)
+static void App_ExceptionHandler(EXCEPTION_POINTERS* pExPtrs)
 {
 	//volatile bool s_done = false;
 	//while(!s_done) {
@@ -152,8 +175,9 @@ static void App_ExceptionHandler(EXCEPTION_POINTERS *pExPtrs)
 	sb_t callstack = callstack_generate_crash_sb();
 	BB_ERROR("Crash", "%s", sb_get(&callstack));
 
-	bugReport *report = bug_report_init();
-	if(report) {
+	bugReport* report = bug_report_init();
+	if (report)
+	{
 		report->type = kBugType_Crash;
 		report->bSilent = false;
 		report->addr = 127 << 24 | 1;
@@ -161,23 +185,28 @@ static void App_ExceptionHandler(EXCEPTION_POINTERS *pExPtrs)
 		sb_append(&report->version, Update_GetCurrentVersion());
 		report->title = sb_clone(&title);
 		sb_t target = { BB_EMPTY_INITIALIZER };
-		if(s_logPath && *s_logPath) {
+		if (s_logPath && *s_logPath)
+		{
 			BB_FLUSH();
 			sb_va(&target, "%s\\bb.bbox", sb_get(&report->dir));
 			CopyFileA(s_logPath, sb_get(&target), false);
 			sb_reset(&target);
 		}
-		if(callstack.count > 1) {
+		if (callstack.count > 1)
+		{
 			sb_va(&target, "%s\\Callstack.txt", sb_get(&report->dir));
 			bb_file_handle_t fp = bb_file_open_for_write(sb_get(&target));
-			if(fp != BB_INVALID_FILE_HANDLE) {
+			if (fp != BB_INVALID_FILE_HANDLE)
+			{
 				bb_file_write(fp, callstack.data, callstack.count - 1);
 				bb_file_close(fp);
 			}
 			sb_reset(&target);
 		}
 		bug_report_dispatch_sync(report);
-	} else {
+	}
+	else
+	{
 		MessageBoxA(0, va("%s\n\n%s", sb_get(&title), sb_get(&callstack)), "Blackbox Unhandled Exception", MB_OK);
 	}
 	sb_reset(&callstack);
@@ -186,13 +215,14 @@ static void App_ExceptionHandler(EXCEPTION_POINTERS *pExPtrs)
 
 #endif // FEATURE_CALLSTACKS
 
-void BBServer_InitAsserts(const char *logPath)
+void BBServer_InitAsserts(const char* logPath)
 {
 	BB_UNUSED(logPath);
 #if BB_USING(FEATURE_CALLSTACKS)
 	s_logPath = logPath;
 	callstack_init(cmdline_find("-symbolserver") >= 0);
-	if(sb_len(&g_site_config.bugProject)) {
+	if (sb_len(&g_site_config.bugProject))
+	{
 		bug_reporter_init(sb_get(&g_site_config.bugProject), sb_get(&g_site_config.bugAssignee));
 	}
 

@@ -12,7 +12,8 @@ extern "C" {
 
 typedef struct sdict_s sdict_t;
 
-typedef struct tag_filterToken {
+typedef struct tag_filterToken
+{
 	sb_t category;
 	sb_t text;
 	b32 prohibited;
@@ -21,16 +22,17 @@ typedef struct tag_filterToken {
 	u8 pad[4];
 } filterToken;
 
-typedef struct tag_filterTokens {
+typedef struct tag_filterTokens
+{
 	u32 count;
 	u32 allocated;
-	filterToken *data;
+	filterToken* data;
 } filterTokens;
 
-void reset_filter_tokens(filterTokens *tokens);
-filterToken *add_filter_token(filterTokens *tokens, const char *category, const char *text);
-void build_filter_tokens(filterTokens *tokens, const char *src);
-b32 passes_filter_tokens(filterTokens *tokens, sdict_t *sd, const char **keys, u32 numKeys);
+void reset_filter_tokens(filterTokens* tokens);
+filterToken* add_filter_token(filterTokens* tokens, const char* category, const char* text);
+void build_filter_tokens(filterTokens* tokens, const char* src);
+b32 passes_filter_tokens(filterTokens* tokens, sdict_t* sd, const char** keys, u32 numKeys);
 
 #if defined(__cplusplus)
 }

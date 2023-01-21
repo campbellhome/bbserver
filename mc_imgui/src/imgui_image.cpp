@@ -10,42 +10,51 @@ BB_WARNING_PUSH(4365 4820 4296 4619 5219)
 BB_WARNING_POP
 #include <d3d9.h>
 
-enum ImGui_Image_Flag : u32 {
+enum ImGui_Image_Flag : u32
+{
 	kImGui_Image_Dirty = 1,
 	kImGui_Image_PendingDestroy = 2,
 	kImGui_Image_PixelDataOwnership = 4,
 };
 
-struct UserImages {
+struct UserImages
+{
 	u32 count;
 	u32 allocated;
-	UserImageData *data;
+	UserImageData* data;
 };
 
 static LPDIRECT3DDEVICE9 g_pImageDevice;
 static UserImages s_userImages;
 static u32 s_lastUserId;
 
-ImVec2 ImGui_Image_Constrain(const UserImageData &image, ImVec2 available)
+ImVec2 ImGui_Image_Constrain(const UserImageData& image, ImVec2 available)
 {
 	float availableRatio = available.x / available.y;
 	float imageRatio = (float)image.width / (float)image.height;
-	if(availableRatio > imageRatio) {
+	if (availableRatio > imageRatio)
+	{
 		// available space is wider, so we have extra space on the sides
 		return ImVec2(imageRatio * available.y, available.y);
-	} else if(availableRatio < imageRatio) {
+	}
+	else if (availableRatio < imageRatio)
+	{
 		// available space is taller, so we have extra space on the top
 		return ImVec2(available.x, available.x / imageRatio);
-	} else {
+	}
+	else
+	{
 		return available;
 	}
 }
 
 UserImageData ImGui_Image_Get(UserImageId userId)
 {
-	for(u32 i = 0; i < s_userImages.count; ++i) {
-		UserImageData *data = s_userImages.data + i;
-		if(data->userId == userId) {
+	for (u32 i = 0; i < s_userImages.count; ++i)
+	{
+		UserImageData* data = s_userImages.data + i;
+		if (data->userId == userId)
+		{
 			return *data;
 		}
 	}
@@ -53,27 +62,31 @@ UserImageData ImGui_Image_Get(UserImageId userId)
 	return empty;
 }
 
-static UserImageData *ImGui_Image_Find(UserImageId userId)
+static UserImageData* ImGui_Image_Find(UserImageId userId)
 {
-	for(u32 i = 0; i < s_userImages.count; ++i) {
-		UserImageData *data = s_userImages.data + i;
-		if(data->userId == userId) {
+	for (u32 i = 0; i < s_userImages.count; ++i)
+	{
+		UserImageData* data = s_userImages.data + i;
+		if (data->userId == userId)
+		{
 			return data;
 		}
 	}
 	return nullptr;
 }
 
-UserImageId ImGui_Image_CreateFromFile(const char *path)
+UserImageId ImGui_Image_CreateFromFile(const char* path)
 {
 	int width = 0;
 	int height = 0;
 	int channelsInFile = 0;
-	u8 *pixelData = stbi_load(path, &width, &height, &channelsInFile, 4);
+	u8* pixelData = stbi_load(path, &width, &height, &channelsInFile, 4);
 	bb_log_external_alloc(pixelData);
-	if(pixelData) {
-		for(s64 i = 0; i < width * height; ++i) {
-			u8 *pixel = pixelData + 4 * i;
+	if (pixelData)
+	{
+		for (s64 i = 0; i < width * height; ++i)
+		{
+			u8* pixel = pixelData + 4 * i;
 			u8 tmp = pixel[0];
 			pixel[0] = pixel[2];
 			pixel[2] = tmp;
@@ -83,7 +96,7 @@ UserImageId ImGui_Image_CreateFromFile(const char *path)
 	return ImGui_Image_Create(pixelData, width, height, kImGui_Image_PixelDataOwnership);
 }
 
-UserImageId ImGui_Image_Create(const u8 *pixelData, int width, int height, u32 extraFlags)
+UserImageId ImGui_Image_Create(const u8* pixelData, int width, int height, u32 extraFlags)
 {
 	UserImageId userId = { ++s_lastUserId };
 	UserImageData data = { BB_EMPTY_INITIALIZER };
@@ -96,12 +109,14 @@ UserImageId ImGui_Image_Create(const u8 *pixelData, int width, int height, u32 e
 	return userId;
 }
 
-void ImGui_Image_Modify(UserImageId userId, const u8 *pixelData, int width, int height)
+void ImGui_Image_Modify(UserImageId userId, const u8* pixelData, int width, int height)
 {
-	UserImageData *data = ImGui_Image_Find(userId);
-	if(data) {
-		if(data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0) {
-			bb_free((void *)data->pixelData);
+	UserImageData* data = ImGui_Image_Find(userId);
+	if (data)
+	{
+		if (data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0)
+		{
+			bb_free((void*)data->pixelData);
 			data->flags &= (~kImGui_Image_PixelDataOwnership);
 		}
 		data->pixelData = pixelData;
@@ -113,10 +128,12 @@ void ImGui_Image_Modify(UserImageId userId, const u8 *pixelData, int width, int 
 
 void ImGui_Image_MarkForDestroy(UserImageId userId)
 {
-	UserImageData *data = ImGui_Image_Find(userId);
-	if(data) {
-		if(data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0) {
-			bb_free((void *)data->pixelData);
+	UserImageData* data = ImGui_Image_Find(userId);
+	if (data)
+	{
+		if (data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0)
+		{
+			bb_free((void*)data->pixelData);
 			data->flags &= (~kImGui_Image_PixelDataOwnership);
 		}
 		data->pixelData = nullptr;
@@ -126,12 +143,13 @@ void ImGui_Image_MarkForDestroy(UserImageId userId)
 	}
 }
 
-void ImGui_Image_InvalidateDeviceObject(UserImageData *data)
+void ImGui_Image_InvalidateDeviceObject(UserImageData* data)
 {
-	if(!g_pImageDevice)
+	if (!g_pImageDevice)
 		return;
 
-	if(data->texture) {
+	if (data->texture)
+	{
 		data->texture->Release();
 		data->texture = nullptr;
 	}
@@ -139,23 +157,28 @@ void ImGui_Image_InvalidateDeviceObject(UserImageData *data)
 
 void ImGui_Image_InvalidateDeviceObjects()
 {
-	for(u32 i = 0; i < s_userImages.count; ++i) {
-		UserImageData *data = s_userImages.data + i;
+	for (u32 i = 0; i < s_userImages.count; ++i)
+	{
+		UserImageData* data = s_userImages.data + i;
 		ImGui_Image_InvalidateDeviceObject(data);
 	}
 }
 
-void ImGui_Image_CreateDeviceObject(UserImageData *data)
+void ImGui_Image_CreateDeviceObject(UserImageData* data)
 {
-	if(data->texture) {
+	if (data->texture)
+	{
 		ImGui_Image_InvalidateDeviceObject(data);
 	}
 
-	if(g_pImageDevice->CreateTexture((UINT)data->width, (UINT)data->height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &data->texture, nullptr) >= 0) {
+	if (g_pImageDevice->CreateTexture((UINT)data->width, (UINT)data->height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &data->texture, nullptr) >= 0)
+	{
 		D3DLOCKED_RECT lockedRect;
-		if(data->texture->LockRect(0, &lockedRect, NULL, 0) == D3D_OK) {
-			for(s64 y = 0; y < data->height; ++y) {
-				memcpy((unsigned char *)lockedRect.pBits + lockedRect.Pitch * y, data->pixelData + (data->width * 4) * y, (size_t)(data->width * 4));
+		if (data->texture->LockRect(0, &lockedRect, NULL, 0) == D3D_OK)
+		{
+			for (s64 y = 0; y < data->height; ++y)
+			{
+				memcpy((unsigned char*)lockedRect.pBits + lockedRect.Pitch * y, data->pixelData + (data->width * 4) * y, (size_t)(data->width * 4));
 			}
 			data->texture->UnlockRect(0);
 			data->flags &= ~kImGui_Image_Dirty;
@@ -165,9 +188,11 @@ void ImGui_Image_CreateDeviceObject(UserImageData *data)
 
 void ImGui_Image_CreateDeviceObjects()
 {
-	for(u32 i = 0; i < s_userImages.count; ++i) {
-		UserImageData *data = s_userImages.data + i;
-		if((!data->texture || (data->flags & kImGui_Image_Dirty) != 0) && data->width && data->height) {
+	for (u32 i = 0; i < s_userImages.count; ++i)
+	{
+		UserImageData* data = s_userImages.data + i;
+		if ((!data->texture || (data->flags & kImGui_Image_Dirty) != 0) && data->width && data->height)
+		{
 			ImGui_Image_CreateDeviceObject(data);
 		}
 	}
@@ -175,11 +200,15 @@ void ImGui_Image_CreateDeviceObjects()
 
 void ImGui_Image_NewFrame()
 {
-	for(u32 i = 0; i < s_userImages.count;) {
-		UserImageData *data = s_userImages.data + i;
-		if((data->flags & kImGui_Image_PendingDestroy) == 0) {
+	for (u32 i = 0; i < s_userImages.count;)
+	{
+		UserImageData* data = s_userImages.data + i;
+		if ((data->flags & kImGui_Image_PendingDestroy) == 0)
+		{
 			++i;
-		} else {
+		}
+		else
+		{
 			ImGui_Image_InvalidateDeviceObject(data);
 			bba_erase(s_userImages, i);
 		}
@@ -187,7 +216,7 @@ void ImGui_Image_NewFrame()
 	ImGui_Image_CreateDeviceObjects();
 }
 
-bool ImGui_Image_Init(IDirect3DDevice9 *device)
+bool ImGui_Image_Init(IDirect3DDevice9* device)
 {
 	ImGui_Image_InvalidateDeviceObjects();
 	g_pImageDevice = device;
@@ -197,10 +226,12 @@ bool ImGui_Image_Init(IDirect3DDevice9 *device)
 void ImGui_Image_Shutdown()
 {
 	ImGui_Image_InvalidateDeviceObjects();
-	for(u32 i = 0; i < s_userImages.count; ++i) {
-		UserImageData *data = s_userImages.data + i;
-		if(data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0) {
-			bb_free((void *)data->pixelData);
+	for (u32 i = 0; i < s_userImages.count; ++i)
+	{
+		UserImageData* data = s_userImages.data + i;
+		if (data->pixelData && (data->flags & kImGui_Image_PixelDataOwnership) != 0)
+		{
+			bb_free((void*)data->pixelData);
 			data->flags &= (~kImGui_Image_PixelDataOwnership);
 		}
 		data->pixelData = nullptr;

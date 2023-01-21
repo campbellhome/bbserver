@@ -37,7 +37,8 @@ AUTOJSON typedef struct tagWINDOWPLACEMENT {
 } WINDOWPLACEMENT;
 #endif
 
-AUTOJSON typedef struct configWhitelistEntry_s {
+AUTOJSON typedef struct configWhitelistEntry_s
+{
 	b32 allow;
 	b32 autodetectedDevkit;
 	u32 delay;
@@ -46,30 +47,35 @@ AUTOJSON typedef struct configWhitelistEntry_s {
 	sb_t applicationName;
 	sb_t comment;
 } configWhitelistEntry_t;
-AUTOJSON typedef struct configWhitelist_s {
+AUTOJSON typedef struct configWhitelist_s
+{
 	u32 count;
 	u32 allocated;
-	configWhitelistEntry_t *data;
+	configWhitelistEntry_t* data;
 } configWhitelist_t;
 
-AUTOJSON typedef struct openTargetEntry_s {
+AUTOJSON typedef struct openTargetEntry_s
+{
 	sb_t displayName;
 	sb_t commandLine;
 } openTargetEntry_t;
-AUTOJSON typedef struct openTargetList_s {
+AUTOJSON typedef struct openTargetList_s
+{
 	u32 count;
 	u32 allocated;
-	openTargetEntry_t *data;
+	openTargetEntry_t* data;
 } openTargetList_t;
 
-AUTOJSON typedef struct pathFixupEntry_s {
+AUTOJSON typedef struct pathFixupEntry_s
+{
 	sb_t src;
 	sb_t dst;
 } pathFixupEntry_t;
-AUTOJSON typedef struct pathFixupList_s {
+AUTOJSON typedef struct pathFixupList_s
+{
 	u32 count;
 	u32 allocated;
-	pathFixupEntry_t *data;
+	pathFixupEntry_t* data;
 } pathFixupList_t;
 
 AUTOJSON AUTODEFAULT(kConfigColors_Full) typedef enum tag_configColorUsage {
@@ -80,7 +86,8 @@ AUTOJSON AUTODEFAULT(kConfigColors_Full) typedef enum tag_configColorUsage {
 	kConfigColors_Count
 } configColorUsage;
 
-AUTOJSON typedef struct tag_tooltipConfig {
+AUTOJSON typedef struct tag_tooltipConfig
+{
 	b32 enabled;
 	b32 overText;
 	b32 overMisc;
@@ -89,7 +96,8 @@ AUTOJSON typedef struct tag_tooltipConfig {
 	u8 pad[4];
 } tooltipConfig;
 
-AUTOJSON typedef struct tag_sizeConfig {
+AUTOJSON typedef struct tag_sizeConfig
+{
 	s32 resizeBarSize;
 	s32 scrollbarSize;
 } sizeConfig;
@@ -104,18 +112,21 @@ AUTOJSON AUTODEFAULT(kViewTileMode_Auto) typedef enum viewTileMode_t {
 	kViewTileMode_Count,
 } viewTileMode_t;
 
-AUTOJSON typedef struct config_named_filter_t {
+AUTOJSON typedef struct config_named_filter_t
+{
 	sb_t name;
 	sb_t text;
 } config_named_filter_t;
 
-AUTOJSON typedef struct config_named_filters_t {
+AUTOJSON typedef struct config_named_filters_t
+{
 	u32 count;
 	u32 allocated;
-	config_named_filter_t *data;
+	config_named_filter_t* data;
 } config_named_filters_t;
 
-AUTOJSON typedef struct config_s {
+AUTOJSON typedef struct config_s
+{
 	configWhitelist_t whitelist;
 	openTargetList_t openTargets;
 	pathFixupList_t pathFixups;
@@ -147,23 +158,26 @@ AUTOJSON typedef struct config_s {
 	b32 showEmptyCategories;
 } config_t;
 
-enum { kConfigVersion = 8 };
+enum
+{
+	kConfigVersion = 8
+};
 
 extern config_t g_config;
 
-b32 config_read(config_t *config);
-b32 config_write(config_t *config);
-config_t config_clone(const config_t *config);
-void config_reset(config_t *config);
-void config_free(config_t *config);
-void config_push_whitelist(configWhitelist_t *whitelist);
-void whitelist_move_entry(configWhitelist_t *whitelist, u32 indexA, u32 indexB);
-void config_validate_whitelist(configWhitelist_t *whitelist);
-void open_target_move_entry(openTargetList_t *openTargets, u32 indexA, u32 indexB);
-void config_validate_open_targets(openTargetList_t *openTargets);
-void path_fixup_move_entry(pathFixupList_t *pathFixups, u32 indexA, u32 indexB);
+b32 config_read(config_t* config);
+b32 config_write(config_t* config);
+config_t config_clone(const config_t* config);
+void config_reset(config_t* config);
+void config_free(config_t* config);
+void config_push_whitelist(configWhitelist_t* whitelist);
+void whitelist_move_entry(configWhitelist_t* whitelist, u32 indexA, u32 indexB);
+void config_validate_whitelist(configWhitelist_t* whitelist);
+void open_target_move_entry(openTargetList_t* openTargets, u32 indexA, u32 indexB);
+void config_validate_open_targets(openTargetList_t* openTargets);
+void path_fixup_move_entry(pathFixupList_t* pathFixups, u32 indexA, u32 indexB);
 u32 config_getwindowplacement(HWND hwnd);
-float config_get_resizeBarSize(config_t *config);
+float config_get_resizeBarSize(config_t* config);
 
 #if defined(__cplusplus)
 }

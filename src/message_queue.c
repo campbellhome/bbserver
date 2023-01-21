@@ -10,14 +10,16 @@
 
 #include "bb_wrap_stdio.h"
 
-typedef enum {
+typedef enum
+{
 	kMessageQueue_ToUI,
 	kMessageQueue_FirstDynamic,
 	kMessageQueue_LastDynamic = kMessageQueue_FirstDynamic + 10,
 	kMessageQueue_Count
 } message_queue_type_e;
 
-enum {
+enum
+{
 	kMessageQueue_Length = 16
 };
 
@@ -40,7 +42,8 @@ static volatile b32 s_mq_shutting_down;
 void mq_init(void)
 {
 	size_t i;
-	for(i = 0; i < BB_ARRAYSIZE(s_mq); ++i) {
+	for (i = 0; i < BB_ARRAYSIZE(s_mq); ++i)
+	{
 		bb_critical_section_init(&s_mq[i].cs);
 	}
 	bb_critical_section_init(&s_mq_reserve_cs);
@@ -55,39 +58,45 @@ void mq_pre_shutdown(void)
 void mq_shutdown(void)
 {
 	size_t i;
-	for(i = 0; i < BB_ARRAYSIZE(s_mq); ++i) {
+	for (i = 0; i < BB_ARRAYSIZE(s_mq); ++i)
+	{
 		bb_critical_section_shutdown(&s_mq[i].cs);
 		message_queue_messages_reset(&s_mq[i].messages);
 	}
 	bb_critical_section_shutdown(&s_mq_reserve_cs);
 }
 
-b32 mq_queue_userData(u32 queueId, u32 command, u32 userData, const char *text, u32 textLen)
+b32 mq_queue_userData(u32 queueId, u32 command, u32 userData, const char* text, u32 textLen)
 {
-	message_queue_t *mq;
+	message_queue_t* mq;
 	b32 ret = false;
-	if(queueId >= kMessageQueue_Count)
+	if (queueId >= kMessageQueue_Count)
 		return true;
 
-	if(textLen > kMessageQueue_MessageSize)
+	if (textLen > kMessageQueue_MessageSize)
 		return true;
 
 	mq = s_mq + queueId;
 
 	bb_critical_section_lock(&mq->cs);
 
-	if(mq->bGrowable) {
-		message_queue_message_t *message = bba_add(mq->messages, 1);
-		if(message) {
+	if (mq->bGrowable)
+	{
+		message_queue_message_t* message = bba_add(mq->messages, 1);
+		if (message)
+		{
 			message->command = command;
 			message->userData = userData;
 			memcpy(message->text, text, textLen);
 			ret = true;
 		}
-	} else {
+	}
+	else
+	{
 		u64 used = mq->writeCursor - mq->readCursor;
-		if(used < BB_ARRAYSIZE(mq->entries)) {
-			message_queue_message_t *message = mq->entries + (mq->writeCursor % BB_ARRAYSIZE(mq->entries));
+		if (used < BB_ARRAYSIZE(mq->entries))
+		{
+			message_queue_message_t* message = mq->entries + (mq->writeCursor % BB_ARRAYSIZE(mq->entries));
 			message->command = command;
 			message->userData = userData;
 			memcpy(message->text, text, textLen);
@@ -100,20 +109,21 @@ b32 mq_queue_userData(u32 queueId, u32 command, u32 userData, const char *text, 
 	return ret;
 }
 
-b32 mq_vqueue(u32 queueId, u32 command, const char *fmt, va_list args)
+b32 mq_vqueue(u32 queueId, u32 command, const char* fmt, va_list args)
 {
-	message_queue_t *mq;
+	message_queue_t* mq;
 	b32 ret = false;
 	char szBuffer[kMessageQueue_MessageSize];
 	int len;
-	if(queueId >= kMessageQueue_Count)
+	if (queueId >= kMessageQueue_Count)
 		return true;
 
 	len = vsnprintf(szBuffer, sizeof(szBuffer), fmt, args);
-	if(len == 0)
+	if (len == 0)
 		return true;
 
-	if(len < 0) {
+	if (len < 0)
+	{
 		len = sizeof(szBuffer) - 1;
 		szBuffer[len] = '\0';
 	}
@@ -122,17 +132,22 @@ b32 mq_vqueue(u32 queueId, u32 command, const char *fmt, va_list args)
 
 	bb_critical_section_lock(&mq->cs);
 
-	if(mq->bGrowable) {
-		message_queue_message_t *message = bba_add(mq->messages, 1);
-		if(message) {
+	if (mq->bGrowable)
+	{
+		message_queue_message_t* message = bba_add(mq->messages, 1);
+		if (message)
+		{
 			message->command = command;
 			memcpy(message->text, szBuffer, sizeof(message->text));
 			ret = true;
 		}
-	} else {
+	}
+	else
+	{
 		u64 used = mq->writeCursor - mq->readCursor;
-		if(used < BB_ARRAYSIZE(mq->entries)) {
-			message_queue_message_t *message = mq->entries + (mq->writeCursor % BB_ARRAYSIZE(mq->entries));
+		if (used < BB_ARRAYSIZE(mq->entries))
+		{
+			message_queue_message_t* message = mq->entries + (mq->writeCursor % BB_ARRAYSIZE(mq->entries));
 			message->command = command;
 			memcpy(message->text, szBuffer, sizeof(message->text));
 			++mq->writeCursor;
@@ -144,25 +159,32 @@ b32 mq_vqueue(u32 queueId, u32 command, const char *fmt, va_list args)
 	return ret;
 }
 
-b32 mq_consume(u32 queueId, message_queue_message_t *message)
+b32 mq_consume(u32 queueId, message_queue_message_t* message)
 {
 	// #TODO: multi producer, single consumer shouldn't lock for read - just use InterlockedIncrement, InterlockedCompare
 	b32 result = false;
-	if(queueId < kMessageQueue_Count) {
-		message_queue_t *mq = s_mq + queueId;
+	if (queueId < kMessageQueue_Count)
+	{
+		message_queue_t* mq = s_mq + queueId;
 		u64 used = mq->bGrowable ? mq->messages.count : mq->writeCursor - mq->readCursor;
-		if(used) {
+		if (used)
+		{
 			bb_critical_section_lock(&mq->cs);
-			if(mq->bGrowable) {
-				if(mq->messages.count) {
-					message_queue_message_t *src = mq->messages.data;
+			if (mq->bGrowable)
+			{
+				if (mq->messages.count)
+				{
+					message_queue_message_t* src = mq->messages.data;
 					memcpy(message, src, sizeof(*message));
 					bba_erase(mq->messages, 0);
 					result = true;
 				}
-			} else {
-				if(mq->writeCursor > mq->readCursor) {
-					message_queue_message_t *src = mq->entries + (mq->readCursor % BB_ARRAYSIZE(mq->entries));
+			}
+			else
+			{
+				if (mq->writeCursor > mq->readCursor)
+				{
+					message_queue_message_t* src = mq->entries + (mq->readCursor % BB_ARRAYSIZE(mq->entries));
 					memcpy(message, src, sizeof(*message));
 					++mq->readCursor;
 					result = true;
@@ -174,19 +196,25 @@ b32 mq_consume(u32 queueId, message_queue_message_t *message)
 	return result;
 }
 
-const message_queue_message_t *mq_peek(u32 queueId)
+const message_queue_message_t* mq_peek(u32 queueId)
 {
 	// #TODO: multi producer, single consumer shouldn't lock for read - just use InterlockedIncrement, InterlockedCompare
-	message_queue_message_t *result = NULL;
-	if(queueId < kMessageQueue_Count) {
-		message_queue_t *mq = s_mq + queueId;
+	message_queue_message_t* result = NULL;
+	if (queueId < kMessageQueue_Count)
+	{
+		message_queue_t* mq = s_mq + queueId;
 		u64 used = mq->bGrowable ? mq->messages.count : mq->writeCursor - mq->readCursor;
-		if(used) {
+		if (used)
+		{
 			bb_critical_section_lock(&mq->cs);
-			if(mq->bGrowable) {
+			if (mq->bGrowable)
+			{
 				result = mq->messages.data;
-			} else {
-				if(mq->writeCursor > mq->readCursor) {
+			}
+			else
+			{
+				if (mq->writeCursor > mq->readCursor)
+				{
 					result = mq->entries + (mq->readCursor % BB_ARRAYSIZE(mq->entries));
 				}
 			}
@@ -199,15 +227,21 @@ const message_queue_message_t *mq_peek(u32 queueId)
 void mq_consume_peek_result(u32 queueId)
 {
 	// #TODO: multi producer, single consumer shouldn't lock for read - just use InterlockedIncrement, InterlockedCompare
-	if(queueId < kMessageQueue_Count) {
-		message_queue_t *mq = s_mq + queueId;
+	if (queueId < kMessageQueue_Count)
+	{
+		message_queue_t* mq = s_mq + queueId;
 		u64 used = mq->bGrowable ? mq->messages.count : mq->writeCursor - mq->readCursor;
-		if(used) {
+		if (used)
+		{
 			bb_critical_section_lock(&mq->cs);
-			if(mq->bGrowable) {
+			if (mq->bGrowable)
+			{
 				bba_erase(mq->messages, 0);
-			} else {
-				if(mq->writeCursor > mq->readCursor) {
+			}
+			else
+			{
+				if (mq->writeCursor > mq->readCursor)
+				{
 					++mq->readCursor;
 				}
 			}
@@ -216,7 +250,7 @@ void mq_consume_peek_result(u32 queueId)
 	}
 }
 
-b32 mq_queue(u32 queueId, u32 command, const char *fmt, ...)
+b32 mq_queue(u32 queueId, u32 command, const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -225,17 +259,18 @@ b32 mq_queue(u32 queueId, u32 command, const char *fmt, ...)
 	return ret;
 }
 
-void to_ui(to_ui_command_e command, const char *fmt, ...)
+void to_ui(to_ui_command_e command, const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	while(!mq_vqueue(kMessageQueue_ToUI, command, fmt, args) && !s_mq_shutting_down) {
+	while (!mq_vqueue(kMessageQueue_ToUI, command, fmt, args) && !s_mq_shutting_down)
+	{
 		Sleep(10);
 	}
 	va_end(args);
 }
 
-b32 mq_consume_to_ui(message_queue_message_t *message)
+b32 mq_consume_to_ui(message_queue_message_t* message)
 {
 	return mq_consume(kMessageQueue_ToUI, message);
 }
@@ -249,8 +284,10 @@ u32 mq_acquire(void)
 {
 	u32 ret = kMessageQueue_Count;
 	bb_critical_section_lock(&s_mq_reserve_cs);
-	for(u32 index = kMessageQueue_FirstDynamic; index <= kMessageQueue_LastDynamic; ++index) {
-		if(!s_mq[index].refcount) {
+	for (u32 index = kMessageQueue_FirstDynamic; index <= kMessageQueue_LastDynamic; ++index)
+	{
+		if (!s_mq[index].refcount)
+		{
 			s_mq[index].refcount = 1;
 			ret = index;
 			break;
@@ -263,9 +300,11 @@ u32 mq_acquire(void)
 u32 mq_addref(u32 id)
 {
 	u32 ret = kMessageQueue_Count;
-	if(id >= kMessageQueue_FirstDynamic && id < kMessageQueue_Count) {
+	if (id >= kMessageQueue_FirstDynamic && id < kMessageQueue_Count)
+	{
 		bb_critical_section_lock(&s_mq_reserve_cs);
-		if(s_mq[id].refcount) {
+		if (s_mq[id].refcount)
+		{
 			++s_mq[id].refcount;
 			ret = id;
 		}
@@ -276,11 +315,14 @@ u32 mq_addref(u32 id)
 
 void mq_releaseref(u32 id)
 {
-	if(id >= kMessageQueue_FirstDynamic && id < kMessageQueue_Count) {
+	if (id >= kMessageQueue_FirstDynamic && id < kMessageQueue_Count)
+	{
 		bb_critical_section_lock(&s_mq_reserve_cs);
-		if(s_mq[id].refcount) {
+		if (s_mq[id].refcount)
+		{
 			--s_mq[id].refcount;
-			if(!s_mq[id].refcount) {
+			if (!s_mq[id].refcount)
+			{
 				message_queue_messages_reset(&s_mq[id].messages);
 				s_mq[id].readCursor = 0;
 				s_mq[id].writeCursor = 0;

@@ -18,27 +18,32 @@ BB_WARNING_POP
 
 static int s_activeFrames;
 
-static bool UIMessageBox_DrawModal(messageBox *mb)
+static bool UIMessageBox_DrawModal(messageBox* mb)
 {
-	sdict_t *sd = &mb->data;
-	const char *title = sdict_find(sd, "title");
-	if(!title)
+	sdict_t* sd = &mb->data;
+	const char* title = sdict_find(sd, "title");
+	if (!title)
 		return false;
 
-	const char *text = sdict_find(sd, "text");
-	if(text) {
+	const char* text = sdict_find(sd, "text");
+	if (text)
+	{
 		ImGui::TextUnformatted(text);
 	}
 
-	sdictEntry_t *inputNumber = sdict_find_entry(sd, "inputNumber");
-	if(inputNumber) {
-		if(s_activeFrames < 3) {
+	sdictEntry_t* inputNumber = sdict_find_entry(sd, "inputNumber");
+	if (inputNumber)
+	{
+		if (s_activeFrames < 3)
+		{
 			ImGui::SetKeyboardFocusHere();
 		}
 		ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
 		bool entered = ImGui::InputText("##path", &inputNumber->value, 1024, flags);
-		if(entered) {
-			if(mb->callback) {
+		if (entered)
+		{
+			if (mb->callback)
+			{
 				mb->callback(mb, sb_get(&inputNumber->value));
 			}
 			return false;
@@ -46,23 +51,31 @@ static bool UIMessageBox_DrawModal(messageBox *mb)
 	}
 
 	u32 buttonIndex = 0;
-	const char *button;
-	while((button = sdict_find(sd, va("button%u", ++buttonIndex))) != nullptr) {
-		if(buttonIndex == 1) {
+	const char* button;
+	while ((button = sdict_find(sd, va("button%u", ++buttonIndex))) != nullptr)
+	{
+		if (buttonIndex == 1)
+		{
 			ImGui::Separator();
-		} else {
+		}
+		else
+		{
 			ImGui::SameLine();
 		}
-		if(ImGui::Button(button, ImVec2(120 * Imgui_Core_GetDpiScale(), 0.0f))) {
-			if(mb->callback) {
+		if (ImGui::Button(button, ImVec2(120 * Imgui_Core_GetDpiScale(), 0.0f)))
+		{
+			if (mb->callback)
+			{
 				mb->callback(mb, button);
 			}
 			return false;
 		}
 	};
 
-	if(ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-		if(mb->callback) {
+	if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+	{
+		if (mb->callback)
+		{
 			mb->callback(mb, "escape");
 		}
 		return false;
@@ -71,27 +84,31 @@ static bool UIMessageBox_DrawModal(messageBox *mb)
 	return true;
 }
 
-static void UIMessageBox_UpdateModal(messageBoxes *boxes)
+static void UIMessageBox_UpdateModal(messageBoxes* boxes)
 {
-	messageBox *mb = mb_get_active(boxes);
-	if(!mb)
+	messageBox* mb = mb_get_active(boxes);
+	if (!mb)
 		return;
 
-	const char *title = sdict_find(&mb->data, "title");
-	if(!title) {
+	const char* title = sdict_find(&mb->data, "title");
+	if (!title)
+	{
 		title = "Untitled";
 	}
 
-	ImGuiViewport *viewport = ImGui::GetMainViewport();
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos + viewport->Size * 0.5f, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowViewport(viewport->ID);
 
 	int flags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking;
-	if(!ImGui::BeginPopupModal(title, nullptr, flags)) {
+	if (!ImGui::BeginPopupModal(title, nullptr, flags))
+	{
 		s_activeFrames = 0;
 		ImGui::OpenPopup(title);
-		if(!ImGui::BeginPopupModal(title, nullptr, flags)) {
-			if(mb->callback) {
+		if (!ImGui::BeginPopupModal(title, nullptr, flags))
+		{
+			if (mb->callback)
+			{
 				mb->callback(mb, "");
 			}
 			mb_remove_active(nullptr);
@@ -100,7 +117,8 @@ static void UIMessageBox_UpdateModal(messageBoxes *boxes)
 	}
 
 	++s_activeFrames;
-	if(!UIMessageBox_DrawModal(mb)) {
+	if (!UIMessageBox_DrawModal(mb))
+	{
 		ImGui::CloseCurrentPopup();
 		mb_remove_active(nullptr);
 	}
@@ -109,17 +127,19 @@ static void UIMessageBox_UpdateModal(messageBoxes *boxes)
 	return;
 }
 
-float UIMessageBox_Update(messageBoxes *boxes)
+float UIMessageBox_Update(messageBoxes* boxes)
 {
-	if(!boxes) {
+	if (!boxes)
+	{
 		boxes = mb_get_queue();
 	}
 
-	messageBox *mb = mb_get_active(boxes);
-	if(!mb)
+	messageBox* mb = mb_get_active(boxes);
+	if (!mb)
 		return 0.0f;
 
-	if(boxes->modal) {
+	if (boxes->modal)
+	{
 		UIMessageBox_UpdateModal(boxes);
 		return 0.0f;
 	}
@@ -133,23 +153,25 @@ float UIMessageBox_Update(messageBoxes *boxes)
 	size.y = ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().ItemSpacing.y;
 	ImVec2 start = windowPos + cursorPos;
 	ImVec2 end = start + size;
-	ImDrawList *DrawList = ImGui::GetWindowDrawList();
+	ImDrawList* DrawList = ImGui::GetWindowDrawList();
 	DrawList->AddRectFilled(start, end, 0x22222222);
 
 	int prevSize = DrawList->VtxBuffer.size();
 
 	ImGui::BeginGroup();
 	ImGui::Spacing();
-	sdict_t *sd = &mb->data;
-	const char *title = sdict_find(&mb->data, "title");
-	if(title) {
+	sdict_t* sd = &mb->data;
+	const char* title = sdict_find(&mb->data, "title");
+	if (title)
+	{
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text(" [ %s ] ", title);
 		ImGui::SameLine();
 	}
 
-	const char *text = sdict_find(&mb->data, "text");
-	if(text) {
+	const char* text = sdict_find(&mb->data, "text");
+	if (text)
+	{
 		ImGui::TextWrapped(" %s ", text);
 		ImGui::SameLine();
 	}
@@ -157,16 +179,20 @@ float UIMessageBox_Update(messageBoxes *boxes)
 	bool focused = false;
 
 	ImGui::PushItemWidth(120.0f * Imgui_Core_GetDpiScale());
-	sdictEntry_t *inputNumber = sdict_find_entry(sd, "inputNumber");
-	if(inputNumber) {
-		if(s_activeFrames < 3) {
+	sdictEntry_t* inputNumber = sdict_find_entry(sd, "inputNumber");
+	if (inputNumber)
+	{
+		if (s_activeFrames < 3)
+		{
 			ImGui::SetKeyboardFocusHere();
 		}
 		ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
 		bool entered = ImGui::InputText("##path", &inputNumber->value, 1024, flags);
 		focused = ImGui::IsItemFocused();
-		if(entered) {
-			if(mb->callback) {
+		if (entered)
+		{
+			if (mb->callback)
+			{
 				mb->callback(mb, sb_get(&inputNumber->value));
 			}
 			bRemove = true;
@@ -176,18 +202,23 @@ float UIMessageBox_Update(messageBoxes *boxes)
 	ImGui::PopItemWidth();
 
 	ImVec2 curPos = ImGui::GetWindowPos() + ImGui::GetCursorPos();
-	if(curPos.x - start.x >= region.x - 120 * Imgui_Core_GetDpiScale()) {
+	if (curPos.x - start.x >= region.x - 120 * Imgui_Core_GetDpiScale())
+	{
 		ImGui::NewLine();
 	}
 
 	u32 buttonIndex = 0;
-	const char *button;
-	while((button = sdict_find(sd, va("button%u", ++buttonIndex))) != nullptr) {
-		if(buttonIndex > 1) {
+	const char* button;
+	while ((button = sdict_find(sd, va("button%u", ++buttonIndex))) != nullptr)
+	{
+		if (buttonIndex > 1)
+		{
 			ImGui::SameLine();
 		}
-		if(ImGui::Button(button, ImVec2(120 * Imgui_Core_GetDpiScale(), 0.0f))) {
-			if(mb->callback) {
+		if (ImGui::Button(button, ImVec2(120 * Imgui_Core_GetDpiScale(), 0.0f)))
+		{
+			if (mb->callback)
+			{
 				mb->callback(mb, button);
 			}
 			bRemove = true;
@@ -199,15 +230,16 @@ float UIMessageBox_Update(messageBoxes *boxes)
 	ImGui::Spacing();
 	ImGui::EndGroup();
 
-	ImDrawVert *bottomLeft = &DrawList->VtxBuffer[prevSize - 1];
-	ImDrawVert *bottomRight = bottomLeft - 1;
-	ImDrawVert *topRight = bottomLeft - 2;
-	ImDrawVert *topLeft = bottomLeft - 3;
+	ImDrawVert* bottomLeft = &DrawList->VtxBuffer[prevSize - 1];
+	ImDrawVert* bottomRight = bottomLeft - 1;
+	ImDrawVert* topRight = bottomLeft - 2;
+	ImDrawVert* topLeft = bottomLeft - 3;
 
 	// colors are ABGR
 	u32 colorLeft = boxes->bgColor[0];
 	u32 colorRight = boxes->bgColor[1];
-	if(colorLeft || colorRight) {
+	if (colorLeft || colorRight)
+	{
 		bottomLeft->col = colorLeft;
 		bottomRight->col = colorRight;
 		topRight->col = colorRight;
@@ -218,19 +250,25 @@ float UIMessageBox_Update(messageBoxes *boxes)
 	bottomLeft->pos.y = endY - ImGui::GetStyle().ItemSpacing.y;
 	bottomRight->pos.y = endY - ImGui::GetStyle().ItemSpacing.y;
 
-	if(focused) {
-		if(ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-			if(mb->callback) {
+	if (focused)
+	{
+		if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+		{
+			if (mb->callback)
+			{
 				mb->callback(mb, "escape");
 			}
 			bRemove = true;
 		}
 	}
 
-	if(bRemove) {
+	if (bRemove)
+	{
 		s_activeFrames = 0;
 		mb_remove_active(boxes);
-	} else {
+	}
+	else
+	{
 		++s_activeFrames;
 	}
 

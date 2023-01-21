@@ -8,6 +8,6 @@ typedef struct tag_tooltipConfig tooltipConfig;
 namespace ImGui
 {
 
-	bool IsTooltipActive(tooltipConfig *tooltips = nullptr);
+	bool IsTooltipActive(tooltipConfig* tooltips = nullptr);
 
 } // namespace ImGui

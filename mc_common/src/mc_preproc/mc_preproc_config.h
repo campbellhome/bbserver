@@ -10,28 +10,32 @@
 #include <string>
 #include <vector>
 
-struct preprocInputDir {
+struct preprocInputDir
+{
 	std::string dir;
 	std::string base;
 };
 
-struct preprocInputConfig {
+struct preprocInputConfig
+{
 	b32 checkFonts = false;
-	std::vector< preprocInputDir > sourceDirs;
-	std::vector< preprocInputDir > includeDirs;
+	std::vector<preprocInputDir> sourceDirs;
+	std::vector<preprocInputDir> includeDirs;
 };
 
-struct preprocOutputConfig {
+struct preprocOutputConfig
+{
 	std::string prefix;
 	std::string sourceDir;
 	std::string includeDir;
 	std::string baseDir;
 };
 
-struct preprocConfig {
+struct preprocConfig
+{
 	b32 bb = false;
 	preprocInputConfig input;
 	preprocOutputConfig output;
 };
 
-preprocConfig read_preprocConfig(const char *path);
+preprocConfig read_preprocConfig(const char* path);

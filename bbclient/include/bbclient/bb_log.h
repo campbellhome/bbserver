@@ -16,12 +16,12 @@ extern "C" {
 void bb_log_init(void);
 void bb_log_shutdown(void);
 
-void bb_log(const char *fmt, ...);
-void bb_warning(const char *fmt, ...);
-void bb_error(const char *fmt, ...);
+void bb_log(const char* fmt, ...);
+void bb_warning(const char* fmt, ...);
+void bb_error(const char* fmt, ...);
 
-char *bb_format_ipport(char *buf, size_t len, u32 addr, u16 port);
-char *bb_format_ip(char *buf, size_t len, u32 addr);
+char* bb_format_ipport(char* buf, size_t len, u32 addr, u16 port);
+char* bb_format_ip(char* buf, size_t len, u32 addr);
 
 #if defined(__cplusplus)
 }

@@ -9,7 +9,8 @@
 extern "C" {
 #endif
 
-typedef enum {
+typedef enum
+{
 	kToUI_DiscoveryStatus,
 	kToUI_AddExistingFile,
 	kToUI_AddInvalidExistingFile,
@@ -17,20 +18,23 @@ typedef enum {
 	kToUI_RecordingStop,
 } to_ui_command_e;
 
-enum {
+enum
+{
 	kMessageQueue_MessageSize = 2040
 };
 
-AUTOSTRUCT typedef struct message_queue_message_s {
+AUTOSTRUCT typedef struct message_queue_message_s
+{
 	u32 command;
 	u32 userData;
 	char text[kMessageQueue_MessageSize];
 } message_queue_message_t;
 
-AUTOSTRUCT typedef struct message_queue_messages_s {
+AUTOSTRUCT typedef struct message_queue_messages_s
+{
 	u32 count;
 	u32 allocated;
-	message_queue_message_t *data;
+	message_queue_message_t* data;
 } message_queue_messages_t;
 
 void mq_init(void);
@@ -48,18 +52,18 @@ void mq_releaseref(u32 id);
 //
 // queue produce/consume for any (dynamic) queue
 //
-b32 mq_vqueue(u32 queueId, u32 command, const char *fmt, va_list args);
-b32 mq_queue(u32 queueId, u32 command, const char *fmt, ...);
+b32 mq_vqueue(u32 queueId, u32 command, const char* fmt, va_list args);
+b32 mq_queue(u32 queueId, u32 command, const char* fmt, ...);
 b32 mq_queue_userData(u32 queueId, u32 command, u32 userData, const char* text, u32 textLen);
-b32 mq_consume(u32 queueId, message_queue_message_t *message);
-const message_queue_message_t *mq_peek(u32 queueId);
+b32 mq_consume(u32 queueId, message_queue_message_t* message);
+const message_queue_message_t* mq_peek(u32 queueId);
 void mq_consume_peek_result(u32 queueId);
 
 //
 // convenience functions for UI queue
 //
-void to_ui(to_ui_command_e command, const char *fmt, ...);
-b32 mq_consume_to_ui(message_queue_message_t *message);
+void to_ui(to_ui_command_e command, const char* fmt, ...);
+b32 mq_consume_to_ui(message_queue_message_t* message);
 
 #if defined(__cplusplus)
 }

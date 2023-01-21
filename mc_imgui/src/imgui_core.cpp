@@ -27,7 +27,8 @@
 
 static void Imgui_Core_InitD3D(void);
 
-typedef struct tag_Imgui_Core_Window {
+typedef struct tag_Imgui_Core_Window
+{
 	HWND hwnd;
 	LPDIRECT3DDEVICE9 pd3dDevice;
 	HRESULT last3DResetResult;
@@ -57,11 +58,12 @@ static HWINEVENTHOOK s_hWinEventHook;
 
 static void CALLBACK Imgui_Core_WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 
-static const char *D3DErrorString(HRESULT Hr)
+static const char* D3DErrorString(HRESULT Hr)
 {
 #define D3D_CASE(x) \
 	case x: return #x
-	switch(Hr) {
+	switch (Hr)
+	{
 		D3D_CASE(D3D_OK);
 
 		D3D_CASE(D3DERR_WRONGTEXTUREFORMAT);
@@ -109,7 +111,7 @@ static const char *D3DErrorString(HRESULT Hr)
 #undef D3D_CASE
 }
 
-extern "C" b32 Imgui_Core_Init(const char *cmdline)
+extern "C" b32 Imgui_Core_Init(const char* cmdline)
 {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -124,7 +126,8 @@ extern "C" b32 Imgui_Core_Init(const char *cmdline)
 
 	s_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
 
-	if(s_pD3D) {
+	if (s_pD3D)
+	{
 		g_d3dpp.Windowed = TRUE;
 		g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
 		g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
@@ -133,7 +136,8 @@ extern "C" b32 Imgui_Core_Init(const char *cmdline)
 		g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE; // Present with vsync
 	}
 
-	if(!cmdline_argc()) {
+	if (!cmdline_argc())
+	{
 		g_setCmdline = true;
 		cmdline_init_composite(cmdline);
 	}
@@ -146,23 +150,29 @@ extern "C" b32 Imgui_Core_Init(const char *cmdline)
 
 void Imgui_Core_ResetD3D()
 {
-	if(!s_wnd.pd3dDevice)
+	if (!s_wnd.pd3dDevice)
 		return;
 	ImGui_ImplDX9_InvalidateDeviceObjects();
 	ImGui_Image_InvalidateDeviceObjects();
 	HRESULT hr = s_wnd.pd3dDevice->Reset(&g_d3dpp);
 	s_wnd.b3dValid = (hr == D3D_OK);
-	if(s_wnd.last3DResetResult != hr) {
+	if (s_wnd.last3DResetResult != hr)
+	{
 		s_wnd.last3DResetResult = hr;
-		if(s_wnd.b3dValid) {
+		if (s_wnd.b3dValid)
+		{
 			BB_LOG("ImguiCore", "D3D Reset HR: %s", D3DErrorString(hr));
-		} else {
+		}
+		else
+		{
 			BB_WARNING("ImguiCore", "D3D Reset HR: %s", D3DErrorString(hr));
 
-			ImGuiPlatformIO &PlatformIO = ImGui::GetPlatformIO();
-			if(PlatformIO.Platform_DestroyWindow) {
-				ImGuiViewport *mainViewport = ImGui::GetMainViewport();
-				if(mainViewport) {
+			ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
+			if (PlatformIO.Platform_DestroyWindow)
+			{
+				ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+				if (mainViewport)
+				{
 					PlatformIO.Platform_DestroyWindow(mainViewport);
 				}
 			}
@@ -184,11 +194,13 @@ extern "C" void Imgui_Core_Shutdown(void)
 	Imgui_Core_Freetype_Shutdown();
 	mb_shutdown(nullptr);
 
-	if(s_hWinEventHook) {
+	if (s_hWinEventHook)
+	{
 		UnhookWinEvent(s_hWinEventHook);
 	}
 
-	if(g_setCmdline) {
+	if (g_setCmdline)
+	{
 		cmdline_shutdown();
 	}
 
@@ -196,7 +208,8 @@ extern "C" void Imgui_Core_Shutdown(void)
 
 	ImGui::DestroyContext();
 
-	if(s_pD3D) {
+	if (s_pD3D)
+	{
 		s_pD3D->Release();
 		s_pD3D = nullptr;
 	}
@@ -224,17 +237,23 @@ extern "C" void Imgui_Core_SetDebugFocusChange(b32 bDebugFocusChange)
 
 extern "C" void Imgui_Core_HideUnhideWindow(void)
 {
-	if(s_wnd.hwnd) {
+	if (s_wnd.hwnd)
+	{
 		WINDOWPLACEMENT wp = { BB_EMPTY_INITIALIZER };
 		wp.length = sizeof(wp);
 		GetWindowPlacement(s_wnd.hwnd, &wp);
-		if(wp.showCmd == SW_SHOWMINIMIZED) {
+		if (wp.showCmd == SW_SHOWMINIMIZED)
+		{
 			ShowWindow(s_wnd.hwnd, SW_RESTORE);
 			Imgui_Core_BringWindowToFront();
-		} else if(!IsWindowVisible(s_wnd.hwnd)) {
+		}
+		else if (!IsWindowVisible(s_wnd.hwnd))
+		{
 			ShowWindow(s_wnd.hwnd, SW_SHOW);
 			Imgui_Core_BringWindowToFront();
-		} else {
+		}
+		else
+		{
 			ShowWindow(s_wnd.hwnd, SW_HIDE);
 		}
 	}
@@ -242,17 +261,22 @@ extern "C" void Imgui_Core_HideUnhideWindow(void)
 
 extern "C" void Imgui_Core_HideWindow(void)
 {
-	if(s_wnd.hwnd) {
+	if (s_wnd.hwnd)
+	{
 		ShowWindow(s_wnd.hwnd, SW_HIDE);
 	}
 }
 
 extern "C" void Imgui_Core_UnhideWindow(void)
 {
-	if(s_wnd.hwnd) {
-		if(IsIconic(s_wnd.hwnd)) {
+	if (s_wnd.hwnd)
+	{
+		if (IsIconic(s_wnd.hwnd))
+		{
 			ShowWindow(s_wnd.hwnd, SW_RESTORE);
-		} else {
+		}
+		else
+		{
 			ShowWindow(s_wnd.hwnd, SW_SHOW);
 		}
 		Imgui_Core_RequestRender();
@@ -261,21 +285,26 @@ extern "C" void Imgui_Core_UnhideWindow(void)
 
 extern "C" void Imgui_Core_MinimizeWindow(void)
 {
-	if(s_wnd.hwnd) {
+	if (s_wnd.hwnd)
+	{
 		ShowWindow(s_wnd.hwnd, SW_MINIMIZE);
 	}
 }
 
 extern "C" void Imgui_Core_BringWindowToFront(void)
 {
-	if(s_wnd.hwnd) {
-		if(!BringWindowToTop(s_wnd.hwnd) && g_bDebugFocusChange) {
+	if (s_wnd.hwnd)
+	{
+		if (!BringWindowToTop(s_wnd.hwnd) && g_bDebugFocusChange)
+		{
 			system_error_to_log(GetLastError(), "Window", "BringWindowToTop");
 		}
-		if(!SetForegroundWindow(s_wnd.hwnd) && g_bDebugFocusChange) {
+		if (!SetForegroundWindow(s_wnd.hwnd) && g_bDebugFocusChange)
+		{
 			system_error_to_log(GetLastError(), "Window", "SetForegroundWindow");
 		}
-		if(!SetFocus(s_wnd.hwnd) && g_bDebugFocusChange) {
+		if (!SetFocus(s_wnd.hwnd) && g_bDebugFocusChange)
+		{
 			system_error_to_log(GetLastError(), "Window", "SetFocus");
 		}
 		Imgui_Core_RequestRender();
@@ -284,7 +313,8 @@ extern "C" void Imgui_Core_BringWindowToFront(void)
 
 extern "C" void Imgui_Core_FlashWindow(b32 bFlash)
 {
-	if(s_wnd.hwnd) {
+	if (s_wnd.hwnd)
+	{
 		FLASHWINFO info = { BB_EMPTY_INITIALIZER };
 		info.cbSize = sizeof(FLASHWINFO);
 		info.hwnd = s_wnd.hwnd;
@@ -293,16 +323,18 @@ extern "C" void Imgui_Core_FlashWindow(b32 bFlash)
 	}
 }
 
-extern "C" void Imgui_Core_SetWindowText(const char *text)
+extern "C" void Imgui_Core_SetWindowText(const char* text)
 {
-	if(s_wnd.hwnd) {
+	if (s_wnd.hwnd)
+	{
 		SetWindowTextA(s_wnd.hwnd, text);
 	}
 }
 
 extern "C" void Imgui_Core_SetDpiScale(float dpiScale)
 {
-	if(g_dpiScale != dpiScale) {
+	if (g_dpiScale != dpiScale)
+	{
 		g_dpiScale = dpiScale;
 		Imgui_Core_QueueUpdateDpiDependentResources();
 	}
@@ -352,62 +384,77 @@ extern "C" b32 Imgui_Core_IsShuttingDown(void)
 	return g_shuttingDown;
 }
 
-extern "C" void Imgui_Core_SetColorScheme(const char *colorscheme)
+extern "C" void Imgui_Core_SetColorScheme(const char* colorscheme)
 {
-	if(strcmp(sb_get(&g_colorscheme), colorscheme)) {
+	if (strcmp(sb_get(&g_colorscheme), colorscheme))
+	{
 		sb_reset(&g_colorscheme);
 		sb_append(&g_colorscheme, colorscheme);
 		Imgui_Core_QueueUpdateDpiDependentResources();
 	}
 }
 
-extern "C" const char *Imgui_Core_GetColorScheme(void)
+extern "C" const char* Imgui_Core_GetColorScheme(void)
 {
 	return sb_get(&g_colorscheme);
 }
 
 extern "C" void Update_Menu(void)
 {
-	if(ImGui::BeginMenu("Update")) {
-		updateManifest_t *manifest = Update_GetManifest();
-		auto AnnotateVersion = [manifest](const char *version) {
-			const char *annotated = version;
-			if(version && !bb_stricmp(version, sb_get(&manifest->stable))) {
+	if (ImGui::BeginMenu("Update"))
+	{
+		updateManifest_t* manifest = Update_GetManifest();
+		auto AnnotateVersion = [manifest](const char* version) {
+			const char* annotated = version;
+			if (version && !bb_stricmp(version, sb_get(&manifest->stable)))
+			{
 				annotated = va("%s (stable)", version);
-			} else if(version && !bb_stricmp(version, sb_get(&manifest->latest))) {
+			}
+			else if (version && !bb_stricmp(version, sb_get(&manifest->latest)))
+			{
 				annotated = va("%s (latest)", version);
 			}
 			return annotated;
 		};
-		const char *currentVersion = Update_GetCurrentVersion();
-		const char *currentVersionAnnotated = AnnotateVersion(currentVersion);
+		const char* currentVersion = Update_GetCurrentVersion();
+		const char* currentVersionAnnotated = AnnotateVersion(currentVersion);
 		ImGui::MenuItem(va("version %s", *currentVersionAnnotated ? currentVersionAnnotated : "unknown"), nullptr, false, false);
-		if(ImGui::MenuItem("Check for updates")) {
+		if (ImGui::MenuItem("Check for updates"))
+		{
 			Update_CheckForUpdates(false);
 		}
-		if(ImGui::BeginMenu("Set desired version")) {
-			if(ImGui::MenuItem("stable", nullptr, Update_IsDesiredVersion("stable") != 0)) {
+		if (ImGui::BeginMenu("Set desired version"))
+		{
+			if (ImGui::MenuItem("stable", nullptr, Update_IsDesiredVersion("stable") != 0))
+			{
 				Update_SetDesiredVersion("stable");
 			}
-			if(ImGui::MenuItem("latest", nullptr, Update_IsDesiredVersion("latest") != 0)) {
+			if (ImGui::MenuItem("latest", nullptr, Update_IsDesiredVersion("latest") != 0))
+			{
 				Update_SetDesiredVersion("latest");
 			}
-			for(u32 i = 0; i < (manifest ? manifest->versions.count : 0); ++i) {
-				updateVersion_t *version = manifest->versions.data + i;
-				const char *versionName = sb_get(&version->name);
-				if(ImGui::MenuItem(AnnotateVersion(versionName), nullptr, Update_IsDesiredVersion(versionName) != 0)) {
+			for (u32 i = 0; i < (manifest ? manifest->versions.count : 0); ++i)
+			{
+				updateVersion_t* version = manifest->versions.data + i;
+				const char* versionName = sb_get(&version->name);
+				if (ImGui::MenuItem(AnnotateVersion(versionName), nullptr, Update_IsDesiredVersion(versionName) != 0))
+				{
 					Update_SetDesiredVersion(versionName);
 				}
 			}
 			ImGui::EndMenu();
 		}
-		if(Update_GetData()->showUpdateManagement && *currentVersion && !Update_IsStableVersion(currentVersion) != 0) {
-			if(ImGui::MenuItem(va("Promote %s to stable version", currentVersion))) {
+		if (Update_GetData()->showUpdateManagement && *currentVersion && !Update_IsStableVersion(currentVersion) != 0)
+		{
+			if (ImGui::MenuItem(va("Promote %s to stable version", currentVersion)))
+			{
 				Update_SetStableVersion(currentVersion);
 			}
 		}
-		if(g_updateIgnoredVersion) {
-			if(ImGui::MenuItem(va("Update to version %u and restart", g_updateIgnoredVersion))) {
+		if (g_updateIgnoredVersion)
+		{
+			if (ImGui::MenuItem(va("Update to version %u and restart", g_updateIgnoredVersion)))
+			{
 				Update_RestartAndUpdate(g_updateIgnoredVersion);
 			}
 		}
@@ -430,10 +477,12 @@ extern "C" void Imgui_Core_QueueUpdateDpiDependentResources(void)
 BOOL EnableNonClientDpiScalingShim(_In_ HWND hwnd)
 {
 	HMODULE hModule = GetModuleHandleA("User32.dll");
-	if(hModule) {
+	if (hModule)
+	{
 		typedef BOOL(WINAPI * Proc)(_In_ HWND hwnd);
-		Proc proc = (Proc)(void *)(GetProcAddress(hModule, "EnableNonClientDpiScaling"));
-		if(proc) {
+		Proc proc = (Proc)(void*)(GetProcAddress(hModule, "EnableNonClientDpiScaling"));
+		if (proc)
+		{
 			return proc(hwnd);
 		}
 	}
@@ -443,10 +492,12 @@ BOOL EnableNonClientDpiScalingShim(_In_ HWND hwnd)
 UINT GetDpiForWindowShim(_In_ HWND hwnd)
 {
 	HMODULE hModule = GetModuleHandleA("User32.dll");
-	if(hModule) {
+	if (hModule)
+	{
 		typedef UINT(WINAPI * Proc)(_In_ HWND hwnd);
-		Proc proc = (Proc)(void *)(GetProcAddress(hModule, "GetDpiForWindow"));
-		if(proc) {
+		Proc proc = (Proc)(void*)(GetProcAddress(hModule, "GetDpiForWindow"));
+		if (proc)
+		{
 			return proc(hwnd);
 		}
 	}
@@ -459,48 +510,56 @@ static void CALLBACK Imgui_Core_WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD 
 	BB_UNUSED(hWinEventHook);
 	BB_UNUSED(dwEventThread);
 	BB_UNUSED(dwmsEventTime);
-	if(hwnd &&
-	   idObject == OBJID_WINDOW &&
-	   idChild == CHILDID_SELF &&
-	   event == EVENT_SYSTEM_FOREGROUND) {
+	if (hwnd &&
+	    idObject == OBJID_WINDOW &&
+	    idChild == CHILDID_SELF &&
+	    event == EVENT_SYSTEM_FOREGROUND)
+	{
 		DWORD processId = 0;
 		b32 bSameProcess = false;
-		if(GetWindowThreadProcessId(hwnd, &processId)) {
+		if (GetWindowThreadProcessId(hwnd, &processId))
+		{
 			bSameProcess = processId == GetCurrentProcessId();
 		}
-		if(bSameProcess) {
+		if (bSameProcess)
+		{
 			g_hasFocus = true;
-		} else if(g_hasFocus) {
+		}
+		else if (g_hasFocus)
+		{
 			g_hasFocus = false;
 		}
 	}
 }
 
-static Imgui_Core_UserWndProc *g_userWndProc;
-void Imgui_Core_SetUserWndProc(Imgui_Core_UserWndProc *wndProc)
+static Imgui_Core_UserWndProc* g_userWndProc;
+void Imgui_Core_SetUserWndProc(Imgui_Core_UserWndProc* wndProc)
 {
 	g_userWndProc = wndProc;
 }
 
 LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if(!s_pD3D) {
+	if (!s_pD3D)
+	{
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 
-	switch(msg) {
+	switch (msg)
+	{
 	case WM_NCCREATE:
 		EnableNonClientDpiScalingShim(hWnd);
 		g_dpi = (int)GetDpiForWindowShim(hWnd);
 		g_dpiScale = (float)g_dpi / (float)USER_DEFAULT_SCREEN_DPI;
 		Style_Apply(sb_get(&g_colorscheme));
 		break;
-	case WM_DPICHANGED: {
+	case WM_DPICHANGED:
+	{
 		g_dpi = HIWORD(wParam);
 		g_dpiScale = (float)g_dpi / (float)USER_DEFAULT_SCREEN_DPI;
 		UpdateDpiDependentResources();
 
-		RECT *const prcNewWindow = (RECT *)lParam;
+		RECT* const prcNewWindow = (RECT*)lParam;
 		SetWindowPos(hWnd,
 		             NULL,
 		             prcNewWindow->left,
@@ -512,7 +571,8 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	}
 	case WM_MOUSEMOVE:
 		Imgui_Core_RequestRender();
-		if(!g_trackingMouse) {
+		if (!g_trackingMouse)
+		{
 			TRACKMOUSEEVENT tme;
 			tme.cbSize = sizeof(tme);
 			tme.hwndTrack = hWnd;
@@ -526,7 +586,8 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		Imgui_Core_RequestRender();
 		g_trackingMouse = false;
 		ImGui::GetIO().MousePos = ImVec2(-1, -1);
-		for(int i = 0; i < BB_ARRAYSIZE(ImGui::GetIO().MouseDown); ++i) {
+		for (int i = 0; i < BB_ARRAYSIZE(ImGui::GetIO().MouseDown); ++i)
+		{
 			ImGui::GetIO().MouseDown[i] = false;
 		}
 		break;
@@ -541,7 +602,8 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		Imgui_Core_RequestRender();
 		break;
 	case WM_CLOSE:
-		if(g_bCloseHidesWindow) {
+		if (g_bCloseHidesWindow)
+		{
 			ShowWindow(hWnd, SW_HIDE);
 			return 0;
 		}
@@ -550,26 +612,33 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	}
 
 	IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	if(ImGui::GetCurrentContext() && ImGui::GetIO().BackendPlatformUserData) {
-		if(ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+	if (ImGui::GetCurrentContext() && ImGui::GetIO().BackendPlatformUserData)
+	{
+		if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
 			return true;
-	} else if(s_wnd.hwnd && ImGui::GetIO().BackendFlags != 0) {
+	}
+	else if (s_wnd.hwnd && ImGui::GetIO().BackendFlags != 0)
+	{
 		BB_WARNING("ImguiCore", "skipped ImGui_ImplWin32_WndProcHandler w/o BackendPlatformUserData");
 	}
 
-	if(g_userWndProc) {
+	if (g_userWndProc)
+	{
 		LRESULT userResult = (*g_userWndProc)(hWnd, msg, wParam, lParam);
-		if(userResult) {
+		if (userResult)
+		{
 			return userResult;
 		}
 	}
 
 	LRESULT result = Update_HandleWindowMessage(hWnd, msg, wParam, lParam);
-	if(result) {
+	if (result)
+	{
 		return result;
 	}
 
-	switch(msg) {
+	switch (msg)
+	{
 	case WM_MOVE:
 		Imgui_Core_RequestRender();
 		Imgui_Core_DirtyWindowPlacement();
@@ -577,14 +646,15 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	case WM_SIZE:
 		Imgui_Core_RequestRender();
 		Imgui_Core_DirtyWindowPlacement();
-		if(wParam != SIZE_MINIMIZED) {
+		if (wParam != SIZE_MINIMIZED)
+		{
 			g_d3dpp.BackBufferWidth = LOWORD(lParam);
 			g_d3dpp.BackBufferHeight = HIWORD(lParam);
 			Imgui_Core_ResetD3D();
 		}
 		return 0;
 	case WM_SYSCOMMAND:
-		if((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
+		if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
 			return 0;
 		break;
 	case WM_DESTROY:
@@ -594,20 +664,23 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-typedef struct D3DCreateInfo_s {
+typedef struct D3DCreateInfo_s
+{
 	D3DDEVTYPE deviceType;
 	DWORD vertexProcessingType;
 } D3DCreateInfo_t;
 
 static void Imgui_Core_InitD3D(void)
 {
-	if(!s_wnd.pd3dDevice && s_wnd.hwnd && s_wnd.b3dInitialized) {
-		if(s_pD3D) {
+	if (!s_wnd.pd3dDevice && s_wnd.hwnd && s_wnd.b3dInitialized)
+	{
+		if (s_pD3D)
+		{
 			s_pD3D->Release();
 			s_pD3D = nullptr;
 		}
 		s_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
-		if(!s_pD3D)
+		if (!s_pD3D)
 			return;
 	}
 
@@ -618,26 +691,31 @@ static void Imgui_Core_InitD3D(void)
 		{ D3DDEVTYPE_SW, D3DCREATE_SOFTWARE_VERTEXPROCESSING },
 	};
 	b32 bOk = false;
-	for(u32 i = 0; !bOk && i < BB_ARRAYSIZE(d3dCreateInfo); ++i) {
+	for (u32 i = 0; !bOk && i < BB_ARRAYSIZE(d3dCreateInfo); ++i)
+	{
 		bOk = s_pD3D->CreateDevice(D3DADAPTER_DEFAULT, d3dCreateInfo[i].deviceType, s_wnd.hwnd, d3dCreateInfo[i].vertexProcessingType, &g_d3dpp, &s_wnd.pd3dDevice) >= 0;
-		if(bOk) {
+		if (bOk)
+		{
 			BB_LOG("ImguiCore", "DeviceType: %d VertexProcessingType: %u", d3dCreateInfo[i].deviceType, d3dCreateInfo[i].vertexProcessingType);
 		}
 	}
-	if(bOk) {
+	if (bOk)
+	{
 		ImGui_ImplWin32_Init(s_wnd.hwnd);
 		ImGui_Image_Init(s_wnd.pd3dDevice);
 		ImGui_ImplDX9_Init(s_wnd.pd3dDevice);
 		Fonts_InitFonts();
 		s_wnd.b3dValid = true;
-	} else {
+	}
+	else
+	{
 		s_wnd.pd3dDevice = nullptr;
 	}
 
 	s_wnd.b3dInitialized = true;
 }
 
-extern "C" HWND Imgui_Core_InitWindow(const char *classname, const char *title, HICON icon, WINDOWPLACEMENT wp_)
+extern "C" HWND Imgui_Core_InitWindow(const char* classname, const char* title, HICON icon, WINDOWPLACEMENT wp_)
 {
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, Imgui_Core_WndProc, 0L, 0L, GetModuleHandle(NULL), icon, LoadCursor(NULL, IDC_ARROW), NULL, NULL, classname, NULL };
 	WINDOWPLACEMENT wp = wp_;
@@ -649,35 +727,48 @@ extern "C" HWND Imgui_Core_InitWindow(const char *classname, const char *title, 
 	int w = 1280;
 	int h = 800;
 	b32 startHidden = cmdline_find("-hide") > 0 && !g_bCloseHidesWindow;
-	if(wp.rcNormalPosition.right > wp.rcNormalPosition.left) {
+	if (wp.rcNormalPosition.right > wp.rcNormalPosition.left)
+	{
 		x = wp.rcNormalPosition.left;
 		y = wp.rcNormalPosition.top;
 		w = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
 		h = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
 	}
 	s_wnd.hwnd = CreateWindow(classname, title, WS_OVERLAPPEDWINDOW, x, y, w, h, NULL, NULL, s_wc.hInstance, NULL);
-	if(wp.rcNormalPosition.right > wp.rcNormalPosition.left) {
-		if(wp.showCmd == SW_SHOWMINIMIZED) {
+	if (wp.rcNormalPosition.right > wp.rcNormalPosition.left)
+	{
+		if (wp.showCmd == SW_SHOWMINIMIZED)
+		{
 			wp.showCmd = SW_SHOWNORMAL;
 		}
-		if(startHidden && wp.showCmd == SW_SHOWMAXIMIZED) {
+		if (startHidden && wp.showCmd == SW_SHOWMAXIMIZED)
+		{
 			wp.showCmd = SW_SHOWMINIMIZED;
 			wp.flags |= WPF_RESTORETOMAXIMIZED;
-		} else if(!startHidden) {
+		}
+		else if (!startHidden)
+		{
 			SetWindowPlacement(s_wnd.hwnd, &wp);
 		}
 		wp.showCmd = wp_.showCmd;
 	}
 	BB_LOG("ImguiCore", "hwnd: %p", s_wnd.hwnd);
 
-	if(s_wnd.hwnd) {
+	if (s_wnd.hwnd)
+	{
 		Imgui_Core_InitD3D();
-		if(wp.showCmd == SW_HIDE && !g_bCloseHidesWindow) {
+		if (wp.showCmd == SW_HIDE && !g_bCloseHidesWindow)
+		{
 			ShowWindow(s_wnd.hwnd, SW_SHOWDEFAULT);
-		} else {
-			if(startHidden) {
+		}
+		else
+		{
+			if (startHidden)
+			{
 				ShowWindow(s_wnd.hwnd, SW_HIDE);
-			} else {
+			}
+			else
+			{
 				ShowWindow(s_wnd.hwnd, (int)wp.showCmd);
 			}
 		}
@@ -690,11 +781,14 @@ extern "C" HWND Imgui_Core_InitWindow(const char *classname, const char *title, 
 
 extern "C" void Imgui_Core_ShutdownWindow(void)
 {
-	if(s_wnd.pd3dDevice) {
-		ImGuiPlatformIO &PlatformIO = ImGui::GetPlatformIO();
-		if(PlatformIO.Platform_DestroyWindow) {
-			ImGuiViewport *mainViewport = ImGui::GetMainViewport();
-			if(mainViewport) {
+	if (s_wnd.pd3dDevice)
+	{
+		ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
+		if (PlatformIO.Platform_DestroyWindow)
+		{
+			ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+			if (mainViewport)
+			{
 				PlatformIO.Platform_DestroyWindow(mainViewport);
 			}
 		}
@@ -709,32 +803,39 @@ extern "C" void Imgui_Core_ShutdownWindow(void)
 b32 Imgui_Core_BeginFrame(void)
 {
 	MSG msg = { BB_EMPTY_INITIALIZER };
-	if(PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
+	if (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
+	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
-		if(msg.message == WM_QUIT) {
+		if (msg.message == WM_QUIT)
+		{
 			Imgui_Core_RequestShutDown();
 		}
 		return false;
 	}
 
-	if(s_wnd.hwnd && !s_wnd.pd3dDevice) {
+	if (s_wnd.hwnd && !s_wnd.pd3dDevice)
+	{
 		Imgui_Core_InitD3D();
-		if(!s_wnd.b3dValid) {
+		if (!s_wnd.b3dValid)
+		{
 			BB_TICK();
 			return false;
 		}
 	}
 
-	if(!s_wnd.b3dValid) {
+	if (!s_wnd.b3dValid)
+	{
 		Imgui_Core_ResetD3D();
 	}
 
-	if(g_needUpdateDpiDependentResources) {
+	if (g_needUpdateDpiDependentResources)
+	{
 		g_needUpdateDpiDependentResources = false;
 		UpdateDpiDependentResources();
 	}
-	if(Fonts_UpdateAtlas()) {
+	if (Fonts_UpdateAtlas())
+	{
 		Imgui_Core_ResetD3D();
 	}
 
@@ -750,27 +851,33 @@ b32 Imgui_Core_BeginFrame(void)
 
 void Imgui_Core_EndFrame(ImVec4 clear_col)
 {
-	messageBoxes *boxes = mb_get_queue();
-	if(!boxes->manualUpdate) {
+	messageBoxes* boxes = mb_get_queue();
+	if (!boxes->manualUpdate)
+	{
 		UIMessageBox_Update(boxes);
 	}
 	ImGui::EndFrame();
 
-	ImGuiIO &io = ImGui::GetIO();
+	ImGuiIO& io = ImGui::GetIO();
 	bool requestRender = Imgui_Core_GetAndClearRequestRender() ||
 	                     ImGui::IsAnyKeyPressedOrReleasedThisFrame() ||
 	                     io.MouseHoveredViewport != 0 ||
 	                     io.MouseWheel != 0.0f ||
 	                     io.MouseWheelH != 0.0f;
-	for(bool mouseDown : io.MouseDown) {
-		if(mouseDown) {
+	for (bool mouseDown : io.MouseDown)
+	{
+		if (mouseDown)
+		{
 			requestRender = true;
 			break;
 		}
 	}
-	if(!requestRender) {
-		for(const ImGuiKeyData &keyData : io.KeysData) {
-			if(keyData.Down) {
+	if (!requestRender)
+	{
+		for (const ImGuiKeyData& keyData : io.KeysData)
+		{
+			if (keyData.Down)
+			{
 				requestRender = true;
 				break;
 			}
@@ -778,32 +885,41 @@ void Imgui_Core_EndFrame(ImVec4 clear_col)
 	}
 
 	// ImGui Rendering
-	if(requestRender && s_wnd.pd3dDevice && s_wnd.b3dValid) {
+	if (requestRender && s_wnd.pd3dDevice && s_wnd.b3dValid)
+	{
 		s_wnd.pd3dDevice->SetRenderState(D3DRS_ZENABLE, false);
 		s_wnd.pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, false);
 		s_wnd.pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, false);
 		D3DCOLOR clear_col_dx = D3DCOLOR_RGBA((int)(clear_col.x * 255.0f), (int)(clear_col.y * 255.0f), (int)(clear_col.z * 255.0f), (int)(clear_col.w * 255.0f));
 		s_wnd.pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clear_col_dx, 1.0f, 0);
-		if(s_wnd.pd3dDevice->BeginScene() >= 0) {
+		if (s_wnd.pd3dDevice->BeginScene() >= 0)
+		{
 			ImGui::Render();
 			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 			s_wnd.pd3dDevice->EndScene();
-		} else {
+		}
+		else
+		{
 			ImGui::EndFrame();
 			Imgui_Core_RequestRender();
 		}
-		if(ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
 		}
 		HRESULT hr = s_wnd.pd3dDevice->Present(NULL, NULL, NULL, NULL);
-		if(FAILED(hr)) {
+		if (FAILED(hr))
+		{
 			bb_sleep_ms(100);
 			Imgui_Core_ResetD3D();
 			Imgui_Core_RequestRender();
 		}
-	} else {
-		if(ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+	}
+	else
+	{
+		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
 			ImGui::UpdatePlatformWindows();
 		}
 		ImGui::EndFrame();

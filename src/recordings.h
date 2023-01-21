@@ -43,7 +43,8 @@ AUTOJSON typedef enum recording_type_e {
 	kRecordingType_Count
 } recording_type_t;
 
-typedef struct recording_s {
+typedef struct recording_s
+{
 	char applicationName[kBBSize_ApplicationName];
 	char applicationFilename[kBBSize_ApplicationName];
 	char path[kBBSize_MaxPath];
@@ -56,7 +57,8 @@ typedef struct recording_s {
 	u32 platform;
 } recording_t;
 
-AUTOJSON typedef struct new_recording_s {
+AUTOJSON typedef struct new_recording_s
+{
 	sb_t applicationName;
 	sb_t applicationFilename;
 	sb_t path;
@@ -67,13 +69,15 @@ AUTOJSON typedef struct new_recording_s {
 	u32 platform;
 } new_recording_t;
 
-typedef struct recordingIds_s {
+typedef struct recordingIds_s
+{
 	u32 count;
 	u32 allocated;
-	u32 *data;
+	u32* data;
 } recordingIds_t;
 
-AUTOJSON typedef struct recordings_tab_config_s {
+AUTOJSON typedef struct recordings_tab_config_s
+{
 	recording_group_t group;
 	recording_sort_t sort;
 	b32 showDate;
@@ -82,30 +86,34 @@ AUTOJSON typedef struct recordings_tab_config_s {
 	b32 showExternal;
 } recordings_tab_config_t;
 
-AUTOJSON typedef struct recordings_config_s {
+AUTOJSON typedef struct recordings_config_s
+{
 	recordings_tab_config_t tabs[kRecordingTab_Count];
 	float width;
 	b32 recordingsOpen;
 } recordings_config_t;
 
-typedef struct recordings_s {
+typedef struct recordings_s
+{
 	u32 count;
 	u32 allocated;
-	recording_t *data;
+	recording_t* data;
 } recordings_t;
 
-typedef struct grouped_recording_entry_s {
-	recording_t *recording;
+typedef struct grouped_recording_entry_s
+{
+	recording_t* recording;
 	u32 groupId;
 	b32 selected;
 } grouped_recording_entry_t;
 
-typedef struct grouped_recordings_s {
+typedef struct grouped_recordings_s
+{
 	u32 count;
 	u32 allocated;
 	u32 lastClickIndex;
 	u8 pad[4];
-	grouped_recording_entry_t *data;
+	grouped_recording_entry_t* data;
 } grouped_recordings_t;
 
 void recordings_init(void);
@@ -114,18 +122,18 @@ b32 recordings_are_dirty(recording_tab_t tab);
 void recordings_clear_dirty(recording_tab_t tab);
 void recordings_sort(recording_tab_t tab);
 void recordings_autodelete_old_recordings(void);
-recordings_t *recordings_get_all(recording_tab_t tab);
-recordings_config_t *recordings_get_config(void);
-grouped_recordings_t *grouped_recordings_get_all(recording_tab_t tab);
+recordings_t* recordings_get_all(recording_tab_t tab);
+recordings_config_t* recordings_get_config(void);
+grouped_recordings_t* grouped_recordings_get_all(recording_tab_t tab);
 
-recording_t *recordings_find_by_id(u32 id);
-recording_t *recordings_find_by_path(const char *path);
-recording_t *recordings_find_main_log(void);
-const char *recording_build_start_identifier(new_recording_t recording);
-void recording_add_existing(char *data, b32 valid);
-void recording_started(char *data);
-void recording_stopped(char *data);
-b32 recordings_get_application_info(const char *path, bb_decoded_packet_t *decoded);
+recording_t* recordings_find_by_id(u32 id);
+recording_t* recordings_find_by_path(const char* path);
+recording_t* recordings_find_main_log(void);
+const char* recording_build_start_identifier(new_recording_t recording);
+void recording_add_existing(char* data, b32 valid);
+void recording_started(char* data);
+void recording_stopped(char* data);
+b32 recordings_get_application_info(const char* path, bb_decoded_packet_t* decoded);
 
 b32 recordings_delete_by_id(u32 id);
 

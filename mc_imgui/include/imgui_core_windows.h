@@ -9,9 +9,9 @@
 extern "C" {
 #endif
 
-HWND Imgui_Core_InitWindow(const char *classname, const char *title, HICON icon, WINDOWPLACEMENT wp);
+HWND Imgui_Core_InitWindow(const char* classname, const char* title, HICON icon, WINDOWPLACEMENT wp);
 typedef LRESULT(Imgui_Core_UserWndProc)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-void Imgui_Core_SetUserWndProc(Imgui_Core_UserWndProc *WndProc);
+void Imgui_Core_SetUserWndProc(Imgui_Core_UserWndProc* WndProc);
 
 #if defined(__cplusplus)
 }

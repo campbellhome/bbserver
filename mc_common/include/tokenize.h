@@ -10,8 +10,8 @@
 extern "C" {
 #endif
 
-span_t tokenize(const char **bufferCursor, const char *delimiters);
-span_t tokenizeLine(span_t *cursor);
+span_t tokenize(const char** bufferCursor, const char* delimiters);
+span_t tokenizeLine(span_t* cursor);
 span_t tokenizeNthLine(span_t span, u32 lineIndex);
 
 #if defined(__cplusplus)

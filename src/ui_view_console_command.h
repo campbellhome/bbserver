@@ -8,4 +8,4 @@
 
 typedef struct view_s view_t;
 
-void UIRecordedView_Console(view_t *view, bool bHasFocus);
+void UIRecordedView_Console(view_t* view, bool bHasFocus);

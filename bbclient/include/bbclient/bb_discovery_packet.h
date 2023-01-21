@@ -14,7 +14,8 @@
 extern "C" {
 #endif
 
-typedef enum {
+typedef enum
+{
 	kBBDiscoveryPacketType_Invalid = -1,
 
 	// Client --> Server
@@ -54,21 +55,24 @@ typedef struct
 	u8 pad[2];
 } bb_packet_discovery_response_t;
 
-typedef struct bb_decoded_discovery_packet_s {
+typedef struct bb_decoded_discovery_packet_s
+{
 	bb_discovery_packet_type_e type;
 	u8 pad[4];
-	union {
+	union
+	{
 		bb_packet_discovery_request_t request;
 		bb_packet_discovery_response_t response;
 	} packet;
 } bb_decoded_discovery_packet_t;
 
-enum {
+enum
+{
 	BB_MAX_DISCOVERY_PACKET_BUFFER_SIZE = sizeof(bb_decoded_discovery_packet_t) + sizeof(BB_PROTOCOL_IDENTIFIER)
 };
 
-b32 bb_discovery_packet_deserialize(s8 *buffer, u16 len, bb_decoded_discovery_packet_t *decoded);
-u16 bb_discovery_packet_serialize(bb_decoded_discovery_packet_t *source, s8 *buffer, u16 len);
+b32 bb_discovery_packet_deserialize(s8* buffer, u16 len, bb_decoded_discovery_packet_t* decoded);
+u16 bb_discovery_packet_serialize(bb_decoded_discovery_packet_t* source, s8* buffer, u16 len);
 
 #if defined(__cplusplus)
 }

@@ -5,4 +5,4 @@
 
 typedef struct view_s view_t;
 
-void UIViewPieInstances_Update(view_t *view);
+void UIViewPieInstances_Update(view_t* view);

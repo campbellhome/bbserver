@@ -7,11 +7,13 @@
 
 #include "bbclient/bb_socket_errors.h"
 
-const char *bbnet_error_to_string(int err)
+const char* bbnet_error_to_string(int err)
 {
-#define BBNET_SOCKET_ERROR_CASE(x) case x: return #x
+#define BBNET_SOCKET_ERROR_CASE(x) \
+	case x: return #x
 
-	switch(err) {
+	switch (err)
+	{
 		BBNET_SOCKET_ERROR_CASE(BBNET_EWOULDBLOCK);
 		BBNET_SOCKET_ERROR_CASE(BBNET_EINPROGRESS);
 		BBNET_SOCKET_ERROR_CASE(BBNET_EALREADY);

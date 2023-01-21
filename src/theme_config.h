@@ -10,10 +10,11 @@
 extern "C" {
 #endif
 
-b32 Style_ReadConfig(const char *colorscheme);
+b32 Style_ReadConfig(const char* colorscheme);
 void Style_ResetConfig(void);
 
-typedef struct tag_styleColor {
+typedef struct tag_styleColor
+{
 	s32 r;
 	s32 g;
 	s32 b;
@@ -22,13 +23,15 @@ typedef struct tag_styleColor {
 	u8 pad[4];
 } styleColor;
 
-typedef struct tag_styleColors {
-	styleColor *data;
+typedef struct tag_styleColors
+{
+	styleColor* data;
 	u32 count;
 	u32 allocated;
 } styleColors;
 
-typedef struct tag_styleConfig {
+typedef struct tag_styleConfig
+{
 	styleColors colors;
 } styleConfig;
 
@@ -88,7 +91,8 @@ AUTOJSON typedef enum tag_styleColor_e {
 	kStyleColor_Count
 } styleColor_e;
 
-AUTOJSON typedef struct color_config_s {
+AUTOJSON typedef struct color_config_s
+{
 	styleColor_e colorName;
 	u8 r;
 	u8 g;
@@ -98,17 +102,20 @@ AUTOJSON typedef struct color_config_s {
 	u8 pad[4];
 } color_config_t;
 
-AUTOJSON typedef struct colors_config_s {
+AUTOJSON typedef struct colors_config_s
+{
 	u32 count;
 	u32 allocated;
-	color_config_t *data;
+	color_config_t* data;
 } colors_config_t;
 
-AUTOJSON typedef struct theme_config_s {
+AUTOJSON typedef struct theme_config_s
+{
 	colors_config_t colors;
 } theme_config_t;
 
-typedef struct tag_resolvedStyle {
+typedef struct tag_resolvedStyle
+{
 	styleColor colors[kStyleColor_Count];
 } resolvedStyle;
 

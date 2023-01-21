@@ -19,7 +19,7 @@ extern "C" {
 
 typedef uintptr_t bb_thread_handle_t;
 typedef unsigned bb_thread_return_t;
-typedef bb_thread_return_t (*bb_thread_func)(void *args);
+typedef bb_thread_return_t (*bb_thread_func)(void* args);
 #define bb_thread_local __declspec(thread)
 #define bb_thread_exit(ret) \
 	{                       \
@@ -32,8 +32,8 @@ typedef bb_thread_return_t (*bb_thread_func)(void *args);
 #include <pthread.h>
 
 typedef pthread_t bb_thread_handle_t;
-typedef void *bb_thread_return_t;
-typedef bb_thread_return_t (*bb_thread_func)(void *args);
+typedef void* bb_thread_return_t;
+typedef bb_thread_return_t (*bb_thread_func)(void* args);
 #define bb_thread_local __thread
 #define bb_thread_exit(ret) \
 	{                       \
@@ -44,8 +44,8 @@ typedef bb_thread_return_t (*bb_thread_func)(void *args);
 
 #define bb_thread_name(x) #x
 
-bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg);
-void bbthread_set_name(const char *name);
+bb_thread_handle_t bbthread_create(bb_thread_func func, void* arg);
+void bbthread_set_name(const char* name);
 void bbthread_join(bb_thread_handle_t threadHandle);
 bb_thread_handle_t bbthread_get_current(void);
 u64 bbthread_get_current_id(void);

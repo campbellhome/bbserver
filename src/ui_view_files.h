@@ -5,4 +5,4 @@
 
 typedef struct view_s view_t;
 
-void UIViewFiles_Update(view_t *view);
+void UIViewFiles_Update(view_t* view);

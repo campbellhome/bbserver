@@ -28,16 +28,18 @@ BB_WARNING_PUSH(4820, 4668)
 #pragma comment(lib, "Iphlpapi.lib")
 BB_WARNING_POP
 
-typedef struct devkit_s {
+typedef struct devkit_s
+{
 	sb_t addr;
 	sb_t comment;
 	b32 bPreferred;
 	u8 pad[4];
 } devkit_t;
-typedef struct devkits_s {
+typedef struct devkits_s
+{
 	u32 count;
 	u32 allocated;
-	devkit_t *data;
+	devkit_t* data;
 } devkits_t;
 
 static const u64 kDevkitAutodetectIntervalMillis = 5 * 60 * 1000;
@@ -52,7 +54,8 @@ static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPFORWARD_ROW2 Row 
 	BB_UNUSED(CallerContext);
 	BB_UNUSED(Row);
 	BB_UNUSED(NotificationType);
-	if(!s_devkitAutodetectActive) {
+	if (!s_devkitAutodetectActive)
+	{
 		s_lastDevkitAutodetectMillis = 0;
 	}
 	s_interfaceChanged = true;
@@ -61,23 +64,26 @@ static void InterfaceChanged(IN PVOID CallerContext, IN PMIB_IPFORWARD_ROW2 Row 
 static void RegisterForInterfaceChanges(void)
 {
 	int ret = NotifyRouteChange2(AF_INET, &InterfaceChanged, NULL, FALSE, &s_interfaceChangeHandle);
-	if(ret != NO_ERROR) {
+	if (ret != NO_ERROR)
+	{
 		system_error_to_log(ret, "Devkit", "NotifyRouteChange2");
 	}
 }
 
 static void UnregisterForInterfaceChanges(void)
 {
-	if(s_interfaceChangeHandle) {
+	if (s_interfaceChangeHandle)
+	{
 		CancelMibChangeNotify2(s_interfaceChangeHandle);
 		s_interfaceChangeHandle = NULL;
 	}
 }
 
-static void devkits_reset(devkits_t *devkits)
+static void devkits_reset(devkits_t* devkits)
 {
-	for(u32 i = 0; i < devkits->count; ++i) {
-		devkit_t *devkit = devkits->data + i;
+	for (u32 i = 0; i < devkits->count; ++i)
+	{
+		devkit_t* devkit = devkits->data + i;
 		sb_reset(&devkit->addr);
 		sb_reset(&devkit->comment);
 	}
@@ -93,19 +99,26 @@ void devkit_autodetect_shutdown(void)
 static void devkit_autodetect_finish(void)
 {
 	b32 changes = false;
-	for(u32 whitelistIndex = 0; whitelistIndex < g_config.whitelist.count; ++whitelistIndex) {
+	for (u32 whitelistIndex = 0; whitelistIndex < g_config.whitelist.count; ++whitelistIndex)
+	{
 		b32 valid = true;
-		configWhitelistEntry_t *entry = g_config.whitelist.data + whitelistIndex;
-		if(entry->autodetectedDevkit) {
+		configWhitelistEntry_t* entry = g_config.whitelist.data + whitelistIndex;
+		if (entry->autodetectedDevkit)
+		{
 			valid = false;
-			for(u32 devkitIndex = 0; devkitIndex < s_devkits.count; ++devkitIndex) {
-				devkit_t *devkit = s_devkits.data + devkitIndex;
-				if(!strcmp(sb_get(&devkit->addr), sb_get(&entry->addressPlusMask))) {
+			for (u32 devkitIndex = 0; devkitIndex < s_devkits.count; ++devkitIndex)
+			{
+				devkit_t* devkit = s_devkits.data + devkitIndex;
+				if (!strcmp(sb_get(&devkit->addr), sb_get(&entry->addressPlusMask)))
+				{
 					valid = true;
-					if(devkit->bPreferred && entry->delay) {
+					if (devkit->bPreferred && entry->delay)
+					{
 						entry->delay = 0;
 						changes = true;
-					} else if(!devkit->bPreferred && entry->delay != 50) {
+					}
+					else if (!devkit->bPreferred && entry->delay != 50)
+					{
 						entry->delay = 50;
 						changes = true;
 					}
@@ -113,39 +126,48 @@ static void devkit_autodetect_finish(void)
 				}
 			}
 		}
-		if(!valid) {
-			if(entry->delay != 75) {
+		if (!valid)
+		{
+			if (entry->delay != 75)
+			{
 				entry->delay = 75;
 				changes = true;
 			}
 		}
 	}
-	for(u32 devkitIndex = 0; devkitIndex < s_devkits.count; ++devkitIndex) {
+	for (u32 devkitIndex = 0; devkitIndex < s_devkits.count; ++devkitIndex)
+	{
 		b32 exists = false;
-		devkit_t *devkit = s_devkits.data + devkitIndex;
-		for(u32 whitelistIndex = 0; whitelistIndex < g_config.whitelist.count; ++whitelistIndex) {
-			configWhitelistEntry_t *entry = g_config.whitelist.data + whitelistIndex;
-			if(entry->autodetectedDevkit && !strcmp(sb_get(&devkit->addr), sb_get(&entry->addressPlusMask))) {
+		devkit_t* devkit = s_devkits.data + devkitIndex;
+		for (u32 whitelistIndex = 0; whitelistIndex < g_config.whitelist.count; ++whitelistIndex)
+		{
+			configWhitelistEntry_t* entry = g_config.whitelist.data + whitelistIndex;
+			if (entry->autodetectedDevkit && !strcmp(sb_get(&devkit->addr), sb_get(&entry->addressPlusMask)))
+			{
 				exists = true;
 				break;
 			}
 		}
-		if(!exists) {
+		if (!exists)
+		{
 			BB_LOG("Devkit", "Adding autodetected devkit %s %s", sb_get(&devkit->addr), sb_get(&devkit->comment));
-			configWhitelistEntry_t *entry = bba_add(g_config.whitelist, 1);
-			if(entry) {
+			configWhitelistEntry_t* entry = bba_add(g_config.whitelist, 1);
+			if (entry)
+			{
 				entry->allow = true;
 				entry->autodetectedDevkit = true;
 				sb_append(&entry->addressPlusMask, sb_get(&devkit->addr));
 				sb_append(&entry->comment, sb_get(&devkit->comment));
-				if(!devkit->bPreferred) {
+				if (!devkit->bPreferred)
+				{
 					entry->delay = 50;
 				}
 				changes = true;
 			}
 		}
 	}
-	if(changes || s_interfaceChanged) {
+	if (changes || s_interfaceChanged)
+	{
 		s_interfaceChanged = false;
 		config_push_whitelist(&g_config.whitelist);
 	}
@@ -155,31 +177,42 @@ static void devkit_autodetect_finish(void)
 	BB_TRACE(kBBLogLevel_Verbose, "Devkit", "Devkit autodetect END");
 }
 
-static void devkit_autodetect_add(span_t addr, const char *platformName, const char *name)
+static void devkit_autodetect_add(span_t addr, const char* platformName, const char* name)
 {
-	if(addr.start && *addr.start > '0' && *addr.start <= '9') {
+	if (addr.start && *addr.start > '0' && *addr.start <= '9')
+	{
 		int numDots = 0;
 		b32 validChars = true;
 		s64 len = addr.end - addr.start;
-		for(s64 i = 0; i < len; ++i) {
-			if(addr.start[i] == '.') {
+		for (s64 i = 0; i < len; ++i)
+		{
+			if (addr.start[i] == '.')
+			{
 				++numDots;
-			} else if(addr.start[i] < '0' || addr.start[i] > '9') {
+			}
+			else if (addr.start[i] < '0' || addr.start[i] > '9')
+			{
 				validChars = false;
 				break;
 			}
 		}
-		if(numDots == 3 && validChars) {
+		if (numDots == 3 && validChars)
+		{
 			devkit_t tmp = { BB_EMPTY_INITIALIZER };
 			sb_append_range(&tmp.addr, addr.start, addr.end);
-			if(name && *name) {
+			if (name && *name)
+			{
 				sb_va(&tmp.comment, "%s (%s)", name, platformName);
-			} else {
+			}
+			else
+			{
 				sb_append(&tmp.comment, platformName);
 			}
 			sb_append(&tmp.comment, " - autodetected");
 			bba_push(s_devkits, tmp);
-		} else {
+		}
+		else
+		{
 			BB_WARNING("Devkit", "Ignored devkit with invalid addr '%.*s'", addr.end - addr.start, addr.start);
 		}
 	}
@@ -187,58 +220,78 @@ static void devkit_autodetect_add(span_t addr, const char *platformName, const c
 
 //////////////////////////////////////////////////////////////////////////
 
-static void task_orbis_info_statechanged(task *t)
+static void task_orbis_info_statechanged(task* t)
 {
 	task_process_statechanged(t);
-	if(t->state == kTaskState_Succeeded) {
-		task_process *p = t->taskData;
-		if(p->process) {
-			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
+	if (t->state == kTaskState_Succeeded)
+	{
+		task_process* p = t->taskData;
+		if (p->process)
+		{
+			const char* cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t line = tokenize(&cursor, "\r\n");
 			sb_t devkitName = { BB_EMPTY_INITIALIZER };
 			sb_t gameAddr = { BB_EMPTY_INITIALIZER };
 			b32 bDefault = false;
 			b32 bConnected = false;
 			b32 bInUse = false;
-			while(line.start) {
-				const char *lineCursor = line.start;
+			while (line.start)
+			{
+				const char* lineCursor = line.start;
 				span_t key = tokenize(&lineCursor, " \r\n");
-				if(!bb_strnicmp(key.start, "CachedName:", key.end - key.start)) {
+				if (!bb_strnicmp(key.start, "CachedName:", key.end - key.start))
+				{
 					span_t val = tokenize(&lineCursor, " \r\n");
-					if(val.start) {
+					if (val.start)
+					{
 						sb_reset(&devkitName);
 						sb_append_range(&devkitName, val.start, val.end);
 					}
-				} else if(!bb_strnicmp(key.start, "GameLanIpAddress:", key.end - key.start)) {
+				}
+				else if (!bb_strnicmp(key.start, "GameLanIpAddress:", key.end - key.start))
+				{
 					span_t val = tokenize(&lineCursor, " \r\n");
-					if(val.start) {
+					if (val.start)
+					{
 						sb_reset(&gameAddr);
 						sb_append_range(&gameAddr, val.start, val.end);
 					}
-				} else if(!bb_strnicmp(key.start, "default:", key.end - key.start)) {
+				}
+				else if (!bb_strnicmp(key.start, "default:", key.end - key.start))
+				{
 					span_t val = tokenize(&lineCursor, " \r\n");
-					if(val.start) {
-						if(!span_strcmp(val, span_from_string("True"))) {
+					if (val.start)
+					{
+						if (!span_strcmp(val, span_from_string("True")))
+						{
 							bDefault = true;
 						}
 					}
-				} else if(!bb_strnicmp(key.start, "ConnectionState:", key.end - key.start)) {
+				}
+				else if (!bb_strnicmp(key.start, "ConnectionState:", key.end - key.start))
+				{
 					span_t val = tokenize(&lineCursor, " \r\n");
-					if(val.start) {
-						if(!span_strcmp(val, span_from_string("CONNECTION_CONNECTED"))) {
+					if (val.start)
+					{
+						if (!span_strcmp(val, span_from_string("CONNECTION_CONNECTED")))
+						{
 							bConnected = true;
-						} else if(!span_strcmp(val, span_from_string("CONNECTION_IN_USE"))) {
+						}
+						else if (!span_strcmp(val, span_from_string("CONNECTION_IN_USE")))
+						{
 							bInUse = true;
 						}
 					}
 				}
 				line = tokenize(&cursor, "\r\n");
 			}
-			if(gameAddr.data) {
+			if (gameAddr.data)
+			{
 				b32 bAdd = (bDefault || bConnected) && !bInUse;
 				BB_LOG("Devkit", "Orbis Game Addr: %s (added:%d default:%d connected:%d inuse:%d)",
 				       gameAddr.data, bAdd, bDefault, bConnected, bInUse);
-				if(bAdd) {
+				if (bAdd)
+				{
 					devkit_autodetect_add(span_from_string(gameAddr.data), bb_platform_name(kBBPlatform_Orbis), sb_get(&devkitName));
 				}
 			}
@@ -248,23 +301,28 @@ static void task_orbis_info_statechanged(task *t)
 	}
 }
 
-static void task_orbis_list_statechanged(task *t)
+static void task_orbis_list_statechanged(task* t)
 {
 	task_process_statechanged(t);
-	if(t->state == kTaskState_Succeeded) {
-		task_process *p = t->taskData;
+	if (t->state == kTaskState_Succeeded)
+	{
+		task_process* p = t->taskData;
 		sb_t dir = env_resolve("%SCE_ROOT_DIR%\\ORBIS\\Tools\\Target Manager Server\\bin");
-		task *groupTask = task_find(t->parentId);
-		if(p->process) {
-			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
+		task* groupTask = task_find(t->parentId);
+		if (p->process)
+		{
+			const char* cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t line = tokenize(&cursor, "\r\n");
-			while(line.start) {
-				const char *lineCursor = line.start;
+			while (line.start)
+			{
+				const char* lineCursor = line.start;
 				//BB_TRACE(kBBLogLevel_Verbose, "Devkit", "%.*s", line.end - line.start, line.start);
 				span_t key = tokenize(&lineCursor, " ");
-				if(!bb_strnicmp(key.start, "Host:", key.end - key.start)) {
+				if (!bb_strnicmp(key.start, "Host:", key.end - key.start))
+				{
 					span_t val = tokenize(&lineCursor, " \r\n");
-					if(val.start) {
+					if (val.start)
+					{
 						BB_LOG("Devkit", "Orbis Devkit Addr: %.*s", val.end - val.start, val.start);
 						task subtask = process_task_create(
 						    va("orbis_info %.*s", val.end - val.start, val.start),
@@ -281,12 +339,13 @@ static void task_orbis_list_statechanged(task *t)
 	}
 }
 
-static void devkit_autodetect_orbis_queue(task *groupTask)
+static void devkit_autodetect_orbis_queue(task* groupTask)
 {
 	sb_t dir = env_resolve("%SCE_ROOT_DIR%\\ORBIS\\Tools\\Target Manager Server\\bin");
 	sb_t path = { BB_EMPTY_INITIALIZER };
 	sb_va(&path, "%s\\orbis-ctrl.exe", sb_get(&dir));
-	if(file_readable(sb_get(&path))) {
+	if (file_readable(sb_get(&path)))
+	{
 		task orbisGroupTask = { BB_EMPTY_INITIALIZER };
 		orbisGroupTask.tick = task_tick_subtasks;
 		orbisGroupTask.parallel = true;
@@ -302,22 +361,26 @@ static void devkit_autodetect_orbis_queue(task *groupTask)
 
 //////////////////////////////////////////////////////////////////////////
 
-static void task_xbconfig_statechanged(task *t)
+static void task_xbconfig_statechanged(task* t)
 {
 	task_process_statechanged(t);
-	if(t->state == kTaskState_Succeeded) {
-		const char *key = sdict_find(&t->extraData, "key");
-		task_process *p = t->taskData;
-		if(p->process && key) {
-			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
+	if (t->state == kTaskState_Succeeded)
+	{
+		const char* key = sdict_find(&t->extraData, "key");
+		task_process* p = t->taskData;
+		if (p->process && key)
+		{
+			const char* cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t line = tokenize(&cursor, " \r\n");
-			if(line.start) {
-				const char *lineCursor = line.start;
+			if (line.start)
+			{
+				const char* lineCursor = line.start;
 				span_t keyToken = tokenize(&lineCursor, " :\r\n");
 				span_t valToken = tokenize(&lineCursor, " :\r\n");
 				size_t keyTokenLen = keyToken.end - keyToken.start;
 				size_t valTokenLen = valToken.end - valToken.start;
-				if(keyToken.start && valToken.start && keyTokenLen == strlen(key) && !strncmp(key, keyToken.start, keyTokenLen)) {
+				if (keyToken.start && valToken.start && keyTokenLen == strlen(key) && !strncmp(key, keyToken.start, keyTokenLen))
+				{
 					BB_LOG("Devkit", "Durango %s: %.*s", key, valTokenLen, valToken.start);
 					sdict_add_raw(&task_find(t->parentId)->extraData, key, va("%.*s", valTokenLen, valToken.start));
 				}
@@ -326,15 +389,18 @@ static void task_xbconfig_statechanged(task *t)
 	}
 }
 
-static void task_xbconnect_statechanged(task *t)
+static void task_xbconnect_statechanged(task* t)
 {
 	task_process_statechanged(t);
-	if(t->state == kTaskState_Succeeded) {
-		task_process *p = t->taskData;
-		if(p->process) {
-			const char *cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
+	if (t->state == kTaskState_Succeeded)
+	{
+		task_process* p = t->taskData;
+		if (p->process)
+		{
+			const char* cursor = p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "";
 			span_t token = tokenize(&cursor, " \r\n");
-			if(token.start && *token.start > '0' && *token.start <= '9') {
+			if (token.start && *token.start > '0' && *token.start <= '9')
+			{
 				BB_LOG("Devkit", "Durango Game Addr: %.*s", token.end - token.start, token.start);
 				sdict_add_raw(&task_find(t->parentId)->extraData, "GameAddr", va("%.*s", token.end - token.start, token.start));
 
@@ -359,14 +425,17 @@ static void task_xbconnect_statechanged(task *t)
 	}
 }
 
-static void task_durango_autodetect_group_statechanged(task *t)
+static void task_durango_autodetect_group_statechanged(task* t)
 {
-	if(task_done(t)) {
-		const char *gameAddr = sdict_find(&t->extraData, "GameAddr");
-		const char *consoleType = sdict_find(&t->extraData, "ConsoleType");
-		const char *hostName = sdict_find(&t->extraData, "HostName");
-		if(gameAddr) {
-			if(!consoleType) {
+	if (task_done(t))
+	{
+		const char* gameAddr = sdict_find(&t->extraData, "GameAddr");
+		const char* consoleType = sdict_find(&t->extraData, "ConsoleType");
+		const char* hostName = sdict_find(&t->extraData, "HostName");
+		if (gameAddr)
+		{
+			if (!consoleType)
+			{
 				consoleType = bb_platform_name(kBBPlatform_Durango);
 			}
 			devkit_autodetect_add(span_from_string(gameAddr), consoleType, hostName);
@@ -374,13 +443,14 @@ static void task_durango_autodetect_group_statechanged(task *t)
 	}
 }
 
-static void devkit_autodetect_durango_queue(task *groupTask)
+static void devkit_autodetect_durango_queue(task* groupTask)
 {
 	sb_t dir = env_resolve("%XboxOneXDKLatest%..\\bin");
 	sb_t path = { BB_EMPTY_INITIALIZER };
 	sb_va(&path, "%s\\xbconnect.exe", sb_get(&dir));
 
-	if(file_readable(sb_get(&path))) {
+	if (file_readable(sb_get(&path)))
+	{
 		task durangoGroupTask = { BB_EMPTY_INITIALIZER };
 		durangoGroupTask.parallel = true;
 		durangoGroupTask.tick = task_tick_subtasks;
@@ -399,24 +469,26 @@ static void devkit_autodetect_durango_queue(task *groupTask)
 
 //////////////////////////////////////////////////////////////////////////
 
-static void task_devkit_autodetect_group_statechanged(task *t)
+static void task_devkit_autodetect_group_statechanged(task* t)
 {
-	if(task_done(t)) {
+	if (task_done(t))
+	{
 		devkit_autodetect_finish();
 	}
 }
 
 void devkit_autodetect_tick(void)
 {
-	if(s_devkitAutodetectActive || s_lastDevkitAutodetectMillis && bb_current_time_ms() < s_lastDevkitAutodetectMillis + kDevkitAutodetectIntervalMillis)
+	if (s_devkitAutodetectActive || s_lastDevkitAutodetectMillis && bb_current_time_ms() < s_lastDevkitAutodetectMillis + kDevkitAutodetectIntervalMillis)
 		return;
 
-	if(!g_site_config.autodetectDevkits)
+	if (!g_site_config.autodetectDevkits)
 		return;
 
 	BB_TRACE(kBBLogLevel_Verbose, "Devkit", "Devkit autodetect BEGIN");
 
-	if(!s_interfaceChangeHandle) {
+	if (!s_interfaceChangeHandle)
+	{
 		RegisterForInterfaceChanges();
 	}
 
@@ -431,9 +503,12 @@ void devkit_autodetect_tick(void)
 	devkit_autodetect_durango_queue(&groupTask);
 
 	groupTask.stateChanged = task_devkit_autodetect_group_statechanged;
-	if(groupTask.subtasks.count) {
+	if (groupTask.subtasks.count)
+	{
 		task_queue(groupTask);
-	} else {
+	}
+	else
+	{
 		task_discard(groupTask);
 		devkit_autodetect_finish();
 	}

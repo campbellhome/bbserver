@@ -3,8 +3,8 @@
 
 #include "bbserver_update.h"
 #include "app_update.h"
-#include "bb_assert.h"
 #include "bb_array.h"
+#include "bb_assert.h"
 #include "bb_colors.h"
 #include "bb_log.h"
 #include "bb_string.h"
@@ -40,10 +40,13 @@ float g_messageboxHeight;
 static bool s_showSystemTrayPopup;
 extern "C" int UISystemTray_Open(void)
 {
-	if(0) {
+	if (0)
+	{
 		s_showSystemTrayPopup = true;
 		return 1;
-	} else {
+	}
+	else
+	{
 		return 0;
 	}
 }
@@ -78,7 +81,7 @@ static bool s_showImguiStyleEditor;
 static bool s_failedDiscoveryStartup;
 static int s_failedDiscoveryCount;
 
-static const char *s_colorschemes[] = {
+static const char* s_colorschemes[] = {
 	"ImGui Dark",
 	"Light",
 	"Classic",
@@ -88,10 +91,12 @@ static const char *s_colorschemes[] = {
 
 static void BBServer_OpenMainLog(b32 bNoDuplicates = true)
 {
-	recording_t *recording = recordings_find_main_log();
-	if(recording) {
-		recorded_session_t *session = recorded_session_find(recording->path);
-		if(!session || !bNoDuplicates) {
+	recording_t* recording = recordings_find_main_log();
+	if (recording)
+	{
+		recorded_session_t* session = recorded_session_find(recording->path);
+		if (!session || !bNoDuplicates)
+		{
 			recorded_session_open(recording->path, recording->applicationFilename, true, recording->active != 0, recording->outgoingMqId);
 		}
 	}
@@ -113,12 +118,12 @@ static void BBServer_DebugAssert()
 static void BBServer_DebugCrash()
 {
 	BB_LOG("UI::Menu::Debug", "User-initiated access violation");
-	char *badAddress = (char *)1;
+	char* badAddress = (char*)1;
 	*badAddress = 0;
 }
 static int infinite_recursion(int i)
 {
-	if(i < 0)
+	if (i < 0)
 		return 0;
 	return i + infinite_recursion(i + 1);
 }
@@ -146,29 +151,34 @@ static void App_GenerateColorTestLogs()
 	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Error, 0, "Test::Color::Error", "This log is Error");
 	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Fatal, 0, "Test::Color::Fatal", "This log is Fatal");
 
-	for(int i = 0; i < kNumColorKeys; ++i) {
+	for (int i = 0; i < kNumColorKeys; ++i)
+	{
 		char c = kFirstColorKey + (char)i;
 		BB_LOG("Test::Color::Log", "This is a log with %c%cColor %c%c%c%c%s, which should be %s\n",
 		       kColorKeyPrefix, c, kColorKeyPrefix, kColorKeyPrefix, c, c, normalColorStr, textColorNames[i + kColorKeyOffset]);
 	}
 
-	for(int i = 0; i < kNumColorKeys; ++i) {
+	for (int i = 0; i < kNumColorKeys; ++i)
+	{
 		char c = kFirstColorKey + (char)i;
 		BB_WARNING("Test::Color::Warning", "This is a warning with %c%cColor %c%c%c%c%s, which should be %s\n",
 		           kColorKeyPrefix, c, kColorKeyPrefix, kColorKeyPrefix, c, c, warningColorStr, textColorNames[i + kColorKeyOffset]);
 	}
 
-	for(int i = 0; i < kNumColorKeys; ++i) {
+	for (int i = 0; i < kNumColorKeys; ++i)
+	{
 		char c = kFirstColorKey + (char)i;
 		BB_ERROR("Test::Color::Error", "This is an error with %c%cColor %c%c%c%c%s, which should be %s\n",
 		         kColorKeyPrefix, c, kColorKeyPrefix, kColorKeyPrefix, c, c, errorColorStr, textColorNames[i + kColorKeyOffset]);
 	}
 
-	for(int i = kBBColor_UE4_Black; i < kBBColor_Count; ++i) {
+	for (int i = kBBColor_UE4_Black; i < kBBColor_Count; ++i)
+	{
 		BB_SET_COLOR((bb_color_t)i, kBBColor_Default);
 		BB_LOG("Test::Color::SetColor", "This log text should be %s", textColorNames[i]);
 	}
-	for(int i = kBBColor_UE4_Black; i < kBBColor_Count; ++i) {
+	for (int i = kBBColor_UE4_Black; i < kBBColor_Count; ++i)
+	{
 		bb_color_t fgColor = (i == kBBColor_UE4_DarkBlue ||
 		                      i == kBBColor_UE4_Blue ||
 		                      i == kBBColor_UE4_Black)
@@ -240,7 +250,7 @@ static void App_GeneratePIEInstanceTestLogs()
 	BB_TRACE_DYNAMIC_PREFORMATTED(__FILE__, (u32)__LINE__, kBBLogLevel_Log, 4, "Test::PIEInstance", "This log is from PIEInstance 4");
 }
 
-static bb_thread_return_t app_test_log_thread(void *args)
+static bb_thread_return_t app_test_log_thread(void* args)
 {
 	BBServer_OpenMainLog();
 	u32 i = (u32)(u64)args;
@@ -250,7 +260,8 @@ static bb_thread_return_t app_test_log_thread(void *args)
 	u64 start = bb_current_time_ms();
 	u64 now = start;
 	u64 end = now + 10000;
-	while(now < end) {
+	while (now < end)
+	{
 		BB_TRACE(kBBLogLevel_Verbose, "Test::ThreadSpam", "app_test_log_thread %u %llu dt %llu ms", i, ++count, now - start);
 		now = bb_current_time_ms();
 	}
@@ -262,55 +273,71 @@ static bb_thread_return_t app_test_log_thread(void *args)
 static void App_GenerateSpamTestLogs()
 {
 	BBServer_OpenMainLog();
-	for(u64 i = 0; i < 10; ++i) {
-		bbthread_create(app_test_log_thread, (void *)i);
+	for (u64 i = 0; i < 10; ++i)
+	{
+		bbthread_create(app_test_log_thread, (void*)i);
 	}
 }
 
 void BBServer_MainMenuBar(void)
 {
-	if(ImGui::BeginMainMenuBar()) {
-		if(ImGui::BeginMenu("File")) {
-			if(ImGui::MenuItem("Open...")) {
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Open..."))
+			{
 				sb_t path = FileOpenDialog_Show();
-				if(sb_len(&path)) {
+				if (sb_len(&path))
+				{
 					DragDrop_ProcessPath(sb_get(&path));
 				}
 				sb_reset(&path);
 			}
-			if(ImGui::MenuItem("Exit")) {
+			if (ImGui::MenuItem("Exit"))
+			{
 				Imgui_Core_RequestShutDown();
 			}
 			ImGui::EndMenu();
 		}
-		if(ImGui::BeginMenu("Edit")) {
-			if(ImGui::MenuItem("Recordings", NULL, &recordings_get_config()->recordingsOpen)) {
+		if (ImGui::BeginMenu("Edit"))
+		{
+			if (ImGui::MenuItem("Recordings", NULL, &recordings_get_config()->recordingsOpen))
+			{
 				BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
 			}
-			if(ImGui::MenuItem("Config")) {
+			if (ImGui::MenuItem("Config"))
+			{
 				BB_LOG("UI::Menu::Config", "UIConfig_Open");
 				UIConfig_Open(&g_config);
 			}
 			ImGui::EndMenu();
 		}
-		if(g_config.showDebugMenu) {
-			if(ImGui::BeginMenu("Debug")) {
-				if(ImGui::MenuItem("Message box")) {
+		if (g_config.showDebugMenu)
+		{
+			if (ImGui::BeginMenu("Debug"))
+			{
+				if (ImGui::MenuItem("Message box"))
+				{
 					messageBox mb = {};
 					sdict_add_raw(&mb.data, "title", "Test Message Box");
 					sdict_add_raw(&mb.data, "text", "Test message box text\nNothing to see here...");
 					sdict_add_raw(&mb.data, "button1", "Ok");
 					mb_queue(mb, nullptr);
 				}
-				if(ImGui::MenuItem("DEBUG Reload style colors")) {
+				if (ImGui::MenuItem("DEBUG Reload style colors"))
+				{
 					Style_ReadConfig(Imgui_Core_GetColorScheme());
 					ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 				}
-				if(ImGui::BeginMenu("Color schemes")) {
-					const char *colorscheme = Imgui_Core_GetColorScheme();
-					for(int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i) {
+				if (ImGui::BeginMenu("Color schemes"))
+				{
+					const char* colorscheme = Imgui_Core_GetColorScheme();
+					for (int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i)
+					{
 						bool bSelected = !strcmp(colorscheme, s_colorschemes[i]);
-						if(ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected)) {
+						if (ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected))
+						{
 							Imgui_Core_SetColorScheme(s_colorschemes[i]);
 							Style_ReadConfig(Imgui_Core_GetColorScheme());
 							ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
@@ -318,63 +345,82 @@ void BBServer_MainMenuBar(void)
 					}
 					ImGui::EndMenu();
 				}
-				if(ImGui::BeginMenu("DEBUG Scale")) {
+				if (ImGui::BeginMenu("DEBUG Scale"))
+				{
 					float dpiScale = Imgui_Core_GetDpiScale();
-					if(dpiScale < 1.0f) {
+					if (dpiScale < 1.0f)
+					{
 						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
-					if(ImGui::MenuItem("1", nullptr, dpiScale == 1.0f)) {
+					if (ImGui::MenuItem("1", nullptr, dpiScale == 1.0f))
+					{
 						Imgui_Core_SetDpiScale(1.0f);
 					}
-					if(dpiScale > 1.0f && dpiScale < 1.25f) {
+					if (dpiScale > 1.0f && dpiScale < 1.25f)
+					{
 						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
-					if(ImGui::MenuItem("1.25", nullptr, dpiScale == 1.25f)) {
+					if (ImGui::MenuItem("1.25", nullptr, dpiScale == 1.25f))
+					{
 						Imgui_Core_SetDpiScale(1.25f);
 					}
-					if(dpiScale > 1.25f && dpiScale < 1.5f) {
+					if (dpiScale > 1.25f && dpiScale < 1.5f)
+					{
 						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
-					if(ImGui::MenuItem("1.5", nullptr, dpiScale == 1.5f)) {
+					if (ImGui::MenuItem("1.5", nullptr, dpiScale == 1.5f))
+					{
 						Imgui_Core_SetDpiScale(1.5f);
 					}
-					if(dpiScale > 1.5f && dpiScale < 1.75f) {
+					if (dpiScale > 1.5f && dpiScale < 1.75f)
+					{
 						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
-					if(ImGui::MenuItem("1.75", nullptr, dpiScale == 1.75f)) {
+					if (ImGui::MenuItem("1.75", nullptr, dpiScale == 1.75f))
+					{
 						Imgui_Core_SetDpiScale(1.75f);
 					}
-					if(dpiScale > 1.75f && dpiScale < 2.0f) {
+					if (dpiScale > 1.75f && dpiScale < 2.0f)
+					{
 						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
-					if(ImGui::MenuItem("2", nullptr, dpiScale == 2.0f)) {
+					if (ImGui::MenuItem("2", nullptr, dpiScale == 2.0f))
+					{
 						Imgui_Core_SetDpiScale(2.0f);
 					}
-					if(dpiScale > 2.0f) {
+					if (dpiScale > 2.0f)
+					{
 						ImGui::MenuItem(va("%.2f", dpiScale), nullptr, true);
 					}
 					ImGui::EndMenu();
 				}
 				Fonts_Menu();
-				if(ImGui::BeginMenu("Asserts and Crashes")) {
-					if(ImGui::Checkbox("Assert MessageBox", &g_config.assertMessageBox)) {
+				if (ImGui::BeginMenu("Asserts and Crashes"))
+				{
+					if (ImGui::Checkbox("Assert MessageBox", &g_config.assertMessageBox))
+					{
 						BB_LOG("UI::Menu::Debug", "Assert MessageBox: %d", g_config.assertMessageBox);
 					}
-					if(ImGui::MenuItem("Log Callstack")) {
+					if (ImGui::MenuItem("Log Callstack"))
+					{
 						BBServer_DebugCallstack();
 					}
-					if(ImGui::MenuItem("Assert")) {
+					if (ImGui::MenuItem("Assert"))
+					{
 						BBServer_DebugAssert();
 					}
-					if(ImGui::MenuItem("Crash - access violation")) {
+					if (ImGui::MenuItem("Crash - access violation"))
+					{
 						BBServer_DebugCrash();
 					}
-					if(ImGui::MenuItem("Crash - infinite recursion")) {
+					if (ImGui::MenuItem("Crash - infinite recursion"))
+					{
 						BBServer_DebugInfiniteRecursion();
 					}
 					ImGui::EndMenu();
 				}
-				if(ImGui::BeginMenu("DEBUG Updates")) {
+				if (ImGui::BeginMenu("DEBUG Updates"))
+				{
 					ImGui::MenuItem("Wait for debugger", nullptr, &g_config.updateWaitForDebugger);
 					ImGui::MenuItem("Pause after successful update", nullptr, &g_config.updatePauseAfterSuccessfulUpdate);
 					ImGui::MenuItem("Pause after failed update", nullptr, &g_config.updatePauseAfterFailedUpdate);
@@ -382,8 +428,10 @@ void BBServer_MainMenuBar(void)
 				}
 				ImGui::EndMenu();
 			}
-			if(ImGui::BeginMenu("Help")) {
-				if(ImGui::BeginMenu("ImGui")) {
+			if (ImGui::BeginMenu("Help"))
+			{
+				if (ImGui::BeginMenu("ImGui"))
+				{
 					ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
 					ImGui::MenuItem("About", nullptr, &s_showImguiAbout);
 					ImGui::MenuItem("Metrics", nullptr, &s_showImguiMetrics);
@@ -391,20 +439,26 @@ void BBServer_MainMenuBar(void)
 					ImGui::MenuItem("Style Editor", nullptr, &s_showImguiStyleEditor);
 					ImGui::EndMenu();
 				}
-				if(ImGui::BeginMenu("Logging Test")) {
-					if(ImGui::MenuItem("Colors")) {
+				if (ImGui::BeginMenu("Logging Test"))
+				{
+					if (ImGui::MenuItem("Colors"))
+					{
 						App_GenerateColorTestLogs();
 					}
-					if(ImGui::MenuItem("Lines")) {
+					if (ImGui::MenuItem("Lines"))
+					{
 						App_GenerateLineTestLogs();
 					}
-					if(ImGui::MenuItem("PIEInstance")) {
+					if (ImGui::MenuItem("PIEInstance"))
+					{
 						App_GeneratePIEInstanceTestLogs();
 					}
-					if(ImGui::MenuItem("Thread Spam")) {
+					if (ImGui::MenuItem("Thread Spam"))
+					{
 						App_GenerateSpamTestLogs();
 					}
-					if(ImGui::MenuItem("Main Log")) {
+					if (ImGui::MenuItem("Main Log"))
+					{
 						BBServer_OpenMainLog(false);
 					}
 					ImGui::EndMenu();
@@ -425,18 +479,23 @@ void BBServer_MainMenuBar(void)
 		}
 		Update_Menu();
 
-		if(s_failedDiscoveryStartup) {
+		if (s_failedDiscoveryStartup)
+		{
 			ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_LogLevel_Error));
-			if(ImGui::MenuItem("Discovery Error")) {
-				recording_t *recording = recordings_find_main_log();
-				if(recording) {
-					recorded_session_t *session = recorded_session_find(recording->path);
-					if(!session) {
+			if (ImGui::MenuItem("Discovery Error"))
+			{
+				recording_t* recording = recordings_find_main_log();
+				if (recording)
+				{
+					recorded_session_t* session = recorded_session_find(recording->path);
+					if (!session)
+					{
 						recorded_session_open(recording->path, recording->applicationFilename, true, recording->active != 0, recording->outgoingMqId);
 					}
 				}
 			}
-			if(ImGui::IsTooltipActive()) {
+			if (ImGui::IsTooltipActive())
+			{
 				ImGui::BeginTooltip();
 				ImGui::TextUnformatted("Failed to start listening for incoming connections.\nSee log for details.");
 				ImGui::EndTooltip();
@@ -444,19 +503,22 @@ void BBServer_MainMenuBar(void)
 			ImGui::PopStyleColor();
 		}
 
-		ImFont *font = ImGui::GetFont();
+		ImFont* font = ImGui::GetFont();
 		ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "Recordings");
 
-		ImGuiStyle &style = ImGui::GetStyle();
+		ImGuiStyle& style = ImGui::GetStyle();
 		float checkWidth = style.FramePadding.x * 4 + style.ItemInnerSpacing.x + textSize.y;
 
 		float width = BB_MAX((textSize.x + checkWidth + 10) * Imgui_Core_GetDpiScale(), UIRecordings_WidthWhenOpen());
 		ImGui::SameLine(ImGui::GetWindowWidth() - width);
-		if(ImGui::Checkbox("Recordings", &recordings_get_config()->recordingsOpen)) {
+		if (ImGui::Checkbox("Recordings", &recordings_get_config()->recordingsOpen))
+		{
 			BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
 		}
-		if(ImGui::BeginPopupContextItem("RecordingsContext")) {
-			if(ImGui::Selectable("Auto-close all")) {
+		if (ImGui::BeginPopupContextItem("RecordingsContext"))
+		{
+			if (ImGui::Selectable("Auto-close all"))
+			{
 				recorded_session_auto_close_all();
 			}
 			ImGui::EndPopup();
@@ -468,9 +530,11 @@ void BBServer_MainMenuBar(void)
 static void BBServer_DispatchToUIMessageQueue()
 {
 	message_queue_message_t message;
-	while(mq_consume_to_ui(&message)) {
+	while (mq_consume_to_ui(&message))
+	{
 		Imgui_Core_RequestRender();
-		switch(message.command) {
+		switch (message.command)
+		{
 		case kToUI_AddExistingFile:
 			recording_add_existing(message.text, true);
 			break;
@@ -484,12 +548,16 @@ static void BBServer_DispatchToUIMessageQueue()
 			recording_stopped(message.text);
 			break;
 		case kToUI_DiscoveryStatus:
-			if(!s_failedDiscoveryStartup && !strcmp(message.text, "Retrying")) {
+			if (!s_failedDiscoveryStartup && !strcmp(message.text, "Retrying"))
+			{
 				++s_failedDiscoveryCount;
-				if(s_failedDiscoveryCount > 10) {
+				if (s_failedDiscoveryCount > 10)
+				{
 					s_failedDiscoveryStartup = true;
 				}
-			} else if(!strcmp(message.text, "Running")) {
+			}
+			else if (!strcmp(message.text, "Running"))
+			{
 				s_failedDiscoveryStartup = false;
 				s_failedDiscoveryCount = 0;
 			}
@@ -504,7 +572,8 @@ static void BBServer_DispatchToUIMessageQueue()
 extern "C" void BBServer_Update(void)
 {
 	b32 bAppliedScrollbarSize = g_config.sizes.scrollbarSize > 0;
-	if(bAppliedScrollbarSize) {
+	if (bAppliedScrollbarSize)
+	{
 		ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, (float)g_config.sizes.scrollbarSize * Imgui_Core_GetDpiScale());
 	}
 
@@ -513,13 +582,19 @@ extern "C" void BBServer_Update(void)
 
 	BBServer_MainMenuBar();
 
-	if(ImGui::GetIO().MouseWheel != 0.0f) {
-		if(ImGui::GetIO().KeyCtrl) {
-			if(g_config.dpiScrollwheel) {
+	if (ImGui::GetIO().MouseWheel != 0.0f)
+	{
+		if (ImGui::GetIO().KeyCtrl)
+		{
+			if (g_config.dpiScrollwheel)
+			{
 				float prevDpiScale = Imgui_Core_GetDpiScale();
-				if(ImGui::GetIO().MouseWheel > 0) {
+				if (ImGui::GetIO().MouseWheel > 0)
+				{
 					Imgui_Core_SetDpiScale(prevDpiScale + 0.1f);
-				} else {
+				}
+				else
+				{
 					Imgui_Core_SetDpiScale(prevDpiScale - 0.1f);
 				}
 			}
@@ -529,15 +604,19 @@ extern "C" void BBServer_Update(void)
 	BBServer_DispatchToUIMessageQueue();
 	recordings_autodelete_old_recordings();
 
-	if(s_showImguiDemo) {
+	if (s_showImguiDemo)
+	{
 		ImGui::ShowDemoWindow(&s_showImguiDemo);
 	}
-	if(s_showImguiAbout) {
+	if (s_showImguiAbout)
+	{
 		ImGui::ShowAboutWindow(&s_showImguiAbout);
 	}
-	if(s_showImguiMetrics) {
+	if (s_showImguiMetrics)
+	{
 		ImGui::ShowMetricsWindow(&s_showImguiMetrics);
-		if(ImGui::Begin("Dear ImGui Metrics", &s_showImguiMetrics)) {
+		if (ImGui::Begin("Dear ImGui Metrics", &s_showImguiMetrics))
+		{
 			ImGui::Separator();
 			ImGui::Text("bba allocs: %lld", g_bba_allocatedCount);
 			ImGui::Text("bba bytes: %lld", g_bba_allocatedBytes);
@@ -546,27 +625,31 @@ extern "C" void BBServer_Update(void)
 		}
 		ImGui::End();
 	}
-	if(s_showImguiUserGuide) {
+	if (s_showImguiUserGuide)
+	{
 		ImGui::ShowUserGuide();
 	}
-	if(s_showImguiStyleEditor) {
+	if (s_showImguiStyleEditor)
+	{
 		ImGui::ShowStyleEditor();
 	}
 
 	Update_Tick();
 	UIConfig_Update(&g_config);
 	UIRecordings_Update();
-	messageBox *mb = mb_get_active(nullptr);
-	if(mb) {
+	messageBox* mb = mb_get_active(nullptr);
+	if (mb)
+	{
 		ImVec2 viewportPos(0.0f, 0.0f);
-		ImGuiViewport *viewport = ImGui::GetViewportForWindow("Recordings");
-		if(viewport) {
+		ImGuiViewport* viewport = ImGui::GetViewportForWindow("Recordings");
+		if (viewport)
+		{
 			viewportPos.x += viewport->Pos.x;
 			viewportPos.y += viewport->Pos.y;
 		}
 
 		float startY = ImGui::GetFrameHeight();
-		ImGuiIO &io = ImGui::GetIO();
+		ImGuiIO& io = ImGui::GetIO();
 		float screenWidth = io.DisplaySize.x - UIRecordings_Width();
 		ImVec2 windowSize(screenWidth - 1, 0.0f);
 		ImGuiCond positioningCond = ImGuiCond_Always;
@@ -575,28 +658,35 @@ extern "C" void BBServer_Update(void)
 
 		int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-		if(ImGui::Begin("##g_messageboxes", (bool *)nullptr, windowFlags)) {
-			messageBoxes *boxes = mb_get_queue();
+		if (ImGui::Begin("##g_messageboxes", (bool*)nullptr, windowFlags))
+		{
+			messageBoxes* boxes = mb_get_queue();
 			boxes->bgColor[0] = ImColor(MakeColor(kStyleColor_MessageBoxBackground0));
 			boxes->bgColor[1] = ImColor(MakeColor(kStyleColor_MessageBoxBackground1));
 			g_messageboxHeight = UIMessageBox_Update(boxes);
-			if(g_messageboxHeight > 0.0f) {
-				ImGuiStyle &style = ImGui::GetStyle();
+			if (g_messageboxHeight > 0.0f)
+			{
+				ImGuiStyle& style = ImGui::GetStyle();
 				g_messageboxHeight += style.WindowBorderSize * 2;
 				g_messageboxHeight += style.WindowPadding.y * 2;
 			}
-		} else {
+		}
+		else
+		{
 			g_messageboxHeight = 0.0f;
 		}
 		ImGui::End();
 		ImGui::PopStyleVar(); // ImGuiStyleVar_WindowRounding
-	} else {
+	}
+	else
+	{
 		g_messageboxHeight = 0.0f;
 	}
 	UIRecordedView_UpdateAll();
 	UISystemTray_Update();
 
-	if(bAppliedScrollbarSize) {
+	if (bAppliedScrollbarSize)
+	{
 		ImGui::PopStyleVar();
 	}
 }

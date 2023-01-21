@@ -16,22 +16,24 @@ void Fonts_InitFonts(void);
 extern "C" {
 #endif
 
-AUTOJSON typedef struct fontConfig_s {
+AUTOJSON typedef struct fontConfig_s
+{
 	b32 enabled;
 	u32 size;
 	sb_t path;
 } fontConfig_t;
 
-AUTOJSON typedef struct fontConfigs_s {
+AUTOJSON typedef struct fontConfigs_s
+{
 	u32 count;
 	u32 allocated;
-	fontConfig_t *data;
+	fontConfig_t* data;
 } fontConfigs_t;
 
 void Fonts_ClearFonts(void);
 void Fonts_AddFont(fontConfig_t font);
 
-void Fonts_CacheGlyphs(const char *text);
+void Fonts_CacheGlyphs(const char* text);
 
 sb_t Fonts_GetSystemFontDir(void);
 

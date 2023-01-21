@@ -14,8 +14,9 @@ BB_WARNING_POP
 
 // InputTextMultilineScrolling and supporting functions adapted from https://github.com/ocornut/imgui/issues/383
 
-struct MultilineScrollState {
-	const char *externalBuf = nullptr;
+struct MultilineScrollState
+{
+	const char* externalBuf = nullptr;
 
 	float scrollRegionX = 0.0f;
 	float scrollX = 0.0f;
@@ -32,55 +33,61 @@ struct MultilineScrollState {
 	u8 pad[4];
 };
 
-typedef struct MultilineScrollStates_s {
+typedef struct MultilineScrollStates_s
+{
 	u32 count;
 	u32 allocated;
-	MultilineScrollState **data;
+	MultilineScrollState** data;
 } MultilineScrollStates_t;
 
 static MultilineScrollStates_t s_multilineScrollStates;
 
 namespace ImGui
 {
-	static bool InputTextScrollingEx(const char *label, char *buf, size_t buf_size, const ImVec2 &size, ImGuiInputTextFlags flags);
+	static bool InputTextScrollingEx(const char* label, char* buf, size_t buf_size, const ImVec2& size, ImGuiInputTextFlags flags);
 }
 
 void ImGui::InputTextShutdown(void)
 {
-	for(u32 i = 0; i < s_multilineScrollStates.count; ++i) {
+	for (u32 i = 0; i < s_multilineScrollStates.count; ++i)
+	{
 		delete s_multilineScrollStates.data[i];
 	}
 	bba_free(s_multilineScrollStates);
 }
 
-static int Imgui_Core_FindLineStart(const char *buf, int cursorPos)
+static int Imgui_Core_FindLineStart(const char* buf, int cursorPos)
 {
-	while((cursorPos > 0) && (buf[cursorPos - 1] != '\n')) {
+	while ((cursorPos > 0) && (buf[cursorPos - 1] != '\n'))
+	{
 		--cursorPos;
 	}
 	return cursorPos;
 }
 
-static int Imgui_Core_CountLines(const char *buf, int cursorPos)
+static int Imgui_Core_CountLines(const char* buf, int cursorPos)
 {
 	int lines = 1;
 	int pos = 0;
-	while(buf[pos]) {
-		if(buf[pos] == '\n') {
+	while (buf[pos])
+	{
+		if (buf[pos] == '\n')
+		{
 			++lines;
 		}
-		if(pos == cursorPos)
+		if (pos == cursorPos)
 			break;
 		++pos;
 	}
 	return lines;
 }
 
-static int Imgui_Core_InputTextMultilineScrollingCallback(ImGuiInputTextCallbackData *data)
+static int Imgui_Core_InputTextMultilineScrollingCallback(ImGuiInputTextCallbackData* data)
 {
-	MultilineScrollState *scrollState = (MultilineScrollState *)data->UserData;
-	if(scrollState->oldCursorPos != data->CursorPos) {
-		const char *buf = data->Buf ? data->Buf : scrollState->externalBuf;
+	MultilineScrollState* scrollState = (MultilineScrollState*)data->UserData;
+	if (scrollState->oldCursorPos != data->CursorPos)
+	{
+		const char* buf = data->Buf ? data->Buf : scrollState->externalBuf;
 		int lineStartPos = Imgui_Core_FindLineStart(buf, data->CursorPos);
 		int lines = Imgui_Core_CountLines(buf, data->CursorPos);
 
@@ -90,26 +97,38 @@ static int Imgui_Core_InputTextMultilineScrollingCallback(ImGuiInputTextCallback
 		float scrollAmountX = scrollState->scrollRegionX * 0.25f;
 		float scrollAmountY = scrollState->scrollRegionY * 0.25f;
 
-		if(cursorX < scrollState->scrollX) {
+		if (cursorX < scrollState->scrollX)
+		{
 			scrollState->bHasScrollTargetX = true;
 			scrollState->scrollTargetX = ImMax(0.0f, cursorX - scrollAmountX);
-		} else if((cursorX - scrollState->scrollRegionX) >= scrollState->scrollX) {
+		}
+		else if ((cursorX - scrollState->scrollRegionX) >= scrollState->scrollX)
+		{
 			scrollState->bHasScrollTargetX = true;
-			if((cursorX - scrollState->scrollRegionX) > scrollAmountX) {
+			if ((cursorX - scrollState->scrollRegionX) > scrollAmountX)
+			{
 				scrollState->scrollTargetX = cursorX - scrollAmountX;
-			} else {
+			}
+			else
+			{
 				scrollState->scrollTargetX = cursorX - scrollState->scrollRegionX + scrollAmountX;
 			}
 		}
 
-		if(cursorY < scrollState->scrollY) {
+		if (cursorY < scrollState->scrollY)
+		{
 			scrollState->bHasScrollTargetY = true;
 			scrollState->scrollTargetY = ImMax(0.0f, cursorY - scrollAmountY);
-		} else if((cursorY - scrollState->scrollRegionY) >= scrollState->scrollY) {
+		}
+		else if ((cursorY - scrollState->scrollRegionY) >= scrollState->scrollY)
+		{
 			scrollState->bHasScrollTargetY = true;
-			if((cursorY - scrollState->scrollRegionY) > scrollAmountY) {
+			if ((cursorY - scrollState->scrollRegionY) > scrollAmountY)
+			{
 				scrollState->scrollTargetY = cursorY - scrollAmountY;
-			} else {
+			}
+			else
+			{
 				scrollState->scrollTargetY = cursorY - scrollState->scrollRegionY + scrollAmountY;
 			}
 		}
@@ -120,9 +139,9 @@ static int Imgui_Core_InputTextMultilineScrollingCallback(ImGuiInputTextCallback
 	return 0;
 }
 
-static bool ImGui::InputTextScrollingEx(const char *label, char *buf, size_t buf_size, const ImVec2 &size, ImGuiInputTextFlags flags)
+static bool ImGui::InputTextScrollingEx(const char* label, char* buf, size_t buf_size, const ImVec2& size, ImGuiInputTextFlags flags)
 {
-	const char *labelVisibleEnd = FindRenderedTextEnd(label);
+	const char* labelVisibleEnd = FindRenderedTextEnd(label);
 	bool bMultiline = (flags & ImGuiInputTextFlags_Multiline) != 0;
 
 	ImVec2 textSize = CalcTextSize(buf);
@@ -130,69 +149,95 @@ static bool ImGui::InputTextScrollingEx(const char *label, char *buf, size_t buf
 	float labelWidth = CalcTextSize(label, labelVisibleEnd).x;
 
 	ImVec2 availSize = GetContentRegionAvail();
-	if(size.x > 0.0f) {
+	if (size.x > 0.0f)
+	{
 		availSize.x = size.x;
-	} else if(size.x < 0.0f) {
+	}
+	else if (size.x < 0.0f)
+	{
 		availSize.x += size.x;
-	} else {
+	}
+	else
+	{
 		availSize.x = CalcItemWidth();
 	}
 
-	if(size.y > 0.0f) {
+	if (size.y > 0.0f)
+	{
 		availSize.y = size.y;
-	} else if(size.y < 0.0f) {
+	}
+	else if (size.y < 0.0f)
+	{
 		availSize.y += size.y;
-	} else if(size.y == 0.0f) {
-		if(bMultiline) {
+	}
+	else if (size.y == 0.0f)
+	{
+		if (bMultiline)
+		{
 			availSize.y = 4.0f * GetTextLineHeightWithSpacing() + scrollbarSize;
-		} else {
+		}
+		else
+		{
 			availSize.y = GetTextLineHeightWithSpacing();
 		}
 	}
 	float childWidth = availSize.x;
-	if(labelWidth > 0.0f) {
+	if (labelWidth > 0.0f)
+	{
 		childWidth = -labelWidth;
 	}
 	float childHeight = availSize.y;
 
 	float textBoxWidth = availSize.x - (bMultiline ? scrollbarSize : 0.0f);
-	if(textSize.x > textBoxWidth * 0.8f) {
+	if (textSize.x > textBoxWidth * 0.8f)
+	{
 		textBoxWidth = textSize.x + textBoxWidth * 0.8f;
 	}
 	float textBoxHeight = 0.0f;
-	if(childHeight < 0) {
+	if (childHeight < 0)
+	{
 		textBoxHeight = availSize.y + childHeight - GetStyle().FramePadding.y - scrollbarSize;
-	} else if(childHeight > 0.0f) {
+	}
+	else if (childHeight > 0.0f)
+	{
 		textBoxHeight = childHeight - GetStyle().FramePadding.y - scrollbarSize;
 	}
 	float minTextBoxHeight = textSize.y + 2.0f * GetStyle().FramePadding.y;
-	if(bMultiline) {
+	if (bMultiline)
+	{
 		minTextBoxHeight += 2.0f * GetTextLineHeightWithSpacing();
-	} else {
+	}
+	else
+	{
 		childHeight = minTextBoxHeight + scrollbarSize;
 	}
-	if(textBoxHeight < minTextBoxHeight) {
+	if (textBoxHeight < minTextBoxHeight)
+	{
 		textBoxHeight = minTextBoxHeight;
 	}
 
-	if(bMultiline && textBoxHeight < childHeight && textBoxWidth <= childWidth) {
+	if (bMultiline && textBoxHeight < childHeight && textBoxWidth <= childWidth)
+	{
 		textBoxHeight = childHeight;
 	}
-	if(textBoxWidth < childWidth && textBoxHeight <= childHeight) {
+	if (textBoxWidth < childWidth && textBoxHeight <= childHeight)
+	{
 		textBoxWidth = childWidth;
 	}
 
 	ImGuiID scrollStateKey = GetID("textInputScrollState");
-	ImGuiStorage *storage = GetStateStorage();
-	MultilineScrollState *scrollState = (MultilineScrollState *)storage->GetVoidPtr(scrollStateKey);
-	if(!scrollState) {
+	ImGuiStorage* storage = GetStateStorage();
+	MultilineScrollState* scrollState = (MultilineScrollState*)storage->GetVoidPtr(scrollStateKey);
+	if (!scrollState)
+	{
 		scrollState = new MultilineScrollState;
-		if(scrollState) {
+		if (scrollState)
+		{
 			bba_push(s_multilineScrollStates, scrollState);
 			storage->SetVoidPtr(scrollStateKey, scrollState);
 		}
 	}
-	if(!scrollState)
+	if (!scrollState)
 		return false;
 
 	ImGuiWindowFlags childFlags = ImGuiWindowFlags_HorizontalScrollbar;
@@ -208,39 +253,54 @@ static bool ImGui::InputTextScrollingEx(const char *label, char *buf, size_t buf
 	bool changed = InputTextEx(label, nullptr, buf, (int)buf_size, ImVec2(textBoxWidth, textBoxHeight),
 	                           flags | ImGuiInputTextFlags_CallbackAlways | ImGuiInputTextFlags_NoHorizontalScroll, Imgui_Core_InputTextMultilineScrollingCallback, scrollState);
 	PopItemWidth();
-	if(IsItemActive() && Imgui_Core_HasFocus()) {
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
 		Imgui_Core_RequestRender();
 	}
 
-	if(scrollState->bHasScrollTargetX) {
+	if (scrollState->bHasScrollTargetX)
+	{
 		float realMaxScrollX = GetScrollMaxX();
 		float maxScrollX = textBoxWidth;
 		float maxUserScrollX = maxScrollX - childWidth * 0.5f;
-		if((realMaxScrollX == 0.0f && scrollState->scrollTargetX > 0.0f) || scrollState->scrollTargetX > textSize.x || (scrollState->scrollTargetX > scrollState->scrollX && maxScrollX < textSize.x)) {
+		if ((realMaxScrollX == 0.0f && scrollState->scrollTargetX > 0.0f) || scrollState->scrollTargetX > textSize.x || (scrollState->scrollTargetX > scrollState->scrollX && maxScrollX < textSize.x))
+		{
 			scrollState->oldCursorPos = oldCursorPos;
 			SetScrollX(maxUserScrollX);
-		} else {
+		}
+		else
+		{
 			scrollState->bHasScrollTargetX = false;
-			if(scrollState->scrollTargetX <= maxScrollX) {
+			if (scrollState->scrollTargetX <= maxScrollX)
+			{
 				SetScrollX(scrollState->scrollTargetX);
-			} else {
+			}
+			else
+			{
 				SetScrollX(maxUserScrollX);
 			}
 		}
 	}
 
-	if(scrollState->bHasScrollTargetY) {
+	if (scrollState->bHasScrollTargetY)
+	{
 		float realMaxScrollY = GetScrollMaxY();
 		float maxScrollY = textBoxHeight;
 		float maxUserScrollY = maxScrollY - textBoxHeight * 0.5f;
-		if((realMaxScrollY == 0.0f && scrollState->scrollTargetY > 0.0f) || scrollState->scrollTargetY > textSize.y || (scrollState->scrollTargetY > scrollState->scrollY && maxScrollY < textSize.y)) {
+		if ((realMaxScrollY == 0.0f && scrollState->scrollTargetY > 0.0f) || scrollState->scrollTargetY > textSize.y || (scrollState->scrollTargetY > scrollState->scrollY && maxScrollY < textSize.y))
+		{
 			scrollState->oldCursorPos = oldCursorPos;
 			SetScrollY(maxUserScrollY);
-		} else {
+		}
+		else
+		{
 			scrollState->bHasScrollTargetY = false;
-			if(scrollState->scrollTargetY <= maxScrollY) {
+			if (scrollState->scrollTargetY <= maxScrollY)
+			{
 				SetScrollY(scrollState->scrollTargetY);
-			} else {
+			}
+			else
+			{
 				SetScrollY(maxUserScrollY);
 			}
 		}
@@ -253,32 +313,34 @@ static bool ImGui::InputTextScrollingEx(const char *label, char *buf, size_t buf
 	return changed;
 }
 
-bool ImGui::InputTextMultilineScrolling(const char *label, char *buf, size_t buf_size, const ImVec2 &size, ImGuiInputTextFlags flags)
+bool ImGui::InputTextMultilineScrolling(const char* label, char* buf, size_t buf_size, const ImVec2& size, ImGuiInputTextFlags flags)
 {
 	return InputTextScrollingEx(label, buf, buf_size, size, flags | ImGuiInputTextFlags_Multiline);
 }
 
-bool ImGui::InputTextMultilineScrolling(const char *label, sb_t *sb, u32 buf_size, const ImVec2 &size, ImGuiInputTextFlags flags)
+bool ImGui::InputTextMultilineScrolling(const char* label, sb_t* sb, u32 buf_size, const ImVec2& size, ImGuiInputTextFlags flags)
 {
-	if(sb->allocated < buf_size) {
+	if (sb->allocated < buf_size)
+	{
 		sb_reserve(sb, buf_size);
 	}
-	bool ret = InputTextScrollingEx(label, (char *)sb->data, sb->allocated, size, flags | ImGuiInputTextFlags_Multiline);
+	bool ret = InputTextScrollingEx(label, (char*)sb->data, sb->allocated, size, flags | ImGuiInputTextFlags_Multiline);
 	sb->count = sb->data ? (u32)strlen(sb->data) + 1 : 0;
 	return ret;
 }
 
-bool ImGui::InputTextScrolling(const char *label, char *buf, size_t buf_size, ImGuiInputTextFlags flags)
+bool ImGui::InputTextScrolling(const char* label, char* buf, size_t buf_size, ImGuiInputTextFlags flags)
 {
 	return InputTextScrollingEx(label, buf, buf_size, ImVec2(0.0f, 0.0f), flags);
 }
 
-bool ImGui::InputTextScrolling(const char *label, sb_t *sb, u32 buf_size, ImGuiInputTextFlags flags)
+bool ImGui::InputTextScrolling(const char* label, sb_t* sb, u32 buf_size, ImGuiInputTextFlags flags)
 {
-	if(sb->allocated < buf_size) {
+	if (sb->allocated < buf_size)
+	{
 		sb_reserve(sb, buf_size);
 	}
-	bool ret = InputTextScrollingEx(label, (char *)sb->data, sb->allocated, ImVec2(0.0f, 0.0f), flags);
+	bool ret = InputTextScrollingEx(label, (char*)sb->data, sb->allocated, ImVec2(0.0f, 0.0f), flags);
 	sb->count = sb->data ? (u32)strlen(sb->data) + 1 : 0;
 	return ret;
 }

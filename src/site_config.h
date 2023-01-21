@@ -10,18 +10,21 @@ extern "C" {
 #include "bb.h"
 #include "sb.h"
 
-AUTOJSON typedef struct site_config_named_filter_t {
+AUTOJSON typedef struct site_config_named_filter_t
+{
 	sb_t name;
 	sb_t text;
 } site_config_named_filter_t;
 
-AUTOJSON typedef struct site_config_named_filters_t {
+AUTOJSON typedef struct site_config_named_filters_t
+{
 	u32 count;
 	u32 allocated;
-	site_config_named_filter_t *data;
+	site_config_named_filter_t* data;
 } site_config_named_filters_t;
 
-AUTOJSON typedef struct updateConfig_s {
+AUTOJSON typedef struct updateConfig_s
+{
 	sb_t updateResultDir;
 	sb_t updateAvailableMessage;
 	sb_t updateIgnoredMessage;
@@ -31,7 +34,8 @@ AUTOJSON typedef struct updateConfig_s {
 	u8 pad[4];
 } updateConfig_t;
 
-AUTOJSON typedef struct site_config_s {
+AUTOJSON typedef struct site_config_s
+{
 	updateConfig_t updates;
 	site_config_named_filters_t namedFilters;
 	sb_t bugAssignee;

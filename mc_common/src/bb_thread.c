@@ -11,11 +11,11 @@
 
 #if BB_USING(BB_COMPILER_MSVC)
 
-#include "bb_wrap_windows.h"
 #include "bb_wrap_process.h"
+#include "bb_wrap_windows.h"
 #include <stdlib.h>
 
-bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)
+bb_thread_handle_t bbthread_create(bb_thread_func func, void* arg)
 {
 	bb_thread_handle_t thread = _beginthreadex(
 	    NULL, // security,
@@ -48,17 +48,19 @@ u64 bbthread_get_current_id(void)
 static HRESULT SetThreadDescriptionShim(_In_ HANDLE hThread, _In_ PCWSTR lpThreadDescription)
 {
 	HMODULE hModule = GetModuleHandleA("kernel32.dll");
-	if(hModule) {
+	if (hModule)
+	{
 		typedef HRESULT(WINAPI * Proc)(_In_ HANDLE hThread, _In_ PCWSTR lpThreadDescription);
-		Proc proc = (Proc)(void *)(GetProcAddress(hModule, "SetThreadDescription"));
-		if(proc) {
+		Proc proc = (Proc)(void*)(GetProcAddress(hModule, "SetThreadDescription"));
+		if (proc)
+		{
 			return proc(hThread, lpThreadDescription);
 		}
 	}
 	return STG_E_UNIMPLEMENTEDFUNCTION;
 }
 
-void bbthread_set_name(const char *name)
+void bbthread_set_name(const char* name)
 {
 	size_t numCharsConverted;
 	wchar_t buffer[kBBSize_ThreadName] = L"";
@@ -74,7 +76,7 @@ void bbthread_set_name(const char *name)
 #include <unistd.h>
 #endif // #if BB_USING(BB_PLATFORM_LINUX)
 
-bb_thread_handle_t bbthread_create(bb_thread_func func, void *arg)
+bb_thread_handle_t bbthread_create(bb_thread_func func, void* arg)
 {
 	bb_thread_handle_t thread = 0;
 	pthread_attr_t attr;
@@ -107,7 +109,7 @@ u64 bbthread_get_current_id(void)
 #endif // #else // #if BB_USING(BB_PLATFORM_LINUX)
 }
 
-void bbthread_set_name(const char *name)
+void bbthread_set_name(const char* name)
 {
 	BB_UNUSED(name);
 	bb_log("implement me: bbthread_set_name");

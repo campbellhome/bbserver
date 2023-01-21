@@ -4,6 +4,6 @@
 #pragma once
 
 void Style_Init(void);
-void Style_Apply(const char *colorscheme);
+void Style_Apply(const char* colorscheme);
 void StyleColorsVSDark(void);
 void StyleColorsWindows(void);
