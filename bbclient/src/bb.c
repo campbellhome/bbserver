@@ -1346,7 +1346,7 @@ void bb_trace_dynamic_w(const char* path, uint32_t line, const bb_wchar_t* categ
 void bb_trace_dynamic_preformatted_w(const char* path, uint32_t line, const bb_wchar_t* category, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t* preformatted)
 {
 #if defined(BB_WIDE_CHAR16) && BB_WIDE_CHAR16
-	bb_trace_dynamic_w(path, line, category, level, pieInstance, TEXT("%s"), preformatted);
+	bb_trace_dynamic_w(path, line, category, level, pieInstance, u"%s", preformatted);
 #else  // #if defined(BB_WIDE_CHAR16) && BB_WIDE_CHAR16
 	uint32_t pathId = 0;
 	uint32_t categoryId = 0;
