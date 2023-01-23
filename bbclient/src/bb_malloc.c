@@ -10,6 +10,7 @@
 #include "bbclient/bb_wrap_windows.h"
 
 #if BB_USING(BB_COMPILER_MSVC)
+BB_WARNING_DISABLE(4710) // warning C4710: 'snprintf': function not inlined
 #define BB_PTR_PREFIX "0x"
 #else
 #define BB_PTR_PREFIX
