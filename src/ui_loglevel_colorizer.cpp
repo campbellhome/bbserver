@@ -76,7 +76,6 @@ LogLevelColorizer::LogLevelColorizer(bb_log_level_e logLevel, bool bCanShadow)
 	styleColor_e styleColor = GetStyleColorForLogLevel(logLevel);
 	if (!bCanShadow)
 	{
-		const bool bRequireShadows = g_styleConfig.colors[styleColor].bTextShadows != 0;
 		if (!bb_stricmp(Imgui_Core_GetColorScheme(), "Light"))
 		{
 			styleColor = GetStyleColorForLogLevel(kBBLogLevel_Log);

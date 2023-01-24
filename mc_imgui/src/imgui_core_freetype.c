@@ -130,18 +130,18 @@ void Imgui_Core_Freetype_Init(void)
 	g_hFreetypeModule = LoadLibraryA("freetype.dll");
 	if (g_hFreetypeModule)
 	{
-		g_FT_New_Memory_Face = (FT_New_Memory_Face_Proc*)GetProcAddress(g_hFreetypeModule, "FT_New_Memory_Face");
-		g_FT_Done_Face = (FT_Done_Face_Proc*)GetProcAddress(g_hFreetypeModule, "FT_Done_Face");
-		g_FT_Request_Size = (FT_Request_Size_Proc*)GetProcAddress(g_hFreetypeModule, "FT_Request_Size");
-		g_FT_Load_Glyph = (FT_Load_Glyph_Proc*)GetProcAddress(g_hFreetypeModule, "FT_Load_Glyph");
-		g_FT_Render_Glyph = (FT_Render_Glyph_Proc*)GetProcAddress(g_hFreetypeModule, "FT_Render_Glyph");
-		g_FT_Select_Charmap = (FT_Select_Charmap_Proc*)GetProcAddress(g_hFreetypeModule, "FT_Select_Charmap");
-		g_FT_Get_Char_Index = (FT_Get_Char_Index_Proc*)GetProcAddress(g_hFreetypeModule, "FT_Get_Char_Index");
-		g_FT_New_Library = (FT_New_Library_Proc*)GetProcAddress(g_hFreetypeModule, "FT_New_Library");
-		g_FT_Done_Library = (FT_Done_Library_Proc*)GetProcAddress(g_hFreetypeModule, "FT_Done_Library");
-		g_FT_Add_Default_Modules = (FT_Add_Default_Modules_Proc*)GetProcAddress(g_hFreetypeModule, "FT_Add_Default_Modules");
-		g_FT_GlyphSlot_Embolden = (FT_GlyphSlot_Embolden_Proc*)GetProcAddress(g_hFreetypeModule, "FT_GlyphSlot_Embolden");
-		g_FT_GlyphSlot_Oblique = (FT_GlyphSlot_Oblique_Proc*)GetProcAddress(g_hFreetypeModule, "FT_GlyphSlot_Oblique");
+		g_FT_New_Memory_Face = (FT_New_Memory_Face_Proc*)(void *)GetProcAddress(g_hFreetypeModule, "FT_New_Memory_Face");
+		g_FT_Done_Face = (FT_Done_Face_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Done_Face");
+		g_FT_Request_Size = (FT_Request_Size_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Request_Size");
+		g_FT_Load_Glyph = (FT_Load_Glyph_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Load_Glyph");
+		g_FT_Render_Glyph = (FT_Render_Glyph_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Render_Glyph");
+		g_FT_Select_Charmap = (FT_Select_Charmap_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Select_Charmap");
+		g_FT_Get_Char_Index = (FT_Get_Char_Index_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Get_Char_Index");
+		g_FT_New_Library = (FT_New_Library_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_New_Library");
+		g_FT_Done_Library = (FT_Done_Library_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Done_Library");
+		g_FT_Add_Default_Modules = (FT_Add_Default_Modules_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Add_Default_Modules");
+		g_FT_GlyphSlot_Embolden = (FT_GlyphSlot_Embolden_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_GlyphSlot_Embolden");
+		g_FT_GlyphSlot_Oblique = (FT_GlyphSlot_Oblique_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_GlyphSlot_Oblique");
 
 		g_freetypeValid = g_FT_New_Memory_Face &&
 		                  g_FT_Done_Face &&
