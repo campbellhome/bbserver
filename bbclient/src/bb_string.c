@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #if !defined(BB_ENABLED) || BB_ENABLED
@@ -18,7 +18,7 @@
 #define NULL ((void*)0)
 #endif
 
-BB_WARNING_DISABLE(4711); // warning C4711: function 'bb_tolower' selected for automatic inline expansion
+BB_WARNING_DISABLE(4711) // warning C4711: function 'bb_tolower' selected for automatic inline expansion
 
 size_t bb_strncpy(char* dest, const char* src, size_t destSize)
 {
@@ -81,7 +81,7 @@ char bb_tolower(char c)
 	return (c >= 'A' && c <= 'Z') ? c - 'A' + 'a' : c;
 }
 
-char* bb_stristr(const char* src, const char* pattern)
+const char* bb_stristr(const char* src, const char* pattern)
 {
 	if (!src)
 		return NULL;
@@ -99,7 +99,7 @@ char* bb_stristr(const char* src, const char* pattern)
 
 		if (!*right)
 		{
-			return (char*)src; // match!
+			return src; // match!
 		}
 
 		++src;

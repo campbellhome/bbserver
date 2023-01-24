@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -84,13 +84,17 @@
 
 #if BB_USING(BB_PLATFORM_WINDOWS)
 
+#if defined(BB_MSVC_CLANG) && BB_MSVC_CLANG
+#define BB_CTASSERT(x) typedef char BB_INTERNAL_CT_ASSERT__[(x) ? 1 : -1]
+#else
 #define BB_CTASSERT(x) static_assert((x), #x)
+#endif
 
 // MULTI_LINE_MACRO_BEGIN and __pragma logic taken from http://cnicholson.net/2009/03/stupid-c-tricks-dowhile0-and-c4127/
 // clang-format off
-#define BB_WARNING_PUSH( x, ... )                  \
-	__pragma( warning( push ) )                    \
-	__pragma( warning( disable : x __VA_ARGS__ ) )
+#define BB_WARNING_PUSH( ... )                   \
+	__pragma( warning( push ) )                  \
+	__pragma( warning( disable : __VA_ARGS__ ) )
 // clang-format on
 
 #define BB_WARNING_DISABLE(x) \

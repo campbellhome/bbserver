@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -13,10 +13,10 @@
 // warning C4365: 'return': conversion from 'b32' to 'BOOLEAN', signed/unsigned mismatch
 // warning C4711 : function 'bbpacket_serialize_user' selected for automatic inline expansion
 // warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
-__pragma(warning(push));
+__pragma(warning(push))
 __pragma(warning(disable : 4711 5045 4820 4255 4668 4574 4365))
 #define WIN32_LEAN_AND_MEAN 1
-#include <windows.h> // must come first before other windows headers
+#include <Windows.h> // must come first before other windows headers
 __pragma(warning(pop))
 
 #endif

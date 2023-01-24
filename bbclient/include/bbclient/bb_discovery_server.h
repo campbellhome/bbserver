@@ -54,6 +54,7 @@ int bb_discovery_server_recv_request(bb_discovery_server_t* ds, s8* buf, size_t 
 void bb_discovery_process_request(bb_discovery_server_t* ds, struct sockaddr_in* sin,
                                   bb_decoded_discovery_packet_t* decoded,
                                   bb_discovery_packet_type_e responseType, u64 delay);
+const char* bb_discovery_packet_name(bb_discovery_packet_type_e type);
 
 #if defined(__cplusplus)
 }

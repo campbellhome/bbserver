@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #if !defined(BB_ENABLED) || BB_ENABLED
@@ -57,7 +57,7 @@ void bbcon_init(bb_connection_t* con)
 	con->sendCursor = con->recvCursor = con->decodeCursor = 0;
 	con->prevSendTime = 0;
 	con->sendInterval = kBBCon_SendIntervalMillis;
-	con->flags = con->flags & (~(kBBCon_Client | kBBCon_Server));
+	con->flags = con->flags & (~((u32)kBBCon_Client | (u32)kBBCon_Server));
 	con->state = kBBConnection_NotConnected;
 	if (!con->connectTimeoutInterval)
 	{
@@ -77,7 +77,7 @@ void bbcon_reset(bb_connection_t* con)
 	con->sentBytesTotal = con->receivedBytesTotal = 0u;
 	con->sendCursor = con->recvCursor = con->decodeCursor = 0;
 	con->prevSendTime = 0;
-	con->flags = con->flags = con->flags & (~(kBBCon_Client | kBBCon_Server));
+	con->flags = con->flags = con->flags & (~((u32)kBBCon_Client | (u32)kBBCon_Server));
 	if (!con->connectTimeoutInterval)
 	{
 		con->connectTimeoutInterval = 10000;
@@ -437,8 +437,8 @@ static void bbcon_flush_no_lock(bb_connection_t* con, b32 retry)
 				break;
 			}
 
-			con->sentBytesTotal += ret;
-			nSendCursor += ret;
+			con->sentBytesTotal += (u64)ret;
+			nSendCursor += (u32)ret;
 			if (!retry)
 			{
 				break;
@@ -690,8 +690,8 @@ static void bbcon_receive(bb_connection_t* con)
 			return;
 		}
 
-		con->receivedBytesTotal += nBytesReceived;
-		con->recvCursor += nBytesReceived;
+		con->receivedBytesTotal += (u64)nBytesReceived;
+		con->recvCursor += (u32)nBytesReceived;
 
 		//BBCON_LOG( "bbcon_receive nBytesReceived:%d decodeCursor:%d recvCursor:%d", nBytesReceived, con->decodeCursor, con->recvCursor );
 	}

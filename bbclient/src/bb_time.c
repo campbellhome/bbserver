@@ -24,7 +24,7 @@ double bb_millis_per_tick(void)
 	LARGE_INTEGER li;
 	li.QuadPart = 1;
 	QueryPerformanceFrequency(&li);
-	return 1000.0 / li.QuadPart;
+	return 1000.0 / (double)li.QuadPart;
 }
 
 u64 bb_current_time_ms(void)

@@ -40,7 +40,7 @@ static b32 bb_discovery_send_request(bb_socket discoverySocket, bb_discovery_pac
 	bb_strncpy(decoded.packet.request.deviceCode, deviceCode, sizeof(decoded.packet.request.deviceCode));
 	bb_strncpy(decoded.packet.request.sourceApplicationName, sourceApplicationName, sizeof(decoded.packet.request.sourceApplicationName));
 	bb_strncpy(decoded.packet.request.applicationName, applicationName, sizeof(decoded.packet.request.applicationName));
-	decoded.packet.request.platform = bb_platform();
+	decoded.packet.request.platform = (u32)(bb_platform_e)bb_platform();
 
 	serializedLen = bb_discovery_packet_serialize(&decoded, buf, sizeof(buf));
 	if (!serializedLen)

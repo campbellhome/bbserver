@@ -156,11 +156,11 @@ static b32 bbpacket_serialize_console_autocomplete_response_header(bb_serialize_
 
 static b32 bbpacket_serialize_console_autocomplete_response_entry(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
+	u16 len = 0;
 	bb_packet_console_autocomplete_response_entry_t* consoleAutocompleteResponseEntry = &decoded->packet.consoleAutocompleteResponseEntry;
 	bbserialize_u32(ser, &consoleAutocompleteResponseEntry->id);
 	bbserialize_s32(ser, &consoleAutocompleteResponseEntry->command);
 	bbserialize_u32(ser, &consoleAutocompleteResponseEntry->flags);
-	u16 len = 0;
 	bbserialize_text(ser, consoleAutocompleteResponseEntry->text, &len);
 	return bbserialize_text(ser, consoleAutocompleteResponseEntry->description, &len);
 }
@@ -232,9 +232,10 @@ b32 bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded)
 	case kBBPacketType_Invalid:
 	case kBBPacketType_Restart:
 	case kBBPacketType_StopRecording:
-	default:
-		return false;
+		break;
 	}
+
+	return false;
 }
 
 u16 bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len)
@@ -318,7 +319,6 @@ u16 bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len)
 	case kBBPacketType_Invalid:
 	case kBBPacketType_Restart:
 	case kBBPacketType_StopRecording:
-	default:
 		BB_ASSERT(false);
 		return 0;
 	}

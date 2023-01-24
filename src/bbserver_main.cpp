@@ -106,13 +106,13 @@ static b32 BBServer_Init(const char* commandLineRecording)
 	BB_LOG("Startup", "Arguments: %s", cmdline_get_full());
 	bbthread_set_name("main");
 
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Registering assert handler");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Registering assert handler");
 	BBServer_InitAsserts(s_bbLogPath);
 
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Reading config");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Reading config");
 	config_read(&g_config);
 
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Reading tags");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Reading tags");
 	tags_init();
 
 	s_updateData.appName = "bb";
@@ -125,32 +125,32 @@ static b32 BBServer_Init(const char* commandLineRecording)
 	s_updateData.pauseAfterFailure = g_config.updatePauseAfterFailedUpdate;
 	s_updateData.updateCheckMs = g_site_config.updates.updateCheckMs;
 	s_updateData.showUpdateManagement = g_config.updateManagement;
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing updates");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing updates");
 	if (!Update_Init(&s_updateData))
 	{
 		return false;
 	}
 
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing process system");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing process system");
 	process_init();
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing task system");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing task system");
 	tasks_startup();
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing message queue");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing message queue");
 	mq_init();
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Validating config");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Validating config");
 	config_validate_whitelist(&g_config.whitelist);
 	config_validate_open_targets(&g_config.openTargets);
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing styles");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing styles");
 	Style_Init();
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing color scheme");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing color scheme");
 	Imgui_Core_SetColorScheme(sb_get(&g_config.colorscheme));
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing file open dialog");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing file open dialog");
 	FileOpenDialog_Init();
 	mb_get_queue()->manualUpdate = true;
-	_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing network");
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing network");
 	if (bbnet_init())
 	{
-		_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing discovery thread");
+		BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing discovery thread");
 		if (discovery_thread_init() != 0)
 		{
 			new_recording_t recording;
@@ -170,7 +170,7 @@ static b32 BBServer_Init(const char* commandLineRecording)
 			to_ui(kToUI_RecordingStart, "%s", recording_build_start_identifier(recording));
 			new_recording_reset(&recording);
 
-			_BB_LOG_INTERNAL(kBBLogLevel_Verbose, "Startup", "Initializing recordings");
+			BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing recordings");
 			recordings_init();
 			return true;
 		}
@@ -292,7 +292,7 @@ static void SetRegistryDefaultValue(HKEY hkey, const char* subkey, const char* v
 	LONG result = RegSetValueA(hkey, subkey, REG_SZ, value, 0);
 	if (result == ERROR_SUCCESS)
 	{
-		_BB_LOG_INTERNAL(kBBLogLevel_Display, "Registry", "RegSetValueA %s (Default) = %s", subkey, value);
+		BB_INTERNAL_LOG(kBBLogLevel_Display, "Registry", "RegSetValueA %s (Default) = %s", subkey, value);
 	}
 	else
 	{

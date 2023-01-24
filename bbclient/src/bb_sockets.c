@@ -99,7 +99,7 @@ int bbnet_socket_nonblocking(bb_socket socket, b32 nonblocking)
 #if BB_USING(BB_COMPILER_MSVC)
 
 	u_long nonBlocking = (u_long)nonblocking;
-	return ioctlsocket(socket, FIONBIO, &nonBlocking);
+	return ioctlsocket(socket, (long)FIONBIO, &nonBlocking);
 
 #elif BB_USING(BB_COMPILER_CLANG) // #if BB_USING(BB_COMPILER_MSVC)
 

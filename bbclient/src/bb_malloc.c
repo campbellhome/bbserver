@@ -4,6 +4,7 @@
 #if !defined(BB_ENABLED) || BB_ENABLED
 
 #include "bb.h"
+#include "bbclient/bb_malloc.h"
 #include "bbclient/bb_common.h"
 #include "bbclient/bb_wrap_malloc.h"
 #include "bbclient/bb_wrap_stdio.h"
@@ -49,7 +50,7 @@ void* bb_realloc_loc(const char* file, int line, void* ptr, size_t size)
 	if (s_bbTrackMalloc)
 	{
 		char buf[256];
-		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_realloc(0x%16.16" PRIx64  ", %zu) " BB_PTR_PREFIX "%p\n", file, line, oldPtr, size, newPtr) < 0)
+		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bb_realloc(0x%16.16" PRIx64 ", %zu) " BB_PTR_PREFIX "%p\n", file, line, oldPtr, size, newPtr) < 0)
 		{
 			buf[sizeof(buf) - 1] = '\0';
 		}

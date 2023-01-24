@@ -4,7 +4,7 @@
 #if !defined(BB_ENABLED) || BB_ENABLED
 
 #if defined(_MSC_VER)
-__pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *const ,...)' : function not inlined
+__pragma(warning(disable : 4710)) // warning C4710 : 'int printf(const char *const ,...)' : function not inlined
 #endif
 
 #include "bb.h"
@@ -88,6 +88,7 @@ static u64 s_lastFileFlushTime;
 static char s_deviceCode[kBBSize_ApplicationName];
 static char s_sourceApplicationName[kBBSize_ApplicationName];
 static char s_applicationName[kBBSize_ApplicationName];
+extern u32 g_bb_initFlags; // we don't have a good header for this, so we need to avoid a warning from -Wmissing-variable-declarations
 u32 g_bb_initFlags;
 static u32 s_sourceIp;
 static u32 s_serverIp;
@@ -434,7 +435,7 @@ static bb_decoded_packet_t bb_build_appinfo(void)
 	decoded.packet.appInfo.initialTimestamp = decoded.header.timestamp;
 	decoded.packet.appInfo.millisPerTick = bb_millis_per_tick();
 	decoded.packet.appInfo.initFlags = g_bb_initFlags;
-	decoded.packet.appInfo.platform = bb_platform();
+	decoded.packet.appInfo.platform = (u32)(bb_platform_e)bb_platform();
 	decoded.packet.appInfo.microsecondsFromEpoch = bb_current_time_microseconds_from_epoch();
 	bb_strncpy(decoded.packet.appInfo.applicationName, s_applicationName, sizeof(decoded.packet.appInfo.applicationName));
 	return decoded;
@@ -692,7 +693,7 @@ void bb_shutdown(const char* file, int line)
 {
 	uint32_t bb_path_id = 0;
 	bb_resolve_path_id(file, &bb_path_id, (uint32_t)line);
-	bb_thread_end(bb_path_id, line);
+	bb_thread_end(bb_path_id, (u32)line);
 	if (s_fp != BB_INVALID_FILE_HANDLE)
 	{
 		bb_file_close(s_fp);
@@ -1109,7 +1110,7 @@ static void bb_trace_send(bb_decoded_packet_t* decoded, size_t textlen)
 	if (textlen >= kBBSize_LogText)
 	{
 		char* text = decoded->packet.logText.text;
-		size_t preTextSize = text - (char*)decoded;
+		size_t preTextSize = (size_t)(text - (char*)decoded);
 		while (textlen >= kBBSize_LogText)
 		{
 			bb_decoded_packet_t partial;
@@ -1151,7 +1152,7 @@ static b32 bb_trace_begin(bb_trace_builder_t* builder, uint32_t pathId, uint32_t
 		}
 	}
 	builder->decoded = (bb_decoded_packet_t*)s_bb_trace_packet_buffer->packetBuffer;
-	builder->textOffset = builder->decoded->packet.logText.text - (char*)builder->decoded;
+	builder->textOffset = (size_t)(builder->decoded->packet.logText.text - (char*)builder->decoded);
 	builder->textBufferSize = sizeof(s_bb_trace_packet_buffer->packetBuffer) - builder->textOffset;
 	builder->textStart = s_bb_trace_packet_buffer->packetBuffer + sizeof(s_bb_trace_packet_buffer->packetBuffer) - builder->textBufferSize;
 	bb_trace_partial_end();
@@ -1175,7 +1176,7 @@ static void bb_trace_end(bb_trace_builder_t* builder, int len, uint32_t category
 	else
 	{
 		builder->decoded->packet.logText.categoryId = categoryId;
-		builder->decoded->packet.logText.level = level;
+		builder->decoded->packet.logText.level = (u32)(bb_log_level_e)level;
 		builder->decoded->packet.logText.pieInstance = pieInstance;
 		builder->decoded->packet.logText.colors = s_bb_colors;
 		bb_trace_send(builder->decoded, (size_t)len);
@@ -1247,14 +1248,14 @@ static void bb_trace_end_w(bb_trace_builder_w_t* builder, int len, uint32_t cate
 	else
 	{
 		builder->decoded->packet.logText.categoryId = categoryId;
-		builder->decoded->packet.logText.level = level;
+		builder->decoded->packet.logText.level = (u32)(bb_log_level_e)level;
 		builder->decoded->packet.logText.pieInstance = pieInstance;
 		builder->decoded->packet.logText.colors = s_bb_colors;
 		bb_trace_send(builder->decoded, numCharsConverted);
 	}
 }
 
-void bb_trace_va_w(uint32_t pathId, uint32_t line, uint32_t categoryId, bb_log_level_e level, s32 pieInstance, const bb_wchar_t* fmt, va_list args)
+static void bb_trace_va_w(uint32_t pathId, uint32_t line, uint32_t categoryId, bb_log_level_e level, s32 pieInstance, const bb_wchar_t* fmt, va_list args)
 {
 	bb_trace_builder_w_t builder = { BB_EMPTY_INITIALIZER };
 	if (!bb_trace_begin_w(&builder, pathId, line))
@@ -1297,13 +1298,13 @@ void bb_trace_dynamic_preformatted_range(const char* path, uint32_t line, const 
 	uint32_t categoryId = 0;
 	bb_resolve_ids(path, category, &pathId, &categoryId, line);
 
-	size_t len = (preformatted_end && preformatted_end > preformatted) ? (preformatted_end - preformatted) : strlen(preformatted);
+	size_t len = (preformatted_end && preformatted_end > preformatted) ? (size_t)(preformatted_end - preformatted) : strlen(preformatted);
 	if (len < kBBSize_LogText)
 	{
 		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
 		bb_fill_header(&decoded, kBBPacketType_LogText, pathId, line);
 		decoded.packet.logText.categoryId = categoryId;
-		decoded.packet.logText.level = level;
+		decoded.packet.logText.level = (u32)(bb_log_level_e)level;
 		decoded.packet.logText.pieInstance = pieInstance;
 		decoded.packet.logText.colors = s_bb_colors;
 		memcpy(&decoded.packet.logText.text, preformatted, len);
@@ -1371,7 +1372,7 @@ typedef struct bb_partial_log_builder_s
 	int32_t len;
 	int32_t partialPacketsSent;
 } bb_partial_log_builder_t;
-bb_thread_local bb_partial_log_builder_t s_bb_partial;
+static bb_thread_local bb_partial_log_builder_t s_bb_partial;
 
 void bb_trace_partial_end(void)
 {
@@ -1443,7 +1444,7 @@ void bb_trace_partial(const char* path, uint32_t line, const char* category, bb_
 
 	s_bb_partial.pathId = pathId;
 	s_bb_partial.line = line;
-	decoded->packet.logText.level = level;
+	decoded->packet.logText.level = (u32)(bb_log_level_e)level;
 	decoded->packet.logText.categoryId = categoryId;
 	decoded->packet.logText.pieInstance = pieInstance;
 
@@ -1496,11 +1497,11 @@ void bb_trace_partial_preformatted(const char* path, uint32_t line, const char* 
 
 	s_bb_partial.pathId = pathId;
 	s_bb_partial.line = line;
-	decoded->packet.logText.level = level;
+	decoded->packet.logText.level = (u32)(bb_log_level_e)level;
 	decoded->packet.logText.categoryId = categoryId;
 	decoded->packet.logText.pieInstance = pieInstance;
 
-	size_t textLen = (preformatted_end && preformatted_end > preformatted) ? preformatted_end - preformatted : strlen(preformatted);
+	size_t textLen = (preformatted_end && preformatted_end > preformatted) ? (size_t)(preformatted_end - preformatted) : strlen(preformatted);
 
 	for (size_t i = 0; i < textLen; ++i)
 	{

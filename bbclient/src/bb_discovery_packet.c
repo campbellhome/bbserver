@@ -115,9 +115,10 @@ b32 bb_discovery_packet_deserialize(s8* buffer, u16 len, bb_decoded_discovery_pa
 	case kBBDiscoveryPacketType_DeclineReservation:
 	case kBBDiscoveryPacketType_Invalid:
 	case kBBDiscoveryPacketType_Count:
-	default:
-		return false;
+		break;
 	}
+
+	return false;
 }
 
 u16 bb_discovery_packet_serialize(bb_decoded_discovery_packet_t* source, s8* buffer, u16 len)
@@ -148,7 +149,6 @@ u16 bb_discovery_packet_serialize(bb_decoded_discovery_packet_t* source, s8* buf
 	case kBBDiscoveryPacketType_DeclineReservation:
 	case kBBDiscoveryPacketType_Invalid:
 	case kBBDiscoveryPacketType_Count:
-	default:
 		BB_ASSERT(false);
 		return 0;
 	}

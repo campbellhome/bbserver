@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -14,11 +14,11 @@
 // warning C4711 : function 'bbpacket_serialize_user' selected for automatic inline expansion
 // warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 
-__pragma(warning(push));
+__pragma(warning(push))
 __pragma(warning(disable : 4711 5045 4820 4255 4668 4574 4365))
 #define WIN32_LEAN_AND_MEAN 1
 #include <WS2tcpip.h>
-#include <winsock2.h>
+#include <WinSock2.h>
 __pragma(warning(pop))
 
 #endif

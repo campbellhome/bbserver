@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #if !defined(BB_ENABLED) || BB_ENABLED
@@ -6,7 +6,7 @@
 #include "bb.h"
 
 #if defined(_MSC_VER)
-__pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *const ,...)' : function not inlined
+__pragma(warning(disable : 4710)) // warning C4710 : 'int printf(const char *const ,...)' : function not inlined
 #endif
 
 #include "bbclient/bb_log.h"
@@ -42,7 +42,7 @@ static void bb_vlog(const char* fmt, va_list args)
 		prefixLen = 0;
 	}
 
-	len = vsnprintf(szBuffer + prefixLen, sizeof(szBuffer) - prefixLen, fmt, args);
+	len = vsnprintf(szBuffer + prefixLen, sizeof(szBuffer) - (u64)prefixLen, fmt, args);
 	if (len == 0)
 		return;
 

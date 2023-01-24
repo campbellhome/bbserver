@@ -19,7 +19,7 @@ extern "C" {
 
 BB_LINKAGE size_t bb_strncpy(char* dest, const char* src, size_t destSize);
 BB_LINKAGE char bb_tolower(char c);
-BB_LINKAGE char* bb_stristr(const char* src, const char* pattern);
+BB_LINKAGE const char* bb_stristr(const char* src, const char* pattern);
 BB_LINKAGE int bb_strnicmp(const char* s1, const char* s2, size_t len);
 BB_LINKAGE int bb_stricmp(const char* s1, const char* s2);
 BB_LINKAGE char* bb_strdup_loc(const char* file, int line, const char* s);

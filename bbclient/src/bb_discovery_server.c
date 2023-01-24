@@ -261,7 +261,6 @@ void bb_discovery_process_request(bb_discovery_server_t* ds, struct sockaddr_in*
 	case kBBDiscoveryPacketType_ReservationRefuse:
 	case kBBDiscoveryPacketType_Invalid:
 	case kBBDiscoveryPacketType_Count:
-	default:
 		//BB_LOG("Discovery", "ignoring request from %s", ip);
 		return;
 	}
