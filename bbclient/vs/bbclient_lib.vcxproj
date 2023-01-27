@@ -201,7 +201,7 @@
     <ClCompile>
       <PreprocessorDefinitions>BB_MSVC_CLANG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <AdditionalOptions>-Wno-extra-semi-stmt -Wno-declaration-after-statement -Wno-format-nonliteral -Wno-cast-align %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Wno-extra-semi-stmt -Wno-declaration-after-statement -Wno-format-nonliteral -Wno-cast-align --analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="bbclient_lib.props" />

@@ -103,7 +103,7 @@ static BB_INLINE void bba_log_realloc(u64 oldp, void* newp, u32 allocated, u32 d
 	if (s_bba_logAllocs)
 	{
 		char buf[256];
-		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bba_realloc(" PRIPtr ", " PRIPtr ") %" PRIu64 " bytes -> %" PRIu64 " bytes (%" PRIu64 " bytes)\n", file, line, (void*)oldp, newp, allocatedSize, desiredSize, desiredSize - allocatedSize) < 0)
+		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bba_realloc(" PRIx64 ", " PRIPtr ") %" PRIu64 " bytes -> %" PRIu64 " bytes (%" PRIu64 " bytes)\n", file, line, oldp, newp, allocatedSize, desiredSize, desiredSize - allocatedSize) < 0)
 		{
 			buf[sizeof(buf) - 1] = '\0';
 		}
@@ -176,11 +176,12 @@ void* bba__raw_add(void* base, ptrdiff_t data_offset, u32* count, u32* allocated
 
 		if (itemsize * desired > itemsize * *allocated)
 		{
+			u64 oldaddr = (u64)arr;
 			void* p = (void*)bba__realloc(arr, itemsize * (u64)desired);
 			if (p)
 			{
 				void* ret = (u8*)p + itemsize * (u64)*count;
-				bba_log_realloc((u64)arr, p, *allocated, desired, (u64)itemsize * *allocated, (u64)itemsize * desired, file, line);
+				bba_log_realloc(oldaddr, p, *allocated, desired, (u64)itemsize * *allocated, (u64)itemsize * desired, file, line);
 				if (clear && !reserve_only)
 				{
 					u32 bytes = itemsize * (desired - *allocated);

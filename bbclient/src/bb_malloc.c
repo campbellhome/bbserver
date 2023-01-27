@@ -60,7 +60,7 @@ void* bb_realloc_loc(const char* file, int line, void* ptr, size_t size)
 		puts(buf);
 #endif
 	}
-	return ptr;
+	return newPtr;
 }
 
 void bb_free_loc(const char* file, int line, void* ptr)
