@@ -103,7 +103,7 @@ static BB_INLINE void bba_log_realloc(u64 oldp, void* newp, u32 allocated, u32 d
 	if (s_bba_logAllocs)
 	{
 		char buf[256];
-		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bba_realloc(" PRIx64 ", " PRIPtr ") %" PRIu64 " bytes -> %" PRIu64 " bytes (%" PRIu64 " bytes)\n", file, line, oldp, newp, allocatedSize, desiredSize, desiredSize - allocatedSize) < 0)
+		if (bb_snprintf(buf, sizeof(buf), "%s(%d) : bba_realloc(%" PRIx64 ", " PRIPtr ") %" PRIu64 " bytes -> %" PRIu64 " bytes (%" PRIu64 " bytes)\n", file, line, oldp, newp, allocatedSize, desiredSize, desiredSize - allocatedSize) < 0)
 		{
 			buf[sizeof(buf) - 1] = '\0';
 		}
