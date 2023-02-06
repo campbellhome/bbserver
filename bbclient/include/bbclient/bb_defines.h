@@ -92,9 +92,15 @@
 
 // MULTI_LINE_MACRO_BEGIN and __pragma logic taken from http://cnicholson.net/2009/03/stupid-c-tricks-dowhile0-and-c4127/
 // clang-format off
+#if defined(BB_MSVC_CLANG) && BB_MSVC_CLANG
 #define BB_WARNING_PUSH( ... )                   \
 	__pragma( warning( push ) )                  \
 	__pragma( warning( disable : __VA_ARGS__ ) )
+#else
+#define BB_WARNING_PUSH( x, ... )                  \
+	__pragma( warning( push ) )                    \
+	__pragma( warning( disable : x __VA_ARGS__ ) )
+#endif
 // clang-format on
 
 #define BB_WARNING_DISABLE(x) \
