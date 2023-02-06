@@ -732,14 +732,14 @@ void bb_set_initial_buffer(void* buffer, uint32_t bufferSize)
 		bb_critical_section_init(&s_initial_buffer.cs);
 	}
 
-	if (bufferSize < sizeof(bb_decoded_packet_t))
+	bb_critical_section_lock(&s_initial_buffer.cs);
+	s_initial_buffer.data = buffer;
+	s_initial_buffer.size = bufferSize;
+	if (bufferSize >= sizeof(bb_decoded_packet_t))
 	{
-		bb_critical_section_lock(&s_initial_buffer.cs);
-		s_initial_buffer.data = buffer;
-		s_initial_buffer.size = bufferSize;
 		s_initial_buffer.used = sizeof(bb_decoded_packet_t);
-		bb_critical_section_unlock(&s_initial_buffer.cs);
 	}
+	bb_critical_section_unlock(&s_initial_buffer.cs);
 }
 
 void bb_enable_stored_thread_ids(int store)
@@ -1012,10 +1012,10 @@ static u32 bb_resolve_id(const char* name, bb_ids_t* ids, u32 pathId, u32 line, 
 		{
 			u32 newId = ++ids->lastId;
 			bb_id_t* newIdData = bba_add(*ids, 1);
-			//u32 tmp;
-			//for(tmp = 0; tmp < 1000; ++tmp) {
+			// u32 tmp;
+			// for(tmp = 0; tmp < 1000; ++tmp) {
 			//	newIdData = bba_add(*ids, 1);
-			//}
+			// }
 			if (newIdData)
 			{
 				newIdData->id = newId;
