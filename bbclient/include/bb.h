@@ -88,6 +88,7 @@ enum
 	kBBSize_Category = 128,
 	kBBSize_ConsoleAutocompleteText = 512,
 	kBBSize_ConsoleAutocompleteDesc = 1544,
+	kBBSize_UserData = 2040,
 	kBBSize_MaxPath = 2048,
 	kBBSize_LogText = 2048,
 	kBBSize_MachineName = 256,
@@ -144,6 +145,7 @@ BB_LINKAGE void bb_init(const char* applicationName, const char* sourceApplicati
 BB_LINKAGE void bb_init_file(const char* path);
 BB_LINKAGE void bb_shutdown(const char* file, int line);
 BB_LINKAGE void bb_set_initial_buffer(void* buffer, uint32_t bufferSize);
+BB_LINKAGE void bb_pre_init_set_applicationGroup(const char* applicationGroup);
 BB_LINKAGE void bb_enable_stored_thread_ids(int store);
 #if BB_COMPILE_WIDECHAR
 BB_LINKAGE void bb_init_w(const bb_wchar_t* applicationName, const bb_wchar_t* sourceApplicationName, const bb_wchar_t* deviceCode, uint32_t sourceIp, bb_init_flags_t initFlags);

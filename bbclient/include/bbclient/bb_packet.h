@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -51,6 +51,8 @@ typedef enum
 	kBBPacketType_ConsoleAutocompleteResponseHeader, // Client --> Server
 	kBBPacketType_ConsoleAutocompleteResponseEntry,  // Client --> Server
 
+	kBBPacketType_AppInfo_v4, // Client --> Server
+
 } bb_packet_type_e;
 
 typedef struct bb_packet_header_s
@@ -66,6 +68,7 @@ typedef struct bb_packet_app_info_s
 	u64 initialTimestamp;
 	double millisPerTick;
 	char applicationName[kBBSize_ApplicationName];
+	char applicationGroup[kBBSize_ApplicationName];
 	u32 initFlags;
 	u32 platform;
 	u64 microsecondsFromEpoch;
@@ -87,8 +90,10 @@ typedef struct bb_packet_log_text_s
 
 typedef struct bb_packet_user_s
 {
-	u8 data[kBBSize_LogText];
+	u8 data[kBBSize_UserData];
 	u16 len;
+	b8 echo;
+	u8 pad;
 } bb_packet_user_t;
 
 typedef struct bb_packet_register_id_s

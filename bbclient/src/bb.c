@@ -88,6 +88,7 @@ static u64 s_lastFileFlushTime;
 static char s_deviceCode[kBBSize_ApplicationName];
 static char s_sourceApplicationName[kBBSize_ApplicationName];
 static char s_applicationName[kBBSize_ApplicationName];
+static char s_applicationGroup[kBBSize_ApplicationName];
 extern u32 g_bb_initFlags; // we don't have a good header for this, so we need to avoid a warning from -Wmissing-variable-declarations
 u32 g_bb_initFlags;
 static u32 s_sourceIp;
@@ -427,7 +428,7 @@ static void bb_send_thread_ids(bb_thread_ids_t* ids, b32 bCallbacks, b32 bSocket
 static bb_decoded_packet_t bb_build_appinfo(void)
 {
 	bb_decoded_packet_t decoded;
-	decoded.type = kBBPacketType_AppInfo;
+	decoded.type = kBBPacketType_AppInfo_v4;
 	decoded.header.timestamp = bb_current_ticks();
 	decoded.header.threadId = bb_get_current_thread_id();
 	decoded.header.fileId = 0;
@@ -438,6 +439,7 @@ static bb_decoded_packet_t bb_build_appinfo(void)
 	decoded.packet.appInfo.platform = (u32)(bb_platform_e)bb_platform();
 	decoded.packet.appInfo.microsecondsFromEpoch = bb_current_time_microseconds_from_epoch();
 	bb_strncpy(decoded.packet.appInfo.applicationName, s_applicationName, sizeof(decoded.packet.appInfo.applicationName));
+	bb_strncpy(decoded.packet.appInfo.applicationGroup, s_applicationGroup, sizeof(decoded.packet.appInfo.applicationGroup));
 	return decoded;
 }
 
@@ -740,6 +742,19 @@ void bb_set_initial_buffer(void* buffer, uint32_t bufferSize)
 		s_initial_buffer.used = sizeof(bb_decoded_packet_t);
 	}
 	bb_critical_section_unlock(&s_initial_buffer.cs);
+}
+
+void bb_pre_init_set_applicationGroup(const char* applicationGroup)
+{
+	if (s_con.cs.initialized)
+	{
+		bb_error("bb application group can only be set before bb_init");
+		BB_ASSERT(false);
+	}
+	else
+	{
+		bb_strncpy(s_applicationGroup, applicationGroup, sizeof(s_applicationGroup));
+	}
 }
 
 void bb_enable_stored_thread_ids(int store)

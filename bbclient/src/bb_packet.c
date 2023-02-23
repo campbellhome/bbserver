@@ -58,6 +58,22 @@ static b32 bbpacket_serialize_app_info_v3(bb_serialize_t* ser, bb_decoded_packet
 	return bbserialize_remaining_text(ser, packet->applicationName);
 }
 
+static b32 bbpacket_serialize_app_info_v4(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
+{
+	bb_packet_app_info_t* packet = &decoded->packet.appInfo;
+	if (ser->reading)
+	{
+		memset(packet, 0, sizeof(*packet));
+	}
+	bbserialize_u64(ser, &packet->initialTimestamp);
+	bbserialize_double(ser, &packet->millisPerTick);
+	bbserialize_u32(ser, &packet->initFlags);
+	bbserialize_u64(ser, &packet->microsecondsFromEpoch);
+	u16 len = 0;
+	bbserialize_text(ser, packet->applicationGroup, &len);
+	return bbserialize_remaining_text(ser, packet->applicationName);
+}
+
 static b32 bbpacket_serialize_app_info(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	bb_packet_app_info_t* packet = &decoded->packet.appInfo;
@@ -185,6 +201,9 @@ b32 bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded)
 	case kBBPacketType_AppInfo_v3:
 		return bbpacket_serialize_app_info_v3(&ser, decoded);
 
+	case kBBPacketType_AppInfo_v4:
+		return bbpacket_serialize_app_info_v4(&ser, decoded);
+
 	case kBBPacketType_AppInfo:
 		return bbpacket_serialize_app_info(&ser, decoded);
 
@@ -258,6 +277,10 @@ u16 bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len)
 
 	case kBBPacketType_AppInfo_v3:
 		bbpacket_serialize_app_info_v3(&ser, source);
+		break;
+
+	case kBBPacketType_AppInfo_v4:
+		bbpacket_serialize_app_info_v4(&ser, source);
 		break;
 
 	case kBBPacketType_AppInfo:
@@ -338,6 +361,7 @@ b32 bbpacket_is_app_info_type(bb_packet_type_e type)
 	return type == kBBPacketType_AppInfo_v1 ||
 	       type == kBBPacketType_AppInfo_v2 ||
 	       type == kBBPacketType_AppInfo_v3 ||
+	       type == kBBPacketType_AppInfo_v4 ||
 	       type == kBBPacketType_AppInfo;
 }
 

@@ -334,6 +334,27 @@ static void recorded_session_add_console_autocomplete_entry(recorded_session_t* 
 	}
 }
 
+static void recorded_session_echo_user_packet(recorded_session_t* session, bb_decoded_packet_t* decoded)
+{
+	if (!decoded->packet.userToServer.echo || session->appInfo.packet.appInfo.applicationGroup[0] == '\0')
+		return;
+
+	for (u32 i = 0; i < s_sessions.count; ++i)
+	{
+		recorded_session_t* other = *(s_sessions.data + i);
+		if (other == session)
+			continue;
+
+		if (bb_stricmp(session->appInfo.packet.appInfo.applicationGroup, other->appInfo.packet.appInfo.applicationGroup))
+			continue;
+
+		if (other->outgoingMqId == mq_invalid_id())
+			continue;
+
+		mq_queue_userData(other->outgoingMqId, kBBPacketType_UserToClient, decoded->packet.userToServer.len, (const char*)decoded->packet.userToServer.data, decoded->packet.userToServer.len);
+	}
+}
+
 void recorded_session_update(recorded_session_t* session)
 {
 	u64 start = bb_current_time_ms();
@@ -350,6 +371,7 @@ void recorded_session_update(recorded_session_t* session)
 		case kBBPacketType_AppInfo_v1:
 		case kBBPacketType_AppInfo_v2:
 		case kBBPacketType_AppInfo_v3:
+		case kBBPacketType_AppInfo_v4:
 		case kBBPacketType_AppInfo:
 			recorded_session_init_appinfo(session, &decoded);
 			break;
@@ -384,12 +406,15 @@ void recorded_session_update(recorded_session_t* session)
 			break;
 		case kBBPacketType_Invalid:
 		case kBBPacketType_FrameEnd:
-		case kBBPacketType_UserToServer:
 		case kBBPacketType_ConsoleCommand:
 		case kBBPacketType_UserToClient:
 		case kBBPacketType_StopRecording:
 		case kBBPacketType_RecordingInfo:
 		case kBBPacketType_ConsoleAutocompleteRequest:
+			break;
+		case kBBPacketType_UserToServer:
+			recorded_session_echo_user_packet(session, &decoded);
+			break;
 		default:
 			break;
 		}

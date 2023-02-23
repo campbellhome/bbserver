@@ -220,6 +220,11 @@ bb_thread_return_t recorder_thread(void* args)
 							outgoing.packet.consoleAutocompleteRequest.id = outgoingMessage->userData;
 							bb_strncpy(outgoing.packet.consoleAutocompleteRequest.text, outgoingMessage->text, sizeof(outgoing.packet.consoleAutocompleteRequest.text));
 						}
+						else if (outgoingMessage->command == kBBPacketType_UserToClient)
+						{
+							valid = true;
+							memcpy(outgoing.packet.userToClient.data, outgoingMessage->text, outgoingMessage->userData);
+						}
 						else if (outgoingMessage->command == kBBPacketType_StopRecording)
 						{
 							bbcon_disconnect(con);
