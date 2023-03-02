@@ -89,6 +89,10 @@ processSpawnResult_t process_spawn(const char* dir, const char* cmdline, process
 		ZeroMemory(&si, sizeof(si));
 		si.cb = sizeof(si);
 
+		if (processLogType == kProcessLog_All)
+		{
+			BB_TRACE(kBBLogLevel_Verbose, "process", "Creating process:\n  dir: %s\n  cmd: %s\n", dir, cmdline);
+		}
 		char* cmdlineDup = bb_strdup(cmdline);
 		result.success = CreateProcessA(NULL, cmdlineDup, NULL, NULL, FALSE, 0, NULL, dir, &si, &pi);
 		bb_free(cmdlineDup);
@@ -97,7 +101,7 @@ processSpawnResult_t process_spawn(const char* dir, const char* cmdline, process
 		{
 			if (processLogType == kProcessLog_All)
 			{
-				BB_LOG("process", "Created process: %s\n", cmdline);
+				BB_LOG("process", "Created process:\n  dir: %s\n  cmd: %s\n", dir, cmdline);
 			}
 			CloseHandle(pi.hThread);
 			CloseHandle(pi.hProcess);
@@ -172,6 +176,10 @@ processSpawnResult_t process_spawn(const char* dir, const char* cmdline, process
 								si.wShowWindow = SW_HIDE;
 
 								char* cmdlineDup = bb_strdup(cmdline);
+								if (processLogType == kProcessLog_All)
+								{
+									BB_TRACE(kBBLogLevel_Verbose, "process", "Creating process:\n  dir: %s\n  cmd: %s\n", dir, cmdline);
+								}
 								result.success = CreateProcess(NULL, cmdlineDup, NULL, NULL, TRUE,
 								                               CREATE_NEW_CONSOLE, NULL, dir, &si, &pi);
 								bb_free(cmdlineDup);
@@ -179,7 +187,7 @@ processSpawnResult_t process_spawn(const char* dir, const char* cmdline, process
 								{
 									if (processLogType == kProcessLog_All)
 									{
-										BB_LOG("process", "Created tracked process: %s\n", cmdline);
+										BB_LOG("process", "Created tracked process:\n  dir: %s\n  cmd: %s\n", dir, cmdline);
 									}
 									AllowSetForegroundWindow(pi.dwProcessId);
 									result.process = bb_malloc(sizeof(win32Process_t));
