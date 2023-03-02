@@ -535,6 +535,16 @@ b32 process_terminate(const char* processName, u32 exitCode)
 	return ret;
 }
 
+b32 process_terminate_process(process_t* base, u32 exitCode)
+{
+	if (base)
+	{
+		win32Process_t* process = (win32Process_t*)(base);
+		return TerminateProcess(process->hProcess, exitCode);
+	}
+	return false;
+}
+
 #else // #if BB_USING(BB_PLATFORM_WINDOWS)
 
 void process_init(void)
@@ -580,6 +590,13 @@ b32 process_is_running(const char* processName)
 b32 process_terminate(const char* processName, u32 exitCode)
 {
 	BB_UNUSED(processName);
+	BB_UNUSED(exitCode);
+	return false;
+}
+
+b32 process_terminate_process(process_t* process, u32 exitCode)
+{
+	BB_UNUSED(process);
 	BB_UNUSED(exitCode);
 	return false;
 }
