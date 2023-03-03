@@ -72,6 +72,11 @@ static void process_report_error(const char* apiName, const char* cmdline, proce
 
 processSpawnResult_t process_spawn(const char* dir, const char* cmdline, processSpawnType_t processSpawnType, processLogType_t processLogType)
 {
+	return process_spawn_with_visibility(dir, cmdline, processSpawnType, processLogType, (processSpawnType == kProcessSpawn_OneShot) ? kProcessVisibility_Visible : kProcessVisibility_Hidden);
+}
+
+processSpawnResult_t process_spawn_with_visibility(const char* dir, const char* cmdline, processSpawnType_t processSpawnType, processLogType_t processLogType, processVisiblityType_t processVisiblityType)
+{
 	processSpawnResult_t result = { BB_EMPTY_INITIALIZER };
 
 	if (!cmdline || !*cmdline)
@@ -88,6 +93,12 @@ processSpawnResult_t process_spawn(const char* dir, const char* cmdline, process
 		STARTUPINFO si;
 		ZeroMemory(&si, sizeof(si));
 		si.cb = sizeof(si);
+
+		if (processVisiblityType == kProcessVisibility_Hidden)
+		{
+			si.dwFlags |= STARTF_USESHOWWINDOW;
+			si.wShowWindow = SW_HIDE;
+		}
 
 		if (processLogType == kProcessLog_All)
 		{
@@ -169,11 +180,16 @@ processSpawnResult_t process_spawn(const char* dir, const char* cmdline, process
 
 								ZeroMemory(&si, sizeof(STARTUPINFO));
 								si.cb = sizeof(STARTUPINFO);
-								si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+								si.dwFlags = STARTF_USESTDHANDLES;
 								si.hStdOutput = hOutputWrite;
 								si.hStdInput = hInputRead;
 								si.hStdError = hErrorWrite;
-								si.wShowWindow = SW_HIDE;
+
+								if (processVisiblityType == kProcessVisibility_Hidden)
+								{
+									si.dwFlags |= STARTF_USESHOWWINDOW;
+									si.wShowWindow = SW_HIDE;
+								}
 
 								char* cmdlineDup = bb_strdup(cmdline);
 								if (processLogType == kProcessLog_All)
@@ -558,6 +574,17 @@ processSpawnResult_t process_spawn(const char* dir, const char* cmdline, process
 	BB_UNUSED(cmdline);
 	BB_UNUSED(processSpawnType);
 	BB_UNUSED(processLogType);
+	return result;
+}
+
+processSpawnResult_t process_spawn_with_visibility(const char* dir, const char* cmdline, processSpawnType_t processSpawnType, processLogType_t processLogType, processVisiblityType_t processVisiblityType)
+{
+	processSpawnResult_t result = { BB_EMPTY_INITIALIZER };
+	BB_UNUSED(dir);
+	BB_UNUSED(cmdline);
+	BB_UNUSED(processSpawnType);
+	BB_UNUSED(processLogType);
+	BB_UNUSED(processVisiblityType);
 	return result;
 }
 

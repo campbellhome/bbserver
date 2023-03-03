@@ -50,7 +50,14 @@ typedef enum processLogType_e
 	kProcessLog_All
 } processLogType_t;
 
+typedef enum processVisiblityType_t
+{
+	kProcessVisibility_Hidden,
+	kProcessVisibility_Visible,
+} processVisiblityType_t;
+
 processSpawnResult_t process_spawn(const char* dir, const char* cmdline, processSpawnType_t processSpawnType, processLogType_t processLogType);
+processSpawnResult_t process_spawn_with_visibility(const char* dir, const char* cmdline, processSpawnType_t processSpawnType, processLogType_t processLogType, processVisiblityType_t processVisiblityType);
 
 typedef struct tag_processIOPtr
 {
