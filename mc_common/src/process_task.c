@@ -38,7 +38,7 @@ void task_process_statechanged(task* _t)
 	task_process* t = (task_process*)_t->taskData;
 	if (_t->state == kTaskState_Running)
 	{
-		t->process = process_spawn_with_visibility(sb_get(&t->dir), sb_get(&t->cmdline), t->spawnType, t->visibilityType, _t->debug ? kProcessLog_All : kProcessLog_None).process;
+		t->process = process_spawn_with_visibility(sb_get(&t->dir), sb_get(&t->cmdline), t->spawnType, _t->debug ? kProcessLog_All : kProcessLog_None, t->visibilityType).process;
 		if (!t->process)
 		{
 			task_set_state(_t, kTaskState_Failed);
