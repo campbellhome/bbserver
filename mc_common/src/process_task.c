@@ -78,6 +78,30 @@ task process_task_create(const char* name, processSpawnType_t spawnType, const c
 		sb_va_list(&p->cmdline, cmdlineFmt, args);
 		va_end(args);
 		p->spawnType = spawnType;
+		p->visibilityType = (spawnType == kProcessSpawn_OneShot) ? kProcessVisibility_Visible : kProcessVisibility_Hidden;
+	}
+	return t;
+}
+
+task process_task_create_with_visibility(const char* name, processSpawnType_t spawnType, processVisiblityType_t visibilityType, const char* dir, const char* cmdlineFmt, ...)
+{
+	task t = { BB_EMPTY_INITIALIZER };
+	sb_append(&t.name, name);
+	t.tick = task_process_tick;
+	t.stateChanged = task_process_statechanged;
+	t.reset = task_process_reset;
+	t.taskData = bb_malloc(sizeof(task_process));
+	if (t.taskData)
+	{
+		task_process* p = t.taskData;
+		memset(p, 0, sizeof(*p));
+		sb_append(&p->dir, dir);
+		va_list args;
+		va_start(args, cmdlineFmt);
+		sb_va_list(&p->cmdline, cmdlineFmt, args);
+		va_end(args);
+		p->spawnType = spawnType;
+		p->visibilityType = visibilityType;
 	}
 	return t;
 }
