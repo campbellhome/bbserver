@@ -58,7 +58,7 @@ static b32 bbpacket_serialize_app_info_v3(bb_serialize_t* ser, bb_decoded_packet
 	return bbserialize_remaining_text(ser, packet->applicationName);
 }
 
-static b32 bbpacket_serialize_app_info_v4(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
+static b32 bbpacket_serialize_app_info_v5(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	bb_packet_app_info_t* packet = &decoded->packet.appInfo;
 	if (ser->reading)
@@ -74,7 +74,7 @@ static b32 bbpacket_serialize_app_info_v4(bb_serialize_t* ser, bb_decoded_packet
 	return bbserialize_remaining_text(ser, packet->applicationName);
 }
 
-static b32 bbpacket_serialize_app_info(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
+static b32 bbpacket_serialize_app_info_v4(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	bb_packet_app_info_t* packet = &decoded->packet.appInfo;
 	if (ser->reading)
@@ -204,8 +204,8 @@ b32 bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded)
 	case kBBPacketType_AppInfo_v4:
 		return bbpacket_serialize_app_info_v4(&ser, decoded);
 
-	case kBBPacketType_AppInfo:
-		return bbpacket_serialize_app_info(&ser, decoded);
+	case kBBPacketType_AppInfo_v5:
+		return bbpacket_serialize_app_info_v5(&ser, decoded);
 
 	case kBBPacketType_ThreadStart:
 	case kBBPacketType_ThreadName:
@@ -283,8 +283,8 @@ u16 bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len)
 		bbpacket_serialize_app_info_v4(&ser, source);
 		break;
 
-	case kBBPacketType_AppInfo:
-		bbpacket_serialize_app_info(&ser, source);
+	case kBBPacketType_AppInfo_v5:
+		bbpacket_serialize_app_info_v5(&ser, source);
 		break;
 
 	case kBBPacketType_ThreadStart:
@@ -362,7 +362,7 @@ b32 bbpacket_is_app_info_type(bb_packet_type_e type)
 	       type == kBBPacketType_AppInfo_v2 ||
 	       type == kBBPacketType_AppInfo_v3 ||
 	       type == kBBPacketType_AppInfo_v4 ||
-	       type == kBBPacketType_AppInfo;
+	       type == kBBPacketType_AppInfo_v4;
 }
 
 b32 bbpacket_is_log_text_type(bb_packet_type_e type)

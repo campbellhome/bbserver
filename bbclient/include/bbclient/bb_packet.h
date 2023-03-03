@@ -10,7 +10,8 @@
 #include "bb_types.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 typedef enum
@@ -38,7 +39,7 @@ typedef enum
 	kBBPacketType_AppInfo_v3, // Client --> Server
 	kBBPacketType_LogText_v2, // Client --> Server
 	kBBPacketType_LogText,    // Client --> Server
-	kBBPacketType_AppInfo,    // Client --> Server
+	kBBPacketType_AppInfo_v4, // Client --> Server
 
 	kBBPacketType_LogTextPartial, // Client --> Server
 
@@ -51,7 +52,9 @@ typedef enum
 	kBBPacketType_ConsoleAutocompleteResponseHeader, // Client --> Server
 	kBBPacketType_ConsoleAutocompleteResponseEntry,  // Client --> Server
 
-	kBBPacketType_AppInfo_v4, // Client --> Server
+	kBBPacketType_AppInfo_v5, // Client --> Server
+
+	kBBPacketType_AppInfo = kBBPacketType_AppInfo_v5
 
 } bb_packet_type_e;
 
@@ -145,7 +148,7 @@ typedef struct bb_decoded_packet_s
 		bb_packet_app_info_t appInfo;
 		bb_packet_text_t threadStart;
 		bb_packet_text_t threadName;
-		//bb_packet_text_t threadEnd; // unused
+		// bb_packet_text_t threadEnd; // unused
 		bb_packet_register_id_t fileId;
 		bb_packet_register_id_t categoryId;
 		bb_packet_frame_end_t frameEnd;

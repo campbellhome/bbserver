@@ -372,7 +372,7 @@ void recorded_session_update(recorded_session_t* session)
 		case kBBPacketType_AppInfo_v2:
 		case kBBPacketType_AppInfo_v3:
 		case kBBPacketType_AppInfo_v4:
-		case kBBPacketType_AppInfo:
+		case kBBPacketType_AppInfo_v5:
 			recorded_session_init_appinfo(session, &decoded);
 			break;
 		case kBBPacketType_CategoryId:
