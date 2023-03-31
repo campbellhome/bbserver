@@ -164,7 +164,7 @@ char* bb_strdup_loc(const char* file, int line, const char* s)
 	char* out = (size) ? (char*)bb_malloc_loc(file, line, size) : 0;
 	if (out)
 	{
-		if (size)
+		if (len)
 		{
 			memcpy(out, s, len);
 		}
