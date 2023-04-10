@@ -399,25 +399,27 @@ extern "C" const char* Imgui_Core_GetColorScheme(void)
 	return sb_get(&g_colorscheme);
 }
 
+static const char* Update_AnnotateVersion(updateManifest_t* manifest, const char* version)
+{
+	const char* annotated = version;
+	if (version && !bb_stricmp(version, sb_get(&manifest->stable)))
+	{
+		annotated = va("%s (stable)", version);
+	}
+	else if (version && !bb_stricmp(version, sb_get(&manifest->latest)))
+	{
+		annotated = va("%s (latest)", version);
+	}
+	return annotated;
+}
+
 extern "C" void Update_Menu(void)
 {
 	if (ImGui::BeginMenu("Update"))
 	{
 		updateManifest_t* manifest = Update_GetManifest();
-		auto AnnotateVersion = [manifest](const char* version) {
-			const char* annotated = version;
-			if (version && !bb_stricmp(version, sb_get(&manifest->stable)))
-			{
-				annotated = va("%s (stable)", version);
-			}
-			else if (version && !bb_stricmp(version, sb_get(&manifest->latest)))
-			{
-				annotated = va("%s (latest)", version);
-			}
-			return annotated;
-		};
 		const char* currentVersion = Update_GetCurrentVersion();
-		const char* currentVersionAnnotated = AnnotateVersion(currentVersion);
+		const char* currentVersionAnnotated = Update_AnnotateVersion(manifest, currentVersion);
 		ImGui::MenuItem(va("version %s", *currentVersionAnnotated ? currentVersionAnnotated : "unknown"), nullptr, false, false);
 		if (ImGui::MenuItem("Check for updates"))
 		{
@@ -437,7 +439,7 @@ extern "C" void Update_Menu(void)
 			{
 				updateVersion_t* version = manifest->versions.data + i;
 				const char* versionName = sb_get(&version->name);
-				if (ImGui::MenuItem(AnnotateVersion(versionName), nullptr, Update_IsDesiredVersion(versionName) != 0))
+				if (ImGui::MenuItem(Update_AnnotateVersion(manifest, versionName), nullptr, Update_IsDesiredVersion(versionName) != 0))
 				{
 					Update_SetDesiredVersion(versionName);
 				}

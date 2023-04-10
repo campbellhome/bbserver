@@ -163,32 +163,32 @@ void Fonts_Init(void)
 //const ImWchar fallbackRanges[] = { 0x2700, 0x2800, 0 };
 //const ImWchar fallbackRanges[] = { 0x100, 0xFFFF, 0 };
 
-const ImWchar allRanges[] = {
-	0x0020, 0x00FF, // Basic Latin + Latin Supplement
-	0x0370, 0x03FF, // Greek and Coptic
-	0x2000, 0x206F, // General Punctuation
-	0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
-	0x3131, 0x3163, // Korean alphabets
-	0x31F0, 0x31FF, // Katakana Phonetic Extensions
-	0x4e00, 0x9FAF, // CJK Ideograms
-	0xAC00, 0xD7A3, // Korean characters
-	0xFF00, 0xFFEF, // Half-width characters
-	0xFFFD, 0xFFFD, // Invalid
-	0
-};
+//const ImWchar allRanges[] = {
+//	0x0020, 0x00FF, // Basic Latin + Latin Supplement
+//	0x0370, 0x03FF, // Greek and Coptic
+//	0x2000, 0x206F, // General Punctuation
+//	0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
+//	0x3131, 0x3163, // Korean alphabets
+//	0x31F0, 0x31FF, // Katakana Phonetic Extensions
+//	0x4e00, 0x9FAF, // CJK Ideograms
+//	0xAC00, 0xD7A3, // Korean characters
+//	0xFF00, 0xFFEF, // Half-width characters
+//	0xFFFD, 0xFFFD, // Invalid
+//	0
+//};
 
-const ImWchar fallbackRanges[] = {
-	0x0100, 0x036F, // between Basic Latin + Latin Supplement and Greek and Coptic
-	0x0400, 0x1FFF, // between Greek and Coptic and General Punctuation
-	0x2070, 0x2FFF, // between General Punctuation and CJK Symbols and Punctuations, Hiragana, Katakana
-	0x3100, 0x3130, // between CJK Symbols and Punctuations, Hiragana, Katakana and Korean alphabets
-	0x3164, 0x31EF, // between Korean alphabets and Katakana Phonetic Extensions
-	0x3200, 0x4DFF, // between Katakana Phonetic Extensions and CJK Ideograms
-	0x9FB0, 0xABFF, // between CJK Ideograms and Korean characters
-	0xD7A2, 0xFEFF, // between Korean characters and Half-width characters
-	0xFFEE, 0xFFFC, // between Half-width characters and Invalid
-	0
-};
+//const ImWchar fallbackRanges[] = {
+//	0x0100, 0x036F, // between Basic Latin + Latin Supplement and Greek and Coptic
+//	0x0400, 0x1FFF, // between Greek and Coptic and General Punctuation
+//	0x2070, 0x2FFF, // between General Punctuation and CJK Symbols and Punctuations, Hiragana, Katakana
+//	0x3100, 0x3130, // between CJK Symbols and Punctuations, Hiragana, Katakana and Korean alphabets
+//	0x3164, 0x31EF, // between Korean alphabets and Katakana Phonetic Extensions
+//	0x3200, 0x4DFF, // between Katakana Phonetic Extensions and CJK Ideograms
+//	0x9FB0, 0xABFF, // between CJK Ideograms and Korean characters
+//	0xD7A2, 0xFEFF, // between Korean characters and Half-width characters
+//	0xFFEE, 0xFFFC, // between Half-width characters and Invalid
+//	0
+//};
 
 void Fonts_InitFonts(void)
 {
