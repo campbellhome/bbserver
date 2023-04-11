@@ -11,11 +11,15 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
 #include "bbclient/bb_time.h"
+#include "path_utils.h"
 #include "sb.h"
 #include "span.h"
 #include "tokenize.h"
+#include "va.h"
 
-#include "bb_wrap_windows.h"
+#include "bb_wrap_windows.h" // must be before bb_wrap_dirent.h
+
+#include "bb_wrap_dirent.h"
 #include "bbclient/bb_wrap_malloc.h"
 #include "bbclient/bb_wrap_stdio.h"
 #include "sqlite/wrap_sqlite3.h"
@@ -24,11 +28,15 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 
 BB_WARNING_DISABLE(5045);
 
+// BB_WARNING_DISABLE(4464); // warning C4464: relative include path contains '..'
+// #include "../view_filter.h"
+
 typedef enum tag_program
 {
 	kProgram_bboxtolog,
 	kProgram_bbcat,
 	kProgram_bbtail,
+	kProgram_bbgrep,
 } program;
 
 typedef enum tag_exitCode
@@ -89,20 +97,29 @@ categories_t g_categories = { 0, 0, 0 };
 double g_millisPerTick = 1.0;
 u64 g_initialTimestamp = 0;
 static logPackets_t g_queuedPackets;
+static const char* g_pathToPrint;
 
 static sqlite3* db;
 static const char* g_sqlCommand;
+
+static void print_stderr(const char* text)
+{
+	fputs(text, stderr);
+#if BB_USING(BB_PLATFORM_WINDOWS)
+	OutputDebugStringA(text);
+#endif
+}
 
 static int usage(void)
 {
 	if (g_program == kProgram_bboxtolog)
 	{
-		fprintf(stderr, "Usage: %s filename.bbox <filename.log>\n", g_exe);
-		fprintf(stderr, "If no output filename is specified, the target will be the source with .bbox\nextension replaced with .log\n");
+		print_stderr(va("Usage: %s filename.bbox <filename.log>\n", g_exe));
+		print_stderr(va("If no output filename is specified, the target will be the source with .bbox\nextension replaced with .log\n"));
 	}
 	else
 	{
-		fprintf(stderr, "Usage: %s filename.bbox\n", g_exe);
+		print_stderr(va("Usage: %s filename.bbox\n", g_exe));
 	}
 	return kExitCode_Error_Usage;
 }
@@ -129,7 +146,15 @@ static void print_lines(logPacket_t packet, FILE* ofp)
 	span_t linesCursor = span_from_string(lines);
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
 	{
-		sb_t text = sb_from_va("[%7lld] [%13s] %.*s\n", packet.ms, category, (int)(line.end - line.start), line.start);
+		sb_t text;
+		if (g_pathToPrint)
+		{
+			text = sb_from_va("%s: [%7lld] [%13s] %.*s\n", g_pathToPrint, packet.ms, category, (int)(line.end - line.start), line.start);
+		}
+		else
+		{
+			text = sb_from_va("[%7lld] [%13s] %.*s\n", packet.ms, category, (int)(line.end - line.start), line.start);
+		}
 		fputs(sb_get(&text), ofp);
 #if BB_USING(BB_PLATFORM_WINDOWS)
 		OutputDebugStringA(sb_get(&text));
@@ -344,6 +369,233 @@ static void print_queued(FILE* ofp)
 	}
 }
 
+static void bbgrep_file(const sb_t* path, const char* filter)
+{
+	BB_UNUSED(filter);
+	g_pathToPrint = sb_get(path);
+	FILE* fp = fopen(g_pathToPrint, "rb");
+	if (fp)
+	{
+		u32 recvCursor = 0;
+		u32 decodeCursor = 0;
+		b32 done = false;
+		while (!done)
+		{
+			if (recvCursor < sizeof(g_recvBuffer))
+			{
+				size_t bytesRead = fread(g_recvBuffer + recvCursor, 1, sizeof(g_recvBuffer) - recvCursor, fp);
+				if (bytesRead)
+				{
+					recvCursor += (u32)bytesRead;
+				}
+			}
+			const u32 krecvBufferSize = sizeof(g_recvBuffer);
+			const u32 kHalfrecvBufferBytes = krecvBufferSize / 2;
+			bb_decoded_packet_t decoded;
+			u32 nDecodableBytes32 = recvCursor - decodeCursor;
+			u16 nDecodableBytes = nDecodableBytes32 > 0xFFFF ? 0xFFFF : (u16)(nDecodableBytes32);
+			u8* cursor = g_recvBuffer + decodeCursor;
+			u16 nPacketBytes = (nDecodableBytes >= 3) ? (*cursor << 8) + (*(cursor + 1)) : 0;
+			if (nPacketBytes == 0 || nPacketBytes > nDecodableBytes)
+			{
+				done = true;
+				break;
+			}
+
+			if (bbpacket_deserialize(cursor + 2, nPacketBytes - 2, &decoded))
+			{
+				if (bbpacket_is_app_info_type(decoded.type))
+				{
+					g_initialTimestamp = decoded.packet.appInfo.initialTimestamp;
+					g_millisPerTick = decoded.packet.appInfo.millisPerTick;
+				}
+				else
+				{
+					BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBPacketType_Invalid' in switch of enum 'bb_packet_type_e' is not explicitly handled by a case label
+					switch (decoded.type)
+					{
+					case kBBPacketType_CategoryId:
+					{
+						category_t* c = bba_add(g_categories, 1);
+						if (c)
+						{
+							const char* temp;
+							const char* category = decoded.packet.categoryId.name;
+							while ((temp = strstr(category, "::")) != NULL)
+							{
+								if (*temp)
+								{
+									category = temp + 2;
+								}
+								else
+								{
+									break;
+								}
+							}
+							c->id = decoded.packet.categoryId.id;
+							bb_strncpy(c->name, category, sizeof(c->name));
+						}
+						break;
+					}
+					case kBBPacketType_LogTextPartial:
+					{
+						bba_push(g_partialLogs, decoded);
+						break;
+					}
+					case kBBPacketType_LogText_v1:
+					case kBBPacketType_LogText_v2:
+					case kBBPacketType_LogText:
+					{
+						queue_packet(&decoded, stdout);
+						break;
+					}
+					default:
+						break;
+					}
+					BB_WARNING_POP;
+				}
+			}
+			else
+			{
+				fprintf(stderr, "Failed to decode packet from %s\n", g_pathToPrint);
+				done = true;
+			}
+
+			decodeCursor += nPacketBytes;
+
+			// TODO: rather lame to keep resetting the buffer - this should be a circular buffer
+			if (decodeCursor >= kHalfrecvBufferBytes)
+			{
+				u32 nBytesRemaining = recvCursor - decodeCursor;
+				memmove(g_recvBuffer, g_recvBuffer + decodeCursor, nBytesRemaining);
+				decodeCursor = 0;
+				recvCursor = nBytesRemaining;
+			}
+		}
+
+		fclose(fp);
+		bba_free(g_partialLogs);
+		bba_free(g_categories);
+	}
+	else
+	{
+		fprintf(stderr, "Could not read %s\n", g_pathToPrint);
+	}
+
+	g_pathToPrint = NULL;
+}
+
+static void separateFilename(const char* filename, sb_t* base, sb_t* ext)
+{
+	const char* separator = strrchr(filename, '.');
+	if (separator)
+	{
+		span_t baseSpan = { filename, separator };
+		*base = sb_from_span(baseSpan);
+		*ext = sb_from_c_string(separator + 1);
+	}
+	else
+	{
+		*base = sb_from_c_string(filename);
+	}
+}
+
+static b32 wildcardMatch(const char* pattern, const char* input)
+{
+	// skip UE backups for now
+	if (bb_stristr(input, "-backup-") != NULL)
+		return false;
+
+	// only support * or full match for now
+	if (!*pattern || bb_stricmp(pattern, "*") == 0)
+		return true;
+
+	return bb_stristr(input, pattern) != NULL;
+}
+
+static int bbgrep(const char* filter, const char* pattern, sb_t* dirName, b32 bRecursive)
+{
+	BB_UNUSED(bRecursive);
+
+	sbs_t files = { BB_EMPTY_INITIALIZER };
+	sbs_t dirs = { BB_EMPTY_INITIALIZER };
+	DIR* d = opendir(sb_get(dirName));
+	if (d)
+	{
+		sb_t patternFilename = { BB_EMPTY_INITIALIZER };
+		sb_t patternExtension = { BB_EMPTY_INITIALIZER };
+		separateFilename(pattern, &patternFilename, &patternExtension);
+
+		struct dirent* entry;
+		while ((entry = readdir(d)) != NULL)
+		{
+			if (entry->d_type == DT_REG)
+			{
+				sb_t entryFilename = { BB_EMPTY_INITIALIZER };
+				sb_t entryExtension = { BB_EMPTY_INITIALIZER };
+				separateFilename(entry->d_name, &entryFilename, &entryExtension);
+
+				// only support * or full match for now
+				if (wildcardMatch(sb_get(&patternFilename), sb_get(&entryFilename)))
+				{
+					if (wildcardMatch(sb_get(&patternExtension), sb_get(&entryExtension)))
+					{
+						sb_t* val = bba_add(files, 1);
+						if (val)
+						{
+							*val = sb_from_va("%s\\%s", sb_get(dirName), entry->d_name);
+						}
+					}
+				}
+
+				sb_reset(&entryFilename);
+				sb_reset(&entryExtension);
+			}
+		}
+		closedir(d);
+
+		sb_reset(&patternFilename);
+		sb_reset(&patternExtension);
+	}
+
+	for (u32 i = 0; i < files.count; ++i)
+	{
+		bbgrep_file(files.data + i, filter);
+	}
+
+	if (bRecursive)
+	{
+		d = opendir(sb_get(dirName));
+		if (d)
+		{
+			struct dirent* entry;
+			while ((entry = readdir(d)) != NULL)
+			{
+				if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
+				{
+					sb_t* val = bba_add(dirs, 1);
+					if (val)
+					{
+						*val = sb_from_va("%s\\%s", sb_get(dirName), entry->d_name);
+					}
+				}
+			}
+			closedir(d);
+		}
+
+		for (u32 i = 0; i < dirs.count; ++i)
+		{
+			sb_t* subdir = dirs.data + i;
+			bbgrep(filter, pattern, subdir, bRecursive);
+		}
+	}
+
+	sbs_reset(&files);
+	sbs_reset(&dirs);
+
+	return 0;
+}
+
 int main_loop(int argc, char** argv)
 {
 	g_exe = argv[0];
@@ -372,9 +624,14 @@ int main_loop(int argc, char** argv)
 	{
 		g_program = kProgram_bbtail;
 	}
+	else if (!bb_stricmp(g_exe, "bbgrep"))
+	{
+		g_program = kProgram_bbgrep;
+	}
 
 	const char* source = NULL;
 	char* target = NULL;
+	b32 bRecursive = false;
 	b32 bPastSwitches = false;
 	for (int i = 1; i < argc; ++i)
 	{
@@ -455,9 +712,17 @@ int main_loop(int argc, char** argv)
 			{
 				g_program = kProgram_bbtail;
 			}
+			else if (!strcmp(arg, "-bbgrep"))
+			{
+				g_program = kProgram_bbgrep;
+			}
 			else if (!bb_strnicmp(arg, "-sql=", 5))
 			{
 				g_sqlCommand = arg + 5;
+			}
+			else if (!strcmp(arg, "-r"))
+			{
+				bRecursive = true;
 			}
 			else
 			{
@@ -484,7 +749,7 @@ int main_loop(int argc, char** argv)
 	if (!source)
 		return usage(); // TODO: read stdin
 
-	if (target && g_program != kProgram_bboxtolog)
+	if (target && g_program != kProgram_bboxtolog && g_program != kProgram_bbgrep)
 		return usage();
 
 	if (g_follow && g_program == kProgram_bboxtolog)
@@ -500,6 +765,17 @@ int main_loop(int argc, char** argv)
 		g_numLines = 10;
 	}
 
+	if (g_program == kProgram_bbgrep)
+	{
+		sb_t dir = sb_from_c_string(target);
+		path_remove_filename(&dir);
+		if (sb_len(&dir) == 0)
+		{
+			sb_append(&dir, ".");
+		}
+		return bbgrep(source, target, &dir, bRecursive);
+	}
+
 	size_t sourceLen = strlen(source);
 	if (sourceLen < 6 || bb_stricmp(source + sourceLen - 5, ".bbox"))
 	{
@@ -512,10 +788,10 @@ int main_loop(int argc, char** argv)
 		strcpy(target + sourceLen - 5, ".log");
 	}
 
-	//printf("source: %s\n", source);
-	//if(target) {
+	// printf("source: %s\n", source);
+	// if(target) {
 	//	printf("target: %s\n", target);
-	//}
+	// }
 
 	int ret = kExitCode_Success;
 

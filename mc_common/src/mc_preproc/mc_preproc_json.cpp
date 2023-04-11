@@ -115,6 +115,7 @@ static void GenerateJsonSource(const char* prefix, const char* includePrefix, co
 	va(s, "\n");
 	va(s, "#include \"%s%sjson_generated.h\"\n", includePrefix, prefix);
 	va(s, "#include \"bb_array.h\"\n");
+	va(s, "#include \"bb_string.h\"\n");
 	va(s, "#include \"json_utils.h\"\n");
 	va(s, "#include \"va.h\"\n");
 	va(s, "\n");
@@ -385,7 +386,7 @@ static void GenerateJsonSource(const char* prefix, const char* includePrefix, co
 		va(s, "\tif(src) {\n");
 		for (const enum_member_s& m : o.members)
 		{
-			va(s, "\t\tif(!strcmp(src, \"%s\")) { dst = %s; }\n", m.name.c_str(), m.name.c_str());
+			va(s, "\t\tif(!bb_stricmp(src, \"%s\")) { dst = %s; }\n", m.name.c_str(), m.name.c_str());
 		}
 		va(s, "\t}\n");
 		va(s, "\treturn dst;\n");
