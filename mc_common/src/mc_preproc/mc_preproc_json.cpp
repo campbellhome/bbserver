@@ -346,7 +346,7 @@ static void GenerateJsonSource(const char* prefix, const char* includePrefix, co
 		va(s, "\t\tif(str) {\n");
 		for (const enum_member_s& m : o.members)
 		{
-			va(s, "\t\t\tif(!strcmp(str, \"%s\")) { dst = %s; }\n", m.name.c_str(), m.name.c_str());
+			va(s, "\t\t\tif(!bb_stricmp(str, \"%s\")) { dst = %s; }\n", m.name.c_str(), m.name.c_str());
 		}
 		va(s, "\t\t}\n");
 		va(s, "\t}\n");
