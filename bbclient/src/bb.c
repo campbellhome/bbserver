@@ -428,7 +428,7 @@ static void bb_send_thread_ids(bb_thread_ids_t* ids, b32 bCallbacks, b32 bSocket
 static bb_decoded_packet_t bb_build_appinfo(void)
 {
 	bb_decoded_packet_t decoded;
-	decoded.type = kBBPacketType_AppInfo;
+	decoded.type = (s_applicationGroup[0] == '\0') ? kBBPacketType_AppInfo_v4 : kBBPacketType_AppInfo;
 	decoded.header.timestamp = bb_current_ticks();
 	decoded.header.threadId = bb_get_current_thread_id();
 	decoded.header.fileId = 0;

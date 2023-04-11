@@ -362,7 +362,7 @@ b32 bbpacket_is_app_info_type(bb_packet_type_e type)
 	       type == kBBPacketType_AppInfo_v2 ||
 	       type == kBBPacketType_AppInfo_v3 ||
 	       type == kBBPacketType_AppInfo_v4 ||
-	       type == kBBPacketType_AppInfo_v4;
+	       type == kBBPacketType_AppInfo_v5;
 }
 
 b32 bbpacket_is_log_text_type(bb_packet_type_e type)
