@@ -17,8 +17,6 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "tokenize.h"
 #include "va.h"
 
-#include "bb_wrap_windows.h" // must be before bb_wrap_dirent.h
-
 #include "bb_wrap_dirent.h"
 #include "bbclient/bb_wrap_malloc.h"
 #include "bbclient/bb_wrap_stdio.h"

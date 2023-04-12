@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "bb_wrap_windows.h"
+
 #if defined(_MSC_VER) && _MSC_VER
 __pragma(warning(push))
 __pragma(warning(disable : 4464 4820 4255))
