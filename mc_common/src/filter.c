@@ -98,14 +98,10 @@ void build_filter_tokens(filterTokens* tokens, const char* src)
 b32 passes_filter_tokens(filterTokens* tokens, sdict_t* sd, const char** keys, u32 numKeys)
 {
 	b32 ok = false;
-	u32 numRequired = 0;
-	u32 numProhibited = 0;
 	u32 numAllowed = 0;
 	for (u32 i = 0; i < tokens->count; ++i)
 	{
 		filterToken* token = tokens->data + i;
-		numRequired += token->required;
-		numProhibited += token->prohibited;
 		numAllowed += (!token->required && !token->prohibited);
 		b32 found = false;
 		const char* key = sb_get(&token->category);
