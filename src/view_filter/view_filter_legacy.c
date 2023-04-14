@@ -102,7 +102,7 @@ static b32 view_filter_legacy_find_token(view_t* view, recorded_log_t* log, cons
 		view_filter_comparison_t comp = view_parse_filter_comparator(&tmp);
 		if (comp != kViewFilterComparison_Count)
 		{
-			return view_filter_abs_millis(view, log, comp, tmp);
+			return view_filter_rel_millis(view, log, comp, tmp);
 		}
 	}
 	return bb_stristr(text, token) != NULL;
@@ -111,8 +111,6 @@ static b32 view_filter_legacy_find_token(view_t* view, recorded_log_t* log, cons
 b32 view_filter_visible_legacy(view_t* view, recorded_log_t* log)
 {
 	b32 ok = false;
-	u32 numRequired = 0;
-	u32 numProhibited = 0;
 	u32 numAllowed = 0;
 	u32 i;
 	for (i = 0; i < view->vfilter.tokens.count; ++i)
@@ -121,15 +119,13 @@ b32 view_filter_visible_legacy(view_t* view, recorded_log_t* log)
 		const char* s = token->span.start;
 		b32 required = *s == '+';
 		b32 prohibited = *s == '-';
-		numRequired += required;
-		numProhibited += prohibited;
 		numAllowed += (!required && !prohibited);
 		if (required || prohibited)
 		{
 			++s;
 		}
 		b32 found = view_filter_legacy_find_token(view, log, s);
-		if (found && prohibited || !found && required)
+		if ((found && prohibited) || (!found && required))
 		{
 			return false;
 			break;

@@ -985,6 +985,32 @@ static void view_filter_evaluate_number(view_t* view, recorded_log_t* log, u32 o
 	case kVFT_Verbosity:
 		lhs = 0; // TODO
 		break;
+	case kVFT_Invalid:
+	case kVFT_OpenParen:
+	case kVFT_CloseParen:
+	case kVFT_String:
+	case kVFT_LessThan:
+	case kVFT_LessThanEquals:
+	case kVFT_Equals:
+	case kVFT_NotEquals:
+	case kVFT_GreaterThan:
+	case kVFT_GreaterThanEquals:
+	case kVFT_Matches:
+	case kVFT_And:
+	case kVFT_Or:
+	case kVFT_Not:
+	case kVFT_Contains:
+	case kVFT_StartsWith:
+	case kVFT_EndsWith:
+	case kVFT_Filename:
+	case kVFT_Thread:
+	case kVFT_Category:
+	case kVFT_Text:
+	case kVFT_Number:
+	case kVFT_NamedFilter:
+	case kVFT_Count:
+	default:
+		break;
 	}
 	BB_WARNING_POP;
 	u32 rhs = right->number;
@@ -1010,6 +1036,30 @@ static void view_filter_evaluate_number(view_t* view, recorded_log_t* log, u32 o
 		break;
 	case kVFT_GreaterThanEquals:
 		result.value = lhs >= rhs;
+		break;
+	case kVFT_Invalid:
+	case kVFT_OpenParen:
+	case kVFT_CloseParen:
+	case kVFT_String:
+	case kVFT_Matches:
+	case kVFT_And:
+	case kVFT_Or:
+	case kVFT_Not:
+	case kVFT_Contains:
+	case kVFT_StartsWith:
+	case kVFT_EndsWith:
+	case kVFT_DeltaMillisecondsAbsolute:
+	case kVFT_DeltaMillisecondsViewRelative:
+	case kVFT_Filename:
+	case kVFT_Thread:
+	case kVFT_PIEInstance:
+	case kVFT_Category:
+	case kVFT_Verbosity:
+	case kVFT_Text:
+	case kVFT_Number:
+	case kVFT_NamedFilter:
+	case kVFT_Count:
+	default:
 		break;
 	}
 	BB_WARNING_POP;
@@ -1039,6 +1089,32 @@ static void view_filter_evaluate_string(view_t* view, recorded_log_t* log, u32 o
 		break;
 	case kVFT_Text:
 		lhs = log->packet.packet.logText.text;
+		break;
+	case kVFT_Invalid:
+	case kVFT_OpenParen:
+	case kVFT_CloseParen:
+	case kVFT_String:
+	case kVFT_LessThan:
+	case kVFT_LessThanEquals:
+	case kVFT_Equals:
+	case kVFT_NotEquals:
+	case kVFT_GreaterThan:
+	case kVFT_GreaterThanEquals:
+	case kVFT_Matches:
+	case kVFT_And:
+	case kVFT_Or:
+	case kVFT_Not:
+	case kVFT_Contains:
+	case kVFT_StartsWith:
+	case kVFT_EndsWith:
+	case kVFT_DeltaMillisecondsAbsolute:
+	case kVFT_DeltaMillisecondsViewRelative:
+	case kVFT_PIEInstance:
+	case kVFT_Verbosity:
+	case kVFT_Number:
+	case kVFT_NamedFilter:
+	case kVFT_Count:
+	default:
 		break;
 	}
 	BB_WARNING_POP;
@@ -1074,6 +1150,32 @@ static void view_filter_evaluate_string(view_t* view, recorded_log_t* log, u32 o
 		{
 			result.value = false;
 		}
+		break;
+	case kVFT_Invalid:
+	case kVFT_OpenParen:
+	case kVFT_CloseParen:
+	case kVFT_String:
+	case kVFT_LessThan:
+	case kVFT_LessThanEquals:
+	case kVFT_Equals:
+	case kVFT_NotEquals:
+	case kVFT_GreaterThan:
+	case kVFT_GreaterThanEquals:
+	case kVFT_And:
+	case kVFT_Or:
+	case kVFT_Not:
+	case kVFT_DeltaMillisecondsAbsolute:
+	case kVFT_DeltaMillisecondsViewRelative:
+	case kVFT_Filename:
+	case kVFT_Thread:
+	case kVFT_PIEInstance:
+	case kVFT_Category:
+	case kVFT_Verbosity:
+	case kVFT_Text:
+	case kVFT_Number:
+	case kVFT_NamedFilter:
+	case kVFT_Count:
+	default:
 		break;
 	}
 	}
