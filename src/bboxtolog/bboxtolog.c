@@ -23,9 +23,12 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "bb_wrap_dirent.h"
 #include "bbclient/bb_wrap_malloc.h"
 #include "bbclient/bb_wrap_stdio.h"
-#include "sqlite/wrap_sqlite3.h"
 #include <stdlib.h>
 #include <string.h>
+
+#if !defined(BB_NO_SQLITE)
+#include <sqlite/wrap_sqlite3.h>
+#endif
 
 BB_WARNING_DISABLE(5045);
 
@@ -100,7 +103,9 @@ u64 g_initialTimestamp = 0;
 static logPackets_t g_queuedPackets;
 static const char* g_pathToPrint;
 
+#if !defined(BB_NO_SQLITE)
 static sqlite3* db;
+#endif
 static const char* g_sqlCommand;
 
 static void print_stderr(const char* text)
@@ -241,6 +246,7 @@ static b32 test_verbosity(const bb_decoded_packet_t* decoded)
 	return (get_verbosity_sort(verbosity) >= get_verbosity_sort(g_verbosity));
 }
 
+#if !defined(BB_NO_SQLITE)
 static b32 sqlite3_bind_u32_and_log(sqlite3_stmt* stmt, int index, u32 value)
 {
 	int rc = sqlite3_bind_int(stmt, index, value);
@@ -322,9 +328,15 @@ static b32 test_sql_internal(const bb_decoded_packet_t* decoded, const char* lin
 
 	return count > 0;
 }
+#endif // #if !defined(BB_NO_SQLITE)
 
 static b32 test_sql(const bb_decoded_packet_t* decoded, const char* lines)
 {
+#if defined(BB_NO_SQLITE)
+	BB_UNUSED(decoded);
+	BB_UNUSED(lines);
+	return true;
+#else
 	if (!g_sqlCommand || !db)
 		return true;
 
@@ -349,6 +361,7 @@ static b32 test_sql(const bb_decoded_packet_t* decoded, const char* lines)
 	}
 
 	return result;
+#endif
 }
 
 static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp)
@@ -397,7 +410,7 @@ static void print_queued(FILE* ofp)
 	}
 }
 
-//static b32 view_filter_visible(vfilter_t* vfilter, recorded_log_t* log)
+// static b32 view_filter_visible(vfilter_t* vfilter, recorded_log_t* log)
 //{
 //	if (!vfilter->valid || !vfilter->tokens.count)
 //		return true;
@@ -414,7 +427,7 @@ static void print_queued(FILE* ofp)
 //	default:
 //		return true;
 //	}
-//}
+// }
 
 static void bbgrep_file(const sb_t* path, const char* filter)
 {
@@ -994,6 +1007,9 @@ int main_loop(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+#if defined(BB_NO_SQLITE)
+	return main_loop(argc, argv);
+#else
 	int rc = sqlite3_open(":memory:", &db);
 	if (rc != SQLITE_OK)
 	{
@@ -1027,4 +1043,5 @@ int main(int argc, char** argv)
 		db = NULL;
 	}
 	return ret;
+#endif
 }

@@ -4,6 +4,8 @@
 #include "view_filter_sql.h"
 #include "recorded_session.h"
 #include "view.h"
+
+#if !defined(BB_NO_SQLITE)
 #include <sqlite/wrap_sqlite3.h>
 
 static b32 sqlite3_bind_u32_and_log(sqlite3* db, sqlite3_stmt* stmt, int index, u32 value)
@@ -92,9 +94,15 @@ static b32 view_sqlWhere_visible_internal(view_t* view, recorded_log_t* log)
 
 	return count > 0;
 }
+#endif // #if !defined(BB_NO_SQLITE)
 
 b32 view_filter_visible_sql(view_t* view, recorded_log_t* log)
 {
+#if defined(BB_NO_SQLITE)
+	BB_UNUSED(view);
+	BB_UNUSED(log);
+	return true;
+#else
 	if (!view->db || !view->sqlSelect.count)
 		return true;
 
@@ -119,4 +127,5 @@ b32 view_filter_visible_sql(view_t* view, recorded_log_t* log)
 	}
 
 	return result;
+#endif // #if !defined(BB_NO_SQLITE)
 }
