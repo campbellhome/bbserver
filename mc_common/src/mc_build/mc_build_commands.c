@@ -25,7 +25,7 @@ typedef struct buildCommandLink_s
 static void task_command_statechanged(task* t)
 {
 	task_process_statechanged(t);
-	if (task_done(t))
+	if (task_done(t) && t->userData) // process failing to start will enter twice
 	{
 		buildCommandLink_t* link = t->userData;
 		buildCommand_t* command = link->command;
@@ -43,6 +43,10 @@ static void task_command_statechanged(task* t)
 			command->result = p->process->exitCode;
 			command->stdoutBuffer = sb_from_c_string(p->process->stdoutBuffer.data ? p->process->stdoutBuffer.data : "");
 			command->stderrBuffer = sb_from_c_string(p->process->stderrBuffer.data ? p->process->stderrBuffer.data : "");
+		}
+		else
+		{
+			sb_va(&command->stderrBuffer, "Failed to start task for %s\n", sb_get(&command->title));
 		}
 
 		t->userData = NULL;
