@@ -464,7 +464,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 				{
 					Fonts_ClearFonts();
 					const char* title = "Blackbox";
-					HWND hwnd = Imgui_Core_InitWindow(classname, title, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), g_config.wp);
+					HWND hwnd = Imgui_Core_InitWindow(classname, title, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), *(WINDOWPLACEMENT*)&g_config.wp);
 					if (hwnd)
 					{
 						HWND hExisting = FindWindowA(classname, nullptr);

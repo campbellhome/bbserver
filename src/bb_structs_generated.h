@@ -21,9 +21,9 @@ struct tag_sdicts;
 struct uuid_node_s;
 struct fontConfig_s;
 struct fontConfigs_s;
-struct tagPOINT;
-struct tagRECT;
-struct tagWINDOWPLACEMENT;
+struct configPoint_t;
+struct configRect_t;
+struct configWindowplacement_t;
 struct configFont_t;
 struct configWhitelistEntry_s;
 struct configWhitelist_s;
@@ -95,9 +95,9 @@ typedef struct tag_sdicts sdicts;
 typedef struct uuid_node_s uuid_node_t;
 typedef struct fontConfig_s fontConfig_t;
 typedef struct fontConfigs_s fontConfigs_t;
-typedef struct tagPOINT POINT;
-typedef struct tagRECT RECT;
-typedef struct tagWINDOWPLACEMENT WINDOWPLACEMENT;
+typedef struct configPoint_t configPoint_t;
+typedef struct configRect_t configRect_t;
+typedef struct configWindowplacement_t configWindowplacement_t;
 typedef struct configFont_t configFont_t;
 typedef struct configWhitelistEntry_s configWhitelistEntry_t;
 typedef struct configWhitelist_s configWhitelist_t;
@@ -169,9 +169,9 @@ void sdicts_reset(sdicts *val);
 void uuid_node_reset(uuid_node_t *val);
 void fontConfig_reset(fontConfig_t *val);
 void fontConfigs_reset(fontConfigs_t *val);
-void POINT_reset(POINT *val);
-void RECT_reset(RECT *val);
-void WINDOWPLACEMENT_reset(WINDOWPLACEMENT *val);
+void configPoint_reset(configPoint_t *val);
+void configRect_reset(configRect_t *val);
+void configWindowplacement_reset(configWindowplacement_t *val);
 void configFont_reset(configFont_t *val);
 void configWhitelistEntry_reset(configWhitelistEntry_t *val);
 void configWhitelist_reset(configWhitelist_t *val);
@@ -259,14 +259,14 @@ fontConfig_t fontConfig_clone(const fontConfig_t *src);
 #if !defined(__cplusplus) || defined(DECLARE_fontConfigs_clone)
 fontConfigs_t fontConfigs_clone(const fontConfigs_t *src);
 #endif
-#if !defined(__cplusplus) || defined(DECLARE_POINT_clone)
-POINT POINT_clone(const POINT *src);
+#if !defined(__cplusplus) || defined(DECLARE_configPoint_clone)
+configPoint_t configPoint_clone(const configPoint_t *src);
 #endif
-#if !defined(__cplusplus) || defined(DECLARE_RECT_clone)
-RECT RECT_clone(const RECT *src);
+#if !defined(__cplusplus) || defined(DECLARE_configRect_clone)
+configRect_t configRect_clone(const configRect_t *src);
 #endif
-#if !defined(__cplusplus) || defined(DECLARE_WINDOWPLACEMENT_clone)
-WINDOWPLACEMENT WINDOWPLACEMENT_clone(const WINDOWPLACEMENT *src);
+#if !defined(__cplusplus) || defined(DECLARE_configWindowplacement_clone)
+configWindowplacement_t configWindowplacement_clone(const configWindowplacement_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_configFont_clone)
 configFont_t configFont_clone(const configFont_t *src);

@@ -9,32 +9,39 @@
 #include "bb_wrap_windows.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
-// define the Windows structs for preproc
-#if 0
-AUTOJSON typedef struct tagPOINT {
-	LONG x;
-	LONG y;
-} POINT;
-
-AUTOJSON typedef struct tagRECT {
-	LONG left;
-	LONG top;
-	LONG right;
-	LONG bottom;
-} RECT;
-
-AUTOJSON typedef struct tagWINDOWPLACEMENT {
-	UINT length;
-	UINT flags;
-	UINT showCmd;
-	POINT ptMinPosition;
-	POINT ptMaxPosition;
-	RECT rcNormalPosition;
-} WINDOWPLACEMENT;
+#if !(defined(_MSC_VER) && _MSC_VER)
+typedef struct HWND__* HWND;
 #endif
+
+// mirror Windows POINT
+AUTOJSON typedef struct configPoint_t {
+	long x;
+	long y;
+} configPoint_t;
+
+// mirror Windows RECT
+AUTOJSON typedef struct configRect_t
+{
+	long left;
+	long top;
+	long right;
+	long bottom;
+} configRect_t;
+
+// mirror Windows WINDOWPLACEMENT
+AUTOJSON typedef struct configWindowplacement_t
+{
+	unsigned int length;
+	unsigned int flags;
+	unsigned int showCmd;
+	configPoint_t ptMinPosition;
+	configPoint_t ptMaxPosition;
+	configRect_t rcNormalPosition;
+} configWindowplacement_t;
 
 AUTOJSON typedef struct configFont_t
 {
@@ -140,7 +147,7 @@ AUTOJSON typedef struct config_s
 	configFont_t logFontConfig;
 	configFont_t uiFontConfig;
 	sb_t colorscheme;
-	WINDOWPLACEMENT wp;
+	configWindowplacement_t wp;
 	u32 version;
 	viewTileMode_t viewTileMode;
 	b32 alternateRowBackground;

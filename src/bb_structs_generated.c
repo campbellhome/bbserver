@@ -29,14 +29,14 @@
 #include <string.h>
 
 
-void POINT_reset(POINT *val)
+void configPoint_reset(configPoint_t *val)
 {
 	if(val) {
 	}
 }
-POINT POINT_clone(const POINT *src)
+configPoint_t configPoint_clone(const configPoint_t *src)
 {
-	POINT dst = { BB_EMPTY_INITIALIZER };
+	configPoint_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.x = src->x;
 		dst.y = src->y;
@@ -44,14 +44,14 @@ POINT POINT_clone(const POINT *src)
 	return dst;
 }
 
-void RECT_reset(RECT *val)
+void configRect_reset(configRect_t *val)
 {
 	if(val) {
 	}
 }
-RECT RECT_clone(const RECT *src)
+configRect_t configRect_clone(const configRect_t *src)
 {
-	RECT dst = { BB_EMPTY_INITIALIZER };
+	configRect_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.left = src->left;
 		dst.top = src->top;
@@ -61,24 +61,24 @@ RECT RECT_clone(const RECT *src)
 	return dst;
 }
 
-void WINDOWPLACEMENT_reset(WINDOWPLACEMENT *val)
+void configWindowplacement_reset(configWindowplacement_t *val)
 {
 	if(val) {
-		POINT_reset(&val->ptMinPosition);
-		POINT_reset(&val->ptMaxPosition);
-		RECT_reset(&val->rcNormalPosition);
+		configPoint_reset(&val->ptMinPosition);
+		configPoint_reset(&val->ptMaxPosition);
+		configRect_reset(&val->rcNormalPosition);
 	}
 }
-WINDOWPLACEMENT WINDOWPLACEMENT_clone(const WINDOWPLACEMENT *src)
+configWindowplacement_t configWindowplacement_clone(const configWindowplacement_t *src)
 {
-	WINDOWPLACEMENT dst = { BB_EMPTY_INITIALIZER };
+	configWindowplacement_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.length = src->length;
 		dst.flags = src->flags;
 		dst.showCmd = src->showCmd;
-		dst.ptMinPosition = POINT_clone(&src->ptMinPosition);
-		dst.ptMaxPosition = POINT_clone(&src->ptMaxPosition);
-		dst.rcNormalPosition = RECT_clone(&src->rcNormalPosition);
+		dst.ptMinPosition = configPoint_clone(&src->ptMinPosition);
+		dst.ptMaxPosition = configPoint_clone(&src->ptMaxPosition);
+		dst.rcNormalPosition = configRect_clone(&src->rcNormalPosition);
 	}
 	return dst;
 }
@@ -310,7 +310,7 @@ void config_reset(config_t *val)
 		configFont_reset(&val->logFontConfig);
 		configFont_reset(&val->uiFontConfig);
 		sb_reset(&val->colorscheme);
-		WINDOWPLACEMENT_reset(&val->wp);
+		configWindowplacement_reset(&val->wp);
 		tooltipConfig_reset(&val->tooltips);
 		sizeConfig_reset(&val->sizes);
 	}
@@ -326,7 +326,7 @@ config_t config_clone(const config_t *src)
 		dst.logFontConfig = configFont_clone(&src->logFontConfig);
 		dst.uiFontConfig = configFont_clone(&src->uiFontConfig);
 		dst.colorscheme = sb_clone(&src->colorscheme);
-		dst.wp = WINDOWPLACEMENT_clone(&src->wp);
+		dst.wp = configWindowplacement_clone(&src->wp);
 		dst.version = src->version;
 		dst.viewTileMode = src->viewTileMode;
 		dst.alternateRowBackground = src->alternateRowBackground;

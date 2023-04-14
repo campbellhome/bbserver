@@ -611,10 +611,10 @@ void UIConfig_Update(config_t* config)
 		bool apply = Button("Apply");
 		if (ok || apply)
 		{
-			WINDOWPLACEMENT wp = config->wp;
+			WINDOWPLACEMENT wp = *(WINDOWPLACEMENT*)&config->wp;
 			config_t tmp = *config;
 			*config = s_preferencesConfig;
-			config->wp = wp;
+			config->wp = *(configWindowplacement_t*)&wp;
 			s_preferencesConfig = tmp;
 			s_preferencesOpen = false;
 			config_push_whitelist(&config->whitelist);

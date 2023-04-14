@@ -22,6 +22,8 @@
 #include "va.h"
 #include <stdlib.h>
 
+BB_CTASSERT(sizeof(WINDOWPLACEMENT) == sizeof(configWindowplacement_t));
+
 config_t g_config;
 
 u32 config_getwindowplacement(HWND hwnd)
@@ -29,7 +31,7 @@ u32 config_getwindowplacement(HWND hwnd)
 	UINT oldShowCmd = g_config.wp.showCmd;
 	memset(&g_config.wp, 0, sizeof(g_config.wp));
 	g_config.wp.length = sizeof(g_config.wp);
-	GetWindowPlacement(hwnd, &g_config.wp);
+	GetWindowPlacement(hwnd, (WINDOWPLACEMENT*)&g_config.wp);
 	if (g_config.wp.showCmd == SW_SHOWMINIMIZED)
 	{
 		g_config.wp.showCmd = oldShowCmd;

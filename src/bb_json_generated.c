@@ -28,49 +28,49 @@
 
 //////////////////////////////////////////////////////////////////////////
 
-POINT json_deserialize_POINT(JSON_Value *src)
+configPoint_t json_deserialize_configPoint_t(JSON_Value *src)
 {
-	POINT dst;
+	configPoint_t dst;
 	memset(&dst, 0, sizeof(dst));
 	if(src) {
 		JSON_Object *obj = json_value_get_object(src);
 		if(obj) {
-			dst.x = (LONG)json_object_get_number(obj, "x");
-			dst.y = (LONG)json_object_get_number(obj, "y");
+			dst.x = (long)json_object_get_number(obj, "x");
+			dst.y = (long)json_object_get_number(obj, "y");
 		}
 	}
 	return dst;
 }
 
-RECT json_deserialize_RECT(JSON_Value *src)
+configRect_t json_deserialize_configRect_t(JSON_Value *src)
 {
-	RECT dst;
+	configRect_t dst;
 	memset(&dst, 0, sizeof(dst));
 	if(src) {
 		JSON_Object *obj = json_value_get_object(src);
 		if(obj) {
-			dst.left = (LONG)json_object_get_number(obj, "left");
-			dst.top = (LONG)json_object_get_number(obj, "top");
-			dst.right = (LONG)json_object_get_number(obj, "right");
-			dst.bottom = (LONG)json_object_get_number(obj, "bottom");
+			dst.left = (long)json_object_get_number(obj, "left");
+			dst.top = (long)json_object_get_number(obj, "top");
+			dst.right = (long)json_object_get_number(obj, "right");
+			dst.bottom = (long)json_object_get_number(obj, "bottom");
 		}
 	}
 	return dst;
 }
 
-WINDOWPLACEMENT json_deserialize_WINDOWPLACEMENT(JSON_Value *src)
+configWindowplacement_t json_deserialize_configWindowplacement_t(JSON_Value *src)
 {
-	WINDOWPLACEMENT dst;
+	configWindowplacement_t dst;
 	memset(&dst, 0, sizeof(dst));
 	if(src) {
 		JSON_Object *obj = json_value_get_object(src);
 		if(obj) {
-			dst.length = (UINT)json_object_get_number(obj, "length");
-			dst.flags = (UINT)json_object_get_number(obj, "flags");
-			dst.showCmd = (UINT)json_object_get_number(obj, "showCmd");
-			dst.ptMinPosition = json_deserialize_POINT(json_object_get_value(obj, "ptMinPosition"));
-			dst.ptMaxPosition = json_deserialize_POINT(json_object_get_value(obj, "ptMaxPosition"));
-			dst.rcNormalPosition = json_deserialize_RECT(json_object_get_value(obj, "rcNormalPosition"));
+			dst.length = (unsigned int)json_object_get_number(obj, "length");
+			dst.flags = (unsigned int)json_object_get_number(obj, "flags");
+			dst.showCmd = (unsigned int)json_object_get_number(obj, "showCmd");
+			dst.ptMinPosition = json_deserialize_configPoint_t(json_object_get_value(obj, "ptMinPosition"));
+			dst.ptMaxPosition = json_deserialize_configPoint_t(json_object_get_value(obj, "ptMaxPosition"));
+			dst.rcNormalPosition = json_deserialize_configRect_t(json_object_get_value(obj, "rcNormalPosition"));
 		}
 	}
 	return dst;
@@ -262,7 +262,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.logFontConfig = json_deserialize_configFont_t(json_object_get_value(obj, "logFontConfig"));
 			dst.uiFontConfig = json_deserialize_configFont_t(json_object_get_value(obj, "uiFontConfig"));
 			dst.colorscheme = json_deserialize_sb_t(json_object_get_value(obj, "colorscheme"));
-			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
+			dst.wp = json_deserialize_configWindowplacement_t(json_object_get_value(obj, "wp"));
 			dst.version = (u32)json_object_get_number(obj, "version");
 			dst.viewTileMode = json_deserialize_viewTileMode_t(json_object_get_value(obj, "viewTileMode"));
 			dst.alternateRowBackground = json_object_get_boolean_safe(obj, "alternateRowBackground");
@@ -878,7 +878,7 @@ view_session_config_t json_deserialize_view_session_config_t(JSON_Value *src)
 
 //////////////////////////////////////////////////////////////////////////
 
-JSON_Value *json_serialize_POINT(const POINT *src)
+JSON_Value *json_serialize_configPoint_t(const configPoint_t *src)
 {
 	JSON_Value *val = json_value_init_object();
 	JSON_Object *obj = json_value_get_object(val);
@@ -889,7 +889,7 @@ JSON_Value *json_serialize_POINT(const POINT *src)
 	return val;
 }
 
-JSON_Value *json_serialize_RECT(const RECT *src)
+JSON_Value *json_serialize_configRect_t(const configRect_t *src)
 {
 	JSON_Value *val = json_value_init_object();
 	JSON_Object *obj = json_value_get_object(val);
@@ -902,7 +902,7 @@ JSON_Value *json_serialize_RECT(const RECT *src)
 	return val;
 }
 
-JSON_Value *json_serialize_WINDOWPLACEMENT(const WINDOWPLACEMENT *src)
+JSON_Value *json_serialize_configWindowplacement_t(const configWindowplacement_t *src)
 {
 	JSON_Value *val = json_value_init_object();
 	JSON_Object *obj = json_value_get_object(val);
@@ -910,9 +910,9 @@ JSON_Value *json_serialize_WINDOWPLACEMENT(const WINDOWPLACEMENT *src)
 		json_object_set_number(obj, "length", src->length);
 		json_object_set_number(obj, "flags", src->flags);
 		json_object_set_number(obj, "showCmd", src->showCmd);
-		json_object_set_value(obj, "ptMinPosition", json_serialize_POINT(&src->ptMinPosition));
-		json_object_set_value(obj, "ptMaxPosition", json_serialize_POINT(&src->ptMaxPosition));
-		json_object_set_value(obj, "rcNormalPosition", json_serialize_RECT(&src->rcNormalPosition));
+		json_object_set_value(obj, "ptMinPosition", json_serialize_configPoint_t(&src->ptMinPosition));
+		json_object_set_value(obj, "ptMaxPosition", json_serialize_configPoint_t(&src->ptMaxPosition));
+		json_object_set_value(obj, "rcNormalPosition", json_serialize_configRect_t(&src->rcNormalPosition));
 	}
 	return val;
 }
@@ -1080,7 +1080,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "logFontConfig", json_serialize_configFont_t(&src->logFontConfig));
 		json_object_set_value(obj, "uiFontConfig", json_serialize_configFont_t(&src->uiFontConfig));
 		json_object_set_value(obj, "colorscheme", json_serialize_sb_t(&src->colorscheme));
-		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
+		json_object_set_value(obj, "wp", json_serialize_configWindowplacement_t(&src->wp));
 		json_object_set_number(obj, "version", src->version);
 		json_object_set_value(obj, "viewTileMode", json_serialize_viewTileMode_t(src->viewTileMode));
 		json_object_set_boolean(obj, "alternateRowBackground", src->alternateRowBackground);
