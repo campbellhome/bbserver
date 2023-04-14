@@ -1,7 +1,8 @@
 {
 	"input": {
 		"sourceDirs": [
-			{ "dir": "src" }
+			{ "dir": "src" },
+			{ "dir": "src/view_filter" }
 		],
 		"includeDirs": [
 			{ "dir": "mc_common/include" },

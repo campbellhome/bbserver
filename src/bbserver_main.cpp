@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #include "app_update.h"
@@ -23,6 +23,7 @@
 #include "devkit_autodetect.h"
 #include "discovery_thread.h"
 #include "dragdrop.h"
+#include "fonts.h"
 #include "imgui_core.h"
 #include "imgui_core_windows.h"
 #include "imgui_themes.h"
@@ -416,11 +417,11 @@ static void* LoggingMallocWrapper(size_t size, void* user_data)
 	IM_UNUSED(user_data);
 
 	void* out = malloc(size);
-	//char buf[256];
-	//if(bb_snprintf(buf, sizeof(buf), "imMalloc(0x%p) %zu bytes\n", out, size) < 0) {
+	// char buf[256];
+	// if(bb_snprintf(buf, sizeof(buf), "imMalloc(0x%p) %zu bytes\n", out, size) < 0) {
 	//	buf[sizeof(buf) - 1] = '\0';
-	//}
-	//OutputDebugStringA(buf);
+	// }
+	// OutputDebugStringA(buf);
 	trackImGuiAlloc(out, size);
 	return out;
 }
@@ -428,11 +429,11 @@ static void LoggingFreeWrapper(void* ptr, void* user_data)
 {
 	IM_UNUSED(user_data);
 
-	//char buf[256];
-	//if(bb_snprintf(buf, sizeof(buf), "imFree(0x%p)\n", ptr) < 0) {
+	// char buf[256];
+	// if(bb_snprintf(buf, sizeof(buf), "imFree(0x%p)\n", ptr) < 0) {
 	//	buf[sizeof(buf) - 1] = '\0';
-	//}
-	//OutputDebugStringA(buf);
+	// }
+	// OutputDebugStringA(buf);
 	untrackImGuiAlloc(ptr);
 	free(ptr);
 }
@@ -440,8 +441,8 @@ static void LoggingFreeWrapper(void* ptr, void* user_data)
 int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
 {
 	crt_leak_check_init();
-	//bb_tracked_malloc_enable(true);
-	//bba_set_logging(true, true);
+	// bb_tracked_malloc_enable(true);
+	// bba_set_logging(true, true);
 
 	cmdline_init_composite(CommandLine);
 	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");
@@ -477,8 +478,8 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 						DragDrop_Init(hwnd);
 						BBServer_InitRegistry();
 						Fonts_ClearFonts();
-						Fonts_AddFont(g_config.uiFontConfig);
-						Fonts_AddFont(g_config.logFontConfig);
+						Fonts_AddFont(*(fontConfig_t*)&g_config.uiFontConfig);
+						Fonts_AddFont(*(fontConfig_t*)&g_config.logFontConfig);
 						Style_ReadConfig(Imgui_Core_GetColorScheme());
 						ImGui::SetTextShadowColor(MakeColor(kStyleColor_TextShadow));
 						Imgui_Core_SetUserWndProc(&BBServer_HandleWindowMessage);

@@ -17,8 +17,51 @@ BB_WARNING_PUSH(4820, 4365)
 #include "imgui_internal.h"
 BB_WARNING_POP
 
-extern "C" fontConfig_t fontConfig_clone(fontConfig_t* src);
-extern "C" void fontConfigs_reset(fontConfigs_t* val);
+extern "C" void fontConfig_reset(fontConfig_t* val)
+{
+	if (val)
+	{
+		sb_reset(&val->path);
+	}
+}
+extern "C" fontConfig_t fontConfig_clone(const fontConfig_t* src)
+{
+	fontConfig_t dst = { BB_EMPTY_INITIALIZER };
+	if (src)
+	{
+		dst.enabled = src->enabled;
+		dst.size = src->size;
+		dst.path = sb_clone(&src->path);
+	}
+	return dst;
+}
+
+extern "C" void fontConfigs_reset(fontConfigs_t* val)
+{
+	if (val)
+	{
+		for (u32 i = 0; i < val->count; ++i)
+		{
+			fontConfig_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+extern "C" fontConfigs_t fontConfigs_clone(const fontConfigs_t* src)
+{
+	fontConfigs_t dst = { BB_EMPTY_INITIALIZER };
+	if (src)
+	{
+		for (u32 i = 0; i < src->count; ++i)
+		{
+			if (bba_add_noclear(dst, 1))
+			{
+				bba_last(dst) = fontConfig_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
 
 static fontConfigs_t s_fontConfigs;
 

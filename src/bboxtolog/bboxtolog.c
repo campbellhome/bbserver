@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #if defined(_MSC_VER)
@@ -16,6 +16,9 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "span.h"
 #include "tokenize.h"
 #include "va.h"
+
+#include "view.h"
+#include "view_filter/view_filter.h"
 
 #include "bb_wrap_dirent.h"
 #include "bbclient/bb_wrap_malloc.h"
@@ -135,6 +138,33 @@ static inline const char* get_category(u32 categoryId)
 		}
 	}
 	return category;
+}
+
+char* recorded_session_get_thread_name(recorded_session_t* session, u64 threadId)
+{
+	BB_UNUSED(session);
+	BB_UNUSED(threadId);
+	return "";
+}
+
+const char* recorded_session_get_filename(recorded_session_t* session, u32 fileId)
+{
+	BB_UNUSED(session);
+	BB_UNUSED(fileId);
+	return "";
+}
+
+const char* recorded_session_get_category_name(recorded_session_t* session, u32 categoryId)
+{
+	BB_UNUSED(session);
+	return get_category(categoryId);
+}
+
+view_category_t* view_find_category(view_t* view, u32 categoryId)
+{
+	BB_UNUSED(view);
+	BB_UNUSED(categoryId);
+	return NULL;
 }
 
 static void print_lines(logPacket_t packet, FILE* ofp)
@@ -367,9 +397,29 @@ static void print_queued(FILE* ofp)
 	}
 }
 
+//static b32 view_filter_visible(vfilter_t* vfilter, recorded_log_t* log)
+//{
+//	if (!vfilter->valid || !vfilter->tokens.count)
+//		return true;
+//
+//	switch (vfilter->type)
+//	{
+//	case kVF_Standard:
+//		return view_filter_visible_standard(view, log);
+//	case kVF_SQL:
+//		return true;
+//	case kVF_Legacy:
+//		return view_filter_visible_legacy(view, log);
+//	case kVF_Count:
+//	default:
+//		return true;
+//	}
+//}
+
 static void bbgrep_file(const sb_t* path, const char* filter)
 {
-	BB_UNUSED(filter);
+	vfilter_t vfilter = view_filter_parse("unnamed", filter);
+
 	g_pathToPrint = sb_get(path);
 	FILE* fp = fopen(g_pathToPrint, "rb");
 	if (fp)
@@ -481,6 +531,7 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 	}
 
 	g_pathToPrint = NULL;
+	vfilter_reset(&vfilter);
 }
 
 static void separateFilename(const char* filename, sb_t* base, sb_t* ext)
@@ -513,8 +564,6 @@ static b32 wildcardMatch(const char* pattern, const char* input)
 
 static int bbgrep(const char* filter, const char* pattern, sb_t* dirName, b32 bRecursive)
 {
-	BB_UNUSED(bRecursive);
-
 	sbs_t files = { BB_EMPTY_INITIALIZER };
 	sbs_t dirs = { BB_EMPTY_INITIALIZER };
 	DIR* d = opendir(sb_get(dirName));

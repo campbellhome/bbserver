@@ -76,6 +76,21 @@ WINDOWPLACEMENT json_deserialize_WINDOWPLACEMENT(JSON_Value *src)
 	return dst;
 }
 
+configFont_t json_deserialize_configFont_t(JSON_Value *src)
+{
+	configFont_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.enabled = json_object_get_boolean_safe(obj, "enabled");
+			dst.size = (u32)json_object_get_number(obj, "size");
+			dst.path = json_deserialize_sb_t(json_object_get_value(obj, "path"));
+		}
+	}
+	return dst;
+}
+
 configWhitelistEntry_t json_deserialize_configWhitelistEntry_t(JSON_Value *src)
 {
 	configWhitelistEntry_t dst;
@@ -244,8 +259,8 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.openTargets = json_deserialize_openTargetList_t(json_object_get_value(obj, "openTargets"));
 			dst.pathFixups = json_deserialize_pathFixupList_t(json_object_get_value(obj, "pathFixups"));
 			dst.namedFilters = json_deserialize_config_named_filters_t(json_object_get_value(obj, "namedFilters"));
-			dst.logFontConfig = json_deserialize_fontConfig_t(json_object_get_value(obj, "logFontConfig"));
-			dst.uiFontConfig = json_deserialize_fontConfig_t(json_object_get_value(obj, "uiFontConfig"));
+			dst.logFontConfig = json_deserialize_configFont_t(json_object_get_value(obj, "logFontConfig"));
+			dst.uiFontConfig = json_deserialize_configFont_t(json_object_get_value(obj, "uiFontConfig"));
 			dst.colorscheme = json_deserialize_sb_t(json_object_get_value(obj, "colorscheme"));
 			dst.wp = json_deserialize_WINDOWPLACEMENT(json_object_get_value(obj, "wp"));
 			dst.version = (u32)json_object_get_number(obj, "version");
@@ -902,6 +917,18 @@ JSON_Value *json_serialize_WINDOWPLACEMENT(const WINDOWPLACEMENT *src)
 	return val;
 }
 
+JSON_Value *json_serialize_configFont_t(const configFont_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_boolean(obj, "enabled", src->enabled);
+		json_object_set_number(obj, "size", src->size);
+		json_object_set_value(obj, "path", json_serialize_sb_t(&src->path));
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_configWhitelistEntry_t(const configWhitelistEntry_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -1050,8 +1077,8 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "openTargets", json_serialize_openTargetList_t(&src->openTargets));
 		json_object_set_value(obj, "pathFixups", json_serialize_pathFixupList_t(&src->pathFixups));
 		json_object_set_value(obj, "namedFilters", json_serialize_config_named_filters_t(&src->namedFilters));
-		json_object_set_value(obj, "logFontConfig", json_serialize_fontConfig_t(&src->logFontConfig));
-		json_object_set_value(obj, "uiFontConfig", json_serialize_fontConfig_t(&src->uiFontConfig));
+		json_object_set_value(obj, "logFontConfig", json_serialize_configFont_t(&src->logFontConfig));
+		json_object_set_value(obj, "uiFontConfig", json_serialize_configFont_t(&src->uiFontConfig));
 		json_object_set_value(obj, "colorscheme", json_serialize_sb_t(&src->colorscheme));
 		json_object_set_value(obj, "wp", json_serialize_WINDOWPLACEMENT(&src->wp));
 		json_object_set_number(obj, "version", src->version);

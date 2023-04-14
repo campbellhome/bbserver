@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_config.h"
@@ -620,8 +620,8 @@ void UIConfig_Update(config_t* config)
 			config_push_whitelist(&config->whitelist);
 			GetIO().MouseDoubleClickTime = config->doubleClickSeconds;
 			Fonts_ClearFonts();
-			Fonts_AddFont(config->uiFontConfig);
-			Fonts_AddFont(config->logFontConfig);
+			Fonts_AddFont(*(fontConfig_t*)&config->uiFontConfig);
+			Fonts_AddFont(*(fontConfig_t*)&config->logFontConfig);
 			Imgui_Core_SetColorScheme(sb_get(&config->colorscheme));
 			Imgui_Core_SetTextShadows(config->textShadows);
 			if (apply)

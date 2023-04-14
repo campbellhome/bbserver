@@ -29,8 +29,12 @@ AUTOJSON typedef struct fontConfigs_s
 	u32 allocated;
 	fontConfig_t* data;
 } fontConfigs_t;
+void fontConfig_reset(fontConfig_t* val);
+fontConfig_t fontConfig_clone(const fontConfig_t* src);
+void fontConfigs_reset(fontConfigs_t* val);
+fontConfigs_t fontConfigs_clone(const fontConfigs_t* src);
 
-void Fonts_ClearFonts(void);
+    void Fonts_ClearFonts(void);
 void Fonts_AddFont(fontConfig_t font);
 
 void Fonts_CacheGlyphs(const char* text);

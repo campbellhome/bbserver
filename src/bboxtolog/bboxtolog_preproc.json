@@ -1,0 +1,21 @@
+{
+  "input": {
+    "sourceDirs": [
+      { "dir": "." },
+      { "dir": "../view_filter" }
+    ],
+    "includeDirs": [
+      { "dir": "../../mc_common/include" },
+      {
+        "dir": "../../mc_common/include/uuid_rfc4122",
+        "base": "../../mc_common/include/"
+      }
+    ]
+  },
+  "output": {
+    "prefix": "bboxtolog_",
+    "sourceDir": ".",
+    "includeDir": ".",
+    "baseDir": "."
+  }
+}

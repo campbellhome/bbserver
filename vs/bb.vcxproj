@@ -121,6 +121,11 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\src;..\src\view_filter</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\src\bbserver_asserts.h" />
     <ClInclude Include="..\src\bbserver_fileopendialog.h" />
@@ -161,9 +166,9 @@
     <ClInclude Include="..\src\uuid_config.h" />
     <ClInclude Include="..\src\view.h" />
     <ClInclude Include="..\src\view_config.h" />
-    <ClInclude Include="..\src\view_filter.h" />
-    <ClInclude Include="..\src\view_filter_legacy.h" />
-    <ClInclude Include="..\src\view_filter_sql.h" />
+    <ClInclude Include="..\src\view_filter\view_filter.h" />
+    <ClInclude Include="..\src\view_filter\view_filter_legacy.h" />
+    <ClInclude Include="..\src\view_filter\view_filter_sql.h" />
     <ClInclude Include="..\src\win32_resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -206,9 +211,9 @@
     <ClCompile Include="..\src\uuid_config.c" />
     <ClCompile Include="..\src\view.c" />
     <ClCompile Include="..\src\view_config.c" />
-    <ClCompile Include="..\src\view_filter.c" />
-    <ClCompile Include="..\src\view_filter_legacy.c" />
-    <ClCompile Include="..\src\view_filter_sql.c" />
+    <ClCompile Include="..\src\view_filter\view_filter.c" />
+    <ClCompile Include="..\src\view_filter\view_filter_legacy.c" />
+    <ClCompile Include="..\src\view_filter\view_filter_sql.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\src\win32_resource.rc" />

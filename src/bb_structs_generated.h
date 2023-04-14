@@ -24,6 +24,7 @@ struct fontConfigs_s;
 struct tagPOINT;
 struct tagRECT;
 struct tagWINDOWPLACEMENT;
+struct configFont_t;
 struct configWhitelistEntry_s;
 struct configWhitelist_s;
 struct openTargetEntry_s;
@@ -97,6 +98,7 @@ typedef struct fontConfigs_s fontConfigs_t;
 typedef struct tagPOINT POINT;
 typedef struct tagRECT RECT;
 typedef struct tagWINDOWPLACEMENT WINDOWPLACEMENT;
+typedef struct configFont_t configFont_t;
 typedef struct configWhitelistEntry_s configWhitelistEntry_t;
 typedef struct configWhitelist_s configWhitelist_t;
 typedef struct openTargetEntry_s openTargetEntry_t;
@@ -170,6 +172,7 @@ void fontConfigs_reset(fontConfigs_t *val);
 void POINT_reset(POINT *val);
 void RECT_reset(RECT *val);
 void WINDOWPLACEMENT_reset(WINDOWPLACEMENT *val);
+void configFont_reset(configFont_t *val);
 void configWhitelistEntry_reset(configWhitelistEntry_t *val);
 void configWhitelist_reset(configWhitelist_t *val);
 void openTargetEntry_reset(openTargetEntry_t *val);
@@ -264,6 +267,9 @@ RECT RECT_clone(const RECT *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_WINDOWPLACEMENT_clone)
 WINDOWPLACEMENT WINDOWPLACEMENT_clone(const WINDOWPLACEMENT *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_configFont_clone)
+configFont_t configFont_clone(const configFont_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_configWhitelistEntry_clone)
 configWhitelistEntry_t configWhitelistEntry_clone(const configWhitelistEntry_t *src);

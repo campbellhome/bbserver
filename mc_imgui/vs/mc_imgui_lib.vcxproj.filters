@@ -28,12 +28,6 @@
     <ClCompile Include="..\src\ui_message_box.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\mc_imgui_json_generated.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\mc_imgui_structs_generated.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\imgui_image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -93,12 +87,6 @@
     <ClInclude Include="..\include\ui_message_box.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\mc_imgui_json_generated.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\mc_imgui_structs_generated.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\imgui_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -149,6 +137,5 @@
     <None Include="..\src\forkawesome-webfont.inc">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="..\mc_imgui_preproc.json" />
   </ItemGroup>
 </Project>

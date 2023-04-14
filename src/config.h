@@ -1,10 +1,9 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
 
 #include "bb.h"
-#include "fonts.h"
 #include "sb.h"
 
 #include "bb_wrap_windows.h"
@@ -36,6 +35,13 @@ AUTOJSON typedef struct tagWINDOWPLACEMENT {
 	RECT rcNormalPosition;
 } WINDOWPLACEMENT;
 #endif
+
+AUTOJSON typedef struct configFont_t
+{
+	b32 enabled;
+	u32 size;
+	sb_t path;
+} configFont_t;
 
 AUTOJSON typedef struct configWhitelistEntry_s
 {
@@ -131,8 +137,8 @@ AUTOJSON typedef struct config_s
 	openTargetList_t openTargets;
 	pathFixupList_t pathFixups;
 	config_named_filters_t namedFilters;
-	fontConfig_t logFontConfig;
-	fontConfig_t uiFontConfig;
+	configFont_t logFontConfig;
+	configFont_t uiFontConfig;
 	sb_t colorscheme;
 	WINDOWPLACEMENT wp;
 	u32 version;

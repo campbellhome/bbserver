@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -105,6 +105,7 @@ AUTOSTRUCT typedef struct vfilter_s
 	vfilter_type_e type;
 	b32 valid;
 } vfilter_t;
+void vfilter_reset(vfilter_t* val);
 
 vfilter_t view_filter_parse(const char* name, const char* input);
 const char* view_filter_get_error_string(vfilter_t* filter);

@@ -772,6 +772,9 @@ static vfilter_t view_filter_parse_single(const char* name, const char* input)
 
 static const char* view_filter_get_named_filter(span_t searchName)
 {
+#if defined(BB_STANDALONE)
+	BB_UNUSED(searchName);
+#else
 	if (*searchName.start == '@')
 	{
 		searchName.start++; // ignore the initial '@'
@@ -794,6 +797,7 @@ static const char* view_filter_get_named_filter(span_t searchName)
 			return filterText;
 		}
 	}
+#endif
 	return NULL;
 }
 

@@ -83,6 +83,23 @@ WINDOWPLACEMENT WINDOWPLACEMENT_clone(const WINDOWPLACEMENT *src)
 	return dst;
 }
 
+void configFont_reset(configFont_t *val)
+{
+	if(val) {
+		sb_reset(&val->path);
+	}
+}
+configFont_t configFont_clone(const configFont_t *src)
+{
+	configFont_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.enabled = src->enabled;
+		dst.size = src->size;
+		dst.path = sb_clone(&src->path);
+	}
+	return dst;
+}
+
 void configWhitelistEntry_reset(configWhitelistEntry_t *val)
 {
 	if(val) {
@@ -290,8 +307,8 @@ void config_reset(config_t *val)
 		openTargetList_reset(&val->openTargets);
 		pathFixupList_reset(&val->pathFixups);
 		config_named_filters_reset(&val->namedFilters);
-		fontConfig_reset(&val->logFontConfig);
-		fontConfig_reset(&val->uiFontConfig);
+		configFont_reset(&val->logFontConfig);
+		configFont_reset(&val->uiFontConfig);
 		sb_reset(&val->colorscheme);
 		WINDOWPLACEMENT_reset(&val->wp);
 		tooltipConfig_reset(&val->tooltips);
@@ -306,8 +323,8 @@ config_t config_clone(const config_t *src)
 		dst.openTargets = openTargetList_clone(&src->openTargets);
 		dst.pathFixups = pathFixupList_clone(&src->pathFixups);
 		dst.namedFilters = config_named_filters_clone(&src->namedFilters);
-		dst.logFontConfig = fontConfig_clone(&src->logFontConfig);
-		dst.uiFontConfig = fontConfig_clone(&src->uiFontConfig);
+		dst.logFontConfig = configFont_clone(&src->logFontConfig);
+		dst.uiFontConfig = configFont_clone(&src->uiFontConfig);
 		dst.colorscheme = sb_clone(&src->colorscheme);
 		dst.wp = WINDOWPLACEMENT_clone(&src->wp);
 		dst.version = src->version;

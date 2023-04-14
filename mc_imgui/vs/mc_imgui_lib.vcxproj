@@ -144,8 +144,6 @@
     <ClInclude Include="..\include\imgui_input_text.h" />
     <ClInclude Include="..\include\imgui_themes.h" />
     <ClInclude Include="..\include\imgui_utils.h" />
-    <ClInclude Include="..\include\mc_imgui_json_generated.h" />
-    <ClInclude Include="..\include\mc_imgui_structs_generated.h" />
     <ClInclude Include="..\include\ui_message_box.h" />
     <ClInclude Include="..\include\wrap_dx9.h" />
     <ClInclude Include="..\include\wrap_imgui.h" />
@@ -170,8 +168,6 @@
     <ClCompile Include="..\src\imgui_input_text.cpp" />
     <ClCompile Include="..\src\imgui_themes.cpp" />
     <ClCompile Include="..\src\imgui_utils.cpp" />
-    <ClCompile Include="..\src\mc_imgui_json_generated.c" />
-    <ClCompile Include="..\src\mc_imgui_structs_generated.c" />
     <ClCompile Include="..\src\ui_message_box.cpp" />
     <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.cpp">
       <WarningLevel>Level3</WarningLevel>
@@ -199,9 +195,6 @@
     <Natvis Include="..\..\thirdparty\imgui\misc\natvis\imgui.natvis" />
   </ItemGroup>
   <ItemDefinitionGroup>
-    <PreBuildEvent>
-      <Command>..\..\mc_common\bin\mc_common_preproc_$(Configuration)_$(PlatformToolset)\mc_common_preproc.exe -config=..\mc_imgui_preproc.json</Command>
-    </PreBuildEvent>
     <ClCompile>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ProgramDatabase</DebugInformationFormat>
     </ClCompile>
@@ -215,7 +208,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\mc_imgui_preproc.json" />
     <None Include="..\src\forkawesome-webfont.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
