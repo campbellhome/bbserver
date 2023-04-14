@@ -6,9 +6,11 @@
 #include "common.h"
 #include "imgui_core.h"
 #include "imgui_utils.h"
+#include "json_utils.h"
 
 #include "bb_wrap_windows.h"
 #include <ShlObj.h>
+#include <parson/parson.h>
 
 // warning C4820 : 'StructName' : '4' bytes padding added after data member 'MemberName'
 // warning C4365: '=': conversion from 'ImGuiTabItemFlags' to 'ImGuiID', signed/unsigned mismatch
@@ -61,6 +63,72 @@ extern "C" fontConfigs_t fontConfigs_clone(const fontConfigs_t* src)
 		}
 	}
 	return dst;
+}
+
+fontConfig_t json_deserialize_fontConfig_t(JSON_Value* src)
+{
+	fontConfig_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if (src)
+	{
+		JSON_Object* obj = json_value_get_object(src);
+		if (obj)
+		{
+			dst.enabled = json_object_get_boolean_safe(obj, "enabled");
+			dst.size = (u32)json_object_get_number(obj, "size");
+			dst.path = json_deserialize_sb_t(json_object_get_value(obj, "path"));
+		}
+	}
+	return dst;
+}
+
+fontConfigs_t json_deserialize_fontConfigs_t(JSON_Value* src)
+{
+	fontConfigs_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if (src)
+	{
+		JSON_Array* arr = json_value_get_array(src);
+		if (arr)
+		{
+			for (u32 i = 0; i < json_array_get_count(arr); ++i)
+			{
+				bba_push(dst, json_deserialize_fontConfig_t(json_array_get_value(arr, i)));
+			}
+		}
+	}
+	return dst;
+}
+
+JSON_Value* json_serialize_fontConfig_t(const fontConfig_t* src)
+{
+	JSON_Value* val = json_value_init_object();
+	JSON_Object* obj = json_value_get_object(val);
+	if (obj)
+	{
+		json_object_set_boolean(obj, "enabled", src->enabled);
+		json_object_set_number(obj, "size", src->size);
+		json_object_set_value(obj, "path", json_serialize_sb_t(&src->path));
+	}
+	return val;
+}
+
+JSON_Value* json_serialize_fontConfigs_t(const fontConfigs_t* src)
+{
+	JSON_Value* val = json_value_init_array();
+	JSON_Array* arr = json_value_get_array(val);
+	if (arr)
+	{
+		for (u32 i = 0; i < src->count; ++i)
+		{
+			JSON_Value* child = json_serialize_fontConfig_t(src->data + i);
+			if (child)
+			{
+				json_array_append_value(arr, child);
+			}
+		}
+	}
+	return val;
 }
 
 static fontConfigs_t s_fontConfigs;
@@ -120,7 +188,7 @@ bool Fonts_UpdateAtlas(void)
 
 void Fonts_Menu(void)
 {
-//ImGui::Checkbox("DEBUG Text Shadows", &g_config.textShadows);
+// ImGui::Checkbox("DEBUG Text Shadows", &g_config.textShadows);
 #if BB_USING(FEATURE_FREETYPE)
 	if (Imgui_Core_Freetype_Valid())
 	{
@@ -203,10 +271,10 @@ void Fonts_Init(void)
 #endif
 }
 
-//const ImWchar fallbackRanges[] = { 0x2700, 0x2800, 0 };
-//const ImWchar fallbackRanges[] = { 0x100, 0xFFFF, 0 };
+// const ImWchar fallbackRanges[] = { 0x2700, 0x2800, 0 };
+// const ImWchar fallbackRanges[] = { 0x100, 0xFFFF, 0 };
 
-//const ImWchar allRanges[] = {
+// const ImWchar allRanges[] = {
 //	0x0020, 0x00FF, // Basic Latin + Latin Supplement
 //	0x0370, 0x03FF, // Greek and Coptic
 //	0x2000, 0x206F, // General Punctuation
@@ -218,9 +286,9 @@ void Fonts_Init(void)
 //	0xFF00, 0xFFEF, // Half-width characters
 //	0xFFFD, 0xFFFD, // Invalid
 //	0
-//};
+// };
 
-//const ImWchar fallbackRanges[] = {
+// const ImWchar fallbackRanges[] = {
 //	0x0100, 0x036F, // between Basic Latin + Latin Supplement and Greek and Coptic
 //	0x0400, 0x1FFF, // between Greek and Coptic and General Punctuation
 //	0x2070, 0x2FFF, // between General Punctuation and CJK Symbols and Punctuations, Hiragana, Katakana
@@ -231,7 +299,7 @@ void Fonts_Init(void)
 //	0xD7A2, 0xFEFF, // between Korean characters and Half-width characters
 //	0xFFEE, 0xFFFC, // between Half-width characters and Invalid
 //	0
-//};
+// };
 
 void Fonts_InitFonts(void)
 {
@@ -259,8 +327,8 @@ void Fonts_InitFonts(void)
 				io.Fonts->AddFontFromFileTTF(sb_get(&fontConfig->path), fontSize, nullptr, glyphRanges.Data);
 				Fonts_MergeIconFont(fontSize);
 
-				//io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\L_10646.ttf", fontSize, &config, fallbackRanges);
-				//io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\SEGUIEMJ.ttf", fontSize, &mergeConfig, fallbackRanges);
+				// io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\L_10646.ttf", fontSize, &config, fallbackRanges);
+				// io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\SEGUIEMJ.ttf", fontSize, &mergeConfig, fallbackRanges);
 			}
 			else
 			{
