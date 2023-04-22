@@ -17,6 +17,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "tokenize.h"
 #include "va.h"
 
+#include "recorded_session.h"
 #include "view.h"
 #include "view_filter/view_filter.h"
 
@@ -52,13 +53,6 @@ typedef enum tag_exitCode
 	kExitCode_Error_Decode,
 } exitCode;
 
-typedef struct partial_logs_s
-{
-	u32 count;
-	u32 allocated;
-	bb_decoded_packet_t* data;
-} partial_logs_t;
-
 typedef struct category_s
 {
 	u32 id;
@@ -71,6 +65,7 @@ typedef struct categories_s
 	u32 count;
 	u32 allocated;
 } categories_t;
+view_category_t s_viewCategory;
 
 typedef struct logPacket_s
 {
@@ -168,7 +163,15 @@ const char* recorded_session_get_category_name(recorded_session_t* session, u32 
 view_category_t* view_find_category(view_t* view, u32 categoryId)
 {
 	BB_UNUSED(view);
-	BB_UNUSED(categoryId);
+	for (u32 i = 0; i < g_categories.count; ++i)
+	{
+		category_t* category = g_categories.data + i;
+		if (category->id == categoryId)
+		{
+			bb_strncpy(s_viewCategory.categoryName, category->name, sizeof(s_viewCategory.categoryName));
+			return &s_viewCategory;
+		}
+	}
 	return NULL;
 }
 
@@ -364,7 +367,22 @@ static b32 test_sql(const bb_decoded_packet_t* decoded, const char* lines)
 #endif
 }
 
-static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp)
+typedef struct vfilter_data_s
+{
+	view_t view;
+	recorded_log_t recordedLog;
+} vfilter_data_t;
+
+static b32 test_vfilter(vfilter_data_t* vfilter_data)
+{
+	if (vfilter_data)
+	{
+		return view_filter_visible(&vfilter_data->view, &vfilter_data->recordedLog);
+	}
+	return true;
+}
+
+static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp, vfilter_data_t* vfilter_data)
 {
 	sb_t lines = { BB_EMPTY_INITIALIZER };
 	for (u32 i = 0; i < g_partialLogs.count; ++i)
@@ -378,7 +396,7 @@ static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp)
 	sb_append(&lines, decoded->packet.logText.text);
 
 	s64 ms = (s64)((decoded->header.timestamp - g_initialTimestamp) * g_millisPerTick);
-	if (test_verbosity(decoded) && test_sql(decoded, sb_get(&lines)))
+	if (test_verbosity(decoded) && test_sql(decoded, sb_get(&lines)) && test_vfilter(vfilter_data))
 	{
 		queue_lines(lines, decoded->packet.logText.categoryId, ms, ofp);
 	}
@@ -431,7 +449,9 @@ static void print_queued(FILE* ofp)
 
 static void bbgrep_file(const sb_t* path, const char* filter)
 {
-	vfilter_t vfilter = view_filter_parse("unnamed", filter);
+	vfilter_data_t vfilter_data = { BB_EMPTY_INITIALIZER };
+	vfilter_data.view.vfilter = view_filter_parse("unnamed", filter);
+	vfilter_data.view.config.filterActive = true;
 
 	g_pathToPrint = sb_get(path);
 	FILE* fp = fopen(g_pathToPrint, "rb");
@@ -507,7 +527,18 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 					case kBBPacketType_LogText_v2:
 					case kBBPacketType_LogText:
 					{
-						queue_packet(&decoded, stdout);
+						vfilter_data.recordedLog.packet = decoded;
+						vfilter_data.recordedLog.numLines = 0;
+						for (u32 i = 0; i < g_partialLogs.count; ++i)
+						{
+							const bb_decoded_packet_t* partial = g_partialLogs.data + i;
+							if (partial->header.threadId == decoded.header.threadId)
+							{
+								++vfilter_data.recordedLog.numLines;
+							}
+						}
+						queue_packet(&decoded, stdout, &vfilter_data);
+						vfilter_data.recordedLog.sessionLogIndex++;
 						break;
 					}
 					default:
@@ -544,7 +575,7 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 	}
 
 	g_pathToPrint = NULL;
-	vfilter_reset(&vfilter);
+	vfilter_reset(&vfilter_data.view.vfilter);
 }
 
 static void separateFilename(const char* filename, sb_t* base, sb_t* ext)
@@ -575,7 +606,7 @@ static b32 wildcardMatch(const char* pattern, const char* input)
 	return bb_stristr(input, pattern) != NULL;
 }
 
-static int bbgrep(const char* filter, const char* pattern, sb_t* dirName, b32 bRecursive)
+static int bbgrep(const char* filter, sb_t* dirName, const char* pattern, b32 bRecursive)
 {
 	sbs_t files = { BB_EMPTY_INITIALIZER };
 	sbs_t dirs = { BB_EMPTY_INITIALIZER };
@@ -646,7 +677,7 @@ static int bbgrep(const char* filter, const char* pattern, sb_t* dirName, b32 bR
 		for (u32 i = 0; i < dirs.count; ++i)
 		{
 			sb_t* subdir = dirs.data + i;
-			bbgrep(filter, pattern, subdir, bRecursive);
+			bbgrep(filter, subdir, pattern, bRecursive);
 		}
 	}
 
@@ -827,13 +858,23 @@ int main_loop(int argc, char** argv)
 
 	if (g_program == kProgram_bbgrep)
 	{
+		const char* filename = "*";
 		sb_t dir = sb_from_c_string(target);
-		path_remove_filename(&dir);
+		const char* ext = bb_stristr(sb_get(&dir), ".bbox");
+		if (ext)
+		{
+			ptrdiff_t offset = ext - dir.data;
+			if (offset == dir.count - 6)
+			{
+				filename = path_get_filename(target);
+				path_remove_filename(&dir);
+			}
+		}
 		if (sb_len(&dir) == 0)
 		{
 			sb_append(&dir, ".");
 		}
-		return bbgrep(source, target, &dir, bRecursive);
+		return bbgrep(source, &dir, filename, bRecursive);
 	}
 
 	size_t sourceLen = strlen(source);
@@ -949,7 +990,7 @@ int main_loop(int argc, char** argv)
 						case kBBPacketType_LogText_v2:
 						case kBBPacketType_LogText:
 						{
-							queue_packet(&decoded, ofp);
+							queue_packet(&decoded, ofp, NULL);
 							break;
 						}
 						default:

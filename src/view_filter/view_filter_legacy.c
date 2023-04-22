@@ -96,7 +96,7 @@ static b32 view_filter_legacy_find_token(view_t* view, recorded_log_t* log, cons
 			return view_filter_abs_millis(view, log, comp, tmp);
 		}
 	}
-	if (!bb_strnicmp(token, "relms", 5))
+	else if (!bb_strnicmp(token, "relms", 5))
 	{
 		const char* tmp = token + 5;
 		view_filter_comparison_t comp = view_parse_filter_comparator(&tmp);
@@ -104,6 +104,17 @@ static b32 view_filter_legacy_find_token(view_t* view, recorded_log_t* log, cons
 		{
 			return view_filter_rel_millis(view, log, comp, tmp);
 		}
+	}
+	else if (!bb_strnicmp(token, "category:", 9))
+	{
+		token = token + 9;
+		decoded->packet.logText.categoryId;
+		view_category_t* category = view_find_category(view, decoded->packet.logText.categoryId);
+		text = (category) ? category->categoryName : "";
+	}
+	else if (!bb_strnicmp(token, "text:", 5))
+	{
+		token = token + 5;
 	}
 	return bb_stristr(text, token) != NULL;
 }
