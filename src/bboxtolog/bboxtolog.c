@@ -11,6 +11,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
 #include "bbclient/bb_time.h"
+#include "crt_leak_check.h"
 #include "path_utils.h"
 #include "sb.h"
 #include "span.h"
@@ -32,9 +33,6 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #endif
 
 BB_WARNING_DISABLE(5045);
-
-// BB_WARNING_DISABLE(4464); // warning C4464: relative include path contains '..'
-// #include "../view_filter.h"
 
 typedef enum tag_program
 {
@@ -841,10 +839,19 @@ int main_loop(int argc, char** argv)
 		return usage(); // TODO: read stdin
 
 	if (target && g_program != kProgram_bboxtolog && g_program != kProgram_bbgrep)
+	{
+		bb_free(target);
 		return usage();
+	}
 
 	if (g_follow && g_program == kProgram_bboxtolog)
+	{
+		if (target)
+		{
+			bb_free(target);
+		}
 		return usage();
+	}
 
 	if (g_program == kProgram_bbtail)
 	{
@@ -874,12 +881,22 @@ int main_loop(int argc, char** argv)
 		{
 			sb_append(&dir, ".");
 		}
-		return bbgrep(source, &dir, filename, bRecursive);
+		int ret = bbgrep(source, &dir, filename, bRecursive);
+		sb_reset(&dir);
+		if (target)
+		{
+			bb_free(target);
+		}
+		return ret;
 	}
 
 	size_t sourceLen = strlen(source);
 	if (sourceLen < 6 || bb_stricmp(source + sourceLen - 5, ".bbox"))
 	{
+		if (target)
+		{
+			bb_free(target);
+		}
 		return usage();
 	}
 
@@ -1046,11 +1063,9 @@ int main_loop(int argc, char** argv)
 	return ret;
 }
 
-int main(int argc, char** argv)
+#if !defined(BB_NO_SQLITE)
+static int sqlite_main_loop(int argc, char** argv)
 {
-#if defined(BB_NO_SQLITE)
-	return main_loop(argc, argv);
-#else
 	int rc = sqlite3_open(":memory:", &db);
 	if (rc != SQLITE_OK)
 	{
@@ -1084,5 +1099,24 @@ int main(int argc, char** argv)
 		db = NULL;
 	}
 	return ret;
+}
 #endif
+
+int main(int argc, char** argv)
+{
+#if defined(_DEBUG)
+	crt_leak_check_init();
+	bb_tracked_malloc_enable(true);
+	bba_set_logging(true, true);
+#endif
+
+#if defined(BB_NO_SQLITE)
+	int ret = main_loop(argc, argv);
+#else
+	int ret = sqlite_main_loop(argc, argv);
+#endif
+
+	BB_SHUTDOWN();
+
+	return ret;
 }
