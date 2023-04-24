@@ -108,7 +108,6 @@ static b32 view_filter_legacy_find_token(view_t* view, recorded_log_t* log, cons
 	else if (!bb_strnicmp(token, "category:", 9))
 	{
 		token = token + 9;
-		decoded->packet.logText.categoryId;
 		view_category_t* category = view_find_category(view, decoded->packet.logText.categoryId);
 		text = (category) ? category->categoryName : "";
 	}
