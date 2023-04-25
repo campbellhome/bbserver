@@ -17,6 +17,12 @@
 #include <bb_wrap_windows.h>
 #include <stdio.h>
 
+typedef enum CrossCompiler_e
+{
+	kCrossCompiler_wsl,
+	kCrossCompiler_zig,
+} CrossCompiler_t;
+
 int main(int argc, const char** argv)
 {
 	int ret = 0;
@@ -86,14 +92,35 @@ int main(int argc, const char** argv)
 		bSqlite = false;
 	}
 
+	CrossCompiler_t crossCompiler = kCrossCompiler_wsl;
+	if (cmdline_find("-wsl") > 0)
+	{
+		crossCompiler = kCrossCompiler_wsl;
+	}
+	else if (cmdline_find("-zig") > 0 || cmdline_find("-zigcc") > 0)
+	{
+		crossCompiler = kCrossCompiler_zig;
+	}
+
 	tasks_startup();
 	process_init();
 
 	buildDependencyTable deps = buildDependencyTable_init(2048);
 	sourceTimestampTable times = sourceTimestampTable_init(2048);
 
-	const char* objDir = "obj/linux";
-	const char* binDir = "bin/linux";
+	const char* objDir = NULL;
+	const char* binDir = NULL;
+	switch (crossCompiler)
+	{
+	case kCrossCompiler_wsl:
+		objDir = "obj/wsl/linux";
+		binDir = "bin/wsl/linux";
+		break;
+	case kCrossCompiler_zig:
+		objDir = "obj/zig/linux";
+		binDir = "bin/zig/linux";
+		break;
+	}
 
 	path_mkdir(objDir);
 	path_mkdir(binDir);
@@ -156,15 +183,33 @@ int main(int argc, const char** argv)
 
 	buildCommands_t commands = { BB_EMPTY_INITIALIZER };
 
-	sb_t wslPath = env_resolve("\"%windir%\\System32\\wsl.exe\"");
-	// sb_t wslPath = env_resolve("\"%comspec%\" /C wsl");
+	sb_t cCompiler = { BB_EMPTY_INITIALIZER };
+	sb_t cppCompiler = { BB_EMPTY_INITIALIZER };
+	switch (crossCompiler)
+	{
+	case kCrossCompiler_wsl:
+	{
+		sb_t wslPath = env_resolve("\"%windir%\\System32\\wsl.exe\"");
+		cCompiler = sb_from_va("%s clang", sb_get(&wslPath));
+		cppCompiler = sb_from_va("%s clang++", sb_get(&wslPath));
+		sb_reset(&wslPath);
+		break;
+	}
+	case kCrossCompiler_zig:
+	{
+		const char* target = "x86_64-linux-gnu.2.28";
+		cCompiler = sb_from_va("zig.exe cc -target %s", target);
+		cppCompiler = sb_from_va("zig.exe c++ -target %s", target);
+		break;
+	}
+	}
 
-	u32 bbclientCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bbclient_c, objDir, debug, rebuild, ".", va("%s clang -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&wslPath)));
-	u32 mcCommonCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &mc_common_c, objDir, debug, rebuild, ".", va("%s clang -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include -Ibbclient/include/bbclient -Imc_common/include -Ithirdparty {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&wslPath)));
-	u32 thirdpartyCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &thirdparty_c, objDir, debug, rebuild, ".", va("%s clang -MMD -c -g -Werror -Ithirdparty {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&wslPath)));
-	u32 bbExampleCCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bb_example_c, objDir, debug, rebuild, ".", va("%s clang -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&wslPath)));
-	u32 bbExampleCPPCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bb_example_cpp, objDir, debug, rebuild, ".", va("%s clang++ -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&wslPath)));
-	u32 bboxtologCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bboxtolog_c, objDir, debug, rebuild, ".", va("%s clang -DBB_STANDALONE -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include -Ibbclient/include/bbclient -Imc_common/include -Ithirdparty -Isrc -Isrc/view_filter {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&wslPath)));
+	u32 bbclientCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bbclient_c, objDir, debug, rebuild, ".", va("%s -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&cCompiler)));
+	u32 mcCommonCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &mc_common_c, objDir, debug, rebuild, ".", va("%s -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include -Ibbclient/include/bbclient -Imc_common/include -Ithirdparty {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&cCompiler)));
+	u32 thirdpartyCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &thirdparty_c, objDir, debug, rebuild, ".", va("%s -MMD -c -g -Werror -Ithirdparty {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&cCompiler)));
+	u32 bbExampleCCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bb_example_c, objDir, debug, rebuild, ".", va("%s -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&cCompiler)));
+	u32 bbExampleCPPCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bb_example_cpp, objDir, debug, rebuild, ".", va("%s -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&cppCompiler)));
+	u32 bboxtologCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bboxtolog_c, objDir, debug, rebuild, ".", va("%s -DBB_STANDALONE -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include -Ibbclient/include/bbclient -Imc_common/include -Ithirdparty -Isrc -Isrc/view_filter {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&cCompiler)));
 
 	buildCommandsState_t dispatchState = buildCommands_dispatch(&commands, concurrency, bStopOnErrors, bShowCommands);
 	ret += dispatchState.errorCount;
@@ -177,7 +222,7 @@ int main(int argc, const char** argv)
 		bUpToDate = buildDependencyTable_checkDeps(&deps, &times, sb_get(&bbclient_example), debug);
 		if (bbclientCommands || mcCommonCommands || thirdpartyCommands || bbExampleCCommands || !bUpToDate)
 		{
-			sb_t cmd = sb_from_va("%s clang -MMD -g -o %s", sb_get(&wslPath), sb_get(&bbclient_example));
+			sb_t cmd = sb_from_va("%s -MMD -g -o %s", sb_get(&cCompiler), sb_get(&bbclient_example));
 			buildUtils_appendObjects(objDir, &bbclient_c, &cmd);
 			buildUtils_appendObjects(objDir, &mc_common_c, &cmd);
 			buildUtils_appendObjects(objDir, &thirdparty_c, &cmd);
@@ -190,7 +235,7 @@ int main(int argc, const char** argv)
 		bUpToDate = buildDependencyTable_checkDeps(&deps, &times, sb_get(&bbclient_example_wchar), debug);
 		if (bbclientCommands || mcCommonCommands || thirdpartyCommands || bbExampleCPPCommands || !bUpToDate)
 		{
-			sb_t cmd = sb_from_va("%s clang -MMD -g -o %s", sb_get(&wslPath), sb_get(&bbclient_example_wchar));
+			sb_t cmd = sb_from_va("%s -MMD -g -o %s", sb_get(&cppCompiler), sb_get(&bbclient_example_wchar));
 			buildUtils_appendObjects(objDir, &bbclient_c, &cmd);
 			buildUtils_appendObjects(objDir, &mc_common_c, &cmd);
 			buildUtils_appendObjects(objDir, &thirdparty_c, &cmd);
@@ -203,7 +248,7 @@ int main(int argc, const char** argv)
 		bUpToDate = buildDependencyTable_checkDeps(&deps, &times, sb_get(&bboxtolog), debug);
 		if (bbclientCommands || mcCommonCommands || thirdpartyCommands || bboxtologCommands || !bUpToDate)
 		{
-			sb_t cmd = sb_from_va("%s clang -MMD -g -o %s", sb_get(&wslPath), sb_get(&bboxtolog));
+			sb_t cmd = sb_from_va("%s -MMD -g -o %s", sb_get(&cCompiler), sb_get(&bboxtolog));
 			buildUtils_appendObjects(objDir, &bbclient_c, &cmd);
 			buildUtils_appendObjects(objDir, &mc_common_c, &cmd);
 			buildUtils_appendObjects(objDir, &thirdparty_c, &cmd);
@@ -218,6 +263,9 @@ int main(int argc, const char** argv)
 		buildCommands_reset(&commands);
 	}
 
+	sb_reset(&cCompiler);
+	sb_reset(&cppCompiler);
+
 	sbs_reset(&bbclient_c);
 	sbs_reset(&mc_common_c);
 	sbs_reset(&thirdparty_c);
@@ -226,7 +274,6 @@ int main(int argc, const char** argv)
 	sbs_reset(&bboxtolog_c);
 	buildDependencyTable_reset(&deps);
 	sourceTimestampTable_reset(&times);
-	sb_reset(&wslPath);
 
 	sb_reset(&bbclient_example);
 	sb_reset(&bbclient_example_wchar);
