@@ -108,19 +108,41 @@ int main(int argc, const char** argv)
 	buildDependencyTable deps = buildDependencyTable_init(2048);
 	sourceTimestampTable times = sourceTimestampTable_init(2048);
 
-	const char* objDir = NULL;
-	const char* binDir = NULL;
+	sb_t cCompiler = { BB_EMPTY_INITIALIZER };
+	sb_t cppCompiler = { BB_EMPTY_INITIALIZER };
+	sb_t objDirBuf = { BB_EMPTY_INITIALIZER };
+	sb_t binDirBuf = { BB_EMPTY_INITIALIZER };
 	switch (crossCompiler)
 	{
 	case kCrossCompiler_wsl:
-		objDir = "obj/wsl/linux";
-		binDir = "bin/wsl/linux";
-		break;
-	case kCrossCompiler_zig:
-		objDir = "obj/zig/linux";
-		binDir = "bin/zig/linux";
+	{
+		sb_t wslPath = env_resolve("\"%windir%\\System32\\wsl.exe\"");
+		cCompiler = sb_from_va("%s clang", sb_get(&wslPath));
+		cppCompiler = sb_from_va("%s clang++", sb_get(&wslPath));
+		sb_reset(&wslPath);
+
+		objDirBuf = sb_from_c_string("obj/wsl/linux");
+		binDirBuf = sb_from_c_string("bin/wsl/linux");
 		break;
 	}
+	case kCrossCompiler_zig:
+	{
+		const char* target = cmdline_find_prefix("-target=");
+		if (!target || !*target)
+		{
+			target = "x86_64-linux-gnu.2.28";
+		}
+		cCompiler = sb_from_va("zig.exe cc -target %s", target);
+		cppCompiler = sb_from_va("zig.exe c++ -target %s", target);
+
+		objDirBuf = sb_from_va("obj/zig/%s", target);
+		binDirBuf = sb_from_va("bin/zig/%s", target);
+		break;
+	}
+	}
+
+	const char* objDir = sb_get(&objDirBuf);
+	const char* binDir = sb_get(&binDirBuf);
 
 	path_mkdir(objDir);
 	path_mkdir(binDir);
@@ -182,27 +204,6 @@ int main(int argc, const char** argv)
 	}
 
 	buildCommands_t commands = { BB_EMPTY_INITIALIZER };
-
-	sb_t cCompiler = { BB_EMPTY_INITIALIZER };
-	sb_t cppCompiler = { BB_EMPTY_INITIALIZER };
-	switch (crossCompiler)
-	{
-	case kCrossCompiler_wsl:
-	{
-		sb_t wslPath = env_resolve("\"%windir%\\System32\\wsl.exe\"");
-		cCompiler = sb_from_va("%s clang", sb_get(&wslPath));
-		cppCompiler = sb_from_va("%s clang++", sb_get(&wslPath));
-		sb_reset(&wslPath);
-		break;
-	}
-	case kCrossCompiler_zig:
-	{
-		const char* target = "x86_64-linux-gnu.2.28";
-		cCompiler = sb_from_va("zig.exe cc -target %s", target);
-		cppCompiler = sb_from_va("zig.exe c++ -target %s", target);
-		break;
-	}
-	}
 
 	u32 bbclientCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &bbclient_c, objDir, debug, rebuild, ".", va("%s -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&cCompiler)));
 	u32 mcCommonCommands = buildDependencyTable_queueCommands(&commands, &deps, &times, &mc_common_c, objDir, debug, rebuild, ".", va("%s -MMD -c -g -Werror -Wall -Wextra -Ibbclient/include -Ibbclient/include/bbclient -Imc_common/include -Ithirdparty {SOURCE_PATH} -o {OBJECT_PATH}", sb_get(&cCompiler)));
@@ -280,6 +281,8 @@ int main(int argc, const char** argv)
 	sb_reset(&bboxtolog);
 
 	sb_reset(&rootDir);
+	sb_reset(&objDirBuf);
+	sb_reset(&binDirBuf);
 
 	u64 end = bb_current_time_ms();
 	BB_LOG("Timings", "Finished in %f seconds.", (end - start) * 0.001);
