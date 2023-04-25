@@ -89,6 +89,7 @@ static b32 g_inTailCatchup;
 static b32 g_follow;
 static u32 g_numLines;
 static bb_log_level_e g_verbosity;
+static b32 g_printFilename;
 
 categories_t g_categories = { 0, 0, 0 };
 double g_millisPerTick = 1.0;
@@ -181,7 +182,7 @@ static void print_lines(logPacket_t packet, FILE* ofp)
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
 	{
 		sb_t text;
-		if (g_pathToPrint)
+		if (g_pathToPrint && g_printFilename)
 		{
 			text = sb_from_va("%s: [%7lld] [%13s] %.*s\n", g_pathToPrint, packet.ms, category, (int)(line.end - line.start), line.start);
 		}
@@ -813,6 +814,14 @@ int main_loop(int argc, char** argv)
 			{
 				bRecursive = true;
 			}
+			else if (!strcmp(arg, "-H") || !strcmp(arg, "--with-filename"))
+			{
+				g_printFilename = true;
+			}
+			else if (!strcmp(arg, "-h") || !strcmp(arg, "--no-filename"))
+			{
+				g_printFilename = true;
+			}
 			else
 			{
 				return usage();
@@ -880,6 +889,10 @@ int main_loop(int argc, char** argv)
 		if (sb_len(&dir) == 0)
 		{
 			sb_append(&dir, ".");
+		}
+		if (bRecursive || strchr(filename, '*') != NULL)
+		{
+			g_printFilename = true;
 		}
 		int ret = bbgrep(source, &dir, filename, bRecursive);
 		sb_reset(&dir);

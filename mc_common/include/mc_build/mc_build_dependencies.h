@@ -75,11 +75,13 @@ typedef enum buildDepTraversal
 
 typedef enum buildDepFileTypes
 {
-	kBuildDep_SourceFiles = 0x1,
-	kBuildDep_HeaderFiles = 0x2,
-	kBuildDep_ObjectFiles = 0x4,
+	kBuildDep_CSourceFiles = 0x1,
+	kBuildDep_CppSourceFiles = 0x2,
+	kBuildDep_AllSourceFiles = kBuildDep_CSourceFiles | kBuildDep_CppSourceFiles,
+	kBuildDep_HeaderFiles = 0x4,
+	kBuildDep_ObjectFiles = 0x8,
 	kBuildDep_NoSourceFiles = kBuildDep_HeaderFiles | kBuildDep_ObjectFiles,
-	kBuildDep_AllFiles = kBuildDep_SourceFiles | kBuildDep_HeaderFiles | kBuildDep_ObjectFiles,
+	kBuildDep_AllFiles = kBuildDep_AllSourceFiles | kBuildDep_HeaderFiles | kBuildDep_ObjectFiles,
 } buildDepFileTypes;
 
 void buildDependencyTable_insertDir(buildDependencyTable* depTable, sourceTimestampTable* timeTable, sbs_t* sourcePaths, const char* sourceDir, const char* objectDir, buildDepTraversal traversal, buildDepFileTypes fileTypes, buildDepDebug debug);

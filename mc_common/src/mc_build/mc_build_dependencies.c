@@ -188,10 +188,12 @@ void buildDependencyTable_insertDir(buildDependencyTable* depTable, sourceTimest
 				const char* ext = strrchr(entry->d_name, '.');
 				if (ext)
 				{
-					b32 bSource = !bb_stricmp(ext, ".c") || !bb_stricmp(ext, ".cpp");
+					b32 bCSource = !bb_stricmp(ext, ".c");
+					b32 bCppSource = !bb_stricmp(ext, ".cpp");
 					b32 bHeader = !bb_stricmp(ext, ".h");
 					b32 bObject = !bb_stricmp(ext, ".o");
-					if (bSource && (fileTypes & kBuildDep_SourceFiles) != 0 ||
+					if (bCSource && (fileTypes & kBuildDep_CSourceFiles) != 0 ||
+					    bCppSource && (fileTypes & kBuildDep_CppSourceFiles) != 0 ||
 					    bHeader && (fileTypes & kBuildDep_HeaderFiles) != 0 ||
 					    bObject && (fileTypes & kBuildDep_ObjectFiles) != 0)
 					{
@@ -217,7 +219,7 @@ void buildDependencyTable_insertDir(buildDependencyTable* depTable, sourceTimest
 							sb_reset(&depPath);
 						}
 
-						if (bSource && sourcePaths)
+						if ((bCSource || bCppSource) && sourcePaths)
 						{
 							if (sourcePaths)
 							{

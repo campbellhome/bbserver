@@ -6,8 +6,8 @@
 // clang-format off
 
 #include "mc_build/mc_build_structs_generated.h"
-#include "bb_array.h"
 #include "bb_assert.h"
+#include "bb_array.h"
 #include "str.h"
 #include "va.h"
 

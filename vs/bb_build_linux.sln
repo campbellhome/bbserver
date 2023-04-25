@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2003
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bb_build_linux", "bb_build_linux.vcxproj", "{13BFF978-7782-4379-B613-DBB91E2FC55D}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -10,14 +10,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bb_build_linux", "bb_build_
 		{766B8754-81EE-4880-91CE-5DEAF459205F} = {766B8754-81EE-4880-91CE-5DEAF459205F}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_preproc", "..\..\mc_common\vs\mc_common_preproc.vcxproj", "{766B8754-81EE-4880-91CE-5DEAF459205F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_preproc", "..\mc_common\vs\mc_common_preproc.vcxproj", "{766B8754-81EE-4880-91CE-5DEAF459205F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_lib", "..\..\bbclient\vs\bbclient_lib.vcxproj", "{383FD59A-3CD9-4ECC-9395-6EE453A114FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_lib", "..\bbclient\vs\bbclient_lib.vcxproj", "{383FD59A-3CD9-4ECC-9395-6EE453A114FA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_lib", "..\..\mc_common\vs\mc_common_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_common_lib", "..\mc_common\vs\mc_common_lib.vcxproj", "{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}"
 	ProjectSection(ProjectDependencies) = postProject
 		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
 	EndProjectSection
