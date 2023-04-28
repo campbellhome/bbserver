@@ -70,7 +70,7 @@ typedef struct logPacket_s
 	s64 ms;
 	sb_t lines;
 	u32 categoryId;
-	u8 pad[4];
+	bb_log_level_e logLevel;
 } logPacket_t;
 
 typedef struct logPackets_s
@@ -181,15 +181,9 @@ static void print_lines(logPacket_t packet, FILE* ofp)
 	span_t linesCursor = span_from_string(lines);
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
 	{
-		sb_t text;
-		if (g_pathToPrint && g_printFilename)
-		{
-			text = sb_from_va("%s: [%7lld] [%13s] %.*s\n", g_pathToPrint, packet.ms, category, (int)(line.end - line.start), line.start);
-		}
-		else
-		{
-			text = sb_from_va("[%7lld] [%13s] %.*s\n", packet.ms, category, (int)(line.end - line.start), line.start);
-		}
+		const char* filename = (g_pathToPrint && g_printFilename) ? va("%s: ", g_pathToPrint) : "";
+		const char* logLevel = (packet.logLevel != kBBLogLevel_Log) ? va("[%s]", bb_get_log_level_name(packet.logLevel, "")) : "";
+		sb_t text = sb_from_va("%s[%lld][%s]%s %.*s\n", filename, packet.ms, category, logLevel, (int)(line.end - line.start), line.start);
 		fputs(sb_get(&text), ofp);
 #if BB_USING(BB_PLATFORM_WINDOWS)
 		OutputDebugStringA(sb_get(&text));
@@ -203,12 +197,13 @@ static void reset_logPacket_t(logPacket_t* packet)
 	sb_reset(&packet->lines);
 }
 
-static void queue_lines(sb_t lines, u32 categoryId, s64 ms, FILE* ofp)
+static void queue_lines(sb_t lines, u32 categoryId, bb_log_level_e logLevel, s64 ms, FILE* ofp)
 {
 	logPacket_t packet = { BB_EMPTY_INITIALIZER };
 	packet.ms = ms;
 	packet.lines = lines;
 	packet.categoryId = categoryId;
+	packet.logLevel = logLevel;
 
 	if (g_inTailCatchup)
 	{
@@ -397,7 +392,7 @@ static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp, vfilter_
 	s64 ms = (s64)((decoded->header.timestamp - g_initialTimestamp) * g_millisPerTick);
 	if (test_verbosity(decoded) && test_sql(decoded, sb_get(&lines)) && test_vfilter(vfilter_data))
 	{
-		queue_lines(lines, decoded->packet.logText.categoryId, ms, ofp);
+		queue_lines(lines, decoded->packet.logText.categoryId, decoded->packet.logText.level, ms, ofp);
 	}
 	else
 	{
@@ -427,33 +422,23 @@ static void print_queued(FILE* ofp)
 	}
 }
 
-// static b32 view_filter_visible(vfilter_t* vfilter, recorded_log_t* log)
-//{
-//	if (!vfilter->valid || !vfilter->tokens.count)
-//		return true;
-//
-//	switch (vfilter->type)
-//	{
-//	case kVF_Standard:
-//		return view_filter_visible_standard(view, log);
-//	case kVF_SQL:
-//		return true;
-//	case kVF_Legacy:
-//		return view_filter_visible_legacy(view, log);
-//	case kVF_Count:
-//	default:
-//		return true;
-//	}
-// }
+typedef struct process_file_data_s process_file_data_t;
+typedef void(tail_catchup_func_t)(process_file_data_t* process_file_data);
+typedef void(log_packet_func_t)(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data);
 
-static void bbgrep_file(const sb_t* path, const char* filter)
+typedef struct process_file_data_s
 {
-	vfilter_data_t vfilter_data = { BB_EMPTY_INITIALIZER };
-	vfilter_data.view.vfilter = view_filter_parse("unnamed", filter);
-	vfilter_data.view.config.filterActive = true;
+	const char* source;
+	tail_catchup_func_t* tail_catchup_func;
+	log_packet_func_t* log_packet_func;
+	void* userdata;
+} process_file_data_t;
 
-	g_pathToPrint = sb_get(path);
-	FILE* fp = fopen(g_pathToPrint, "rb");
+static int process_file(process_file_data_t* process_file_data)
+{
+	int ret = kExitCode_Success;
+
+	FILE* fp = fopen(process_file_data->source, "rb");
 	if (fp)
 	{
 		u32 recvCursor = 0;
@@ -478,8 +463,28 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 			u16 nPacketBytes = (nDecodableBytes >= 3) ? (*cursor << 8) + (*(cursor + 1)) : 0;
 			if (nPacketBytes == 0 || nPacketBytes > nDecodableBytes)
 			{
-				done = true;
-				break;
+				if (g_program == kProgram_bbtail)
+				{
+					if (g_inTailCatchup)
+					{
+						if (process_file_data->tail_catchup_func)
+						{
+							(*process_file_data->tail_catchup_func)(process_file_data);
+						}
+						g_inTailCatchup = false;
+					}
+				}
+
+				if (g_follow)
+				{
+					bb_sleep_ms(10);
+					continue;
+				}
+				else
+				{
+					done = true;
+					break;
+				}
 			}
 
 			if (bbpacket_deserialize(cursor + 2, nPacketBytes - 2, &decoded))
@@ -499,21 +504,8 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 						category_t* c = bba_add(g_categories, 1);
 						if (c)
 						{
-							const char* temp;
-							const char* category = decoded.packet.categoryId.name;
-							while ((temp = strstr(category, "::")) != NULL)
-							{
-								if (*temp)
-								{
-									category = temp + 2;
-								}
-								else
-								{
-									break;
-								}
-							}
 							c->id = decoded.packet.categoryId.id;
-							bb_strncpy(c->name, category, sizeof(c->name));
+							bb_strncpy(c->name, decoded.packet.categoryId.name, sizeof(c->name));
 						}
 						break;
 					}
@@ -526,18 +518,10 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 					case kBBPacketType_LogText_v2:
 					case kBBPacketType_LogText:
 					{
-						vfilter_data.recordedLog.packet = decoded;
-						vfilter_data.recordedLog.numLines = 0;
-						for (u32 i = 0; i < g_partialLogs.count; ++i)
+						if (process_file_data->log_packet_func)
 						{
-							const bb_decoded_packet_t* partial = g_partialLogs.data + i;
-							if (partial->header.threadId == decoded.header.threadId)
-							{
-								++vfilter_data.recordedLog.numLines;
-							}
+							(*process_file_data->log_packet_func)(&decoded, process_file_data);
 						}
-						queue_packet(&decoded, stdout, &vfilter_data);
-						vfilter_data.recordedLog.sessionLogIndex++;
 						break;
 					}
 					default:
@@ -548,7 +532,8 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 			}
 			else
 			{
-				fprintf(stderr, "Failed to decode packet from %s\n", g_pathToPrint);
+				fprintf(stderr, "Failed to decode packet from %s\n", process_file_data->source);
+				ret = kExitCode_Error_Decode;
 				done = true;
 			}
 
@@ -565,13 +550,48 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 		}
 
 		fclose(fp);
-		bba_free(g_partialLogs);
 		bba_free(g_categories);
 	}
 	else
 	{
-		fprintf(stderr, "Could not read %s\n", g_pathToPrint);
+		fprintf(stderr, "Could not read %s\n", process_file_data->source);
+		ret = kExitCode_Error_ReadSource;
 	}
+	return ret;
+}
+
+static void bbgrep_log_packet(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data)
+{
+	vfilter_data_t* vfilter_data = process_file_data->userdata;
+	vfilter_data->recordedLog.packet = *decoded;
+	vfilter_data->recordedLog.numLines = 0;
+	for (u32 i = 0; i < g_partialLogs.count; ++i)
+	{
+		const bb_decoded_packet_t* partial = g_partialLogs.data + i;
+		if (partial->header.threadId == decoded->header.threadId)
+		{
+			++vfilter_data->recordedLog.numLines;
+		}
+	}
+	queue_packet(decoded, stdout, vfilter_data);
+	vfilter_data->recordedLog.sessionLogIndex++;
+}
+
+static void bbgrep_file(const sb_t* path, const char* filter)
+{
+	vfilter_data_t vfilter_data = { BB_EMPTY_INITIALIZER };
+	vfilter_data.view.vfilter = view_filter_parse("unnamed", filter);
+	vfilter_data.view.config.filterActive = true;
+
+	g_pathToPrint = sb_get(path);
+
+	process_file_data_t process_file_data = { BB_EMPTY_INITIALIZER };
+
+	process_file_data.source = g_pathToPrint;
+	process_file_data.log_packet_func = &bbgrep_log_packet;
+	process_file_data.userdata = &vfilter_data;
+
+	process_file(&process_file_data);
 
 	g_pathToPrint = NULL;
 	vfilter_reset(&vfilter_data.view.vfilter);
@@ -684,6 +704,23 @@ static int bbgrep(const char* filter, sb_t* dirName, const char* pattern, b32 bR
 	sbs_reset(&dirs);
 
 	return 0;
+}
+
+typedef struct bboxtolog_userdata_s
+{
+	FILE* ofp;
+} bboxtolog_userdata_t;
+
+static void bboxtolog_tail_catchup(process_file_data_t* process_file_data)
+{
+	bboxtolog_userdata_t* bboxtolog_userdata = process_file_data->userdata;
+	print_queued(bboxtolog_userdata->ofp);
+}
+
+static void bboxtolog_log_packet(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data)
+{
+	bboxtolog_userdata_t* bboxtolog_userdata = process_file_data->userdata;
+	queue_packet(decoded, bboxtolog_userdata->ofp, NULL);
 }
 
 int main_loop(int argc, char** argv)
@@ -926,146 +963,26 @@ int main_loop(int argc, char** argv)
 
 	int ret = kExitCode_Success;
 
-	FILE* fp = fopen(source, "rb");
-	if (fp)
+	process_file_data_t process_file_data = { BB_EMPTY_INITIALIZER };
+	bboxtolog_userdata_t userdata = { BB_EMPTY_INITIALIZER };
+
+	process_file_data.source = source;
+	process_file_data.tail_catchup_func = &bboxtolog_tail_catchup;
+	process_file_data.log_packet_func = &bboxtolog_log_packet;
+	process_file_data.userdata = &userdata;
+	userdata.ofp = (target) ? fopen(target, "wt") : stdout;
+
+	if (userdata.ofp)
 	{
-		FILE* ofp = (target) ? fopen(target, "wt") : stdout;
-		if (ofp)
-		{
-
-			u32 recvCursor = 0;
-			u32 decodeCursor = 0;
-			b32 done = false;
-			while (!done)
-			{
-				if (recvCursor < sizeof(g_recvBuffer))
-				{
-					size_t bytesRead = fread(g_recvBuffer + recvCursor, 1, sizeof(g_recvBuffer) - recvCursor, fp);
-					if (bytesRead)
-					{
-						recvCursor += (u32)bytesRead;
-					}
-				}
-				const u32 krecvBufferSize = sizeof(g_recvBuffer);
-				const u32 kHalfrecvBufferBytes = krecvBufferSize / 2;
-				bb_decoded_packet_t decoded;
-				u32 nDecodableBytes32 = recvCursor - decodeCursor;
-				u16 nDecodableBytes = nDecodableBytes32 > 0xFFFF ? 0xFFFF : (u16)(nDecodableBytes32);
-				u8* cursor = g_recvBuffer + decodeCursor;
-				u16 nPacketBytes = (nDecodableBytes >= 3) ? (*cursor << 8) + (*(cursor + 1)) : 0;
-				if (nPacketBytes == 0 || nPacketBytes > nDecodableBytes)
-				{
-					if (g_program == kProgram_bbtail)
-					{
-						if (g_inTailCatchup)
-						{
-							print_queued(ofp);
-							g_inTailCatchup = false;
-						}
-					}
-
-					if (g_follow)
-					{
-						bb_sleep_ms(10);
-						continue;
-					}
-					else
-					{
-						done = true;
-						break;
-					}
-				}
-
-				if (bbpacket_deserialize(cursor + 2, nPacketBytes - 2, &decoded))
-				{
-					if (bbpacket_is_app_info_type(decoded.type))
-					{
-						g_initialTimestamp = decoded.packet.appInfo.initialTimestamp;
-						g_millisPerTick = decoded.packet.appInfo.millisPerTick;
-					}
-					else
-					{
-						BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBPacketType_Invalid' in switch of enum 'bb_packet_type_e' is not explicitly handled by a case label
-						switch (decoded.type)
-						{
-						case kBBPacketType_CategoryId:
-						{
-							category_t* c = bba_add(g_categories, 1);
-							if (c)
-							{
-								const char* temp;
-								const char* category = decoded.packet.categoryId.name;
-								while ((temp = strstr(category, "::")) != NULL)
-								{
-									if (*temp)
-									{
-										category = temp + 2;
-									}
-									else
-									{
-										break;
-									}
-								}
-								c->id = decoded.packet.categoryId.id;
-								bb_strncpy(c->name, category, sizeof(c->name));
-							}
-							break;
-						}
-						case kBBPacketType_LogTextPartial:
-						{
-							bba_push(g_partialLogs, decoded);
-							break;
-						}
-						case kBBPacketType_LogText_v1:
-						case kBBPacketType_LogText_v2:
-						case kBBPacketType_LogText:
-						{
-							queue_packet(&decoded, ofp, NULL);
-							break;
-						}
-						default:
-							break;
-						}
-						BB_WARNING_POP;
-					}
-				}
-				else
-				{
-					fprintf(stderr, "Failed to decode packet from %s\n", source);
-					ret = kExitCode_Error_Decode;
-					done = true;
-				}
-
-				decodeCursor += nPacketBytes;
-
-				// TODO: rather lame to keep resetting the buffer - this should be a circular buffer
-				if (decodeCursor >= kHalfrecvBufferBytes)
-				{
-					u32 nBytesRemaining = recvCursor - decodeCursor;
-					memmove(g_recvBuffer, g_recvBuffer + decodeCursor, nBytesRemaining);
-					decodeCursor = 0;
-					recvCursor = nBytesRemaining;
-				}
-			}
-
-			fclose(fp);
-			fclose(ofp);
-			bba_free(g_categories);
-		}
-		else
-		{
-			if (target)
-			{
-				fprintf(stderr, "Could not write to %s\n", target);
-			}
-			fclose(fp);
-			ret = kExitCode_Error_WriteTarget;
-		}
+		ret = process_file(&process_file_data);
 	}
 	else
 	{
-		fprintf(stderr, "Could not read %s\n", source);
-		ret = kExitCode_Error_ReadSource;
+		if (target)
+		{
+			fprintf(stderr, "Could not write to %s\n", target);
+		}
+		ret = kExitCode_Error_WriteTarget;
 	}
 
 	if (target)
