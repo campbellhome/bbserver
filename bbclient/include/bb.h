@@ -110,6 +110,7 @@ typedef enum
 	kBBLogLevel_Count
 } bb_log_level_e;
 const char* bb_get_log_level_name(bb_log_level_e logLevel, const char* defaultValue);
+bb_log_level_e bb_get_log_level_from_name(const char* name);
 
 typedef enum
 {

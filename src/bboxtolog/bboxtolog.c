@@ -7,6 +7,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 
 #include "bb.h"
 #include "bbclient/bb_array.h"
+#include "bbclient/bb_file.h"
 #include "bbclient/bb_malloc.h"
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
@@ -30,6 +31,10 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 
 #if !defined(BB_NO_SQLITE)
 #include <sqlite/wrap_sqlite3.h>
+#endif
+
+#if BB_USING(BB_COMPILER_MSVC)
+#include <locale.h>
 #endif
 
 BB_WARNING_DISABLE(5045);
@@ -91,6 +96,15 @@ static u32 g_numLines;
 static bb_log_level_e g_verbosity;
 static b32 g_printFilename;
 
+typedef enum plaintext_prefix_e
+{
+	kPlaintextPrefix_Auto,
+	kPlaintextPrefix_None,
+	kPlaintextPrefix_Unreal,
+	kPlaintextPrefix_Brackets,
+} plaintext_prefix_t;
+static plaintext_prefix_t s_plaintext_prefix;
+
 categories_t g_categories = { 0, 0, 0 };
 double g_millisPerTick = 1.0;
 u64 g_initialTimestamp = 0;
@@ -137,6 +151,28 @@ static inline const char* get_category(u32 categoryId)
 		}
 	}
 	return category;
+}
+
+static inline u32 find_or_add_category_by_name(const char* category)
+{
+	for (u32 i = 0; i < g_categories.count; ++i)
+	{
+		category_t* c = g_categories.data + i;
+		if (!bb_stricmp(c->name, category))
+		{
+			return c->id;
+		}
+	}
+
+	category_t* c = bba_add(g_categories, 1);
+	if (c)
+	{
+		c->id = g_categories.count;
+		bb_strncpy(c->name, category, sizeof(c->name));
+		return c->id;
+	}
+
+	return 0;
 }
 
 char* recorded_session_get_thread_name(recorded_session_t* session, u64 threadId)
@@ -434,7 +470,7 @@ typedef struct process_file_data_s
 	void* userdata;
 } process_file_data_t;
 
-static int process_file(process_file_data_t* process_file_data)
+static int process_bbox_file(process_file_data_t* process_file_data)
 {
 	int ret = kExitCode_Success;
 
@@ -558,6 +594,404 @@ static int process_file(process_file_data_t* process_file_data)
 		ret = kExitCode_Error_ReadSource;
 	}
 	return ret;
+}
+
+static void finalize_plaintext_log_packet(bb_decoded_packet_t* decoded, const char* lineStart, size_t lineSize)
+{
+	if (lineSize > 1)
+	{
+		if (lineStart[lineSize - 1] == '\r')
+		{
+			--lineSize;
+		}
+
+		if (s_plaintext_prefix == kPlaintextPrefix_Auto && *lineStart != '[')
+		{
+			s_plaintext_prefix = kPlaintextPrefix_None;
+		}
+
+		if (s_plaintext_prefix != kPlaintextPrefix_None)
+		{
+			// const char* original = lineStart;
+			const char* category = NULL;
+			while (lineStart[0] == '[')
+			{
+				// step past [ ] blocks
+				b32 valid = false;
+				const char* start = lineStart;
+				const char* end = start + 1;
+				while (end && end < lineStart + lineSize)
+				{
+					if (*end == ']')
+					{
+						valid = true;
+						break;
+					}
+					++end;
+				}
+
+				if (valid)
+				{
+					const char* keyword = va("%.*s", end - start - 1, start + 1);
+					bb_log_level_e logLevel = bb_get_log_level_from_name(keyword);
+					if (logLevel == kBBLogLevel_Count)
+					{
+						category = keyword;
+					}
+					else
+					{
+						decoded->packet.logText.level = logLevel;
+					}
+
+					size_t len = end - start + 1;
+					lineStart += len;
+					lineSize -= len;
+				}
+			}
+
+			if (category)
+			{
+				++lineStart;
+				--lineSize;
+
+				if (s_plaintext_prefix == kPlaintextPrefix_Auto)
+				{
+					if ((*category >= 'a' && *category <= 'z') || (*category >= 'A' && *category <= 'Z'))
+					{
+						s_plaintext_prefix = kPlaintextPrefix_Brackets;
+					}
+					else
+					{
+						s_plaintext_prefix = kPlaintextPrefix_Unreal;
+					}
+				}
+
+				if (s_plaintext_prefix == kPlaintextPrefix_Brackets)
+				{
+					decoded->packet.logText.categoryId = find_or_add_category_by_name(category);
+				}
+				else if (s_plaintext_prefix == kPlaintextPrefix_Unreal)
+				{
+					const char* start = lineStart;
+					const char* end = start;
+					while (end && end < lineStart + lineSize)
+					{
+						if (*end == ':')
+						{
+							category = va("%.*s", end - start, start);
+							decoded->packet.logText.categoryId = find_or_add_category_by_name(category);
+							size_t len = (end - start) + 2;
+							lineStart += len;
+							lineSize -= len;
+							break;
+						}
+						else if ((*end >= 'a' && *end <= 'z') || (*end >= 'A' && *end <= 'Z'))
+						{
+							++end;
+						}
+						else
+						{
+							// not a "Category:" block
+							break;
+						}
+					}
+
+					if (decoded->packet.logText.categoryId > 0)
+					{
+						start = lineStart;
+						end = start;
+						while (end && end < lineStart + lineSize)
+						{
+							if (*end == ':')
+							{
+								category = va("%.*s", end - start, start);
+								bb_log_level_e logLevel = bb_get_log_level_from_name(category);
+								if (logLevel != kBBLogLevel_Count)
+								{
+									decoded->packet.logText.level = logLevel;
+								}
+								size_t len = (end - start) + 2;
+								lineStart += len;
+								lineSize -= len;
+								break;
+							}
+							else if ((*end >= 'a' && *end <= 'z') || (*end >= 'A' && *end <= 'Z'))
+							{
+								++end;
+							}
+							else
+							{
+								// not a "Verbosity:" block
+								break;
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				if (s_plaintext_prefix == kPlaintextPrefix_Auto)
+				{
+					s_plaintext_prefix = kPlaintextPrefix_None;
+				}
+			}
+		}
+
+		bb_strncpy(decoded->packet.logText.text, lineStart, lineSize);
+	}
+}
+
+static int process_plaintext_file(process_file_data_t* process_file_data)
+{
+#if BB_USING(BB_COMPILER_MSVC)
+	_locale_t utf8_locale = _create_locale(LC_ALL, ".utf8");
+#endif
+	static u8 recvBuffer[32768 + 1];
+	static char mbsBuffer[32768 + 1];
+	memset(recvBuffer, 0, sizeof(recvBuffer));
+	memset(mbsBuffer, 0, sizeof(mbsBuffer));
+
+	b32 bEncodingTested = false;
+	b32 bUTF16 = false;
+	b32 bByteSwap = false;
+
+	bb_file_handle_t fp = bb_file_open_for_read(process_file_data->source);
+	if (fp != BB_INVALID_FILE_HANDLE)
+	{
+		// recorded_session_queue_log_appinfo(session, filename);
+
+		u32 recvCursor = 0;
+		u32 decodeCursor = 0;
+		u32 fileSize = 0;
+		while (fp != BB_INVALID_FILE_HANDLE)
+		{
+			b32 done = false;
+			u32 bytesToRead = sizeof(recvBuffer) - recvCursor - 2;
+			if (bytesToRead % 2)
+			{
+				--bytesToRead;
+			}
+			u32 bytesRead = bb_file_read(fp, recvBuffer, bytesToRead);
+			recvBuffer[bytesRead] = '\0';
+			recvBuffer[bytesRead + 1] = '\0';
+
+			if (!bEncodingTested)
+			{
+				bEncodingTested = true;
+				if (bytesRead >= 2)
+				{
+					if ((recvBuffer[0] == 0xFF && recvBuffer[1] == 0xFE) || (recvBuffer[0] != 0 && recvBuffer[1] == 0))
+					{
+						bUTF16 = true;
+					}
+					else if ((recvBuffer[0] == 0xFE && recvBuffer[1] == 0xFF) || (recvBuffer[0] == 0 && recvBuffer[1] != 0))
+					{
+						bUTF16 = true;
+						bByteSwap = true;
+					}
+				}
+			}
+
+			if (bByteSwap)
+			{
+				for (u32 index = 0; index < bytesRead; index += 2)
+				{
+					u8 tmp = recvBuffer[index];
+					recvBuffer[index] = recvBuffer[index + 1];
+					recvBuffer[index + 1] = tmp;
+				}
+			}
+
+			if (bUTF16)
+			{
+				size_t mbsBufferSize = sizeof(mbsBuffer) - 1;
+				mbsBuffer[0] = '\0';
+#if BB_USING(BB_COMPILER_MSVC)
+				size_t numCharsConverted;
+				errno_t ret = _wcstombs_s_l(&numCharsConverted, mbsBuffer, mbsBufferSize, (const wchar_t*)recvBuffer, _TRUNCATE, utf8_locale);
+#else
+				int ret = wcstombs(mbsBuffer, (const wchar_t*)recvBuffer, mbsBufferSize);
+				mbsBuffer[mbsBufferSize - 1] = '\0';
+				size_t numCharsConverted = ret + 1;
+#endif
+				if (ret)
+				{
+					break;
+				}
+
+				mbsBuffer[numCharsConverted] = '\0';
+				if (numCharsConverted > 0)
+				{
+					if (numCharsConverted - 1 >= sizeof(recvBuffer) + recvCursor)
+					{
+						break;
+					}
+					memcpy(recvBuffer + recvCursor, mbsBuffer, numCharsConverted);
+					bytesRead = (u32)numCharsConverted - 1;
+				}
+			}
+			else
+			{
+				memcpy(recvBuffer + recvCursor, recvBuffer, bytesRead);
+			}
+
+			if (bytesRead)
+			{
+				recvCursor += bytesRead;
+			}
+			else
+			{
+				u32 oldFileSize = fileSize;
+				fileSize = bb_file_size(fp);
+				if (fileSize < oldFileSize)
+				{
+					BB_LOG("Recorder::Read::Start", "restarting read from %s\n", process_file_data->source);
+					bb_file_close(fp);
+					fp = bb_file_open_for_read(process_file_data->source);
+					recvCursor = 0;
+					decodeCursor = 0;
+					// bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
+					// decoded.type = kBBPacketType_Restart;
+					// recorded_session_queue(session, &decoded);
+					// recorded_session_queue_log_appinfo(session, filename);
+					continue;
+				}
+				else
+				{
+					if (!bytesRead)
+					{
+						if (g_program == kProgram_bbtail)
+						{
+							if (g_inTailCatchup)
+							{
+								if (process_file_data->tail_catchup_func)
+								{
+									(*process_file_data->tail_catchup_func)(process_file_data);
+								}
+								g_inTailCatchup = false;
+							}
+						}
+					}
+
+					if (g_follow)
+					{
+						bb_sleep_ms(100);
+					}
+					else
+					{
+						done = true;
+						bb_file_close(fp);
+						fp = BB_INVALID_FILE_HANDLE;
+					}
+				}
+			}
+
+			while (!done)
+			{
+				const u32 krecvBufferSize = sizeof(recvBuffer);
+				const u32 kHalfrecvBufferBytes = krecvBufferSize / 2;
+				bb_decoded_packet_t decoded;
+				u16 nDecodableBytes = (u16)(recvCursor - decodeCursor);
+				if (nDecodableBytes < 1)
+				{
+					done = true;
+					break;
+				}
+
+				const char* lineEnd = NULL;
+				span_t cursor = { BB_EMPTY_INITIALIZER };
+				cursor.start = (const char*)(recvBuffer + decodeCursor);
+				cursor.end = (const char*)(recvBuffer + recvCursor);
+				for (span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor))
+				{
+					if (line.end && (*line.end == '\n' || !strncmp(line.end, "\r\n", 2)))
+					{
+						if (*line.end == '\r')
+						{
+							++line.end;
+						}
+						size_t lineLen = line.end - line.start;
+						size_t maxLineLen = kBBSize_LogText - 1;
+						while (lineLen > maxLineLen)
+						{
+							memset(&decoded, 0, sizeof(decoded));
+							decoded.type = kBBPacketType_LogTextPartial;
+							decoded.header.timestamp = bb_current_ticks();
+							decoded.header.threadId = 0;
+							decoded.header.fileId = 0;
+							decoded.header.line = 0;
+							decoded.packet.logText.level = kBBLogLevel_Log;
+							finalize_plaintext_log_packet(&decoded, line.start, sizeof(decoded.packet.logText.text));
+							bba_push(g_partialLogs, decoded);
+
+							line.start += maxLineLen;
+							lineLen -= maxLineLen;
+						}
+
+						memset(&decoded, 0, sizeof(decoded));
+						decoded.type = kBBPacketType_LogText;
+						decoded.header.timestamp = bb_current_ticks();
+						decoded.header.threadId = 0;
+						decoded.header.fileId = 0;
+						decoded.header.line = 0;
+						decoded.packet.logText.level = kBBLogLevel_Log;
+						finalize_plaintext_log_packet(&decoded, line.start, lineLen + 1);
+						if (process_file_data->log_packet_func)
+						{
+							(*process_file_data->log_packet_func)(&decoded, process_file_data);
+						}
+
+						lineEnd = line.end + 1;
+					}
+				}
+
+				if (lineEnd)
+				{
+					u32 nConsumedBytes = (u32)(lineEnd - (const char*)(recvBuffer + decodeCursor));
+					decodeCursor += nConsumedBytes;
+
+					// TODO: rather lame to keep resetting the buffer - this should be a circular buffer
+					if (decodeCursor >= kHalfrecvBufferBytes)
+					{
+						u16 nBytesRemaining = (u16)(recvCursor - decodeCursor);
+						memmove(recvBuffer, recvBuffer + decodeCursor, nBytesRemaining);
+						decodeCursor = 0;
+						recvCursor = nBytesRemaining;
+					}
+				}
+				else
+				{
+					done = true;
+				}
+			}
+		}
+
+		if (fp != BB_INVALID_FILE_HANDLE)
+		{
+			bb_file_close(fp);
+		}
+	}
+
+#if BB_USING(BB_COMPILER_MSVC)
+	_free_locale(utf8_locale);
+#endif
+	bba_free(g_categories);
+
+	return process_file_data != 0;
+}
+
+static int process_file(process_file_data_t* process_file_data)
+{
+	const char* ext = strrchr(process_file_data->source, '.');
+	b32 plaintext = !ext || bb_stricmp(ext, ".bbox");
+	if (plaintext)
+	{
+		return process_plaintext_file(process_file_data);
+	}
+	else
+	{
+		return process_bbox_file(process_file_data);
+	}
 }
 
 static void bbgrep_log_packet(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data)
@@ -859,6 +1293,18 @@ int main_loop(int argc, char** argv)
 			{
 				g_printFilename = true;
 			}
+			else if (!bb_stricmp(arg, "--plaintext-prefix=unreal"))
+			{
+				s_plaintext_prefix = kPlaintextPrefix_Unreal;
+			}
+			else if (!bb_stricmp(arg, "--plaintext-prefix=brackets"))
+			{
+				s_plaintext_prefix = kPlaintextPrefix_Brackets;
+			}
+			else if (!bb_stricmp(arg, "--plaintext-prefix=none"))
+			{
+				s_plaintext_prefix = kPlaintextPrefix_None;
+			}
 			else
 			{
 				return usage();
@@ -913,15 +1359,18 @@ int main_loop(int argc, char** argv)
 	{
 		const char* filename = "*";
 		sb_t dir = sb_from_c_string(target);
-		const char* ext = bb_stristr(sb_get(&dir), ".bbox");
-		if (ext)
+
+		DIR* d = opendir(target);
+		b32 isdir = d != NULL;
+		if (d)
 		{
-			ptrdiff_t offset = ext - dir.data;
-			if (offset == dir.count - 6)
-			{
-				filename = path_get_filename(target);
-				path_remove_filename(&dir);
-			}
+			closedir(d);
+		}
+
+		if (!isdir)
+		{
+			filename = path_get_filename(target);
+			path_remove_filename(&dir);
 		}
 		if (sb_len(&dir) == 0)
 		{

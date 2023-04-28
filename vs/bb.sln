@@ -43,6 +43,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbclient_example_wchar", ".
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mc_imgui_example", "..\mc_imgui\vs\mc_imgui_example.vcxproj", "{3C7E2D15-F723-4C73-AF12-C87A066522EE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bb_build_linux", "bb_build_linux.vcxproj", "{13BFF978-7782-4379-B613-DBB91E2FC55D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6A23A729-4708-4E3E-AFF1-AFBC5B0CA206} = {6A23A729-4708-4E3E-AFF1-AFBC5B0CA206}
+		{383FD59A-3CD9-4ECC-9395-6EE453A114FA} = {383FD59A-3CD9-4ECC-9395-6EE453A114FA}
+		{766B8754-81EE-4880-91CE-5DEAF459205F} = {766B8754-81EE-4880-91CE-5DEAF459205F}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -161,6 +168,18 @@ Global
 		{3C7E2D15-F723-4C73-AF12-C87A066522EE}.ReleaseASanClang|x64.Build.0 = ReleaseASan|x64
 		{3C7E2D15-F723-4C73-AF12-C87A066522EE}.ReleaseClang|x64.ActiveCfg = ReleaseASan|x64
 		{3C7E2D15-F723-4C73-AF12-C87A066522EE}.ReleaseClang|x64.Build.0 = ReleaseASan|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.Debug|x64.ActiveCfg = Debug|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.Debug|x64.Build.0 = Debug|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.DebugClang|x64.ActiveCfg = Debug|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.DebugClang|x64.Build.0 = Debug|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.Release|x64.ActiveCfg = Release|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.Release|x64.Build.0 = Release|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.ReleaseASan|x64.ActiveCfg = ReleaseASan|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.ReleaseASan|x64.Build.0 = ReleaseASan|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.ReleaseASanClang|x64.ActiveCfg = ReleaseASan|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.ReleaseASanClang|x64.Build.0 = ReleaseASan|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.ReleaseClang|x64.ActiveCfg = ReleaseASan|x64
+		{13BFF978-7782-4379-B613-DBB91E2FC55D}.ReleaseClang|x64.Build.0 = ReleaseASan|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

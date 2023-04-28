@@ -314,6 +314,18 @@ const char* bb_get_log_level_name(bb_log_level_e logLevel, const char* defaultVa
 	return defaultValue;
 }
 
+bb_log_level_e bb_get_log_level_from_name(const char* name)
+{
+	for (u32 i = 0; i < kBBLogLevel_Count; ++i)
+	{
+		if (bb_stricmp(s_bbLogLevelNames[i], name) == 0)
+		{
+			return (bb_log_level_e)i;
+		}
+	}
+	return kBBLogLevel_Count;
+}
+
 bb_platform_e bb_platform(void)
 {
 #if BB_USING(BB_PLATFORM_WINDOWS)

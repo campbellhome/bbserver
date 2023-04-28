@@ -128,6 +128,11 @@
     <PreBuildEvent>
       <Command>..\mc_common\bin\mc_common_preproc_$(Configuration)_$(PlatformToolset)\mc_common_preproc.exe -config=..\src\bboxtolog\bboxtolog_preproc.json</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy /y $(OutDir)$(TargetName).exe $(OutDir)bbtail.exe
+copy /y $(OutDir)$(TargetName).exe $(OutDir)bbcat.exe
+copy /y $(OutDir)$(TargetName).exe $(OutDir)bbgrep.exe</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\bboxtolog\bboxtolog.c" />
