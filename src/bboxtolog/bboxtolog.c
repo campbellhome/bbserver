@@ -991,14 +991,15 @@ static int process_file(process_file_data_t* process_file_data)
 {
 	const char* ext = strrchr(process_file_data->source, '.');
 	b32 plaintext = !ext || bb_stricmp(ext, ".bbox");
-	if (plaintext)
+	int ret = (plaintext) ? process_plaintext_file(process_file_data) : process_bbox_file(process_file_data);
+
+	for (u32 i = 0; i < g_queuedPackets.count; ++i)
 	{
-		return process_plaintext_file(process_file_data);
+		reset_logPacket_t(g_queuedPackets.data + i);
 	}
-	else
-	{
-		return process_bbox_file(process_file_data);
-	}
+	bba_free(g_queuedPackets);
+
+	return ret;
 }
 
 static void bbgrep_log_packet(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data)
@@ -1397,13 +1398,27 @@ int main_loop(int argc, char** argv)
 	}
 
 	size_t sourceLen = strlen(source);
-	if (sourceLen < 6 || bb_stricmp(source + sourceLen - 5, ".bbox"))
+	if (g_program == kProgram_bboxtolog)
 	{
-		if (target)
+		if (sourceLen < 6 || bb_stricmp(source + sourceLen - 5, ".bbox"))
 		{
-			bb_free(target);
+			if (target)
+			{
+				bb_free(target);
+			}
+			return usage();
 		}
-		return usage();
+	}
+	else
+	{
+		if (sourceLen < 1)
+		{
+			if (target)
+			{
+				bb_free(target);
+			}
+			return usage();
+		}
 	}
 
 	if (!target && (g_program == kProgram_bboxtolog))
