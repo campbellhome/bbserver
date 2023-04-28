@@ -647,12 +647,19 @@ static void finalize_plaintext_log_packet(bb_decoded_packet_t* decoded, const ch
 					lineStart += len;
 					lineSize -= len;
 				}
+				else
+				{
+					break;
+				}
 			}
 
 			if (category)
 			{
-				++lineStart;
-				--lineSize;
+				if (*category == ' ')
+				{
+					++lineStart;
+					--lineSize;
+				}
 
 				if (s_plaintext_prefix == kPlaintextPrefix_Auto)
 				{
