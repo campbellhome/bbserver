@@ -434,6 +434,12 @@ void BBServer_MainMenuBar(void)
 			}
 			if (ImGui::BeginMenu("Help"))
 			{
+#if defined(BB_VERSION_STRING)
+				if (sb_len(&g_site_config.updates.updateManifestDir) == 0)
+				{
+					ImGui::MenuItem(va("%s", BB_VERSION_STRING), nullptr, false, false);
+				}
+#endif
 				if (ImGui::BeginMenu("ImGui"))
 				{
 					ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
