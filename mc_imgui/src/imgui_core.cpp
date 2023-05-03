@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #include "imgui_core.h"
@@ -446,7 +446,7 @@ extern "C" void Update_Menu(void)
 			}
 			ImGui::EndMenu();
 		}
-		if (Update_GetData()->showUpdateManagement && *currentVersion && !Update_IsStableVersion(currentVersion) != 0)
+		if (Update_GetData()->showUpdateManagement && *currentVersion && !Update_IsStableVersion(currentVersion))
 		{
 			if (ImGui::MenuItem(va("Promote %s to stable version", currentVersion)))
 			{

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bbserver_update.h"
@@ -22,6 +22,7 @@
 #include "message_queue.h"
 #include "recorded_session.h"
 #include "recordings.h"
+#include "site_config.h"
 #include "tasks.h"
 #include "theme_config.h"
 #include "ui_config.h"
@@ -419,12 +420,15 @@ void BBServer_MainMenuBar(void)
 					}
 					ImGui::EndMenu();
 				}
-				if (ImGui::BeginMenu("DEBUG Updates"))
+				if (sb_len(&g_site_config.updates.updateManifestDir) > 0)
 				{
-					ImGui::MenuItem("Wait for debugger", nullptr, &g_config.updateWaitForDebugger);
-					ImGui::MenuItem("Pause after successful update", nullptr, &g_config.updatePauseAfterSuccessfulUpdate);
-					ImGui::MenuItem("Pause after failed update", nullptr, &g_config.updatePauseAfterFailedUpdate);
-					ImGui::EndMenu();
+					if (ImGui::BeginMenu("DEBUG Updates"))
+					{
+						ImGui::MenuItem("Wait for debugger", nullptr, &g_config.updateWaitForDebugger);
+						ImGui::MenuItem("Pause after successful update", nullptr, &g_config.updatePauseAfterSuccessfulUpdate);
+						ImGui::MenuItem("Pause after failed update", nullptr, &g_config.updatePauseAfterFailedUpdate);
+						ImGui::EndMenu();
+					}
 				}
 				ImGui::EndMenu();
 			}
@@ -477,7 +481,10 @@ void BBServer_MainMenuBar(void)
 				ImGui::EndMenu();
 			}
 		}
-		Update_Menu();
+		if (sb_len(&g_site_config.updates.updateManifestDir) > 0)
+		{
+			Update_Menu();
+		}
 
 		if (s_failedDiscoveryStartup)
 		{
