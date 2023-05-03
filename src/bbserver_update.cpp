@@ -434,6 +434,14 @@ void BBServer_MainMenuBar(void)
 			}
 			if (ImGui::BeginMenu("Help"))
 			{
+				if (sb_len(&g_site_config.updates.updateManifestDir) == 0)
+				{
+					const char* currentVersion = Update_GetCurrentVersion();
+					if (currentVersion && *currentVersion)
+					{
+						ImGui::MenuItem(va("version %s", currentVersion), nullptr, false, false);
+					}
+				}
 				if (ImGui::BeginMenu("ImGui"))
 				{
 					ImGui::MenuItem("Demo", nullptr, &s_showImguiDemo);
