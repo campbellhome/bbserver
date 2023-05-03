@@ -437,7 +437,11 @@ void BBServer_MainMenuBar(void)
 #if defined(BB_VERSION_STRING)
 				if (sb_len(&g_site_config.updates.updateManifestDir) == 0)
 				{
-					ImGui::MenuItem(va("%s", BB_VERSION_STRING), nullptr, false, false);
+					const char* versionString = va("%s", BB_VERSION_STRING);
+					if (versionString && *versionString)
+					{
+						ImGui::MenuItem(versionString, nullptr, false, false);
+					}
 				}
 #endif
 				if (ImGui::BeginMenu("ImGui"))
