@@ -35,6 +35,9 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData* Callb
 		view->consoleInputTime = bb_current_time_ms();
 		if (CallbackData->EventChar == '`')
 			return 1;
+
+		view->consolePopupOpen = true;
+		view->consoleMode = kConsoleMode_Autocomplete;
 	}
 
 	if (CallbackData->EventFlag & ImGuiInputTextFlags_CallbackCompletion)
@@ -44,41 +47,45 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData* Callb
 
 	if (CallbackData->EventFlag & ImGuiInputTextFlags_CallbackHistory)
 	{
-		if (view->consoleHistory.entries.count)
+		view->consolePopupOpen = true;
+		if (view->consoleMode == kConsoleMode_History)
 		{
-			view->consoleHistoryTime = bb_current_time_ms();
-			u32 prevHistoryPos = view->consoleHistory.pos;
-			if (CallbackData->EventKey == ImGuiKey_UpArrow)
+			if (view->consoleHistory.entries.count)
 			{
-				if (view->consoleHistory.pos == ~0U)
+				view->consoleHistoryTime = bb_current_time_ms();
+				u32 prevHistoryPos = view->consoleHistory.pos;
+				if (CallbackData->EventKey == ImGuiKey_UpArrow)
 				{
-					view->consoleHistory.pos = view->consoleHistory.entries.count - 1;
-				}
-				else if (view->consoleHistory.pos)
-				{
-					--view->consoleHistory.pos;
-				}
-			}
-			else if (CallbackData->EventKey == ImGuiKey_DownArrow)
-			{
-				if (view->consoleHistory.pos != ~0U)
-				{
-					++view->consoleHistory.pos;
-					if (view->consoleHistory.pos >= view->consoleHistory.entries.count)
+					if (view->consoleHistory.pos == ~0U)
 					{
-						view->consoleHistory.pos = ~0U;
+						view->consoleHistory.pos = view->consoleHistory.entries.count - 1;
+					}
+					else if (view->consoleHistory.pos)
+					{
+						--view->consoleHistory.pos;
 					}
 				}
-			}
-			if (prevHistoryPos != view->consoleHistory.pos)
-			{
-				const char* command = (view->consoleHistory.pos == ~0U) ? "" : sb_get(&view->consoleHistory.entries.data[view->consoleHistory.pos].command);
-				int len = (int)bb_strncpy(CallbackData->Buf, command, (size_t)CallbackData->BufSize);
-				CallbackData->CursorPos = len;
-				CallbackData->SelectionStart = len;
-				CallbackData->SelectionEnd = len;
-				CallbackData->BufTextLen = len;
-				CallbackData->BufDirty = true;
+				else if (CallbackData->EventKey == ImGuiKey_DownArrow)
+				{
+					if (view->consoleHistory.pos != ~0U)
+					{
+						++view->consoleHistory.pos;
+						if (view->consoleHistory.pos >= view->consoleHistory.entries.count)
+						{
+							view->consoleHistory.pos = ~0U;
+						}
+					}
+				}
+				if (prevHistoryPos != view->consoleHistory.pos)
+				{
+					const char* command = (view->consoleHistory.pos == ~0U) ? "" : sb_get(&view->consoleHistory.entries.data[view->consoleHistory.pos].command);
+					int len = (int)bb_strncpy(CallbackData->Buf, command, (size_t)CallbackData->BufSize);
+					CallbackData->CursorPos = len;
+					CallbackData->SelectionStart = len;
+					CallbackData->SelectionEnd = len;
+					CallbackData->BufTextLen = len;
+					CallbackData->BufDirty = true;
+				}
 			}
 		}
 	}
@@ -179,6 +186,12 @@ static void view_console_command_exec(view_t* view, const char* filepath)
 	fileData_reset(&fileData);
 }
 
+void UIRecordedView_Console_ClosePopup(view_t *view)
+{
+	view->consolePopupOpen = false;
+	view->consoleMode = kConsoleMode_History;
+}
+
 static void UIRecordedView_Console_Dispatch(view_t* view)
 {
 	bool consoleAvailable = (view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0;
@@ -201,6 +214,7 @@ static void UIRecordedView_Console_Dispatch(view_t* view)
 			}
 		}
 	}
+	UIRecordedView_Console_ClosePopup(view);
 }
 
 void UIRecordedView_Console(view_t* view, bool bHasFocus)
@@ -213,6 +227,7 @@ void UIRecordedView_Console(view_t* view, bool bHasFocus)
 		ImGui::SameLine();
 		if (bHasFocus && ImGui::IsKeyPressed(ImGuiKey_GraveAccent, false))
 		{
+			UIRecordedView_Console_ClosePopup(view);
 			if (view->consoleInputActive)
 			{
 				// TODO: remove input focus here
@@ -277,7 +292,7 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 		return;
 	}
 
-	if (view->consoleInputFocused && view->consoleInputActive)
+	if (view->consoleInputFocused && view->consoleInputActive && view->consolePopupOpen)
 	{
 		ImGui::OpenPopup("###ConsolePopup", ImGuiPopupFlags_None);
 
@@ -299,7 +314,11 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 	}
 
 	u32 numLines = 0;
-	if (view->consoleInputTime >= view->consoleHistoryTime)
+	if (view->consoleMode == kConsoleMode_History)
+	{
+		numLines = view->consoleHistory.entries.count;
+	}
+	else
 	{
 		if (sb_len(&view->consoleInput) > 0)
 		{
@@ -312,10 +331,6 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 				}
 			}
 		}
-	}
-	else
-	{
-		numLines = view->consoleHistory.entries.count;
 	}
 	if (!numLines)
 	{
@@ -331,7 +346,8 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 
 	const ImGuiStyle& style = ImGui::GetStyle();
 
-	float popupHeight = ImGui::GetTextLineHeightWithSpacing() * (float)numLines + style.ItemSpacing.y * 3;
+	// reserve space for an extra line (Mode: History etc)
+	float popupHeight = ImGui::GetTextLineHeightWithSpacing() * (float)(numLines + 1) + style.ItemSpacing.y * 3;
 	ImVec2 contentRegionAvail;
 	contentRegionAvail.x = ImGui::GetContentRegionAvail().x - cursorPos.x - 10.0f;
 	contentRegionAvail.y = cursorPos.y - ImGui::GetFrameHeightWithSpacing();
@@ -345,6 +361,7 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 		if (ImGui::IsKeyPressed(ImGuiKey_Escape))
 		{
 			ImGui::CloseCurrentPopup();
+			UIRecordedView_Console_ClosePopup(view);
 		}
 		bool isPopupFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 		if (!isPopupFocused && !view->consoleInputFocused)
@@ -352,8 +369,10 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 			ImGui::CloseCurrentPopup();
 		}
 
+		ImGui::TextDisabled("Mode: %s", view->consoleMode == kConsoleMode_History ? "History" : "Autocomplete");
+
 		const char* selected = nullptr;
-		if (view->consoleHistoryTime >= view->consoleInputTime)
+		if (view->consoleMode == kConsoleMode_History)
 		{
 			for (u32 i = 0; i < view->consoleHistory.entries.count; ++i)
 			{

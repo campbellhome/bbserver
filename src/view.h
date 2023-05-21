@@ -304,6 +304,12 @@ extern const char* g_view_column_long_display_names[];
 extern const char* g_view_column_display_names[];
 extern const char* g_view_column_config_names[];
 
+typedef enum
+{
+	kConsoleMode_History,
+	kConsoleMode_Autocomplete,
+} view_console_mode;
+
 typedef struct view_column_s
 {
 	b32 visible;
@@ -365,6 +371,8 @@ typedef struct view_s
 	b8 autoClose;
 	b8 consoleInputFocused;
 	b8 consoleInputActive;
+	b8 consolePopupOpen;
+	view_console_mode consoleMode;
 	b8 spansActive;
 	b8 changedNonFavoriteColumnVisibility;
 	b8 tiled;
@@ -374,6 +382,7 @@ typedef struct view_s
 	s8 redockCount;
 	b8 filterPopupOpen;
 	b8 filterContextPopupOpen;
+	u8 pad[3];
 } view_t;
 
 void view_init(view_t* view, recorded_session_t* session, b8 autoClose);
