@@ -43,6 +43,30 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData* Callb
 	if (CallbackData->EventFlag & ImGuiInputTextFlags_CallbackCompletion)
 	{
 		view->consoleInputTime = bb_current_time_ms();
+		const char* command = nullptr;
+		if (view->consoleMode == kConsoleMode_History)
+		{
+			if (view->consoleHistory.pos != ~0u)
+			{
+				command = sb_get(&view->consoleHistory.entries.data[view->consoleHistory.pos].command);
+			}
+		}
+		else
+		{
+			if (view->consoleAutocompleteIndex != ~0u && view->consoleAutocompleteIndex < view->session->consoleAutocomplete.count)
+			{
+				command = view->session->consoleAutocomplete.data[view->consoleAutocompleteIndex].text;
+			}
+		}
+		if (command && *command)
+		{
+			int len = (int)bb_strncpy(CallbackData->Buf, command, (size_t)CallbackData->BufSize);
+			CallbackData->CursorPos = len;
+			CallbackData->SelectionStart = len;
+			CallbackData->SelectionEnd = len;
+			CallbackData->BufTextLen = len;
+			CallbackData->BufDirty = true;
+		}
 	}
 
 	if (CallbackData->EventFlag & ImGuiInputTextFlags_CallbackHistory)
@@ -50,41 +74,63 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData* Callb
 		view->consolePopupOpen = true;
 		if (view->consoleMode == kConsoleMode_History)
 		{
-			if (view->consoleHistory.entries.count)
+			if (view->consoleHistory.entries.count > 0)
 			{
 				view->consoleHistoryTime = bb_current_time_ms();
-				u32 prevHistoryPos = view->consoleHistory.pos;
 				if (CallbackData->EventKey == ImGuiKey_UpArrow)
 				{
-					if (view->consoleHistory.pos == ~0U)
+					if (view->consoleHistory.pos == ~0U || view->consoleHistory.pos == 0)
 					{
 						view->consoleHistory.pos = view->consoleHistory.entries.count - 1;
 					}
-					else if (view->consoleHistory.pos)
+					else
 					{
 						--view->consoleHistory.pos;
 					}
 				}
 				else if (CallbackData->EventKey == ImGuiKey_DownArrow)
 				{
-					if (view->consoleHistory.pos != ~0U)
+					if (view->consoleHistory.pos == ~0U)
+					{
+						view->consoleHistory.pos = 0u;
+					}
+					else
 					{
 						++view->consoleHistory.pos;
 						if (view->consoleHistory.pos >= view->consoleHistory.entries.count)
 						{
-							view->consoleHistory.pos = ~0U;
+							view->consoleHistory.pos = 0U;
 						}
 					}
 				}
-				if (prevHistoryPos != view->consoleHistory.pos)
+			}
+		}
+		else if (view->session->consoleAutocomplete.count > 0)
+		{
+			if (CallbackData->EventKey == ImGuiKey_UpArrow)
+			{
+				if (view->consoleAutocompleteIndex == ~0U || view->consoleAutocompleteIndex == 0)
 				{
-					const char* command = (view->consoleHistory.pos == ~0U) ? "" : sb_get(&view->consoleHistory.entries.data[view->consoleHistory.pos].command);
-					int len = (int)bb_strncpy(CallbackData->Buf, command, (size_t)CallbackData->BufSize);
-					CallbackData->CursorPos = len;
-					CallbackData->SelectionStart = len;
-					CallbackData->SelectionEnd = len;
-					CallbackData->BufTextLen = len;
-					CallbackData->BufDirty = true;
+					view->consoleAutocompleteIndex = view->session->consoleAutocomplete.count - 1;
+				}
+				else
+				{
+					--view->consoleAutocompleteIndex;
+				}
+			}
+			else if (CallbackData->EventKey == ImGuiKey_DownArrow)
+			{
+				if (view->consoleAutocompleteIndex == ~0U)
+				{
+					view->consoleAutocompleteIndex = 0u;
+				}
+				else
+				{
+					++view->consoleAutocompleteIndex;
+					if (view->consoleAutocompleteIndex >= view->session->consoleAutocomplete.count)
+					{
+						view->consoleAutocompleteIndex = 0u;
+					}
 				}
 			}
 		}
@@ -190,6 +236,8 @@ void UIRecordedView_Console_ClosePopup(view_t *view)
 {
 	view->consolePopupOpen = false;
 	view->consoleMode = kConsoleMode_History;
+	view->consoleAutocompleteIndex = ~0u;
+	view->consoleAutocompleteId = 0u;
 }
 
 static void UIRecordedView_Console_Dispatch(view_t* view)
@@ -313,6 +361,12 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 		}
 	}
 
+	if (view->consoleAutocompleteId != view->session->consoleAutocomplete.id)
+	{
+		view->consoleAutocompleteId = view->session->consoleAutocomplete.id;
+		view->consoleAutocompleteIndex = ~0u;
+	}
+
 	u32 numLines = 0;
 	if (view->consoleMode == kConsoleMode_History)
 	{
@@ -356,7 +410,7 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 
 	ImGui::SetNextWindowPos(ImVec2(cursorScreenPos.x, cursorScreenPos.y - ImGui::GetFrameHeightWithSpacing() - popupSize.y), ImGuiCond_Always);
 	ImGuiCond filterPopupFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing;
-	if (ImGui::BeginPopup("###ConsolePopup", filterPopupFlags))
+	if (view->consolePopupOpen && ImGui::BeginPopup("###ConsolePopup", filterPopupFlags))
 	{
 		if (ImGui::IsKeyPressed(ImGuiKey_Escape))
 		{
@@ -378,7 +432,7 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 			{
 				view_console_history_entry_t* entry = view->consoleHistory.entries.data + i;
 				const char* entryCommand = sb_get(&entry->command);
-				if (ImGui::Selectable(entryCommand))
+				if (ImGui::Selectable(entryCommand, view->consoleHistory.pos == i))
 				{
 					selected = entryCommand;
 				}
@@ -391,7 +445,7 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 				const bb_packet_console_autocomplete_response_entry_t* entry = view->session->consoleAutocomplete.data + i;
 				if (bb_strnicmp(entry->text, sb_get(&view->consoleInput), sb_len(&view->consoleInput)) == 0)
 				{
-					if (ImGui::Selectable(entry->text))
+					if (ImGui::Selectable(entry->text, view->consoleAutocompleteIndex == i))
 					{
 						selected = entry->text;
 					}

@@ -373,6 +373,8 @@ typedef struct view_s
 	b8 consoleInputActive;
 	b8 consolePopupOpen;
 	view_console_mode consoleMode;
+	u32 consoleAutocompleteIndex;
+	u32 consoleAutocompleteId;
 	b8 spansActive;
 	b8 changedNonFavoriteColumnVisibility;
 	b8 tiled;
