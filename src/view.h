@@ -375,6 +375,7 @@ typedef struct view_s
 	view_console_mode consoleMode;
 	u32 consoleAutocompleteIndex;
 	u32 consoleAutocompleteId;
+	b8 consolePopupScrollReset;
 	b8 spansActive;
 	b8 changedNonFavoriteColumnVisibility;
 	b8 tiled;
@@ -384,7 +385,7 @@ typedef struct view_s
 	s8 redockCount;
 	b8 filterPopupOpen;
 	b8 filterContextPopupOpen;
-	u8 pad[3];
+	u8 pad[2];
 } view_t;
 
 void view_init(view_t* view, recorded_session_t* session, b8 autoClose);

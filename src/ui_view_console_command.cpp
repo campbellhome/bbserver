@@ -74,6 +74,7 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData* Callb
 		view->consolePopupOpen = true;
 		if (view->consoleMode == kConsoleMode_History)
 		{
+			view->consolePopupScrollReset = true;
 			if (view->consoleHistory.entries.count > 0)
 			{
 				view->consoleHistoryTime = bb_current_time_ms();
@@ -238,6 +239,8 @@ void UIRecordedView_Console_ClosePopup(view_t *view)
 	view->consoleMode = kConsoleMode_History;
 	view->consoleAutocompleteIndex = ~0u;
 	view->consoleAutocompleteId = 0u;
+	view->consoleHistory.pos = ~0u;
+	view->consolePopupScrollReset = false;
 }
 
 static void UIRecordedView_Console_Dispatch(view_t* view)
@@ -245,6 +248,26 @@ static void UIRecordedView_Console_Dispatch(view_t* view)
 	bool consoleAvailable = (view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0;
 	if (consoleAvailable && view->session->outgoingMqId != mq_invalid_id())
 	{
+		if (view->consolePopupOpen)
+		{
+			if (view->consoleMode == kConsoleMode_History)
+			{
+				if (view->consoleHistory.pos != ~0u)
+				{
+					sb_reset(&view->consoleInput);
+					sb_append(&view->consoleInput, sb_get(&view->consoleHistory.entries.data[view->consoleHistory.pos].command));
+				}
+			}
+			else
+			{
+				if (view->consoleAutocompleteIndex != ~0u && view->consoleAutocompleteIndex < view->session->consoleAutocomplete.count)
+				{
+					sb_reset(&view->consoleInput);
+					sb_append(&view->consoleInput, view->session->consoleAutocomplete.data[view->consoleAutocompleteIndex].text);
+				}
+			}
+		}
+
 		const char* command = sb_get(&view->consoleInput);
 		if (*command == '/')
 		{
@@ -254,7 +277,7 @@ static void UIRecordedView_Console_Dispatch(view_t* view)
 				view_console_history_entry_add(view, command);
 			}
 		}
-		else
+		else if (*command)
 		{
 			if (view_console_send(view, command))
 			{
@@ -432,7 +455,13 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 			{
 				view_console_history_entry_t* entry = view->consoleHistory.entries.data + i;
 				const char* entryCommand = sb_get(&entry->command);
-				if (ImGui::Selectable(entryCommand, view->consoleHistory.pos == i))
+				const bool bSelected = view->consoleHistory.pos == i;
+				if (bSelected && view->consolePopupScrollReset)
+				{
+					view->consolePopupScrollReset = false;
+					ImGui::SetScrollHereY();
+				}
+				if (ImGui::Selectable(entryCommand, bSelected))
 				{
 					selected = entryCommand;
 				}
@@ -445,7 +474,13 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 				const bb_packet_console_autocomplete_response_entry_t* entry = view->session->consoleAutocomplete.data + i;
 				if (bb_strnicmp(entry->text, sb_get(&view->consoleInput), sb_len(&view->consoleInput)) == 0)
 				{
-					if (ImGui::Selectable(entry->text, view->consoleAutocompleteIndex == i))
+					const bool bSelected = view->consoleAutocompleteIndex == i;
+					if (bSelected && view->consolePopupScrollReset)
+					{
+						view->consolePopupScrollReset = false;
+						ImGui::SetScrollHereY();
+					}
+					if (ImGui::Selectable(entry->text, bSelected))
 					{
 						selected = entry->text;
 					}
@@ -468,6 +503,7 @@ static void UIRecordedView_ConsoleAutocomplete(view_t* view)
 			view->consoleInput = sb_from_c_string(selected);
 			view->lastConsoleInput = sb_clone(&view->consoleInput);
 			++view->consoleRequestActive;
+			UIRecordedView_Console_ClosePopup(view);
 		}
 
 		ImGui::EndPopup();
