@@ -35,7 +35,7 @@ u32 bbserialize_get_remaining(bb_serialize_t* ser);
 bbserialize_state_e bbserialize_get_state(bb_serialize_t* ser);
 b32 bbserialize_is_reading(bb_serialize_t* ser);
 
-b32 bbserialize_remaining_buffer(bb_serialize_t* ser, void* data, size_t dataSize);
+b32 bbserialize_remaining_buffer(bb_serialize_t* ser, void* data, size_t dataSize, u16* dataLen);
 b32 bbserialize_remaining_text_(bb_serialize_t* ser, char* data, size_t dataSize, size_t dataLen);
 #define bbserialize_remaining_text(ser, data) bbserialize_remaining_text_(ser, data, sizeof(data), ser->reading ? 0 : strlen(data))
 

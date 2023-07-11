@@ -46,9 +46,9 @@ b32 bbserialize_is_reading(bb_serialize_t* ser)
 	return ser->reading != 0;
 }
 
-b32 bbserialize_remaining_buffer(bb_serialize_t* ser, void* data, size_t dataSize)
+b32 bbserialize_remaining_buffer(bb_serialize_t* ser, void* data, size_t dataSize, u16* dataLen)
 {
-	size_t len = (ser->reading) ? bbserialize_get_remaining(ser) : dataSize;
+	size_t len = (ser->reading) ? bbserialize_get_remaining(ser) : *dataLen;
 	if (len > dataSize)
 	{
 		ser->state = kBBSerialize_OutOfSpace;
@@ -57,6 +57,10 @@ b32 bbserialize_remaining_buffer(bb_serialize_t* ser, void* data, size_t dataSiz
 	else
 	{
 		bbserialize_buffer(ser, data, (u16)len);
+		if (ser->reading)
+		{
+			*dataLen = (u16)len;
+		}
 		return ser->state == kBBSerialize_Ok;
 	}
 }

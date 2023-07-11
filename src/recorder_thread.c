@@ -224,6 +224,7 @@ bb_thread_return_t recorder_thread(void* args)
 						{
 							valid = true;
 							memcpy(outgoing.packet.userToClient.data, outgoingMessage->text, outgoingMessage->userData);
+							outgoing.packet.userToClient.len = (u16)outgoingMessage->userData;
 						}
 						else if (outgoingMessage->command == kBBPacketType_StopRecording)
 						{

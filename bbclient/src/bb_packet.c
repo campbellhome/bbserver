@@ -92,7 +92,12 @@ static b32 bbpacket_serialize_app_info_v4(bb_serialize_t* ser, bb_decoded_packet
 static b32 bbpacket_serialize_user(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
 {
 	bb_packet_user_t* user = &decoded->packet.user;
-	return bbserialize_remaining_buffer(ser, user->data, user->len);
+	if (ser->reading)
+	{
+		memset(user, 0, sizeof(*user));
+	}
+	bbserialize_s8(ser, &user->echo);
+	return bbserialize_remaining_buffer(ser, user->data, BB_ARRAYSIZE(user->data), &user->len);
 }
 
 static b32 bbpacket_serialize_register_id(bb_serialize_t* ser, bb_decoded_packet_t* decoded)

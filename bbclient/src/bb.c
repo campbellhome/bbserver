@@ -909,7 +909,7 @@ void bb_set_incoming_packet_handler(bb_incoming_packet_handler handler, void* co
 
 int bb_send_raw_packet(bb_decoded_packet_t* decoded)
 {
-	if (decoded->type == kBBPacketType_ConsoleAutocompleteResponseHeader || decoded->type == kBBPacketType_ConsoleAutocompleteResponseEntry)
+	if (decoded->type == kBBPacketType_ConsoleAutocompleteResponseHeader || decoded->type == kBBPacketType_ConsoleAutocompleteResponseEntry || decoded->type == kBBPacketType_UserToServer)
 	{
 		bb_fill_header(decoded, decoded->type, 0, 0);
 		bb_send(decoded);
