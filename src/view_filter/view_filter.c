@@ -191,17 +191,17 @@ static vfilter_token_t view_filter_tokenize(span_t* out, vfilter_t* filter, cons
 	else if (next == '\"')
 	{
 		ret.span = view_filter_tokenize_string(&remaining, filter, line);
-		ret.type = kVFT_String;
+		ret.type = (ret.span.start && ret.span.end) ? kVFT_String : kVFT_Invalid;
 	}
 	else if (next == '\'')
 	{
 		ret.span = view_filter_tokenize_string(&remaining, filter, line);
-		ret.type = kVFT_String;
+		ret.type = (ret.span.start && ret.span.end) ? kVFT_String : kVFT_Invalid;
 	}
 	else
 	{
 		ret.span = view_filter_tokenize_string(&remaining, filter, line);
-		ret.type = kVFT_String;
+		ret.type = (ret.span.start && ret.span.end) ? kVFT_String : kVFT_Invalid;
 	}
 
 	if (!filter->valid)
@@ -621,11 +621,18 @@ static vfilter_t view_filter_parse_single(const char* name, const char* input)
 	while (!span_is_empty(remaining))
 	{
 		vfilter_token_t token = view_filter_tokenize(&remaining, &filter, filter.tokenstream.data);
-		BB_LOG("filter", "token type:%d contents:%.*s", token.type, span_length(token.span), token.span.start);
-		bba_push(filter.tokens, token);
-		if (token.type != kVFT_String)
+		if (token.type == kVFT_Invalid || !token.span.start || !token.span.end)
 		{
-			bAllString = false;
+			break;
+		}
+		else
+		{
+			BB_LOG("filter", "token type:%d contents:%.*s", token.type, span_length(token.span), token.span.start);
+			bba_push(filter.tokens, token);
+			if (token.type != kVFT_String)
+			{
+				bAllString = false;
+			}
 		}
 	}
 
