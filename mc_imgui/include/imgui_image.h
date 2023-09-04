@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -12,7 +12,7 @@ struct IDirect3DDevice9;
 struct UserImageId
 {
 	u32 id = 0;
-	const bool operator==(const UserImageId& other) const { return id == other.id; }
+	bool operator==(const UserImageId& other) const { return id == other.id; }
 };
 
 struct UserImageData
