@@ -47,7 +47,7 @@ static span_t view_filter_tokenize_string(span_t* out, vfilter_t* filter, const 
 		}
 		else
 		{
-			if (next == ' ' || next == ')' || next == '>' || next == '<')
+			if (next == ' ' || next == '(' || next == ')' || next == '>' || next == '<')
 			{
 				ret.end = remaining.start;
 				break;
