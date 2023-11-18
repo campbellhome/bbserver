@@ -1,16 +1,11 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #include "imgui_input_text.h"
 #include "bb_array.h"
 #include "imgui_core.h"
 #include "sb.h"
-
-// warning C4820 : 'StructName' : '4' bytes padding added after data member 'MemberName'
-// warning C4365: '=': conversion from 'ImGuiTabItemFlags' to 'ImGuiID', signed/unsigned mismatch
-BB_WARNING_PUSH(4820 4365)
-#include "imgui_internal.h"
-BB_WARNING_POP
+#include "wrap_imgui_internal.h"
 
 // InputTextMultilineScrolling and supporting functions adapted from https://github.com/ocornut/imgui/issues/383
 

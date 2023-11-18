@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #include "fonts.h"
@@ -11,13 +11,6 @@
 #include "bb_wrap_windows.h"
 #include <ShlObj.h>
 #include <parson/parson.h>
-
-// warning C4820 : 'StructName' : '4' bytes padding added after data member 'MemberName'
-// warning C4365: '=': conversion from 'ImGuiTabItemFlags' to 'ImGuiID', signed/unsigned mismatch
-BB_WARNING_PUSH(4820, 4365)
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui_internal.h"
-BB_WARNING_POP
 
 extern "C" void fontConfig_reset(fontConfig_t* val)
 {

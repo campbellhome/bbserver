@@ -1,18 +1,12 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #include "imgui_utils.h"
 #include "imgui_core.h"
 #include "sb.h"
 #include "va.h"
+#include "wrap_imgui_internal.h"
 #include <math.h>
-
-// warning C4820 : 'StructName' : '4' bytes padding added after data member 'MemberName'
-// warning C4365: '=': conversion from 'ImGuiTabItemFlags' to 'ImGuiID', signed/unsigned mismatch
-BB_WARNING_PUSH(4820, 4365)
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui_internal.h"
-BB_WARNING_POP
 
 namespace ImGui
 {
@@ -689,16 +683,16 @@ namespace ImGui
 		{
 			const float spacing_x = span_all_columns ? 0.0f : style.ItemSpacing.x;
 			const float spacing_y = style.ItemSpacing.y;
-			const float spacing_L = IM_FLOOR(spacing_x * 0.50f);
-			const float spacing_U = IM_FLOOR(spacing_y * 0.50f);
+			const float spacing_L = IM_TRUNC(spacing_x * 0.50f);
+			const float spacing_U = IM_TRUNC(spacing_y * 0.50f);
 			bb.Min.x -= spacing_L;
 			bb.Min.y -= spacing_U;
 			bb.Max.x += (spacing_x - spacing_L);
 			bb.Max.y += (spacing_y - spacing_U);
 		}
-		//if (g.IO.KeyCtrl) { GetForegroundDrawList()->AddRect(bb.Min, bb.Max, IM_COL32(0, 255, 0, 255)); }
+		// if (g.IO.KeyCtrl) { GetForegroundDrawList()->AddRect(bb.Min, bb.Max, IM_COL32(0, 255, 0, 255)); }
 
-		// Modify ClipRect for the ItemAdd(), faster than doing a PushColumnsBackground/PushTableBackground for every Selectable..
+		// Modify ClipRect for the ItemAdd(), faster than doing a PushColumnsBackground/PushTableBackgroundChannel for every Selectable..
 		const float backup_clip_rect_min_x = window->ClipRect.Min.x;
 		const float backup_clip_rect_max_x = window->ClipRect.Max.x;
 		if (span_all_columns)
@@ -751,9 +745,9 @@ namespace ImGui
 		{
 			button_flags |= ImGuiButtonFlags_PressedOnClickRelease | ImGuiButtonFlags_PressedOnDoubleClick;
 		}
-		if (flags & ImGuiSelectableFlags_AllowItemOverlap)
+		if ((flags & ImGuiSelectableFlags_AllowOverlap) || (g.LastItemData.InFlags & ImGuiItemFlags_AllowOverlap))
 		{
-			button_flags |= ImGuiButtonFlags_AllowItemOverlap;
+			button_flags |= ImGuiButtonFlags_AllowOverlap;
 		}
 
 		const bool was_selected = selected;
@@ -783,22 +777,20 @@ namespace ImGui
 		if (pressed)
 			MarkItemEdited(id);
 
-		if (flags & ImGuiSelectableFlags_AllowItemOverlap)
-			SetItemAllowOverlap();
-
 		// In this branch, Selectable() cannot toggle the selection so this will never trigger.
 		if (selected != was_selected) //-V547
 			g.LastItemData.StatusFlags |= ImGuiItemStatusFlags_ToggledSelection;
 
 		// Render
-		if (held && (flags & ImGuiSelectableFlags_DrawHoveredWhenHeld))
-			hovered = true;
 		if (hovered || selected)
 		{
 			const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_HeaderActive : hovered ? ImGuiCol_HeaderHovered
 			                                                                                  : ImGuiCol_Header);
 			RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
 		}
+
+		//////////////////////////////////////////////////////////////////////////
+		// Begin MC Change
 		else
 		{
 			const ImU32 col = bgColor;
@@ -807,7 +799,11 @@ namespace ImGui
 				RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
 			}
 		}
-		RenderNavHighlight(bb, id, ImGuiNavHighlightFlags_TypeThin | ImGuiNavHighlightFlags_NoRounding);
+		// End MC Change
+		//////////////////////////////////////////////////////////////////////////
+
+		if (g.NavId == id)
+			RenderNavHighlight(bb, id, ImGuiNavHighlightFlags_TypeThin | ImGuiNavHighlightFlags_NoRounding);
 
 		if (span_all_columns && window->DC.CurrentColumns)
 			PopColumnsBackground();

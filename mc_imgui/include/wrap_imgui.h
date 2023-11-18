@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2023 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bb_common.h"
@@ -20,6 +20,7 @@ BB_WARNING_DISABLE(4710) // snprintf not inlined
 // warning C4459: declaration of 'var' hides global declaration
 BB_WARNING_PUSH(4820 4255 4668 4574 4365 4459)
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 
 #include "backends/imgui_impl_dx9.h"
