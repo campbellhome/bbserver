@@ -994,6 +994,14 @@ void bb_thread_end(uint32_t pathId, uint32_t line)
 	}
 }
 
+void bb_start_frame_number(uint32_t pathId, uint32_t line, uint64_t frameNumber)
+{
+	bb_decoded_packet_t decoded;
+	bb_fill_header(&decoded, kBBPacketType_FrameNumber, pathId, line);
+	decoded.packet.frameNumber.frameNumber = frameNumber;
+	bb_send(&decoded);
+}
+
 static u32 bb_find_id(const char* text, bb_ids_t* ids)
 {
 	u32 i;

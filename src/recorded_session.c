@@ -404,6 +404,9 @@ void recorded_session_update(recorded_session_t* session)
 		case kBBPacketType_ConsoleAutocompleteResponseEntry:
 			recorded_session_add_console_autocomplete_entry(session, &decoded);
 			break;
+		case kBBPacketType_FrameNumber:
+			session->currentFrameNumber = decoded.packet.frameNumber.frameNumber;
+			break;
 		case kBBPacketType_Invalid:
 		case kBBPacketType_FrameEnd:
 		case kBBPacketType_ConsoleCommand:
@@ -650,6 +653,7 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 			Fonts_CacheGlyphs(text);
 			log->sessionLogIndex = session->logs.count - 1;
 			log->numLines = numLines;
+			log->frameNumber = session->currentFrameNumber;
 			memcpy(&log->packet, decoded, preTextSize);
 			bb_strncpy(log->packet.packet.logText.text, text, textLen + 1);
 			for (u32 i = 0; i < session->views.count; ++i)

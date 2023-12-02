@@ -93,7 +93,7 @@ static const char* s_pathNames[] = {
 
 static b32 s_bQuit = false;
 
-//enum { InitialBufferLen = 1 };
+// enum { InitialBufferLen = 1 };
 enum
 {
 	InitialBufferLen = 1024 * 1024
@@ -223,23 +223,32 @@ int main(int argc, const char** argv)
 	uint64_t start = bb_current_time_ms();
 	uint32_t categoryIndex = 0;
 	uint32_t pathIndex = 0;
+	uint64_t frameNumber = 0;
 	(void)argc;
 	(void)argv;
 
 	bb_init_critical_sections();
 
-	//bbthread_create(before_connect_thread_proc, nullptr);
-	//bb_sleep_ms(1000);
+	// bbthread_create(before_connect_thread_proc, nullptr);
+	// bb_sleep_ms(1000);
 
 	bb_set_initial_buffer(s_initialBuffer, InitialBufferLen);
-	//bb_enable_stored_thread_ids(false);
+	// bb_enable_stored_thread_ids(false);
 
-	//bb_init_file_w(L"bbclient.bbox");
-	//BB_INIT(L"bbclient: matt");
+	// bb_init_file_w(L"bbclient.bbox");
+	// BB_INIT(L"bbclient: matt");
 	BB_INIT_WITH_FLAGS(L"bbclient: matt", kBBInitFlag_ConsoleCommands | kBBInitFlag_DebugInit | kBBInitFlag_ConsoleAutocomplete);
-	//BB_INIT_WITH_FLAGS(L"bbclient: matt (no view)", kBBInitFlag_NoOpenView | kBBInitFlag_DebugInit);
+	// BB_INIT_WITH_FLAGS(L"bbclient: matt (no view)", kBBInitFlag_NoOpenView | kBBInitFlag_DebugInit);
 	BB_THREAD_START(L"main thread!");
 	BB_LOG(L"startup", L"bbclient init took %llu ms", bb_current_time_ms() - start);
+
+	BB_START_FRAME_NUMBER(++frameNumber);
+	BB_LOG(L"frameNumber", L"frameNumber: %llu", frameNumber);
+	BB_START_FRAME_NUMBER(++frameNumber);
+	BB_LOG(L"frameNumber", L"frameNumber: %llu", frameNumber);
+	BB_START_FRAME_NUMBER(++frameNumber);
+	BB_LOG(L"frameNumber", L"frameNumber: %llu", frameNumber);
+	BB_START_FRAME_NUMBER(++frameNumber);
 
 	BB_SET_INCOMING_PACKET_HANDLER(&incoming_packet_handler, NULL);
 
@@ -279,6 +288,7 @@ int main(int argc, const char** argv)
 		while (BB_IS_CONNECTED())
 		{
 			bb_sleep_ms(100);
+			BB_START_FRAME_NUMBER(++frameNumber);
 			BB_TICK();
 		}
 
@@ -291,6 +301,7 @@ int main(int argc, const char** argv)
 	while (BB_IS_CONNECTED())
 	{
 		bb_sleep_ms(160);
+		BB_START_FRAME_NUMBER(++frameNumber);
 		BB_TICK();
 
 		BB_LOG(L"test::category", L"new frame");
@@ -327,6 +338,7 @@ int main(int argc, const char** argv)
 
 	while (BB_IS_CONNECTED() && !s_bQuit)
 	{
+		BB_START_FRAME_NUMBER(++frameNumber);
 		BB_TICK();
 		BB_LOG(L"test::frame", L"-----------------------------------------------------");
 		BB_LOG(L"test::spam1", L"some data");
@@ -354,9 +366,9 @@ int main(int argc, const char** argv)
 		BB_LOG(L"test::spam3", L"over and");
 		BB_LOG(L"test::spam3", L"over.");
 		bb_sleep_ms(50);
-		//if(bb_current_time_ms() - start > 1000) {
+		// if(bb_current_time_ms() - start > 1000) {
 		//	break;
-		//}
+		// }
 	}
 
 	BB_SHUTDOWN();

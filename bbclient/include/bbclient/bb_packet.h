@@ -54,6 +54,8 @@ typedef enum
 
 	kBBPacketType_AppInfo_v5, // Client --> Server
 
+	kBBPacketType_FrameNumber, // Client --> Server
+
 	kBBPacketType_AppInfo = kBBPacketType_AppInfo_v5
 
 } bb_packet_type_e;
@@ -138,6 +140,11 @@ typedef struct bb_packet_console_autocomplete_response_entry_s
 	char description[kBBSize_ConsoleAutocompleteDesc];
 } bb_packet_console_autocomplete_response_entry_t;
 
+typedef struct bb_packet_frame_number_s
+{
+	u64 frameNumber;
+} bb_packet_frame_number_t;
+
 typedef struct bb_decoded_packet_s
 {
 	bb_packet_type_e type;
@@ -166,6 +173,8 @@ typedef struct bb_decoded_packet_s
 		bb_packet_console_autocomplete_request_t consoleAutocompleteRequest;
 		bb_packet_console_autocomplete_response_header_t consoleAutocompleteResponseHeader;
 		bb_packet_console_autocomplete_response_entry_t consoleAutocompleteResponseEntry;
+
+		bb_packet_frame_number_t frameNumber;
 	} packet;
 } bb_decoded_packet_t;
 

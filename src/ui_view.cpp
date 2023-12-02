@@ -381,7 +381,7 @@ sb_t StripColorCodes(span_t span /*, bool bSingleLine*/)
 	{
 		while (*text && text < span.end)
 		{
-			//if(bSingleLine && (*text == '\r' || *text == '\n'))
+			// if(bSingleLine && (*text == '\r' || *text == '\n'))
 			//	break;
 			if (*text == kColorKeyPrefix && text[1] >= kFirstColorKey && text[1] <= kLastColorKey)
 			{
@@ -720,7 +720,7 @@ static void TextWrappedMaxLines(const char* text, s32 numLines, bool bShadowed)
 	}
 }
 
-static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* category, recorded_session_t* session, view_t* view)
+static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* category, recorded_session_t* session, view_t* view, recorded_log_t* sessionLog)
 {
 	if (IsTooltipActive())
 	{
@@ -733,6 +733,10 @@ static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* cat
 		else
 		{
 			TextShadowed(va("Timestamp: %" PRIu64, decoded->header.timestamp));
+		}
+		if (session->currentFrameNumber > 0)
+		{
+			TextShadowed(va("Frame: %" PRIu64, sessionLog->frameNumber));
 		}
 		TextShadowed(va("Category: %s", category->categoryName));
 		TextShadowed(va("Verbosity: %s", bb_get_log_level_name((bb_log_level_e)decoded->packet.logText.level, "(unknown)")));
@@ -849,13 +853,13 @@ static colored_text_t UIRecordedView_GetColoredTextInternal(colored_text_t prev)
 		}
 		else
 		{
-			//char c = *marker;
+			// char c = *marker;
 			++marker;
 			/*
 			if(c == '\n') {
-				ret.len = (int)(marker - ret.start);
-				ret.next = nullptr;
-				return ret;
+			    ret.len = (int)(marker - ret.start);
+			    ret.next = nullptr;
+			    return ret;
 			}
 			*/
 		}
@@ -879,12 +883,12 @@ static colored_text_t UIRecordedView_GetColoredText(colored_text_t prev)
 	return ret;
 }
 
-static void UIRecordedView_SpanFromSelection(view_t* view, u32 startIndex, bool before, bool after)
+static void UIRecordedView_SpanFromSelection(view_t* view, u32 sessionLogIndex, bool before, bool after)
 {
 	recorded_session_t* session = view->session;
 	const char* applicationName = session->appInfo.packet.appInfo.applicationName;
-	u32 start = startIndex;
-	u32 end = startIndex;
+	u32 start = sessionLogIndex;
+	u32 end = sessionLogIndex;
 	for (u32 i = 0; i < view->visibleLogs.count; ++i)
 	{
 		view_log_t* log = view->visibleLogs.data + i;
@@ -910,6 +914,43 @@ static void UIRecordedView_SpanFromSelection(view_t* view, u32 startIndex, bool 
 	view->visibleLogsDirty = true;
 	view->spansActive = true;
 	BB_LOG("Debug", "Set spans to '%s' for '%s'\n", sb_get(&view->config.spansInput), applicationName);
+}
+
+static void UIRecordedView_FrameSpanFromSelection(view_t* view, u32 sessionLogIndex, bool before, bool after)
+{
+	recorded_session_t* session = view->session;
+	const char* applicationName = session->appInfo.packet.appInfo.applicationName;
+	u32 start = sessionLogIndex;
+	u32 end = sessionLogIndex;
+	for (u32 i = 0; i < view->visibleLogs.count; ++i)
+	{
+		view_log_t* log = view->visibleLogs.data + i;
+		if (log->selected)
+		{
+			start = BB_MIN(start, log->sessionLogIndex);
+			end = BB_MAX(end, log->sessionLogIndex);
+		}
+	}
+
+	u64 startFrameNumber = session->logs.data[start]->frameNumber;
+	u64 endFrameNumber = session->logs.data[end]->frameNumber;
+
+	sb_reset(&view->config.frameSpansInput);
+	if (before)
+	{
+		sb_va(&view->config.frameSpansInput, "-%llu", endFrameNumber);
+	}
+	else if (after)
+	{
+		sb_va(&view->config.frameSpansInput, "%llu-", startFrameNumber);
+	}
+	else
+	{
+		sb_va(&view->config.frameSpansInput, "%llu-%llu", startFrameNumber, endFrameNumber);
+	}
+	view->visibleLogsDirty = true;
+	view->frameSpansActive = true;
+	BB_LOG("Debug", "Set frame spans to '%s' for '%s'\n", sb_get(&view->config.frameSpansInput), applicationName);
 }
 
 void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
@@ -945,6 +986,21 @@ void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
 		if (ImGui::Selectable("Span: selection and following"))
 		{
 			UIRecordedView_SpanFromSelection(view, sessionLogIndex, false, true);
+		}
+	}
+	if (session->logs.count && session->currentFrameNumber > 0)
+	{
+		if (ImGui::Selectable("Frames: up to and including selection"))
+		{
+			UIRecordedView_FrameSpanFromSelection(view, sessionLogIndex, true, false);
+		}
+		if (ImGui::Selectable("Frames: selection"))
+		{
+			UIRecordedView_FrameSpanFromSelection(view, sessionLogIndex, false, false);
+		}
+		if (ImGui::Selectable("Frames: selection and following"))
+		{
+			UIRecordedView_FrameSpanFromSelection(view, sessionLogIndex, false, true);
 		}
 	}
 	if (filename)
@@ -1109,7 +1165,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	bgColor.z = bgColor.z * (1 - targetBgColor.Value.w) + targetBgColor.Value.z * targetBgColor.Value.w;
 
 	int styleCount = 0;
-	//ImGui::PushStyleColor(ImGuiCol_HeaderInactive, bgColor);
+	// ImGui::PushStyleColor(ImGuiCol_HeaderInactive, bgColor);
 	if (viewLog->bookmarked)
 	{
 		styleCount += 3;
@@ -1142,14 +1198,14 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		{
 			if (g_config.tooltips.overText)
 			{
-				SetLogTooltip(decoded, category, session, view);
+				SetLogTooltip(decoded, category, session, view, sessionLog);
 			}
 		}
 		else
 		{
 			if (g_config.tooltips.overMisc)
 			{
-				SetLogTooltip(decoded, category, session, view);
+				SetLogTooltip(decoded, category, session, view, sessionLog);
 			}
 		}
 		ImGui::PopStyleColor(1);
@@ -1395,8 +1451,8 @@ static void PopExpandButtonColors(void)
 
 static void DrawViewToggles(view_t* view, const char* applicationName)
 {
-//#define ICON_EXPAND_LEFT "<"
-//#define ICON_EXPAND_RIGHT ">"
+// #define ICON_EXPAND_LEFT "<"
+// #define ICON_EXPAND_RIGHT ">"
 #define ICON_EXPAND_LEFT ICON_FK_CHEVRON_LEFT
 #define ICON_EXPAND_RIGHT ICON_FK_CHEVRON_RIGHT
 
@@ -2171,7 +2227,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 		view->messageboxes.bgColor[1] = ImColor(MakeColor(kStyleColor_MessageBoxBackground1));
 		UIMessageBox_Update(&view->messageboxes);
 
-		//Separator();
+		// Separator();
 
 		bool consoleAvailable = (view->session->appInfo.packet.appInfo.initFlags & kBBInitFlag_ConsoleCommands) != 0;
 		bool consoleVisible = consoleAvailable && view->session->outgoingMqId != mq_invalid_id();
@@ -2342,6 +2398,34 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			{
 				ImGui::SetTooltip("Clears view by setting Spans to [last log index + 1]-");
 			}
+		}
+
+		if (session->currentFrameNumber > 0)
+		{
+
+			ImGui::PushItemWidth(175.0f);
+			ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
+			ImGui::TextUnformatted("Frames:");
+			ImGui::SameLine();
+			if (ImGui::Checkbox("###FrameSpansActive", &view->frameSpansActive))
+			{
+				view->visibleLogsDirty = true;
+				BB_LOG("Debug", "Set frameSpansActive to '%d' for '%s'\n", view->frameSpansActive, applicationName);
+			}
+			ImGui::SameLine();
+			if (ImGui::InputText("###Frame Spans", &view->config.frameSpansInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll))
+			{
+				view->visibleLogsDirty = true;
+				view->frameSpansActive = true;
+				BB_LOG("Debug", "Set frame spans to '%s' for '%s'\n", sb_get(&view->config.frameSpansInput), applicationName);
+			}
+			Fonts_CacheGlyphs(sb_get(&view->config.frameSpansInput));
+			const bool frameSpansFocused = IsItemActive() && Imgui_Core_HasFocus();
+			if (frameSpansFocused)
+			{
+				Imgui_Core_RequestRender();
+			}
+			ImGui::PopItemWidth();
 		}
 
 		bool selectedHackFocused = false;
@@ -2537,7 +2621,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			}
 			float curScrollY = GetScrollY();
 			const float kScreenPercent = 0.5f;
-			//view->bookmarkThreshold = (int)(clipper.DisplayStart + visibleLines * 0.5f);
+			// view->bookmarkThreshold = (int)(clipper.DisplayStart + visibleLines * 0.5f);
 			if (view->gotoTarget >= 0)
 			{
 				int adjustedTarget = view->gotoTarget - (int)((float)s_visibleLogLines * kScreenPercent);
@@ -2621,7 +2705,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			{
 				if (curScrollY < view->prevScrollY && view->prevScrollY <= ImGui::GetScrollMaxY())
 				{
-					//ClearViewTail(view, "not at bottom");
+					// ClearViewTail(view, "not at bottom");
 				}
 				if (view->visibleLogsAdded)
 				{

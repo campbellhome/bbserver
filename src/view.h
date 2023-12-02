@@ -212,6 +212,7 @@ AUTOJSON typedef struct view_config_s
 	view_console_history_t filterHistory;
 	sb_t filterInput;
 	sb_t spansInput;
+	sb_t frameSpansInput;
 	b32 showVeryVerbose;
 	b32 showVerbose;
 	b32 showLogs;
@@ -285,6 +286,18 @@ typedef struct view_spans_s
 	view_span_t* data;
 } view_spans_t;
 
+typedef struct view_frame_span_s
+{
+	u64 start;
+	u64 end;
+} view_frame_span_t;
+typedef struct view_frame_spans_s
+{
+	u32 count;
+	u32 allocated;
+	view_frame_span_t* data;
+} view_frame_spans_t;
+
 typedef enum
 {
 	kColumn_AbsIndex,
@@ -335,6 +348,7 @@ typedef struct view_s
 	view_persistent_logs_t persistentLogs;
 	vfilter_t vfilter;
 	view_spans_t spans;
+	view_frame_spans_t frameSpans;
 	sb_t consoleInput;
 	sb_t lastConsoleInput;
 	u64 consoleInputTime;
@@ -377,6 +391,7 @@ typedef struct view_s
 	u32 consoleAutocompleteId;
 	b8 consolePopupScrollReset;
 	b8 spansActive;
+	b8 frameSpansActive;
 	b8 changedNonFavoriteColumnVisibility;
 	b8 tiled;
 	b8 beingDragged;
@@ -385,7 +400,7 @@ typedef struct view_s
 	s8 redockCount;
 	b8 filterPopupOpen;
 	b8 filterContextPopupOpen;
-	u8 pad[2];
+	u8 pad;
 } view_t;
 
 void view_init(view_t* view, recorded_session_t* session, b8 autoClose);

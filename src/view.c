@@ -212,7 +212,7 @@ void view_reset(view_t* view)
 {
 	if (view_config_write(view))
 	{
-		//BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
+		// BB_LOG("View", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
 	}
 	else
 	{
@@ -227,6 +227,7 @@ void view_reset(view_t* view)
 	bba_free(view->persistentLogs);
 	vfilter_reset(&view->vfilter);
 	bba_free(view->spans);
+	bba_free(view->frameSpans);
 	view_config_reset(&view->config);
 	view_session_config_reset(&view->sessionConfig);
 	view_config_logs_reset(&view->configLogs);
@@ -247,7 +248,7 @@ void view_restart(view_t* view)
 {
 	if (view_config_write(view))
 	{
-		//BB_LOG("View::Config", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
+		// BB_LOG("View::Config", "%s wrote config\n", view->session->appInfo.packet.appInfo.applicationName);
 	}
 	else
 	{
@@ -260,6 +261,7 @@ void view_restart(view_t* view)
 	bba_free(view->visibleLogs);
 	bba_free(view->persistentLogs);
 	bba_free(view->spans);
+	bba_free(view->frameSpans);
 	view_config_reset(&view->config);
 	view_session_config_reset(&view->sessionConfig);
 	view_config_logs_reset(&view->configLogs);
@@ -273,7 +275,7 @@ void view_reset_column_offsets(view_t* view)
 		view_column_t* column = view->columns + i;
 		column->offset = 0.0f;
 	}
-	//BB_LOG("View::Columns", "%s reset column offsets", view->session->appInfo.packet.appInfo.applicationName);
+	// BB_LOG("View::Columns", "%s reset column offsets", view->session->appInfo.packet.appInfo.applicationName);
 }
 
 void view_reset_column_widths(view_t* view)
@@ -285,7 +287,7 @@ void view_reset_column_widths(view_t* view)
 		column->width = s_column_defaults[i].width * Imgui_Core_GetDpiScale();
 		column->offset = 0.0f;
 	}
-	//BB_LOG("View::Columns", "%s reset column widths", view->session->appInfo.packet.appInfo.applicationName);
+	// BB_LOG("View::Columns", "%s reset column widths", view->session->appInfo.packet.appInfo.applicationName);
 }
 
 void view_add_category(view_t* view, recorded_category_t* category, const view_config_category_t* configCategory)
@@ -304,7 +306,7 @@ void view_add_category(view_t* view, recorded_category_t* category, const view_c
 		}
 		else
 		{
-			//BB_LOG("Config::Category", "%s skipped apply for missing '%s' during add", view->session->applicationFilename, c->categoryName);
+			// BB_LOG("Config::Category", "%s skipped apply for missing '%s' during add", view->session->applicationFilename, c->categoryName);
 			c->visible = view->config.newNonFavoriteCategoryVisibility;
 		}
 		qsort(view->categories.data, view->categories.count, sizeof(view->categories.data[0]), ViewCategoryCompare);
@@ -335,7 +337,7 @@ void view_add_thread(view_t* view, recorded_thread_t* rt)
 	view_thread_t* t = bba_add(view->threads, 1);
 	if (t)
 	{
-		//BB_LOG("View::AddThread", "view_add_thread %lu %s\n", rt->id, rt->threadName);
+		// BB_LOG("View::AddThread", "view_add_thread %lu %s\n", rt->id, rt->threadName);
 		bb_strncpy(t->threadName, rt->threadName, sizeof(t->threadName));
 		t->id = rt->id;
 		t->selected = false;
@@ -355,7 +357,7 @@ void view_set_thread_name(view_t* view, u64 id, const char* name)
 			view_config_thread_t* ct;
 			bb_strncpy(t->threadName, name, sizeof(t->threadName));
 			ct = view_find_config_thread(view, t->threadName);
-			//BB_LOG("View::SetThreadName", "view_set_thread_name %lu %s (config:%d)\n", id, t->threadName, (ct) ? 1 : 0);
+			// BB_LOG("View::SetThreadName", "view_set_thread_name %lu %s (config:%d)\n", id, t->threadName, (ct) ? 1 : 0);
 			if (ct)
 			{
 				view_apply_config_thread(ct, t);
@@ -585,14 +587,14 @@ void view_add_file(view_t* view, recorded_filename_t* rt)
 	if (t)
 	{
 		view_config_file_t* cf;
-		//BB_LOG("View::Addfile", "view_add_file %lu %s\n", rt->id, rt->path);
+		// BB_LOG("View::Addfile", "view_add_file %lu %s\n", rt->id, rt->path);
 		bb_strncpy(t->path, rt->path, sizeof(t->path));
 		t->id = rt->id;
 		t->selected = false;
 		t->visible = view->config.newFileVisibility;
 
 		cf = view_find_config_file(view, t->path);
-		//BB_LOG("View::AddFile", "view_add_file %lu %s (config:%d)\n", t->id, t->path, (cf) ? 1 : 0);
+		// BB_LOG("View::AddFile", "view_add_file %lu %s (config:%d)\n", t->id, t->path, (cf) ? 1 : 0);
 		if (cf)
 		{
 			view_apply_config_file(cf, t);
@@ -744,6 +746,24 @@ static b32 view_is_log_visible(view_t* view, recorded_log_t* log)
 			return false;
 		}
 	}
+	if (view->frameSpans.count && view->frameSpansActive)
+	{
+		b32 ok = false;
+		u32 i;
+		for (i = 0; i < view->frameSpans.count; ++i)
+		{
+			view_frame_span_t* span = view->frameSpans.data + i;
+			if (log->frameNumber >= span->start && log->frameNumber <= span->end)
+			{
+				ok = true;
+				break;
+			}
+		}
+		if (!ok)
+		{
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -803,6 +823,48 @@ static void view_update_spans(view_t* view)
 		}
 		entry.start = (u32)atoi(token);
 		bba_push(view->spans, entry);
+		token = line_parser_next_token(&parser);
+	}
+}
+
+static void view_update_frame_spans(view_t* view)
+{
+	char tokenBuffer[256];
+	char* token;
+	line_parser_t parser;
+	bba_clear(view->frameSpans);
+	bb_strncpy(tokenBuffer, sb_get(&view->config.frameSpansInput), sizeof(tokenBuffer));
+	line_parser_init(&parser, "frameSpans", tokenBuffer);
+	parser.commentCharacter = 0;
+	parser.tokenCursor = parser.buffer;
+	token = line_parser_next_token(&parser);
+	while (token)
+	{
+		view_frame_span_t entry;
+		char* separator = strchr(token, '-');
+		if (!separator)
+		{
+			separator = strchr(token, '~');
+			if (!separator)
+			{
+				separator = strchr(token, '+');
+			}
+		}
+		entry.end = ~0U;
+		if (separator)
+		{
+			*separator++ = '\0';
+			if (*separator)
+			{
+				entry.end = (u64)_atoi64(separator);
+			}
+		}
+		else
+		{
+			entry.end = (u64)_atoi64(token);
+		}
+		entry.start = (u64)_atoi64(token);
+		bba_push(view->frameSpans, entry);
 		token = line_parser_next_token(&parser);
 	}
 }
@@ -936,6 +998,7 @@ void view_update_visible_logs(view_t* view)
 	view->vfilter = view_filter_parse("", sb_get(&view->config.filterInput));
 	view_update_sqlWhere(view);
 	view_update_spans(view);
+	view_update_frame_spans(view);
 	for (i = 0; i < session->logs.count; ++i)
 	{
 		recorded_log_t* log = session->logs.data[i];
@@ -1176,7 +1239,7 @@ static void view_add_log_internal(view_t* view, recorded_log_t* log, u32 persist
 			{
 				visibleLog->viewLogIndex = view->visibleLogs.data[view->visibleLogs.count - 2].viewLogIndex + 1;
 			}
-			//visibleLog->viewLogIndex = view->visibleLogs.count - 1;
+			// visibleLog->viewLogIndex = view->visibleLogs.count - 1;
 			visibleLog->selected = false;
 			visibleLog->subLine = 0;
 			visibleLog->persistentLogIndex = persistentLogIndex;
@@ -1195,7 +1258,7 @@ static void view_add_log_internal(view_t* view, recorded_log_t* log, u32 persist
 						subLineLog->subLine = i;
 						subLineLog->persistentLogIndex = persistentLogIndex + i;
 						subLineLog->bookmarked = persistent->bookmarked;
-						//subLineLog->viewLogIndex = view->visibleLogs.count - 1;
+						// subLineLog->viewLogIndex = view->visibleLogs.count - 1;
 					}
 				}
 			}

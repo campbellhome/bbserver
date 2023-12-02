@@ -186,6 +186,11 @@ static b32 bbpacket_serialize_console_autocomplete_response_entry(bb_serialize_t
 	return bbserialize_text(ser, consoleAutocompleteResponseEntry->description, &len);
 }
 
+static b32 bbpacket_serialize_framenumber(bb_serialize_t* ser, bb_decoded_packet_t* decoded)
+{
+	return bbserialize_u64(ser, &decoded->packet.frameNumber.frameNumber);
+}
+
 b32 bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded)
 {
 	u8 type;
@@ -252,6 +257,9 @@ b32 bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded)
 
 	case kBBPacketType_ConsoleAutocompleteResponseEntry:
 		return bbpacket_serialize_console_autocomplete_response_entry(&ser, decoded);
+
+	case kBBPacketType_FrameNumber:
+		return bbpacket_serialize_framenumber(&ser, decoded);
 
 	case kBBPacketType_Invalid:
 	case kBBPacketType_Restart:
@@ -342,6 +350,10 @@ u16 bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len)
 
 	case kBBPacketType_ConsoleAutocompleteResponseEntry:
 		bbpacket_serialize_console_autocomplete_response_entry(&ser, source);
+		break;
+
+	case kBBPacketType_FrameNumber:
+		bbpacket_serialize_framenumber(&ser, source);
 		break;
 
 	case kBBPacketType_Invalid:

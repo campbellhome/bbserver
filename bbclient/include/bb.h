@@ -7,7 +7,8 @@
 #define BB_H
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 #if !defined(BB_ENABLED)
@@ -212,6 +213,8 @@ BB_LINKAGE void bb_trace_dynamic_preformatted_w(const char* path, uint32_t line,
 BB_LINKAGE void bb_trace_partial_w(const char* path, uint32_t line, const bb_wchar_t* category, bb_log_level_e level, int32_t pieInstance, const bb_wchar_t* fmt, ...);
 #endif // #if BB_COMPILE_WIDECHAR
 
+BB_LINKAGE void bb_start_frame_number(uint32_t pathId, uint32_t line, uint64_t frameNumber);
+
 #if BB_WIDECHAR
 #define BB_FUNC_INIT bb_init_w
 #define BB_FUNC_INIT_FILE bb_init_file_w
@@ -375,6 +378,16 @@ typedef struct bb_colors_s
 	bb_color_t bg;
 } bb_colors_t;
 
+#define BB_START_FRAME_NUMBER(frameNumber)                                  \
+	{                                                                       \
+		static uint32_t bb_path_id = 0;                                     \
+		if (!bb_path_id)                                                    \
+		{                                                                   \
+			bb_resolve_path_id(__FILE__, &bb_path_id, (uint32_t)__LINE__);  \
+		}                                                                   \
+		bb_start_frame_number(bb_path_id, (uint32_t)__LINE__, frameNumber); \
+	}
+
 #else // #if BB_ENABLED
 
 #define BB_INIT(applicationName)
@@ -418,6 +431,8 @@ typedef struct bb_colors_s
 #define BB_END_PARTIAL()
 
 #define BB_SET_COLOR(fg, bg)
+
+#define BB_START_FRAME_NUMBER(frameNumber)
 
 #endif // #else // #if BB_ENABLED
 

@@ -36,6 +36,7 @@ typedef struct recorded_log_s
 {
 	u32 sessionLogIndex;
 	u32 numLines;
+	u64 frameNumber;
 	bb_decoded_packet_t packet;
 } recorded_log_t;
 typedef struct recorded_logs_s
@@ -144,6 +145,7 @@ typedef struct recorded_session_s
 	recorded_pieInstances_t pieInstances;
 	recorded_console_autocomplete_t consoleAutocomplete;
 	bb_thread_handle_t threadHandle;
+	u64 currentFrameNumber;
 	u32 nextViewId;
 	u32 outgoingMqId;
 	session_message_queue_t* incoming;

@@ -1099,6 +1099,7 @@ void view_config_reset(view_config_t *val)
 		view_console_history_reset(&val->filterHistory);
 		sb_reset(&val->filterInput);
 		sb_reset(&val->spansInput);
+		sb_reset(&val->frameSpansInput);
 	}
 }
 view_config_t view_config_clone(const view_config_t *src)
@@ -1113,6 +1114,7 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.filterHistory = view_console_history_clone(&src->filterHistory);
 		dst.filterInput = sb_clone(&src->filterInput);
 		dst.spansInput = sb_clone(&src->spansInput);
+		dst.frameSpansInput = sb_clone(&src->frameSpansInput);
 		dst.showVeryVerbose = src->showVeryVerbose;
 		dst.showVerbose = src->showVerbose;
 		dst.showLogs = src->showLogs;

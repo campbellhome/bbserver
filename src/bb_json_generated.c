@@ -780,6 +780,7 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.filterHistory = json_deserialize_view_console_history_t(json_object_get_value(obj, "filterHistory"));
 			dst.filterInput = json_deserialize_sb_t(json_object_get_value(obj, "filterInput"));
 			dst.spansInput = json_deserialize_sb_t(json_object_get_value(obj, "spansInput"));
+			dst.frameSpansInput = json_deserialize_sb_t(json_object_get_value(obj, "frameSpansInput"));
 			dst.showVeryVerbose = json_object_get_boolean_safe(obj, "showVeryVerbose");
 			dst.showVerbose = json_object_get_boolean_safe(obj, "showVerbose");
 			dst.showLogs = json_object_get_boolean_safe(obj, "showLogs");
@@ -1532,6 +1533,7 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_value(obj, "filterHistory", json_serialize_view_console_history_t(&src->filterHistory));
 		json_object_set_value(obj, "filterInput", json_serialize_sb_t(&src->filterInput));
 		json_object_set_value(obj, "spansInput", json_serialize_sb_t(&src->spansInput));
+		json_object_set_value(obj, "frameSpansInput", json_serialize_sb_t(&src->frameSpansInput));
 		json_object_set_boolean(obj, "showVeryVerbose", src->showVeryVerbose);
 		json_object_set_boolean(obj, "showVerbose", src->showVerbose);
 		json_object_set_boolean(obj, "showLogs", src->showLogs);
