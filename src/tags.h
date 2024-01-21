@@ -1,10 +1,11 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 #include "sb.h"
@@ -41,7 +42,7 @@ AUTOJSON AUTOFROMLOC typedef struct tag_s
 	sb_t name;
 	sbs_t categories;
 	tag_visibility_t visibility;
-	u8 pad[4];
+	b32 noColor;
 } tag_t;
 
 AUTOJSON AUTOFROMLOC typedef struct tags_s
@@ -91,7 +92,7 @@ tagCategory_t* tagCategory_find(const char* categoryName);
 void tag_add_category(const char* tagName, const char* categoryName);
 void tag_remove_category(const char* tagName, const char* categoryName);
 
-void tag_apply_tag_visibility_to_all_views(void);
+void tag_apply_tag_to_all_views(void);
 
 #if defined(__cplusplus)
 }

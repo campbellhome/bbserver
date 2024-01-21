@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -29,7 +29,7 @@ typedef struct view_category_s
 	b32 visible;
 	b32 disabled;
 	b32 removed;
-	u8 pad[4];
+	b32 noColor;
 } view_category_t;
 typedef struct view_categories_s
 {
@@ -430,7 +430,7 @@ void view_collect_categories_by_selection(view_t* view, view_category_collection
 void view_set_category_collection_visiblity(view_category_collection_t* categoryCollection, b32 visible);
 void view_set_category_collection_selection(view_category_collection_t* categoryCollection, b32 selected);
 void view_set_category_collection_disabled(view_category_collection_t* categoryCollection, b32 disabled);
-void view_apply_tag_visibility(view_t* view);
+void view_apply_tag(view_t* view);
 void view_remove_unreferenced_categories(view_category_collection_t* categoryCollection);
 void view_set_all_category_visibility(view_t* view, b8 visible);
 void view_set_all_thread_visibility(view_t* view, b8 visible);

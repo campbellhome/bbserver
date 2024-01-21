@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "tags.h"
@@ -45,6 +45,7 @@ void tags_init(void)
 			if (tag)
 			{
 				tag->visibility = configTag->visibility;
+				tag->noColor = configTag->noColor;
 			}
 		}
 
@@ -255,7 +256,7 @@ void tag_remove_category(const char* tagName, const char* categoryName)
 	}
 }
 
-void tag_apply_tag_visibility_to_all_views(void)
+void tag_apply_tag_to_all_views(void)
 {
 	for (u32 sessionIndex = 0; sessionIndex < recorded_session_count(); ++sessionIndex)
 	{
@@ -266,7 +267,7 @@ void tag_apply_tag_visibility_to_all_views(void)
 		for (u32 viewIndex = 0; viewIndex < session->views.count; ++viewIndex)
 		{
 			view_t* sessionView = session->views.data + viewIndex;
-			view_apply_tag_visibility(sessionView);
+			view_apply_tag(sessionView);
 			sessionView->visibleLogsDirty = true;
 		}
 	}

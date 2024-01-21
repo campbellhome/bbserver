@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_view.h"
@@ -804,7 +804,7 @@ typedef struct colored_text_s
 	ImColor color;
 	styleColor_e styleColor;
 	b32 blink;
-	u8 pad[4];
+	b32 categoryNoColors;
 } colored_text_t;
 
 static colored_text_t UIRecordedView_GetColoredTextInternal(colored_text_t prev)
@@ -813,28 +813,35 @@ static colored_text_t UIRecordedView_GetColoredTextInternal(colored_text_t prev)
 	const char* marker = start;
 	colored_text_t ret = { BB_EMPTY_INITIALIZER };
 	ret.end = prev.end;
+	ret.categoryNoColors = prev.categoryNoColors;
+	ret.styleColor = prev.styleColor;
+	ret.color = prev.color;
+	ret.blink = prev.blink;
 	if (!start || !*start)
 	{
 		return ret;
 	}
-	ret.styleColor = prev.styleColor;
-	ret.color = prev.color;
-	ret.blink = prev.blink;
 
 	if (*marker == kColorKeyPrefix && marker[1] >= kFirstColorKey && marker[1] <= kLastColorKey)
 	{
 		int colorIndex = marker[1] - kFirstColorKey;
 		ret.start = start + 2;
 		ret.next = marker + 2;
-		ret.styleColor = (styleColor_e)(colorIndex + kColorKeyOffset);
-		ret.color = MakeColor(ret.styleColor);
+		if (!ret.categoryNoColors)
+		{
+			ret.styleColor = (styleColor_e)(colorIndex + kColorKeyOffset);
+			ret.color = MakeColor(ret.styleColor);
+		}
 		marker += 2;
 	}
 	else if (*marker == '^' && marker[1] == 'F')
 	{
 		ret.start = start + 2;
 		ret.next = marker + 2;
-		ret.blink = !prev.blink;
+		if (!ret.categoryNoColors)
+		{
+			ret.blink = !prev.blink;
+		}
 		marker += 2;
 	}
 	else
@@ -1101,7 +1108,7 @@ void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
 		view_category_t* viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
 		viewCategory->visible = false;
 		view->visibleLogsDirty = true;
-		view_apply_tag_visibility(view);
+		view_apply_tag(view);
 	}
 	if (ImGui::Selectable("Hide all but this category"))
 	{
@@ -1110,7 +1117,7 @@ void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
 		recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
 		view_category_t* viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
 		viewCategory->visible = true;
-		view_apply_tag_visibility(view);
+		view_apply_tag(view);
 	}
 
 	PopUIFont();
@@ -1123,8 +1130,10 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	recorded_session_t* session = view->session;
 	recorded_log_t* sessionLog = session->logs.data[logIndex];
 	bb_decoded_packet_t* decoded = &sessionLog->packet;
-	recorded_category_t* category = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+	recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+	view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
 	LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
+	b32 categoryNoColors = viewCategory->noColor;
 
 	const configColorUsage colorUsage = g_config.logColorUsage;
 	ImColor targetBgColor;
@@ -1157,7 +1166,8 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	ImVec4 bgColor = (decoded->packet.logText.colors.bg == kBBColor_Default ||
 	                  colorUsage == kConfigColors_BgAsFg ||
 	                  colorUsage == kConfigColors_None ||
-	                  colorUsage == kConfigColors_NoBg)
+	                  colorUsage == kConfigColors_NoBg ||
+	                  categoryNoColors)
 	                     ? ImVec4(ImColor(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)))
 	                     : MakeColor((styleColor_e)(decoded->packet.logText.colors.bg));
 	bgColor.x = bgColor.x * (1 - targetBgColor.Value.w) + targetBgColor.Value.x * targetBgColor.Value.w;
@@ -1198,14 +1208,14 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		{
 			if (g_config.tooltips.overText)
 			{
-				SetLogTooltip(decoded, category, session, view, sessionLog);
+				SetLogTooltip(decoded, recordedCategory, session, view, sessionLog);
 			}
 		}
 		else
 		{
 			if (g_config.tooltips.overMisc)
 			{
-				SetLogTooltip(decoded, category, session, view, sessionLog);
+				SetLogTooltip(decoded, recordedCategory, session, view, sessionLog);
 			}
 		}
 		ImGui::PopStyleColor(1);
@@ -1261,7 +1271,8 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	bool first = true;
 
 	colored_text_t span = { BB_EMPTY_INITIALIZER };
-	if (colorUsage != kConfigColors_None)
+	span.styleColor = GetStyleColorForLogLevel((bb_log_level_e)decoded->packet.logText.level);
+	if (colorUsage != kConfigColors_None && !categoryNoColors)
 	{
 		span.styleColor = (styleColor_e)(decoded->packet.logText.colors.fg);
 		if (colorUsage == kConfigColors_BgAsFg)
@@ -1288,6 +1299,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		other.color = fgColor;
 		other.next = decoded->packet.logText.text;
 		other.end = subLineSpan.start;
+		other.categoryNoColors = categoryNoColors;
 		do
 		{
 			other = UIRecordedView_GetColoredText(other);
@@ -1301,6 +1313,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 
 	span.next = subLineSpan.start;
 	span.end = subLineSpan.end;
+	span.categoryNoColors = categoryNoColors;
 	do
 	{
 		span = UIRecordedView_GetColoredText(span);

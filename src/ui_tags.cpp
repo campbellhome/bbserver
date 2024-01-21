@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_tags.h"
@@ -139,7 +139,23 @@ static void UITags_TagPopup(tag_t* tag, view_t* view)
 			if (oldVisibility != tag->visibility)
 			{
 				tags_write();
-				tag_apply_tag_visibility_to_all_views();
+				tag_apply_tag_to_all_views();
+			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Color"))
+		{
+			b32 color = tag->noColor == 0;
+			if (ImGui::Checkbox("Allow Colors", &color))
+			{
+				const b32 noColor = color == 0;
+				if (tag->noColor != noColor)
+				{
+					tag->noColor = noColor;
+					tags_write();
+					tag_apply_tag_to_all_views();
+				}
 			}
 			ImGui::EndMenu();
 		}
@@ -340,7 +356,7 @@ static void UITags_SelectedCategories_AddTag(view_t* view, const char* tagName)
 		}
 	}
 	tags_write();
-	tag_apply_tag_visibility_to_all_views();
+	tag_apply_tag_to_all_views();
 }
 
 static void UITags_SelectedCategories_RemoveTag(view_t* view, const char* tagName)
@@ -466,7 +482,7 @@ static void UITags_Category_SetSelectedVisibility(view_t* view, b32 visible, boo
 			viewCategory->visible = false;
 		}
 	}
-	view_apply_tag_visibility(view);
+	view_apply_tag(view);
 }
 
 static void UITags_CountCategoryVisibility(view_t* view, tag_t* tag, u32* visibleCount, u32* hiddenCount)
@@ -609,7 +625,7 @@ void UITags_Update(view_t* view)
 								vc->visible = checked;
 							}
 						}
-						view_apply_tag_visibility(view);
+						view_apply_tag(view);
 					}
 					ImGui::SameLine();
 					u32 viewCategoryIndex = (u32)(viewCategory - view->categories.data);

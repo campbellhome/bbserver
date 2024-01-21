@@ -466,9 +466,7 @@ tag_t json_deserialize_tag_t(JSON_Value *src)
 			dst.name = json_deserialize_sb_t(json_object_get_value(obj, "name"));
 			dst.categories = json_deserialize_sbs_t(json_object_get_value(obj, "categories"));
 			dst.visibility = json_deserialize_tag_visibility_t(json_object_get_value(obj, "visibility"));
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
-				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
-			}
+			dst.noColor = json_object_get_boolean_safe(obj, "noColor");
 		}
 	}
 	return dst;
@@ -1255,9 +1253,7 @@ JSON_Value *json_serialize_tag_t(const tag_t *src)
 		json_object_set_value(obj, "name", json_serialize_sb_t(&src->name));
 		json_object_set_value(obj, "categories", json_serialize_sbs_t(&src->categories));
 		json_object_set_value(obj, "visibility", json_serialize_tag_visibility_t(src->visibility));
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
-		}
+		json_object_set_boolean(obj, "noColor", src->noColor);
 	}
 	return val;
 }
