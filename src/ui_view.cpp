@@ -62,6 +62,7 @@ static sb_t s_newFilterName;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 static int s_visibleLogLines;
+static bool g_tileToggle = true;
 
 using namespace ImGui;
 
@@ -2804,6 +2805,19 @@ void UIRecordedView_RemoveClosedViews()
 	}
 }
 
+bool UIRecordedView_EnableTiledViews(void)
+{
+	return g_config.viewTileMode != kViewTileMode_None && g_tileToggle;
+}
+
+void UIRecordedView_TiledViewCheckbox(void)
+{
+	if (g_config.viewTileMode != kViewTileMode_None)
+	{
+		ImGui::Checkbox("Tile Views", &g_tileToggle);
+	}
+}
+
 static int GatheredViewSort(const void* _a, const void* _b)
 {
 	const view_t* a = *(const view_t**)_a;
@@ -2871,7 +2885,7 @@ void UIRecordedView_UpdateAll()
 	float screenWidth = io.DisplaySize.x - UIRecordings_Width();
 	float screenHeight = io.DisplaySize.y - startY;
 
-	const bool autoTileViews = g_config.viewTileMode != kViewTileMode_None;
+	const bool autoTileViews = UIRecordedView_EnableTiledViews();
 	if (autoTileViews)
 	{
 

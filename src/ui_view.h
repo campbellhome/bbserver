@@ -9,6 +9,8 @@
 void UIRecordedView_UpdateAll();
 void UIRecordedView_Shutdown(void);
 void UIRecordedView_TooltipLevelText(const char* fmt, u32 count, bb_log_level_e logLevel);
+bool UIRecordedView_EnableTiledViews(void);
+void UIRecordedView_TiledViewCheckbox(void);
 
 const char kColorKeyPrefix = '^';
 const char kFirstColorKey = '0';

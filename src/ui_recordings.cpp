@@ -515,7 +515,7 @@ void UIRecordings_Update()
 	if (!config->recordingsOpen)
 		return;
 
-	const bool autoTileViews = g_config.viewTileMode != kViewTileMode_None;
+	const bool autoTileViews = UIRecordedView_EnableTiledViews();
 	if (autoTileViews)
 	{
 		ImVec2 viewportPos(0.0f, 0.0f);

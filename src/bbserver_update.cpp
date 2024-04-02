@@ -490,6 +490,8 @@ void BBServer_MainMenuBar(void)
 #endif
 				ImGui::EndMenu();
 			}
+
+			UIRecordedView_TiledViewCheckbox();
 		}
 		if (sb_len(&g_site_config.updates.updateManifestDir) > 0)
 		{
