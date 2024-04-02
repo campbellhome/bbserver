@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -107,6 +107,7 @@ int bbnet_socket_nodelay(bb_socket socket, b32 nodelay);
 int bbnet_socket_linger(bb_socket socket, b32 enabled, u16 seconds);
 int bbnet_socket_reuseaddr(bb_socket socket, int reuseAddr);
 int bbnet_socket_nonblocking(bb_socket socket, b32 nonblocking);
+int bbnet_socket_ipv6only(bb_socket socket, b32 ipv6only);
 
 #if defined(__cplusplus)
 }

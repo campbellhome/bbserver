@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #if !defined(BB_ENABLED) || BB_ENABLED
@@ -10,9 +10,11 @@ __pragma(warning(disable : 4710)) // warning C4710 : 'int printf(const char *con
 #endif
 
 #include "bbclient/bb_log.h"
+#include "bbclient/bb_sockets.h"
 #include "bbclient/bb_time.h"
 #include "bbclient/bb_wrap_stdio.h"
 #include "bbclient/bb_wrap_windows.h"
+#include <string.h>
 
 extern u32 g_bb_initFlags;
 
@@ -116,6 +118,50 @@ char* bb_format_ip(char* buf, size_t len, u32 addr)
 	ret = (ret > 0 && ret < (int)len) ? ret : (int)len - 1;
 	buf[ret] = '\0';
 	return buf;
+}
+
+char* bb_format_addr(char* buf, size_t bufLen, const struct sockaddr* addr, size_t addrSize, b32 addPort)
+{
+	if (!buf || !bufLen || !addr || !addrSize)
+		return "";
+
+	if (!addr || !addrSize)
+	{
+		*buf = '\0';
+		return buf;
+	}
+
+	char* out = buf;
+
+	if (addr->sa_family == AF_INET6 && addPort)
+	{
+		*buf = '[';
+		++buf;
+		--bufLen;
+	}
+
+	getnameinfo(addr, (socklen_t)addrSize, buf, (socklen_t)bufLen, NULL, 0, NI_NUMERICHOST);
+	size_t used = strlen(buf);
+	buf += used;
+	bufLen -= used;
+
+	if (addPort)
+	{
+		if (addr->sa_family == AF_INET6 && bufLen)
+		{
+			*buf = ']';
+			++buf;
+			--bufLen;
+		}
+
+		u16 port = ntohs((addr->sa_family == AF_INET6) ? ((const struct sockaddr_in6*)addr)->sin6_port : ((const struct sockaddr_in*)addr)->sin_port);
+		if (bufLen)
+		{
+			bb_snprintf(buf, bufLen, ":%u", port);
+		}
+	}
+
+	return out;
 }
 
 #endif // #if BB_ENABLED

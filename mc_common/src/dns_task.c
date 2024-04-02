@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "dns_task.h"
@@ -23,7 +23,7 @@ static bb_thread_return_t dns_task_thread_proc(void* args)
 
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET; // use AF_INET6 to force IPv6, AF_UNSPEC to get both
+	hints.ai_family = AF_UNSPEC; // use AF_INET to force IPv4, AF_INET6 to force IPv6, AF_UNSPEC to get both
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE; // for use in bind(), gets local address
 
@@ -37,13 +37,27 @@ static bb_thread_return_t dns_task_thread_proc(void* args)
 	}
 
 	struct addrinfo* p;
-	struct sockaddr_in* addr;
 	for (p = addrinfos; p != NULL; p = p->ai_next)
 	{
-		if (p->ai_addr->sa_family != AF_INET)
-			continue;
-		addr = (struct sockaddr_in*)(p->ai_addr);
-		bba_push(userdata->result.addrs, ntohl(BB_S_ADDR_UNION(*addr)));
+		if (p->ai_addr->sa_family == AF_INET)
+		{
+			struct sockaddr_in* addr4 = (struct sockaddr_in*)(p->ai_addr);
+			struct sockaddr_in6 addr = { BB_EMPTY_INITIALIZER };
+			addr.sin6_family = AF_INET6;
+			addr.sin6_port = addr4->sin_port;
+			addr.sin6_addr.s6_addr[10] = 0xff;
+			addr.sin6_addr.s6_addr[11] = 0xff;
+			addr.sin6_addr.s6_addr[12] = (u8)(BB_S_ADDR_UNION(*addr4));
+			addr.sin6_addr.s6_addr[13] = (u8)(BB_S_ADDR_UNION(*addr4) >> 8);
+			addr.sin6_addr.s6_addr[14] = (u8)(BB_S_ADDR_UNION(*addr4) >> 16);
+			addr.sin6_addr.s6_addr[15] = (u8)(BB_S_ADDR_UNION(*addr4) >> 24);
+			bba_push(userdata->result.addrs, addr);
+		}
+		else if (p->ai_addr->sa_family == AF_INET6)
+		{
+			struct sockaddr_in6* addr = (struct sockaddr_in6*)(p->ai_addr);
+			bba_push(userdata->result.addrs, *addr);
+		}
 	}
 
 	freeaddrinfo(addrinfos);

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #if !defined(BB_ENABLED) || BB_ENABLED
@@ -112,6 +112,11 @@ int bbnet_socket_nonblocking(bb_socket socket, b32 nonblocking)
 #error
 
 #endif // #else // #elif BB_USING(BB_COMPILER_CLANG) // #if BB_USING(BB_COMPILER_MSVC)
+}
+
+int bbnet_socket_ipv6only(bb_socket socket, b32 ipv6only)
+{
+	return setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&ipv6only, sizeof(ipv6only));
 }
 
 #endif // #if BB_ENABLED

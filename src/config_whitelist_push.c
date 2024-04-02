@@ -46,15 +46,50 @@ static void config_push_whitelist_task_statechanged(task* t)
 			BB_LOG("whitelist", "lookup %s has %u results:", sb_get(&result->name), result->addrs.count);
 			if (result->addrs.count)
 			{
-				resolved_whitelist_entry_t entry = { BB_EMPTY_INITIALIZER };
-				entry.allow = atoi(sdict_find_safe(sd, "allow"));
-				bb_strncpy(entry.applicationName, sdict_find_safe(sd, "applicationName"), sizeof(entry.applicationName));
-				entry.mask = strtoul(sdict_find_safe(sd, "mask"), NULL, 10);
+				s32 subnetMask = atoi(sdict_find_safe(sd, "subnetMask"));
 				for (u32 i = 0; i < result->addrs.count; ++i)
 				{
-					char buf[32];
-					BB_LOG("whitelist", "  %s", bb_format_ip(buf, sizeof(buf), result->addrs.data[i]));
-					entry.ip = result->addrs.data[i];
+					resolved_whitelist_entry_t entry = { BB_EMPTY_INITIALIZER };
+					entry.allow = atoi(sdict_find_safe(sd, "allow"));
+					bb_strncpy(entry.applicationName, sdict_find_safe(sd, "applicationName"), sizeof(entry.applicationName));
+
+					char buf[64];
+					BB_LOG("whitelist", "  %s", bb_format_addr(buf, sizeof(buf), (const struct sockaddr*)&result->addrs.data[i], sizeof(result->addrs.data[i]), false));
+					entry.addr = result->addrs.data[i];
+
+					entry.subnetMask.sin6_family = AF_INET6;
+
+					s32 localSubnetMask = subnetMask;
+					if (entry.addr.sin6_addr.s6_addr[0] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[1] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[2] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[3] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[4] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[5] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[6] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[7] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[8] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[9] == 0x00 &&
+					    entry.addr.sin6_addr.s6_addr[10] == 0xff &&
+					    entry.addr.sin6_addr.s6_addr[11] == 0xff)
+					{
+						if (subnetMask <= 32) // IPv4 mapped to IPv6, treat the mask as /32
+						{
+							localSubnetMask += 12 * 8;
+						}
+					}
+
+					for (int byteIndex = 0; byteIndex < 16 && localSubnetMask; ++byteIndex)
+					{
+						for (int bitIndex = 7; bitIndex >= 0 && localSubnetMask; --bitIndex)
+						{
+							u8 byteMask = 1u << bitIndex;
+							entry.subnetMask.sin6_addr.s6_addr[byteIndex] |= byteMask;
+							if (!--localSubnetMask)
+								break;
+						}
+					}
+
 					resolved_whitelist_add_entry(&resolvedWhitelist, &entry);
 				}
 			}
@@ -81,13 +116,13 @@ static void dns_task_finished(task* t, dns_task_result* results)
 
 static void queue_dns_task(task* groupTask,
                            b32 allow,
-                           const char* hostname, u32 mask,
+                           const char* hostname, s32 mask,
                            const char* applicationName)
 {
 	task subtask = dns_task_create(hostname, dns_task_finished);
 	sdict_add_raw(&subtask.extraData, "allow", allow ? "1" : "0");
 	sdict_add_raw(&subtask.extraData, "applicationName", applicationName);
-	sdict_add_raw(&subtask.extraData, "mask", va("%u", mask));
+	sdict_add_raw(&subtask.extraData, "subnetMask", va("%d", mask));
 	task_queue_subtask(groupTask, subtask);
 
 	if (!strcmp(hostname, "localhost"))
@@ -106,25 +141,14 @@ void config_push_whitelist(configWhitelist_t* configWhitelist)
 	groupTask.stateChanged = config_push_whitelist_task_statechanged;
 	for (u32 i = 0; i < configWhitelist->count; ++i)
 	{
-		u32 mask = ~0U;
+		s32 mask = 128;
 		configWhitelistEntry_t* entry = configWhitelist->data + i;
 		char* sep = strchr(sb_get(&entry->addressPlusMask), '/');
 		if (sep)
 		{
-			int val;
-			u32 zeros;
 			*sep = '\0';
-			val = atoi(sep + 1);
-			zeros = (val < 0) ? 0 : (val > 32) ? 32
-			                                   : val;
-			if (zeros == 32)
-			{
-				mask = 0;
-			}
-			else if (zeros > 0)
-			{
-				mask = mask << zeros;
-			}
+			mask = atoi(sep + 1);
+			mask = (mask < 0) ? 0 : ((mask > 128) ? 128 : mask);
 			queue_dns_task(&groupTask, entry->allow, sb_get(&entry->addressPlusMask), mask, sb_get(&entry->applicationName));
 			*sep = '/';
 		}

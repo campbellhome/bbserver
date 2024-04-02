@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "config.h"
@@ -135,6 +135,7 @@ b32 config_read(config_t* config)
 		if (entry->autodetectedDevkit)
 		{
 			int numDots = 0;
+			int numColons = 0;
 			b32 validChars = true;
 			size_t len = strlen(sb_get(&entry->addressPlusMask));
 			for (size_t i = 0; i < len; ++i)
@@ -143,13 +144,18 @@ b32 config_read(config_t* config)
 				{
 					++numDots;
 				}
-				else if (entry->addressPlusMask.data[i] < '0' || entry->addressPlusMask.data[i] > '9')
+				else if (entry->addressPlusMask.data[i] == ':')
+				{
+					++numColons;
+				}
+				else if ((entry->addressPlusMask.data[i] < '0' || entry->addressPlusMask.data[i] > '9') &&
+				         (entry->addressPlusMask.data[i] < 'a' || entry->addressPlusMask.data[i] > 'f'))
 				{
 					validChars = false;
 					break;
 				}
 			}
-			if (numDots != 3 || !validChars)
+			if ((numDots != 3 && numColons < 2) || !validChars)
 			{
 				bRemove = true;
 			}

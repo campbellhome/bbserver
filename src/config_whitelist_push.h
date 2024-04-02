@@ -1,9 +1,9 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
 
-#include "bb_types.h"
+#include "bb_sockets.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -11,8 +11,8 @@ extern "C" {
 
 typedef struct resolved_whitelist_entry_s
 {
-	u32 ip;
-	u32 mask;
+	struct sockaddr_in6 addr;
+	struct sockaddr_in6 subnetMask;
 	u32 delay;
 	b32 allow;
 	char applicationName[kBBSize_ApplicationName];

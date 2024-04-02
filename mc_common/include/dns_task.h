@@ -1,9 +1,10 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
 
 #include "tasks.h"
+#include "bb_sockets.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -16,7 +17,7 @@ typedef struct tag_dns_addresses
 {
 	u32 count;
 	u32 allocated;
-	u32* data;
+	struct sockaddr_in6* data;
 } dns_addresses;
 
 typedef struct tag_dns_task_result

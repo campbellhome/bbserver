@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -18,7 +18,8 @@ extern "C" {
 
 typedef struct bb_discovery_response_s
 {
-	struct sockaddr_in clientAddr;
+	struct sockaddr_in6 clientAddr;
+	u32 addrPad;
 	u64 nextSendTime;
 	int nTimesSent;
 	int nMaxTimesSent;
@@ -50,8 +51,8 @@ void bb_discovery_server_shutdown(bb_discovery_server_t* ds);
 
 void bb_discovery_server_tick_responses(bb_discovery_server_t* ds);
 int bb_discovery_server_recv_request(bb_discovery_server_t* ds, s8* buf, size_t bufSize,
-                                     struct sockaddr_in* sin);
-void bb_discovery_process_request(bb_discovery_server_t* ds, struct sockaddr_in* sin,
+                                     struct sockaddr_in6* sin);
+void bb_discovery_process_request(bb_discovery_server_t* ds, struct sockaddr_in6* sin,
                                   bb_decoded_discovery_packet_t* decoded,
                                   bb_discovery_packet_type_e responseType, u64 delay);
 const char* bb_discovery_packet_name(bb_discovery_packet_type_e type);

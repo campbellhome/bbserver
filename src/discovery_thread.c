@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "config.h"
@@ -53,20 +53,41 @@ static void discovery_shutdown(discovery_data_t* host)
 	bb_critical_section_shutdown(&host->whitelist_cs);
 }
 
-static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, struct sockaddr_in* sin,
+static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, struct sockaddr_in6* sin,
                                                         bb_decoded_discovery_packet_t* decoded)
 {
+	BB_UNUSED(sin);
 	if (decoded->packet.request.protocolVersion == BB_PROTOCOL_VERSION)
 	{
 		const char* sourceApplicationName = decoded->packet.request.sourceApplicationName;
 		const char* applicationName = (*sourceApplicationName) ? sourceApplicationName : decoded->packet.request.applicationName;
-		u32 sourceIp = decoded->packet.request.sourceIp;
-		u32 addr = (sourceIp) ? sourceIp : ntohl(BB_S_ADDR_UNION(*sin));
+		struct sockaddr_in6 addr = *sin;
+		u32 sourceIp = decoded->packet.request.sourceIp; // #ipv6 TODO: sourceIp should maybe be a string?  or a u8[16]?
+		if (sourceIp)
+		{
+			memset(addr.sin6_addr.s6_addr, 0, sizeof(addr.sin6_addr));
+			addr.sin6_addr.s6_addr[10] = 0xff;
+			addr.sin6_addr.s6_addr[11] = 0xff;
+			addr.sin6_addr.s6_addr[12] = (u8)(sourceIp >> 24);
+			addr.sin6_addr.s6_addr[13] = (u8)(sourceIp >> 16);
+			addr.sin6_addr.s6_addr[14] = (u8)(sourceIp >> 8);
+			addr.sin6_addr.s6_addr[15] = (u8)(sourceIp);
+		}
 		u32 i;
 		for (i = 0; i < host->whitelist.count; ++i)
 		{
 			resolved_whitelist_entry_t* entry = host->whitelist.data + i;
-			if ((addr & entry->mask) == (entry->ip & entry->mask))
+
+			struct sockaddr_in6 a = addr;
+			struct sockaddr_in6 b = entry->addr;
+
+			for (int byteIndex = 0; byteIndex < sizeof(addr.sin6_addr); ++byteIndex)
+			{
+				a.sin6_addr.s6_addr[byteIndex] &= entry->subnetMask.sin6_addr.s6_addr[byteIndex];
+				b.sin6_addr.s6_addr[byteIndex] &= entry->subnetMask.sin6_addr.s6_addr[byteIndex];
+			}
+
+			if (!memcmp(&a.sin6_addr, &b.sin6_addr, sizeof(addr.sin6_addr)))
 			{
 				if (!entry->applicationName[0] ||
 				    !strcmp(entry->applicationName, applicationName))
@@ -79,7 +100,7 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 	return NULL;
 }
 
-static bb_discovery_packet_type_e get_discovery_response(discovery_data_t* host, struct sockaddr_in* sin,
+static bb_discovery_packet_type_e get_discovery_response(discovery_data_t* host, struct sockaddr_in6* sin,
                                                          bb_decoded_discovery_packet_t* decoded, u64* delay)
 {
 	bb_discovery_packet_type_e result = kBBDiscoveryPacketType_Invalid;
@@ -90,9 +111,8 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t* host,
 	{
 		const char* applicationName = decoded->packet.request.applicationName;
 		resolved_whitelist_entry_t* entry = find_whitelist_match(host, sin, decoded);
-		u32 addr = ntohl(BB_S_ADDR_UNION(*sin));
-		char ip[32];
-		bb_format_ip(ip, sizeof(ip), addr);
+		char ip[64];
+		bb_format_addr(ip, sizeof(ip), (const struct sockaddr*)sin, sizeof(*sin), false);
 		if (entry && entry->allow)
 		{
 			BB_WARNING_PUSH(4061); // warning C4061: enumerator 'kBBDiscoveryPacketType_Invalid' in switch of enum 'bb_discovery_packet_type_e' is not explicitly handled by a case label
@@ -166,9 +186,9 @@ void discovery_push_whitelist(resolved_whitelist_t* resolvedWhitelist)
 	for (i = 0; i < resolvedWhitelist->count; ++i)
 	{
 		resolved_whitelist_entry_t* entry = resolvedWhitelist->data + i;
-		char ip[32], mask[32];
-		bb_format_ip(ip, sizeof(ip), entry->ip);
-		bb_format_ip(mask, sizeof(mask), entry->mask);
+		char ip[64], mask[64];
+		bb_format_addr(ip, sizeof(ip), (const struct sockaddr*)&entry->addr, sizeof(entry->addr), false);
+		bb_format_addr(mask, sizeof(mask), (const struct sockaddr*)&entry->subnetMask, sizeof(entry->subnetMask), false);
 		bb_log("%u: %s %s (mask %s) application: '%s'", i,
 		       entry->allow ? "(allow)" : "(deny)",
 		       ip, mask, entry->applicationName);
@@ -210,7 +230,7 @@ static bb_thread_return_t discovery_thread_func(void* args)
 	{
 		int nBytesRead;
 		s8 buf[BB_MAX_DISCOVERY_PACKET_BUFFER_SIZE];
-		struct sockaddr_in sin;
+		struct sockaddr_in6 sin;
 
 		bb_discovery_server_tick_responses(ds);
 		nBytesRead = bb_discovery_server_recv_request(ds, buf, sizeof(buf), &sin);
@@ -249,7 +269,7 @@ static bb_thread_return_t discovery_thread_func(void* args)
 						{
 							BB_ERROR("bb::discovery", "failed to start listening for client connection");
 						}
-						//BB_LOG("bb:discovery", "used con %p with socket %d state %d", con, con->socket, con->state);
+						// BB_LOG("bb:discovery", "used con %p with socket %d state %d", con, con->socket, con->state);
 						bbthread_create(recorder_thread, data);
 						break;
 					}

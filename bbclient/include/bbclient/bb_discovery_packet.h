@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -41,7 +41,7 @@ typedef enum
 typedef struct
 {
 	u32 protocolVersion;
-	u32 sourceIp;
+	u32 sourceIp; // #ipv6 TODO: version and move to a string or u8[16] to handle ipv6?
 	u32 platform;
 	char deviceCode[kBBSize_ApplicationName];
 	char sourceApplicationName[kBBSize_ApplicationName];
