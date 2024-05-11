@@ -20,7 +20,8 @@
 #endif
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 void bba_set_logging(b32 allocs, b32 failedAllocs);
@@ -54,7 +55,7 @@ static BB_INLINE U* bba__template_add(T& a, U*, u32 n, b32 clear, b32 reserve_on
 #define bba_add_from_loc(file, line, a, n) bba__raw_add(&(a), (u8*)&((a).data) - (u8*)&(a), &(a).count, &(a).allocated, (n), sizeof(*((a).data)), true, false, (file), (line))
 #define bba_add_noclear_from_loc(file, line, a, n) bba__raw_add(&(a), (u8*)&((a).data) - (u8*)&(a), &(a).count, &(a).allocated, (n), sizeof(*((a).data)), false, false, (file), (line))
 #define bba_reserve_from_loc(file, line, a, n) bba__raw_add(&(a), (u8*)&((a).data) - (u8*)&(a), &(a).count, &(a).allocated, (n), sizeof(*((a).data)), true, true, (file), (line))
-#endif //#else // #if defined(__cplusplus)
+#endif // #else // #if defined(__cplusplus)
 
 #define bba_add_array(a, ptr, n)                                     \
 	{                                                                \
@@ -83,18 +84,20 @@ static BB_INLINE U* bba__template_add(T& a, U*, u32 n, b32 clear, b32 reserve_on
 	}
 #define bba_last(a) ((a).data[(a).count - 1])
 
-#define bba_erase(a, n)                                                                   \
-	{                                                                                     \
-		if (n < (a).count)                                                                \
-		{                                                                                 \
-			u32 remainder = (a).count - n - 1;                                            \
-			if (remainder)                                                                \
-			{                                                                             \
-				memmove((a).data + n, (a).data + n + 1, remainder * sizeof((a).data[0])); \
-			}                                                                             \
-			--(a).count;                                                                  \
-		}                                                                                 \
+#define bba_erase_num(a, index, num)                                                                      \
+	{                                                                                                     \
+		if ((index) < (a).count && (index) + (num) <= (a).count)                                          \
+		{                                                                                                 \
+			u32 remainder = (a).count - (index) - (num);                                                  \
+			if (remainder)                                                                                \
+			{                                                                                             \
+				memmove((a).data + (index), (a).data + (index) + (num), remainder * sizeof((a).data[0])); \
+			}                                                                                             \
+			(a).count -= (num);                                                                           \
+		}                                                                                                 \
 	}
+
+#define bba_erase(a, n) bba_erase_num(a, n, 1)
 
 #define bba_clone(src, dst)                                                    \
 	{                                                                          \

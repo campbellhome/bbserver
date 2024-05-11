@@ -27,7 +27,7 @@
 #include <stdlib.h>
 
 static void recorded_session_add_category(recorded_session_t* session, bb_decoded_packet_t* decoded);
-static void recorded_session_add_partial_log(recorded_session_t* session, bb_decoded_packet_t* decoded);
+static void recorded_session_add_partial_log(recorded_session_t* session, bb_decoded_packet_t* decoded, recorded_thread_t* t);
 static void recorded_session_add_log(recorded_session_t* session, bb_decoded_packet_t* decoded, recorded_thread_t* t);
 static void recorded_session_add_fileid(recorded_session_t* session, bb_decoded_packet_t* decoded);
 static recorded_thread_t* recorded_session_find_or_add_thread(recorded_session_t* session, bb_decoded_packet_t* decoded);
@@ -379,7 +379,7 @@ void recorded_session_update(recorded_session_t* session)
 			recorded_session_add_category(session, &decoded);
 			break;
 		case kBBPacketType_LogTextPartial:
-			recorded_session_add_partial_log(session, &decoded);
+			recorded_session_add_partial_log(session, &decoded, t);
 			break;
 		case kBBPacketType_LogText_v1:
 		case kBBPacketType_LogText_v2:
@@ -584,8 +584,29 @@ static void clear_to_zero(void* zp, size_t bytes)
 	}
 }
 
-static void recorded_session_add_partial_log(recorded_session_t* session, bb_decoded_packet_t* decoded)
+static void recorded_session_add_partial_log(recorded_session_t* session, bb_decoded_packet_t* decoded, recorded_thread_t* t)
 {
+	size_t len = strlen(decoded->packet.logText.text);
+	if (len > 0 && decoded->packet.logText.text[len - 1] == '\n')
+	{
+		// partial ends in a '\n'.  Check if we have too long a buffer queued up, and treat it as a full log instead if so.
+		size_t queuedLen = len;
+		for (u32 i = 0; i < session->partialLogs.count; ++i)
+		{
+			const bb_decoded_packet_t* partial = session->partialLogs.data + i;
+			if (partial->header.threadId == decoded->header.threadId)
+			{
+				queuedLen += strlen(partial->packet.logText.text);
+			}
+		}
+
+		if (queuedLen > 16 * 1024)
+		{
+			recorded_session_add_log(session, decoded, t);
+			return;
+		}
+	}
+
 	bba_push(session->partialLogs, *decoded);
 }
 
@@ -670,7 +691,20 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 			const bb_decoded_packet_t* partial = session->partialLogs.data + i;
 			if (partial->header.threadId == decoded->header.threadId)
 			{
-				bba_erase(session->partialLogs, i);
+				u32 end = i + 1;
+				for (u32 j = end; j < session->partialLogs.count; ++j)
+				{
+					const bb_decoded_packet_t* endPacket = session->partialLogs.data + j;
+					if (endPacket->header.threadId == decoded->header.threadId)
+					{
+						end = j + 1;
+					}
+					else
+					{
+						break;
+					}
+				}
+				bba_erase_num(session->partialLogs, i, end - i);
 			}
 			else
 			{
