@@ -558,7 +558,7 @@ void bb_connect_direct(uint32_t targetIp, uint16_t targetPort, const void* paylo
 	bb_disconnect();
 	s_serverIp = targetIp;
 	s_serverPort = targetPort;
-	if (bbcon_connect_client_async(&s_con, targetIp, targetPort))
+	if (bbcon_connect_client_async_ipv4(&s_con, targetIp, targetPort))
 	{
 		while (bbcon_is_connecting(&s_con))
 		{
@@ -600,7 +600,7 @@ void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort)
 		{
 			s_serverIp = discovery.serverIp;
 			s_serverPort = discovery.serverPort;
-			if (bbcon_connect_client_async(&s_con, discovery.serverIp, discovery.serverPort))
+			if (bbcon_connect_client_async_ipv4(&s_con, discovery.serverIp, discovery.serverPort))
 			{
 				while (bbcon_is_connecting(&s_con))
 				{
@@ -623,7 +623,7 @@ void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort)
 			{
 				s_serverIp = discovery.serverIp;
 				s_serverPort = discovery.serverPort;
-				if (bbcon_connect_client_async(&s_con, discovery.serverIp, discovery.serverPort))
+				if (bbcon_connect_client_async_ipv4(&s_con, discovery.serverIp, discovery.serverPort))
 				{
 					while (bbcon_is_connecting(&s_con))
 					{

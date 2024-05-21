@@ -84,7 +84,68 @@ void bbcon_reset(bb_connection_t* con)
 	}
 }
 
-b32 bbcon_connect_client_async(bb_connection_t* con, u32 remoteAddr, u16 remotePort)
+b32 bbcon_connect_client_async(bb_connection_t* con, const struct sockaddr_in6* remoteAddr)
+{
+	char ipport[32];
+	b32 bConnected = false;
+	bb_socket testSocket;
+	bbcon_reset(con);
+	testSocket = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+	if (testSocket == BB_INVALID_SOCKET)
+	{
+		BBCON_ERROR("bbcon_connect_client_async failed - could create socket");
+		return false;
+	}
+
+	bb_format_addr(ipport, sizeof(ipport), (const struct sockaddr*)remoteAddr, sizeof(*remoteAddr), true);
+	BBCON_LOG("BlackBox client trying to connect to %s", ipport);
+
+	bbnet_socket_nodelay(testSocket, true);
+	bbnet_socket_nonblocking(testSocket, true);
+
+	int ret;
+	BBCON_LOG("BlackBox client trying to async connect...");
+	ret = connect(testSocket, (struct sockaddr*)remoteAddr, sizeof(*remoteAddr));
+	if (ret == BB_SOCKET_ERROR)
+	{
+		int err = BBNET_ERRNO;
+		if (err == BBNET_EWOULDBLOCK || err == BBNET_EINPROGRESS)
+		{
+			BBCON_LOG("BlackBox client connecting async");
+			con->socket = testSocket;
+			con->flags |= kBBCon_Client;
+			con->state = kBBConnection_Connecting;
+			con->connectTimeoutTime = bb_current_time_ms() + con->connectTimeoutInterval;
+			return true;
+		}
+		else
+		{
+			BBCON_ERROR("BlackBox client async connect failed with errno %d (%s)", err, bbnet_error_to_string(err));
+		}
+	}
+	else
+	{
+		bConnected = true;
+	}
+
+	if (!bConnected)
+	{
+		BB_CLOSE(testSocket);
+		return false;
+	}
+
+	BBCON_LOG("BlackBox client connected");
+
+	// We're connected - send an initial packet and flush to ensure the packet is sent
+	con->socket = testSocket;
+	con->flags |= kBBCon_Client;
+	con->state = kBBConnection_Connected;
+	bbcon_flush(con);
+
+	return true;
+}
+
+b32 bbcon_connect_client_async_ipv4(bb_connection_t* con, u32 remoteAddr, u16 remotePort)
 {
 	char ipport[32];
 	b32 bConnected = false;
@@ -98,7 +159,7 @@ b32 bbcon_connect_client_async(bb_connection_t* con, u32 remoteAddr, u16 remoteP
 	testSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (testSocket == BB_INVALID_SOCKET)
 	{
-		BBCON_ERROR("bbcon_connect_client failed - could create socket");
+		BBCON_ERROR("bbcon_connect_client_async_ipv4 failed - could create socket");
 		return false;
 	}
 
