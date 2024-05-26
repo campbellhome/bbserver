@@ -11,8 +11,8 @@ extern "C" {
 
 typedef struct resolved_whitelist_entry_s
 {
-	struct sockaddr_in6 addr;
-	struct sockaddr_in6 subnetMask;
+	struct sockaddr_storage addr;
+	struct sockaddr_storage subnetMask;
 	u32 delay;
 	b32 allow;
 	char applicationName[kBBSize_ApplicationName];

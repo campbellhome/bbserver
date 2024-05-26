@@ -84,20 +84,20 @@ void bbcon_reset(bb_connection_t* con)
 	}
 }
 
-b32 bbcon_connect_client_async(bb_connection_t* con, const struct sockaddr_in6* remoteAddr)
+b32 bbcon_connect_client_async(bb_connection_t* con, const struct sockaddr* remoteAddr, size_t remoteAddrSize)
 {
 	char ipport[32];
 	b32 bConnected = false;
 	bb_socket testSocket;
 	bbcon_reset(con);
-	testSocket = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+	testSocket = socket(remoteAddr->sa_family, SOCK_STREAM, IPPROTO_TCP);
 	if (testSocket == BB_INVALID_SOCKET)
 	{
 		BBCON_ERROR("bbcon_connect_client_async failed - could create socket");
 		return false;
 	}
 
-	bb_format_addr(ipport, sizeof(ipport), (const struct sockaddr*)remoteAddr, sizeof(*remoteAddr), true);
+	bb_format_addr(ipport, sizeof(ipport), remoteAddr, remoteAddrSize, true);
 	BBCON_LOG("BlackBox client trying to connect to %s", ipport);
 
 	bbnet_socket_nodelay(testSocket, true);
@@ -105,7 +105,7 @@ b32 bbcon_connect_client_async(bb_connection_t* con, const struct sockaddr_in6* 
 
 	int ret;
 	BBCON_LOG("BlackBox client trying to async connect...");
-	ret = connect(testSocket, (struct sockaddr*)remoteAddr, sizeof(*remoteAddr));
+	ret = connect(testSocket, remoteAddr, (int)remoteAddrSize);
 	if (ret == BB_SOCKET_ERROR)
 	{
 		int err = BBNET_ERRNO;

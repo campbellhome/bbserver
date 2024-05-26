@@ -1,8 +1,9 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "config_whitelist_push.h"
 #include "bb_array.h"
+#include "bb_assert.h"
 #include "bb_log.h"
 #include "bb_string.h"
 #include "config.h"
@@ -57,37 +58,60 @@ static void config_push_whitelist_task_statechanged(task* t)
 					BB_LOG("whitelist", "  %s", bb_format_addr(buf, sizeof(buf), (const struct sockaddr*)&result->addrs.data[i], sizeof(result->addrs.data[i]), false));
 					entry.addr = result->addrs.data[i];
 
-					entry.subnetMask.sin6_family = AF_INET6;
-
-					s32 localSubnetMask = subnetMask;
-					if (entry.addr.sin6_addr.s6_addr[0] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[1] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[2] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[3] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[4] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[5] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[6] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[7] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[8] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[9] == 0x00 &&
-					    entry.addr.sin6_addr.s6_addr[10] == 0xff &&
-					    entry.addr.sin6_addr.s6_addr[11] == 0xff)
+					if (entry.addr.ss_family == AF_INET6)
 					{
-						if (subnetMask <= 32) // IPv4 mapped to IPv6, treat the mask as /32
+						struct sockaddr_in6* addr = (struct sockaddr_in6*)&entry.addr;
+						struct sockaddr_in6* mask = (struct sockaddr_in6*)&entry.subnetMask;
+
+						mask->sin6_family = AF_INET6;
+
+						s32 localSubnetMask = subnetMask;
+						if (addr->sin6_addr.s6_addr[0] == 0x00 &&
+						    addr->sin6_addr.s6_addr[1] == 0x00 &&
+						    addr->sin6_addr.s6_addr[2] == 0x00 &&
+						    addr->sin6_addr.s6_addr[3] == 0x00 &&
+						    addr->sin6_addr.s6_addr[4] == 0x00 &&
+						    addr->sin6_addr.s6_addr[5] == 0x00 &&
+						    addr->sin6_addr.s6_addr[6] == 0x00 &&
+						    addr->sin6_addr.s6_addr[7] == 0x00 &&
+						    addr->sin6_addr.s6_addr[8] == 0x00 &&
+						    addr->sin6_addr.s6_addr[9] == 0x00 &&
+						    addr->sin6_addr.s6_addr[10] == 0xff &&
+						    addr->sin6_addr.s6_addr[11] == 0xff)
 						{
-							localSubnetMask += 12 * 8;
+							if (subnetMask <= 32) // IPv4 mapped to IPv6, treat the mask as /32
+							{
+								localSubnetMask += 12 * 8;
+							}
+						}
+
+						for (int byteIndex = 0; byteIndex < 16 && localSubnetMask; ++byteIndex)
+						{
+							for (int bitIndex = 7; bitIndex >= 0 && localSubnetMask; --bitIndex)
+							{
+								u8 byteMask = 1u << bitIndex;
+								mask->sin6_addr.s6_addr[byteIndex] |= byteMask;
+								if (!--localSubnetMask)
+									break;
+							}
 						}
 					}
-
-					for (int byteIndex = 0; byteIndex < 16 && localSubnetMask; ++byteIndex)
+					else if (entry.addr.ss_family == AF_INET)
 					{
-						for (int bitIndex = 7; bitIndex >= 0 && localSubnetMask; --bitIndex)
+						entry.subnetMask = entry.addr;
+						struct sockaddr_in* mask = (struct sockaddr_in*)&entry.subnetMask;
+						if (subnetMask >=0 && subnetMask < 32)
 						{
-							u8 byteMask = 1u << bitIndex;
-							entry.subnetMask.sin6_addr.s6_addr[byteIndex] |= byteMask;
-							if (!--localSubnetMask)
-								break;
+							BB_S_ADDR_UNION(*mask) = (1u << subnetMask) - 1u;
 						}
+						else
+						{
+							BB_S_ADDR_UNION(*mask) = ~0u;
+						}
+					}
+					else
+					{
+						BB_ASSERT(false);
 					}
 
 					resolved_whitelist_add_entry(&resolvedWhitelist, &entry);

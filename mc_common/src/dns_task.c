@@ -15,6 +15,8 @@ typedef struct tag_dns_task_userdata
 	volatile taskState threadExitState;
 	dns_task_result result;
 	DnsTask_Finished* finishedFunc;
+	s32 addrFamily;
+	u8 pad[4];
 } dns_task_userdata;
 
 static bb_thread_return_t dns_task_thread_proc(void* args)
@@ -23,7 +25,7 @@ static bb_thread_return_t dns_task_thread_proc(void* args)
 
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC; // use AF_INET to force IPv4, AF_INET6 to force IPv6, AF_UNSPEC to get both
+	hints.ai_family = userdata->addrFamily;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE; // for use in bind(), gets local address
 
@@ -39,24 +41,11 @@ static bb_thread_return_t dns_task_thread_proc(void* args)
 	struct addrinfo* p;
 	for (p = addrinfos; p != NULL; p = p->ai_next)
 	{
-		if (p->ai_addr->sa_family == AF_INET)
+		if (p->ai_addr->sa_family == AF_INET || p->ai_addr->sa_family == AF_INET6)
 		{
-			struct sockaddr_in* addr4 = (struct sockaddr_in*)(p->ai_addr);
-			struct sockaddr_in6 addr = { BB_EMPTY_INITIALIZER };
-			addr.sin6_family = AF_INET6;
-			addr.sin6_port = addr4->sin_port;
-			addr.sin6_addr.s6_addr[10] = 0xff;
-			addr.sin6_addr.s6_addr[11] = 0xff;
-			addr.sin6_addr.s6_addr[12] = (u8)(BB_S_ADDR_UNION(*addr4));
-			addr.sin6_addr.s6_addr[13] = (u8)(BB_S_ADDR_UNION(*addr4) >> 8);
-			addr.sin6_addr.s6_addr[14] = (u8)(BB_S_ADDR_UNION(*addr4) >> 16);
-			addr.sin6_addr.s6_addr[15] = (u8)(BB_S_ADDR_UNION(*addr4) >> 24);
+			struct sockaddr_storage addr = { BB_EMPTY_INITIALIZER };
+			memcpy(&addr, p->ai_addr, BB_MIN(p->ai_addrlen, sizeof(addr)));
 			bba_push(userdata->result.addrs, addr);
-		}
-		else if (p->ai_addr->sa_family == AF_INET6)
-		{
-			struct sockaddr_in6* addr = (struct sockaddr_in6*)(p->ai_addr);
-			bba_push(userdata->result.addrs, *addr);
 		}
 	}
 
@@ -128,6 +117,11 @@ void dns_task_reset(task* t)
 
 task dns_task_create(const char* name, DnsTask_Finished* finished)
 {
+	return dns_task_create_addrfamily(name, finished, AF_UNSPEC);
+}
+
+task dns_task_create_addrfamily(const char* name, DnsTask_Finished* finished, const int addrFamily)
+{
 	task t = { BB_EMPTY_INITIALIZER };
 	sb_append(&t.name, name);
 	t.tick = dns_task_tick;
@@ -140,6 +134,7 @@ task dns_task_create(const char* name, DnsTask_Finished* finished)
 		memset(userdata, 0, sizeof(*userdata));
 		sb_append(&userdata->result.name, name);
 		userdata->finishedFunc = finished;
+		userdata->addrFamily = addrFamily;
 	}
 	return t;
 }

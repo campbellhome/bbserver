@@ -11,7 +11,8 @@
 #include "bb_discovery_shared.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 typedef enum
@@ -41,9 +42,9 @@ typedef enum
 typedef struct
 {
 	u32 protocolVersion;
-	u32 sourceIp; // #ipv6 TODO: version and move to a string or u8[16] to handle ipv6?
-	u32 platform;
-	char deviceCode[kBBSize_ApplicationName];
+	u32 sourceIp;                             // #ipv6 TODO: version and move to a string or u8[16] to handle ipv6?
+	u32 platform;                             // present in kBBDiscoveryPacketType_RequestDiscovery and kBBDiscoveryPacketType_RequestDiscovery_v1
+	char deviceCode[kBBSize_ApplicationName]; // present in kBBDiscoveryPacketType_RequestDiscovery and kBBDiscoveryPacketType_RequestReservation
 	char sourceApplicationName[kBBSize_ApplicationName];
 	char applicationName[kBBSize_ApplicationName];
 } bb_packet_discovery_request_t;

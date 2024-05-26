@@ -36,7 +36,7 @@ typedef struct
 	bb_critical_section whitelist_cs;
 	bb_thread_handle_t thread_id;
 	b32 shutdownRequest;
-	u8 pad[4];
+	s32 addrFamily;
 } discovery_data_t;
 
 static discovery_data_t s_discovery_data; // too large for stack
@@ -53,7 +53,7 @@ static void discovery_shutdown(discovery_data_t* host)
 	bb_critical_section_shutdown(&host->whitelist_cs);
 }
 
-static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, struct sockaddr_in6* sin,
+static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, struct sockaddr_storage* sin,
                                                         bb_decoded_discovery_packet_t* decoded)
 {
 	BB_UNUSED(sin);
@@ -61,38 +61,69 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 	{
 		const char* sourceApplicationName = decoded->packet.request.sourceApplicationName;
 		const char* applicationName = (*sourceApplicationName) ? sourceApplicationName : decoded->packet.request.applicationName;
-		struct sockaddr_in6 addr = *sin;
-		u32 sourceIp = decoded->packet.request.sourceIp; // #ipv6 TODO: sourceIp should maybe be a string?  or a u8[16]?
-		if (sourceIp)
+
+		if (sin->ss_family == AF_INET)
 		{
-			memset(addr.sin6_addr.s6_addr, 0, sizeof(addr.sin6_addr));
-			addr.sin6_addr.s6_addr[10] = 0xff;
-			addr.sin6_addr.s6_addr[11] = 0xff;
-			addr.sin6_addr.s6_addr[12] = (u8)(sourceIp >> 24);
-			addr.sin6_addr.s6_addr[13] = (u8)(sourceIp >> 16);
-			addr.sin6_addr.s6_addr[14] = (u8)(sourceIp >> 8);
-			addr.sin6_addr.s6_addr[15] = (u8)(sourceIp);
-		}
-		u32 i;
-		for (i = 0; i < host->whitelist.count; ++i)
-		{
-			resolved_whitelist_entry_t* entry = host->whitelist.data + i;
-
-			struct sockaddr_in6 a = addr;
-			struct sockaddr_in6 b = entry->addr;
-
-			for (int byteIndex = 0; byteIndex < sizeof(addr.sin6_addr); ++byteIndex)
+			struct sockaddr_in* incomingAddr4 = (struct sockaddr_in*)sin;
+			u32 sourceIp = decoded->packet.request.sourceIp;
+			u32 incomingIp = (sourceIp) ? sourceIp : ntohl(BB_S_ADDR_UNION(*incomingAddr4));
+			for (u32 i = 0; i < host->whitelist.count; ++i)
 			{
-				a.sin6_addr.s6_addr[byteIndex] &= entry->subnetMask.sin6_addr.s6_addr[byteIndex];
-				b.sin6_addr.s6_addr[byteIndex] &= entry->subnetMask.sin6_addr.s6_addr[byteIndex];
-			}
+				resolved_whitelist_entry_t* entry = host->whitelist.data + i;
 
-			if (!memcmp(&a.sin6_addr, &b.sin6_addr, sizeof(addr.sin6_addr)))
-			{
-				if (!entry->applicationName[0] ||
-				    !strcmp(entry->applicationName, applicationName))
+				const struct sockaddr_in* entryAddr = (const struct sockaddr_in*)&entry->addr;
+				const struct sockaddr_in* subnetMask = (const struct sockaddr_in*)&entry->subnetMask;
+
+				const u32 entryIp = BB_S_ADDR_UNION(*entryAddr);
+				const u32 subnetMaskIp = BB_S_ADDR_UNION(*subnetMask);
+
+				if ((incomingIp & subnetMaskIp) == (entryIp & subnetMaskIp))
 				{
-					return entry;
+					if (!entry->applicationName[0] ||
+					    !strcmp(entry->applicationName, applicationName))
+					{
+						return entry;
+					}
+				}
+			}
+		}
+		else if (sin->ss_family == AF_INET6)
+		{
+			struct sockaddr_in6 addr = *(struct sockaddr_in6*)sin;
+			u32 sourceIp = decoded->packet.request.sourceIp; // #ipv6 TODO: sourceIp should maybe be a string?  or a u8[16]?
+			if (sourceIp)
+			{
+				memset(addr.sin6_addr.s6_addr, 0, sizeof(addr.sin6_addr));
+				addr.sin6_addr.s6_addr[10] = 0xff;
+				addr.sin6_addr.s6_addr[11] = 0xff;
+				addr.sin6_addr.s6_addr[12] = (u8)(sourceIp >> 24);
+				addr.sin6_addr.s6_addr[13] = (u8)(sourceIp >> 16);
+				addr.sin6_addr.s6_addr[14] = (u8)(sourceIp >> 8);
+				addr.sin6_addr.s6_addr[15] = (u8)(sourceIp);
+			}
+			for (u32 i = 0; i < host->whitelist.count; ++i)
+			{
+				resolved_whitelist_entry_t* entry = host->whitelist.data + i;
+				if (entry->addr.ss_family == AF_INET6)
+				{
+					struct sockaddr_in6 a = addr;
+					struct sockaddr_in6 b = *(const struct sockaddr_in6*)&entry->addr;
+					const struct sockaddr_in6* subnetMask = (const struct sockaddr_in6*)&entry->subnetMask;
+
+					for (int byteIndex = 0; byteIndex < sizeof(addr.sin6_addr); ++byteIndex)
+					{
+						a.sin6_addr.s6_addr[byteIndex] &= subnetMask->sin6_addr.s6_addr[byteIndex];
+						b.sin6_addr.s6_addr[byteIndex] &= subnetMask->sin6_addr.s6_addr[byteIndex];
+					}
+
+					if (!memcmp(&a.sin6_addr, &b.sin6_addr, sizeof(addr.sin6_addr)))
+					{
+						if (!entry->applicationName[0] ||
+						    !strcmp(entry->applicationName, applicationName))
+						{
+							return entry;
+						}
+					}
 				}
 			}
 		}
@@ -100,7 +131,7 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 	return NULL;
 }
 
-static bb_discovery_packet_type_e get_discovery_response(discovery_data_t* host, struct sockaddr_in6* sin,
+static bb_discovery_packet_type_e get_discovery_response(discovery_data_t* host, struct sockaddr_storage* sin,
                                                          bb_decoded_discovery_packet_t* decoded, u64* delay)
 {
 	bb_discovery_packet_type_e result = kBBDiscoveryPacketType_Invalid;
@@ -208,7 +239,7 @@ static bb_thread_return_t discovery_thread_func(void* args)
 
 	while (!host->shutdownRequest)
 	{
-		if (bb_discovery_server_init(&host->ds))
+		if (bb_discovery_server_init(&host->ds, host->addrFamily))
 			break;
 
 		to_ui(kToUI_DiscoveryStatus, "Retrying");
@@ -230,7 +261,7 @@ static bb_thread_return_t discovery_thread_func(void* args)
 	{
 		int nBytesRead;
 		s8 buf[BB_MAX_DISCOVERY_PACKET_BUFFER_SIZE];
-		struct sockaddr_in6 sin;
+		struct sockaddr_storage sin;
 
 		bb_discovery_server_tick_responses(ds);
 		nBytesRead = bb_discovery_server_recv_request(ds, buf, sizeof(buf), &sin);
@@ -289,9 +320,10 @@ static bb_thread_return_t discovery_thread_func(void* args)
 	bb_thread_exit(0);
 }
 
-int discovery_thread_init(void)
+int discovery_thread_init(const int addrFamily)
 {
 	memset(&s_discovery_data, 0, sizeof(s_discovery_data));
+	s_discovery_data.addrFamily = addrFamily;
 	discovery_init(&s_discovery_data);
 	deviceCodes_init();
 	s_discovery_data.thread_id = bbthread_create(discovery_thread_func, &s_discovery_data);

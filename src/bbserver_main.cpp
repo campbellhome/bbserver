@@ -152,7 +152,7 @@ static b32 BBServer_Init(const char* commandLineRecording)
 	if (bbnet_init())
 	{
 		BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Initializing discovery thread");
-		if (discovery_thread_init() != 0)
+		if (discovery_thread_init(AF_UNSPEC) != 0)
 		{
 			new_recording_t recording;
 			config_push_whitelist(&g_config.whitelist);

@@ -13,13 +13,13 @@
 #include "bb_sockets.h"
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
 typedef struct bb_discovery_response_s
 {
-	struct sockaddr_in6 clientAddr;
-	u32 addrPad;
+	struct sockaddr_storage clientAddr;
 	u64 nextSendTime;
 	int nTimesSent;
 	int nMaxTimesSent;
@@ -39,20 +39,21 @@ typedef struct bb_discovery_pending_connection_s
 
 typedef struct bb_discovery_server_s
 {
-	bb_socket socket;
+	bb_socket socket_in4;
+	bb_socket socket_in6;
 	bb_discovery_response_t responses[64];
 	bb_discovery_pending_connection_t pendingConnections[64];
 	u32 numResponses;
 	u32 numPendingConnections;
 } bb_discovery_server_t;
 
-b32 bb_discovery_server_init(bb_discovery_server_t* ds);
+b32 bb_discovery_server_init(bb_discovery_server_t* ds, const int addrFamily);
 void bb_discovery_server_shutdown(bb_discovery_server_t* ds);
 
 void bb_discovery_server_tick_responses(bb_discovery_server_t* ds);
 int bb_discovery_server_recv_request(bb_discovery_server_t* ds, s8* buf, size_t bufSize,
-                                     struct sockaddr_in6* sin);
-void bb_discovery_process_request(bb_discovery_server_t* ds, struct sockaddr_in6* sin,
+                                     struct sockaddr_storage* sin);
+void bb_discovery_process_request(bb_discovery_server_t* ds, struct sockaddr_storage* sin,
                                   bb_decoded_discovery_packet_t* decoded,
                                   bb_discovery_packet_type_e responseType, u64 delay);
 const char* bb_discovery_packet_name(bb_discovery_packet_type_e type);

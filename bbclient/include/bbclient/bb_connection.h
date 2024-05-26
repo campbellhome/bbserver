@@ -55,7 +55,7 @@ void bbcon_init(bb_connection_t* con);
 void bbcon_shutdown(bb_connection_t* con);
 void bbcon_reset(bb_connection_t* con);
 
-b32 bbcon_connect_client_async(bb_connection_t* con, const struct sockaddr_in6* remoteAddr);
+b32 bbcon_connect_client_async(bb_connection_t* con, const struct sockaddr* remoteAddr, size_t remoteAddrSize);
 b32 bbcon_connect_client_async_ipv4(bb_connection_t* con, u32 remoteAddr, u16 remotePort);
 b32 bbcon_connect_client(bb_connection_t* con, u32 remoteAddr, u16 remotePort, u32 retries);
 b32 bbcon_tick_connecting(bb_connection_t* con);
