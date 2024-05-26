@@ -1994,6 +1994,20 @@ static bool UIRecordedView_UpdateFilter(view_t* view)
 	return filterFocused || view->filterPopupOpen;
 }
 
+static void UIRecordedView_HandleStopRecordingMessageBox(messageBox* mb, const char* action)
+{
+	if (!bb_stricmp(action, "Stop Recording"))
+	{
+		view_t* view = (view_t*)mb->userData;
+		recorded_session_t* session = view->session;
+		const recording_t* recording = recordings_find_by_path(session->path);
+		if (recording && recording->active && recording->outgoingMqId != mq_invalid_id())
+		{
+			mq_queue(recording->outgoingMqId, kBBPacketType_StopRecording, "stop");
+		}
+	}
+}
+
 static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 {
 	if (!view->initialized)
@@ -2213,6 +2227,23 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				if (ImGui::MenuItem("Open containing folder"))
 				{
 					UIRecordedView_OpenContainingFolder(view);
+				}
+				if (recording->active)
+				{
+					if (recording->outgoingMqId != mq_invalid_id())
+					{
+						if (ImGui::Selectable("Stop recording"))
+						{
+							messageBox mb = {};
+							sdict_add_raw(&mb.data, "title", u8"\uf06a Stop recording?");
+							sdict_add_raw(&mb.data, "text", va("Stop recording %s?", session->path));
+							sdict_add_raw(&mb.data, "button1", "Stop Recording");
+							sdict_add_raw(&mb.data, "button2", "Cancel");
+							mb.callback = &UIRecordedView_HandleStopRecordingMessageBox;
+							mb.userData = view;
+							mb_queue(mb, &view->messageboxes);
+						}
+					}
 				}
 				if (g_config.showDebugMenu)
 				{
