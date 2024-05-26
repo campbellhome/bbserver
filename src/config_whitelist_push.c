@@ -66,18 +66,7 @@ static void config_push_whitelist_task_statechanged(task* t)
 						mask->sin6_family = AF_INET6;
 
 						s32 localSubnetMask = subnetMask;
-						if (addr->sin6_addr.s6_addr[0] == 0x00 &&
-						    addr->sin6_addr.s6_addr[1] == 0x00 &&
-						    addr->sin6_addr.s6_addr[2] == 0x00 &&
-						    addr->sin6_addr.s6_addr[3] == 0x00 &&
-						    addr->sin6_addr.s6_addr[4] == 0x00 &&
-						    addr->sin6_addr.s6_addr[5] == 0x00 &&
-						    addr->sin6_addr.s6_addr[6] == 0x00 &&
-						    addr->sin6_addr.s6_addr[7] == 0x00 &&
-						    addr->sin6_addr.s6_addr[8] == 0x00 &&
-						    addr->sin6_addr.s6_addr[9] == 0x00 &&
-						    addr->sin6_addr.s6_addr[10] == 0xff &&
-						    addr->sin6_addr.s6_addr[11] == 0xff)
+						if (bbnet_socket_is6to4((const struct sockaddr*)addr))
 						{
 							if (subnetMask <= 32) // IPv4 mapped to IPv6, treat the mask as /32
 							{

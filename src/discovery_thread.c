@@ -93,13 +93,7 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 			u32 sourceIp = decoded->packet.request.sourceIp; // #ipv6 TODO: sourceIp should maybe be a string?  or a u8[16]?
 			if (sourceIp)
 			{
-				memset(addr.sin6_addr.s6_addr, 0, sizeof(addr.sin6_addr));
-				addr.sin6_addr.s6_addr[10] = 0xff;
-				addr.sin6_addr.s6_addr[11] = 0xff;
-				addr.sin6_addr.s6_addr[12] = (u8)(sourceIp >> 24);
-				addr.sin6_addr.s6_addr[13] = (u8)(sourceIp >> 16);
-				addr.sin6_addr.s6_addr[14] = (u8)(sourceIp >> 8);
-				addr.sin6_addr.s6_addr[15] = (u8)(sourceIp);
+				bbnet_socket_build6to4(&addr, sourceIp);
 			}
 			for (u32 i = 0; i < host->whitelist.count; ++i)
 			{

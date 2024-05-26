@@ -119,4 +119,39 @@ int bbnet_socket_ipv6only(bb_socket socket, b32 ipv6only)
 	return setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&ipv6only, sizeof(ipv6only));
 }
 
+b32 bbnet_socket_is6to4(const struct sockaddr* addr)
+{
+	if (addr->sa_family == AF_INET6)
+	{
+		const struct sockaddr_in6* addr6 = (const struct sockaddr_in6*)addr;
+		if (addr6->sin6_addr.s6_addr[0] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[1] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[2] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[3] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[4] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[5] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[6] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[7] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[8] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[9] == 0x00 &&
+		    addr6->sin6_addr.s6_addr[10] == 0xff &&
+		    addr6->sin6_addr.s6_addr[11] == 0xff)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void bbnet_socket_build6to4(struct sockaddr_in6* addr, const u32 ip)
+{
+	memset(addr->sin6_addr.s6_addr, 0, sizeof(addr->sin6_addr));
+	addr->sin6_addr.s6_addr[10] = 0xff;
+	addr->sin6_addr.s6_addr[11] = 0xff;
+	addr->sin6_addr.s6_addr[12] = (u8)(ip >> 24);
+	addr->sin6_addr.s6_addr[13] = (u8)(ip >> 16);
+	addr->sin6_addr.s6_addr[14] = (u8)(ip >> 8);
+	addr->sin6_addr.s6_addr[15] = (u8)(ip);
+}
+
 #endif // #if BB_ENABLED
