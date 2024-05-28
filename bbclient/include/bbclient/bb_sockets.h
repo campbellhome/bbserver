@@ -110,6 +110,8 @@ int bbnet_socket_nonblocking(bb_socket socket, b32 nonblocking);
 int bbnet_socket_ipv6only(bb_socket socket, b32 ipv6only);
 b32 bbnet_socket_is6to4(const struct sockaddr *addr); // returns true if addr is ipv4 mapped to ipv6
 void bbnet_socket_build6to4(struct sockaddr_in6 *addr, const u32 ip); // builds ipv4to6 addr from v4 ip
+u16 bbnet_get_port_from_sockaddr(const struct sockaddr *addr);
+void bbnet_set_port_on_sockaddr(struct sockaddr* addr, const u16 port);
 
 #if defined(__cplusplus)
 }

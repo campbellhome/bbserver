@@ -154,4 +154,29 @@ void bbnet_socket_build6to4(struct sockaddr_in6* addr, const u32 ip)
 	addr->sin6_addr.s6_addr[15] = (u8)(ip);
 }
 
+u16 bbnet_get_port_from_sockaddr(const struct sockaddr* addr)
+{
+	if (addr->sa_family == AF_INET)
+	{
+		return ntohs(((const struct sockaddr_in*)addr)->sin_port);
+	}
+	else if (addr->sa_family == AF_INET6)
+	{
+		return ntohs(((const struct sockaddr_in6*)addr)->sin6_port);
+	}
+	return 0;
+}
+
+void bbnet_set_port_on_sockaddr(struct sockaddr* addr, const u16 port)
+{
+	if (addr->sa_family == AF_INET)
+	{
+		((struct sockaddr_in*)addr)->sin_port = htons(port);
+	}
+	else if (addr->sa_family == AF_INET6)
+	{
+		((struct sockaddr_in6*)addr)->sin6_port = htons(port);
+	}
+}
+
 #endif // #if BB_ENABLED

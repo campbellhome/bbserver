@@ -98,7 +98,7 @@ static void BBServer_OpenMainLog(b32 bNoDuplicates = true)
 		recorded_session_t* session = recorded_session_find(recording->path);
 		if (!session || !bNoDuplicates)
 		{
-			recorded_session_open(recording->path, recording->applicationFilename, true, recording->active != 0, recording->outgoingMqId);
+			recorded_session_open(recording->path, recording->applicationFilename, recording->applicationName, true, recording->active != 0, recording->outgoingMqId);
 		}
 	}
 }
@@ -510,7 +510,7 @@ void BBServer_MainMenuBar(void)
 					recorded_session_t* session = recorded_session_find(recording->path);
 					if (!session)
 					{
-						recorded_session_open(recording->path, recording->applicationFilename, true, recording->active != 0, recording->outgoingMqId);
+						recorded_session_open(recording->path, recording->applicationFilename, recording->applicationName, true, recording->active != 0, recording->outgoingMqId);
 					}
 				}
 			}

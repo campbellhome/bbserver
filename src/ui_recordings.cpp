@@ -204,7 +204,7 @@ static void UIRecordings_HandlePopupMenu(recording_tab_t tab, grouped_recording_
 				bool hasView = recorded_session_find(entry->recording->path) != nullptr;
 				if (!hasView)
 				{
-					recorded_session_open(entry->recording->path, entry->recording->applicationFilename, false, entry->recording->active, entry->recording->outgoingMqId);
+					recorded_session_open(entry->recording->path, entry->recording->applicationFilename, entry->recording->applicationName, false, entry->recording->active, entry->recording->outgoingMqId);
 				}
 			}
 		}
@@ -327,7 +327,7 @@ static void UIRecordings_Recording(recording_tab_t tab, grouped_recording_entry_
 	{
 		if (ImGui::IsMouseDoubleClicked(0))
 		{
-			recorded_session_open(recording->path, recording->applicationFilename, false, recording->active, recording->outgoingMqId);
+			recorded_session_open(recording->path, recording->applicationFilename, recording->applicationName, false, recording->active, recording->outgoingMqId);
 			UIRecordings_HandleDoubleClick(tab, e);
 		}
 		else

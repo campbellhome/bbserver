@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -155,6 +155,7 @@ BB_LINKAGE void bb_init_file_w(const bb_wchar_t* path);
 #endif // #if BB_COMPILE_WIDECHAR
 
 BB_LINKAGE void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort);
+BB_LINKAGE int32_t bb_connect_str(const char* discoveryAddr, uint16_t discoveryPort);
 BB_LINKAGE void bb_connect_direct(uint32_t targetIp, uint16_t targetPort, const void* payload, uint32_t payloadBytes);
 BB_LINKAGE void bb_disconnect(void);
 BB_LINKAGE int bb_is_connected(void);

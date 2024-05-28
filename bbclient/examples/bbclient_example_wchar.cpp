@@ -240,6 +240,7 @@ int main(int argc, const char** argv)
 	BB_INIT_WITH_FLAGS(L"bbclient: matt", kBBInitFlag_ConsoleCommands | kBBInitFlag_DebugInit | kBBInitFlag_ConsoleAutocomplete);
 	// BB_INIT_WITH_FLAGS(L"bbclient: matt (no view)", kBBInitFlag_NoOpenView | kBBInitFlag_DebugInit);
 	BB_THREAD_START(L"main thread!");
+	bb_connect_str("127.0.0.1", 0);
 	BB_LOG(L"startup", L"bbclient init took %llu ms", bb_current_time_ms() - start);
 
 	BB_START_FRAME_NUMBER(++frameNumber);

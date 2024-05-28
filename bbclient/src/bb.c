@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #if !defined(BB_ENABLED) || BB_ENABLED
@@ -14,6 +14,7 @@ __pragma(warning(disable : 4710)) // warning C4710 : 'int printf(const char *con
 #include "bbclient/bb_connection.h"
 #include "bbclient/bb_criticalsection.h"
 #include "bbclient/bb_discovery_client.h"
+#include "bbclient/bb_discovery_shared.h"
 #include "bbclient/bb_file.h"
 #include "bbclient/bb_log.h"
 #include "bbclient/bb_malloc.h"
@@ -579,10 +580,10 @@ void bb_connect_direct(uint32_t targetIp, uint16_t targetPort, const void* paylo
 	bb_critical_section_unlock(&s_id_cs);
 }
 
-void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort)
+b32 bb_connect_sockaddr(const struct sockaddr* discoveryAddr, size_t discoveryAddrSize)
 {
 	if (!s_id_cs.initialized)
-		return;
+		return false;
 
 	bb_critical_section_lock(&s_id_cs);
 
@@ -591,55 +592,91 @@ void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort)
 	b32 bFile = !s_bFileSentAppInfo;
 	s_bFileSentAppInfo = true;
 	b32 bSocket = false;
-	if (discoveryIp || discoveryPort)
+
+	bb_disconnect();
+	bb_discovery_result_t discovery = bb_discovery_client_start(s_applicationName, s_sourceApplicationName, s_deviceCode, s_sourceIp, discoveryAddr, discoveryAddrSize);
+	if (discovery.success)
 	{
-		bb_disconnect();
-		bb_discovery_result_t discovery = bb_discovery_client_start(s_applicationName, s_sourceApplicationName, s_deviceCode,
-		                                                            s_sourceIp, discoveryIp, discoveryPort);
-		if (discovery.serverIp)
+		if (discovery.serverAddr.ss_family == AF_INET)
 		{
-			s_serverIp = discovery.serverIp;
-			s_serverPort = discovery.serverPort;
-			if (bbcon_connect_client_async_ipv4(&s_con, discovery.serverIp, discovery.serverPort))
+			s_serverIp = BB_S_ADDR_UNION(*(const struct sockaddr_in*)&discovery.serverAddr);
+		}
+		else
+		{
+			s_serverIp = 0;
+		}
+		s_serverPort = bbnet_get_port_from_sockaddr((const struct sockaddr*)&discovery.serverAddr);
+		if (bbcon_connect_client_async(&s_con, (const struct sockaddr*)&discovery.serverAddr, sizeof(discovery.serverAddr)))
+		{
+			while (bbcon_is_connecting(&s_con))
 			{
-				while (bbcon_is_connecting(&s_con))
-				{
-					bbcon_tick_connecting(&s_con);
-				}
-				if (bbcon_is_connected(&s_con))
-				{
-					bSocket = true;
-				}
+				bbcon_tick_connecting(&s_con);
+			}
+			if (bbcon_is_connected(&s_con))
+			{
+				bSocket = true;
 			}
 		}
 	}
-	if (!bbcon_is_connected(&s_con))
-	{
-		if ((g_bb_initFlags & kBBInitFlag_NoDiscovery) == 0)
-		{
-			bb_discovery_result_t discovery = bb_discovery_client_start(s_applicationName, s_sourceApplicationName, s_deviceCode,
-			                                                            s_sourceIp, 0, 0);
-			if (discovery.serverIp)
-			{
-				s_serverIp = discovery.serverIp;
-				s_serverPort = discovery.serverPort;
-				if (bbcon_connect_client_async_ipv4(&s_con, discovery.serverIp, discovery.serverPort))
-				{
-					while (bbcon_is_connecting(&s_con))
-					{
-						bbcon_tick_connecting(&s_con);
-					}
-					if (bbcon_is_connected(&s_con))
-					{
-						bSocket = true;
-					}
-				}
-			}
-		}
-	}
+
 	bb_send_initial(bCallbacks, bSocket, bFile);
 
 	bb_critical_section_unlock(&s_id_cs);
+
+	return bSocket;
+}
+
+b32 bb_connect_ipv4(uint32_t discoveryIp, uint16_t discoveryPort)
+{
+	struct sockaddr_in addr = { BB_EMPTY_INITIALIZER };
+	addr.sin_family = AF_INET;
+	BB_S_ADDR_UNION(addr) = (discoveryIp) ? htonl(discoveryIp) : INADDR_BROADCAST;
+	addr.sin_port = htons(discoveryPort ? discoveryPort : BB_DISCOVERY_PORT);
+	return bb_connect_sockaddr((const struct sockaddr*)&addr, sizeof(addr));
+}
+
+int32_t bb_connect_str(const char* discoveryAddr, uint16_t discoveryPort)
+{
+	struct sockaddr_storage addr = { BB_EMPTY_INITIALIZER };
+	addr.ss_family = (strchr(discoveryAddr, '.') == 0) ? AF_INET6 : AF_INET;
+	if (discoveryAddr)
+	{
+		if (addr.ss_family == AF_INET6)
+		{
+			struct sockaddr_in6 *addr6 = (struct sockaddr_in6*)&addr;
+			if (inet_pton(AF_INET6, discoveryAddr, &addr6->sin6_addr) != 1)
+			{
+				return false;
+			}
+			addr6->sin6_port = htons(discoveryPort ? discoveryPort : BB_DISCOVERY_PORT);
+		}
+		else
+		{
+			struct sockaddr_in* addr4 = (struct sockaddr_in*)&addr;
+			if (inet_pton(AF_INET, discoveryAddr, &addr4->sin_addr) != 1)
+			{
+				return false;
+			}
+			addr4->sin_port = htons(discoveryPort ? discoveryPort : BB_DISCOVERY_PORT);
+		}
+	}
+	else
+	{
+		return false;
+	}
+	return bb_connect_sockaddr((const struct sockaddr*)&addr, sizeof(addr));
+}
+
+void bb_connect(uint32_t discoveryIp, uint16_t discoveryPort)
+{
+	if (bb_connect_ipv4(discoveryIp, discoveryPort))
+		return;
+
+	if (discoveryIp != 0)
+	{
+		if (bb_connect_ipv4(0, discoveryPort))
+			return;
+	}
 }
 
 void bb_init_critical_sections(void)

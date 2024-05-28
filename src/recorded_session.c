@@ -69,7 +69,7 @@ void recorded_session_shutdown(void)
 	sb_reset(&s_reconstructedLogText);
 }
 
-void recorded_session_open(const char* path, const char* applicationFilename, b8 autoClose, b32 recordingActive, u32 outgoingMqId)
+void recorded_session_open(const char* path, const char* applicationFilename, const char* applicationName, b8 autoClose, b32 recordingActive, u32 outgoingMqId)
 {
 	if (g_config.autoCloseAll)
 	{
@@ -77,7 +77,7 @@ void recorded_session_open(const char* path, const char* applicationFilename, b8
 	}
 	else
 	{
-		recorded_session_auto_close(applicationFilename);
+		recorded_session_auto_close(applicationName);
 	}
 
 	view_t* view;

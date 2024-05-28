@@ -19,20 +19,19 @@ typedef struct bb_discovery_client_s
 {
 	u32 discoveryTimeoutMillis;
 	u32 discoveryRequestMillis;
-	u32 reservationIp;
+	struct sockaddr_storage reservationAddr;
 	u32 serverIp;
-	u16 reservationPort;
 	u16 serverPort;
+	u8 pad[2];
 } bb_discovery_client_t;
 
 static b32 bb_discovery_send_request(bb_socket discoverySocket, bb_discovery_packet_type_e type,
                                      const char* applicationName, const char* sourceApplicationName,
-                                     const char* deviceCode, u32 sourceIp, u32 ip, u16 port)
+                                     const char* deviceCode, u32 sourceIp, const struct sockaddr_storage* addrStorage)
 {
 	int nBytesSent;
-	char ipport[32];
+	char ipport[256];
 	u16 serializedLen;
-	struct sockaddr_in sin;
 	s8 buf[BB_MAX_DISCOVERY_PACKET_BUFFER_SIZE];
 	bb_decoded_discovery_packet_t decoded;
 	decoded.type = type;
@@ -49,28 +48,19 @@ static b32 bb_discovery_send_request(bb_socket discoverySocket, bb_discovery_pac
 		return false;
 	}
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(port);
-	BB_S_ADDR_UNION(sin) = htonl(ip);
-
-	nBytesSent = sendto(discoverySocket, (const char*)buf, serializedLen, 0, (struct sockaddr*)&sin, sizeof(sin));
+	nBytesSent = sendto(discoverySocket, (const char*)buf, serializedLen, 0, (const struct sockaddr*)addrStorage, sizeof(*addrStorage));
 	if (nBytesSent < 0)
 	{
 		int err = BBNET_ERRNO;
 		bb_error("Failed to send discovery request to %s - err %d (%s)",
-		         bb_format_ipport(ipport, sizeof(ipport),
-		                          ntohl(BB_S_ADDR_UNION(sin)),
-		                          ntohs(sin.sin_port)),
+		         bb_format_addr(ipport, sizeof(ipport), (const struct sockaddr*)addrStorage, sizeof(*addrStorage), true),
 		         err, bbnet_error_to_string(err));
 	}
 	else
 	{
 		bb_log("Sent discovery request of %d bytes to %s",
 		       nBytesSent,
-		       bb_format_ipport(ipport, sizeof(ipport),
-		                        ntohl(BB_S_ADDR_UNION(sin)),
-		                        ntohs(sin.sin_port)));
+		       bb_format_addr(ipport, sizeof(ipport), (const struct sockaddr*)addrStorage, sizeof(*addrStorage), true));
 	}
 	if (nBytesSent == serializedLen)
 	{
@@ -82,7 +72,7 @@ static b32 bb_discovery_send_request(bb_socket discoverySocket, bb_discovery_pac
 	}
 }
 
-static b32 bb_discovery_client_recvfrom(bb_socket socket, struct sockaddr_in* addr, bb_decoded_discovery_packet_t* decoded, u32 timeoutMillis)
+static b32 bb_discovery_client_recvfrom(bb_socket socket, struct sockaddr_storage* addr, bb_decoded_discovery_packet_t* decoded, u32 timeoutMillis)
 {
 	u64 startMillis = bb_current_time_ms();
 	u64 endMillis = startMillis + timeoutMillis;
@@ -116,7 +106,7 @@ static b32 bb_discovery_client_recvfrom(bb_socket socket, struct sockaddr_in* ad
 			ret = BB_SELECT((int)socket + 1, &set, 0, 0, &tv);
 			if (1 != ret)
 			{
-				//bb_log( "discovery client select ret:%d" );
+				// bb_log( "discovery client select ret:%d" );
 				continue;
 			}
 
@@ -143,13 +133,13 @@ static b32 bb_discovery_client_recvfrom(bb_socket socket, struct sockaddr_in* ad
 }
 
 bb_discovery_result_t bb_discovery_client_start(const char* applicationName, const char* sourceApplicationName, const char* deviceCode,
-                                                u32 sourceIp, u32 searchIp, u16 searchPort)
+                                                u32 sourceIp, const struct sockaddr* discoveryAddr, size_t discoveryAddrSize)
 {
 	const u32 kDiscoveryTimeoutMillis = 500;
 	const u32 kDiscoveryRequestMillis = 100;
 	int val = 1;
 	bb_socket discoverySocket;
-	bb_discovery_client_t client;
+	bb_discovery_client_t client = { BB_EMPTY_INITIALIZER };
 	bb_discovery_client_t* dc;
 	u64 startTime = bb_current_time_ms();
 	u64 endTime = startTime + kDiscoveryTimeoutMillis;
@@ -162,9 +152,9 @@ bb_discovery_result_t bb_discovery_client_start(const char* applicationName, con
 	dc->discoveryRequestMillis = kDiscoveryRequestMillis;
 	dc->serverIp = 0;
 	dc->serverPort = 0;
+	memcpy(&dc->reservationAddr, discoveryAddr, BB_MIN(sizeof(dc->reservationAddr), discoveryAddrSize));
 
-	dc->reservationIp = (searchIp) ? searchIp : INADDR_BROADCAST;
-	dc->reservationPort = (searchPort) ? searchPort : BB_DISCOVERY_PORT;
+	const u16 reservationPort = bbnet_get_port_from_sockaddr(discoveryAddr);
 
 	bb_log("Client discovery started");
 
@@ -192,9 +182,8 @@ bb_discovery_result_t bb_discovery_client_start(const char* applicationName, con
 		u64 reservationStartTime;
 		u64 reservationEndTime;
 		u64 currentTime;
-		u32 serverIP;
-		char serverIpStr[32];
-		struct sockaddr_in serverAddr;
+		char serverIpStr[256];
+		struct sockaddr_storage serverAddr = { BB_EMPTY_INITIALIZER };
 		bb_decoded_discovery_packet_t decoded;
 		u64 now = bb_current_time_ms();
 		if (now > endTime)
@@ -203,15 +192,15 @@ bb_discovery_result_t bb_discovery_client_start(const char* applicationName, con
 		if (now >= prevRequestTime + dc->discoveryRequestMillis)
 		{
 			bb_discovery_send_request(discoverySocket, kBBDiscoveryPacketType_RequestDiscovery, applicationName,
-			                          sourceApplicationName, deviceCode, sourceIp, dc->reservationIp, dc->reservationPort);
+			                          sourceApplicationName, deviceCode, sourceIp, &dc->reservationAddr);
 			prevRequestTime = now;
 		}
 
 		if (!bb_discovery_client_recvfrom(discoverySocket, &serverAddr, &decoded, 100))
 			continue;
 
-		serverIP = ntohl(BB_S_ADDR_UNION(serverAddr));
-		bb_format_ip(serverIpStr, sizeof(serverIpStr), serverIP);
+		bbnet_set_port_on_sockaddr((struct sockaddr *)&serverAddr, reservationPort);
+		bb_format_addr(serverIpStr, sizeof(serverIpStr), (const struct sockaddr*)&serverAddr, sizeof(serverAddr), false);
 
 		if (decoded.type != kBBDiscoveryPacketType_AnnouncePresence)
 		{
@@ -222,26 +211,44 @@ bb_discovery_result_t bb_discovery_client_start(const char* applicationName, con
 		//	send reservation request
 		bb_log("Sending reservation request");
 		bb_discovery_send_request(discoverySocket, kBBDiscoveryPacketType_RequestReservation, applicationName,
-		                          sourceApplicationName, deviceCode, sourceIp, serverIP, dc->reservationPort);
+		                          sourceApplicationName, deviceCode, sourceIp, &serverAddr);
 
 		// wait for reservation response
 		reservationStartTime = bb_current_time_ms();
 		reservationEndTime = reservationStartTime + ReservationMilliseconds;
 
 		// Loop while not timed out:
-		//BB_TRACE( "Waiting for reservation response time:%d", reservationStartTime );
+		// BB_TRACE( "Waiting for reservation response time:%d", reservationStartTime );
 		currentTime = reservationStartTime;
 		while (currentTime < reservationEndTime)
 		{
 			currentTime = bb_current_time_ms();
 
-			if (!bb_discovery_client_recvfrom(discoverySocket, &serverAddr, &decoded, 100))
+			struct sockaddr_storage newServerAddr = { BB_EMPTY_INITIALIZER };
+			if (!bb_discovery_client_recvfrom(discoverySocket, &newServerAddr, &decoded, 100))
 				continue;
 
-			if (serverIP != ntohl(BB_S_ADDR_UNION(serverAddr)))
+			b32 bMismatch = (serverAddr.ss_family != newServerAddr.ss_family);
+			if (!bMismatch)
 			{
-				char packetIp[32];
-				bb_format_ip(packetIp, sizeof(packetIp), ntohl(BB_S_ADDR_UNION(serverAddr)));
+				if (serverAddr.ss_family == AF_INET)
+				{
+					bMismatch = BB_S_ADDR_UNION(*(const struct sockaddr_in*)&serverAddr) != BB_S_ADDR_UNION(*(const struct sockaddr_in*)&newServerAddr);
+				}
+				else if (serverAddr.ss_family == AF_INET6)
+				{
+					bMismatch = memcmp(&((const struct sockaddr_in6*)&serverAddr)->sin6_addr, &((const struct sockaddr_in6*)&newServerAddr)->sin6_addr, 16) != 0;
+				}
+				else
+				{
+					bMismatch = true;
+				}
+			}
+
+			if (bMismatch)
+			{
+				char packetIp[256];
+				bb_format_addr(packetIp, sizeof(packetIp), (const struct sockaddr*)&newServerAddr, sizeof(newServerAddr), false);
 				bb_log("Ignoring response from server %s - reserving from %s", packetIp, serverIpStr);
 				continue;
 			}
@@ -249,12 +256,13 @@ bb_discovery_result_t bb_discovery_client_start(const char* applicationName, con
 			if (decoded.type == kBBDiscoveryPacketType_ReservationAccept)
 			{
 				// We win!
-				char ipport[32];
-				result.serverIp = serverIP;
-				result.serverPort = decoded.packet.response.port;
+				char ipport[256];
+				result.serverAddr = serverAddr;
+				result.success = true;
+				bbnet_set_port_on_sockaddr((struct sockaddr*)&result.serverAddr, decoded.packet.response.port);
 				bbnet_gracefulclose(&discoverySocket);
 
-				bb_format_ipport(ipport, sizeof(ipport), result.serverIp, result.serverPort);
+				bb_format_addr(ipport, sizeof(ipport), (const struct sockaddr*)&result.serverAddr, sizeof(result.serverAddr), true);
 				bb_log("Client discovery reserved server at %s", ipport);
 				return result;
 			}

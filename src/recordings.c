@@ -319,7 +319,7 @@ void recording_started(char* data)
 			s_recordingsDirty[tab] = true;
 			if (r.openView)
 			{
-				recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), recording->recordingType != kRecordingType_ExternalFile, true, recording->outgoingMqId);
+				recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), recording->applicationName, recording->recordingType != kRecordingType_ExternalFile, true, recording->outgoingMqId);
 			}
 		}
 	}
