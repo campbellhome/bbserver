@@ -6,6 +6,7 @@
 #include "bb.h"
 
 #include "bbclient/bb_sockets.h"
+#include <string.h>
 
 #if BB_USING(BB_COMPILER_MSVC)
 #pragma comment(lib, "ws2_32.lib")

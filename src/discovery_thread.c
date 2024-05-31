@@ -70,19 +70,21 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 			for (u32 i = 0; i < host->whitelist.count; ++i)
 			{
 				resolved_whitelist_entry_t* entry = host->whitelist.data + i;
-
-				const struct sockaddr_in* entryAddr = (const struct sockaddr_in*)&entry->addr;
-				const struct sockaddr_in* subnetMask = (const struct sockaddr_in*)&entry->subnetMask;
-
-				const u32 entryIp = BB_S_ADDR_UNION(*entryAddr);
-				const u32 subnetMaskIp = BB_S_ADDR_UNION(*subnetMask);
-
-				if ((incomingIp & subnetMaskIp) == (entryIp & subnetMaskIp))
+				if (sin->ss_family == AF_INET)
 				{
-					if (!entry->applicationName[0] ||
-					    !strcmp(entry->applicationName, applicationName))
+					const struct sockaddr_in* entryAddr = (const struct sockaddr_in*)&entry->addr;
+					const struct sockaddr_in* subnetMask = (const struct sockaddr_in*)&entry->subnetMask;
+
+					const u32 entryIp = ntohl(BB_S_ADDR_UNION(*entryAddr));
+					const u32 subnetMaskIp = ntohl(BB_S_ADDR_UNION(*subnetMask));
+
+					if ((incomingIp & subnetMaskIp) == (entryIp & subnetMaskIp))
 					{
-						return entry;
+						if (!entry->applicationName[0] ||
+						    !strcmp(entry->applicationName, applicationName))
+						{
+							return entry;
+						}
 					}
 				}
 			}
@@ -207,14 +209,14 @@ void discovery_push_whitelist(resolved_whitelist_t* resolvedWhitelist)
 	bb_critical_section_unlock(&s_discovery_data.whitelist_cs);
 	bba_free(oldWhitelist);
 
-	bb_log("whitelist has %u entries (%u allocated):", resolvedWhitelist->count, resolvedWhitelist->allocated);
+	BB_LOG("bb::discovery", "whitelist has %u entries (%u allocated):", resolvedWhitelist->count, resolvedWhitelist->allocated);
 	for (i = 0; i < resolvedWhitelist->count; ++i)
 	{
 		resolved_whitelist_entry_t* entry = resolvedWhitelist->data + i;
 		char ip[64], mask[64];
 		bb_format_addr(ip, sizeof(ip), (const struct sockaddr*)&entry->addr, sizeof(entry->addr), false);
 		bb_format_addr(mask, sizeof(mask), (const struct sockaddr*)&entry->subnetMask, sizeof(entry->subnetMask), false);
-		bb_log("%u: %s %s (mask %s) application: '%s'", i,
+		BB_LOG("bb::discovery", "%u: %s %s (mask %s) application: '%s'", i,
 		       entry->allow ? "(allow)" : "(deny)",
 		       ip, mask, entry->applicationName);
 	}
