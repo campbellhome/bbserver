@@ -92,6 +92,7 @@ static const char* s_pathNames[] = {
 };
 
 static b32 s_bQuit = false;
+static u32 s_NumContinues = 0;
 
 // enum { InitialBufferLen = 1 };
 enum
@@ -109,6 +110,7 @@ struct console_autocomplete_entry
 };
 
 static console_autocomplete_entry s_autocompleteEntries[] = {
+	{ "continue", "continue to next section of test app", true, 0 },
 	{ "quit", "quit the application", true, 0 },
 	{ "log LogTemp", "set log category", true, 0 },
 	{ "log LogConsole", "set log category", true, 0 },
@@ -136,6 +138,11 @@ static void incoming_packet_handler(const bb_decoded_packet_t* decoded, void* co
 		if (!bb_stricmp(text, "quit"))
 		{
 			s_bQuit = true;
+			s_NumContinues = INT_MAX;
+		}
+		else if (!bb_stricmp(text, "continue"))
+		{
+			++s_NumContinues;
 		}
 	}
 	else if (decoded->type == kBBPacketType_ConsoleAutocompleteRequest)
@@ -183,6 +190,7 @@ static void incoming_packet_handler(const bb_decoded_packet_t* decoded, void* co
 static bb_thread_return_t before_connect_thread_proc(void*)
 {
 	BB_THREAD_SET_NAME(L"before_connect_thread_proc");
+	BB_TRACE_A(kBBLogLevel_Verbose, "Thread::before_connect_thread_proc", "before_connect_thread_proc started");
 
 	u64 count = 0;
 	u64 start = bb_current_time_ms();
@@ -199,9 +207,30 @@ static bb_thread_return_t before_connect_thread_proc(void*)
 	return 0;
 }
 
+static bb_thread_return_t also_before_connect_thread_proc(void*)
+{
+	BB_THREAD_SET_NAME(L"also_before_connect_thread_proc");
+	BB_TRACE_A(kBBLogLevel_Verbose, "Thread::also_before_connect_thread_proc", "also_before_connect_thread_proc started");
+
+	u64 count = 0;
+	u64 start = bb_current_time_ms();
+	u64 now = start;
+	u64 end = now + 1000000;
+	while (now < end && !s_bQuit)
+	{
+		BB_TRACE_A(kBBLogLevel_Verbose, "Thread::also_before_connect_thread_proc", "also_before_connect_thread_proc %llu dt %llu ms", ++count, now - start);
+		bb_sleep_ms(1000);
+		now = bb_current_time_ms();
+	}
+
+	BB_THREAD_END();
+	return 0;
+}
+
 static bb_thread_return_t after_connect_thread_proc(void*)
 {
 	BB_THREAD_SET_NAME(L"after_connect_thread_proc");
+	BB_TRACE_A(kBBLogLevel_Verbose, "Thread::after_connect_thread_proc", "after_connect_thread_proc started");
 
 	u64 count = 0;
 	u64 start = bb_current_time_ms();
@@ -230,6 +259,7 @@ int main(int argc, const char** argv)
 	//bb_init_critical_sections();
 
 	bbthread_create(before_connect_thread_proc, nullptr);
+	bbthread_create(also_before_connect_thread_proc, nullptr);
 	bb_sleep_ms(1000);
 
 	bb_set_initial_buffer(s_initialBuffer, InitialBufferLen);
@@ -240,7 +270,6 @@ int main(int argc, const char** argv)
 	BB_INIT_WITH_FLAGS(L"bbclient: matt", kBBInitFlag_ConsoleCommands | kBBInitFlag_DebugInit | kBBInitFlag_ConsoleAutocomplete);
 	// BB_INIT_WITH_FLAGS(L"bbclient: matt (no view)", kBBInitFlag_NoOpenView | kBBInitFlag_DebugInit);
 	BB_THREAD_START(L"main thread!");
-	// bb_connect_str("127.0.0.1", 0);
 	BB_LOG(L"startup", L"bbclient init took %llu ms", bb_current_time_ms() - start);
 
 	BB_START_FRAME_NUMBER(++frameNumber);
@@ -268,7 +297,7 @@ int main(int argc, const char** argv)
 	BB_LOG(L"standalone::nested::category", L"standalone::nested::category");
 
 	// repeating connection test for iteration on bbserver console input
-	while (1)
+	while (s_NumContinues < 1)
 	{
 		BB_LOG(L"test::unicode::wchar_t", L"Sofía");
 		BB_LOG(L"test::unicode::wchar_t", L"(╯°□°）╯︵ ┻━┻");
@@ -286,20 +315,22 @@ int main(int argc, const char** argv)
 		BB_LOG_A("test::unicode::utf8", u8"\u2728");       // ✨
 		BB_LOG_A("test::unicode::utf8", u8"\u2122");       // ™
 
-		while (BB_IS_CONNECTED())
+		while (BB_IS_CONNECTED() && s_NumContinues < 1)
 		{
 			bb_sleep_ms(100);
 			BB_START_FRAME_NUMBER(++frameNumber);
 			BB_TICK();
 		}
 
-		bb_sleep_ms(1000);
-		bb_connect(127 << 24 | 1, 0);
+		if (!BB_IS_CONNECTED())
+		{
+			bb_sleep_ms(1000);
+			bb_connect(127 << 24 | 1, 0);
+		}
 	}
-	// bbthread_create(before_connect_thread_proc, nullptr); // fixes unused function warning/error
 
 	start = bb_current_time_ms();
-	while (BB_IS_CONNECTED())
+	while (BB_IS_CONNECTED() && s_NumContinues < 2)
 	{
 		bb_sleep_ms(160);
 		BB_START_FRAME_NUMBER(++frameNumber);
@@ -316,11 +347,6 @@ int main(int argc, const char** argv)
 		{
 			categoryIndex = 0;
 		}
-
-		if (bb_current_time_ms() - start > 300)
-		{
-			break;
-		}
 	}
 
 	s_bQuit = true;
@@ -334,10 +360,10 @@ int main(int argc, const char** argv)
 	printf("Here we go...\n");
 	bb_disconnect();
 	bb_sleep_ms(1000);
-	bb_connect(127 << 24 | 1, 0);
+	bb_connect_str("127.0.0.1", 0);
 	bbthread_create(after_connect_thread_proc, nullptr);
 
-	while (BB_IS_CONNECTED() && !s_bQuit)
+	while (BB_IS_CONNECTED() && !s_bQuit && s_NumContinues < 3)
 	{
 		BB_START_FRAME_NUMBER(++frameNumber);
 		BB_TICK();
