@@ -227,20 +227,20 @@ int main(int argc, const char** argv)
 	(void)argc;
 	(void)argv;
 
-	bb_init_critical_sections();
+	//bb_init_critical_sections();
 
-	// bbthread_create(before_connect_thread_proc, nullptr);
-	// bb_sleep_ms(1000);
+	bbthread_create(before_connect_thread_proc, nullptr);
+	bb_sleep_ms(1000);
 
 	bb_set_initial_buffer(s_initialBuffer, InitialBufferLen);
 	// bb_enable_stored_thread_ids(false);
 
-	// bb_init_file_w(L"bbclient.bbox");
+	bb_init_file_w(L"bbclient.bbox");
 	// BB_INIT(L"bbclient: matt");
 	BB_INIT_WITH_FLAGS(L"bbclient: matt", kBBInitFlag_ConsoleCommands | kBBInitFlag_DebugInit | kBBInitFlag_ConsoleAutocomplete);
 	// BB_INIT_WITH_FLAGS(L"bbclient: matt (no view)", kBBInitFlag_NoOpenView | kBBInitFlag_DebugInit);
 	BB_THREAD_START(L"main thread!");
-	bb_connect_str("127.0.0.1", 0);
+	// bb_connect_str("127.0.0.1", 0);
 	BB_LOG(L"startup", L"bbclient init took %llu ms", bb_current_time_ms() - start);
 
 	BB_START_FRAME_NUMBER(++frameNumber);
@@ -296,7 +296,7 @@ int main(int argc, const char** argv)
 		bb_sleep_ms(1000);
 		bb_connect(127 << 24 | 1, 0);
 	}
-	bbthread_create(before_connect_thread_proc, nullptr); // fixes unused function warning/error
+	// bbthread_create(before_connect_thread_proc, nullptr); // fixes unused function warning/error
 
 	start = bb_current_time_ms();
 	while (BB_IS_CONNECTED())

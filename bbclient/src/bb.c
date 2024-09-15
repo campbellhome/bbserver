@@ -53,6 +53,7 @@ typedef struct bb_id_s
 {
 	char text[1020];
 	u32 id;
+	u64 initialBufferState;
 } bb_id_t;
 typedef struct bb_ids_s
 {
@@ -71,7 +72,7 @@ typedef struct bb_thread_id_s
 	bb_packet_header_t header;
 	bb_packet_type_e packetType;
 	char text[kBBSize_ThreadName];
-	u8 pad[4];
+	u32 initialBufferState;
 } bb_thread_id_t;
 typedef struct bb_thread_ids_s
 {
@@ -107,9 +108,16 @@ static void* s_bb_send_callback_context;
 static bb_incoming_packet_handler s_bb_incoming_packet_handler;
 static void* s_bb_incoming_packet_context;
 
+enum bbInitialBufferState_e
+{
+	kBBInitialBuffer_Unset,
+	kBBInitialBuffer_Set,
+	kBBInitialBuffer_Done,
+};
 typedef struct bbInitialBuffer_s
 {
 	bb_critical_section cs;
+	u64 state;
 	void* data;
 	u32 size;
 	u32 used;
@@ -117,6 +125,8 @@ typedef struct bbInitialBuffer_s
 	u32 pad;
 } bbInitialBuffer_t;
 static bbInitialBuffer_t s_initial_buffer;
+
+bb_decoded_packet_t s_initialAppInfo;
 
 typedef struct bbtraceBuffer_s
 {
@@ -274,6 +284,7 @@ static BB_INLINE void bb_send(bb_decoded_packet_t* decoded)
 				s_initial_buffer.data = NULL;
 				s_initial_buffer.size = 0u;
 				s_initial_buffer.used = 0u;
+				s_initial_buffer.state = kBBInitialBuffer_Done;
 			}
 		}
 		bb_critical_section_unlock(&s_initial_buffer.cs);
@@ -405,11 +416,16 @@ static BB_INLINE void bb_send_directed(bb_decoded_packet_t* decoded, b32 bCallba
 	}
 }
 
-static void bb_send_ids(bb_ids_t* ids, bb_packet_type_e packetType, b32 bCallbacks, b32 bSocket, b32 bFile)
+static void bb_send_ids(bb_ids_t* ids, bb_packet_type_e packetType, b32 bCallbacks, b32 bSocket, b32 bFile, b32 bBeforeInitialBuffer)
 {
 	for (u32 i = 0; i < ids->count; ++i)
 	{
 		bb_id_t* id = ids->data + i;
+		if (bBeforeInitialBuffer && id->initialBufferState != kBBInitialBuffer_Unset)
+			continue;
+		if (!bBeforeInitialBuffer && id->initialBufferState != kBBInitialBuffer_Done)
+			continue;
+
 		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
 		bb_fill_header(&decoded, packetType, 0, 0);
 		decoded.packet.registerId.id = id->id;
@@ -418,11 +434,16 @@ static void bb_send_ids(bb_ids_t* ids, bb_packet_type_e packetType, b32 bCallbac
 	}
 }
 
-static void bb_send_thread_ids(bb_thread_ids_t* ids, b32 bCallbacks, b32 bSocket, b32 bFile)
+static void bb_send_thread_ids(bb_thread_ids_t* ids, b32 bCallbacks, b32 bSocket, b32 bFile, b32 bBeforeInitialBuffer)
 {
 	for (u32 i = 0; i < ids->count; ++i)
 	{
 		bb_thread_id_t* id = ids->data + i;
+		if (bBeforeInitialBuffer && id->initialBufferState != kBBInitialBuffer_Unset)
+			continue;
+		if (!bBeforeInitialBuffer && id->initialBufferState != kBBInitialBuffer_Done)
+			continue;
+
 		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
 		decoded.type = id->packetType;
 		decoded.header = id->header;
@@ -461,44 +482,33 @@ static void bb_save_initial_appinfo(void)
 	if (s_initial_buffer.cs.initialized)
 	{
 		bb_critical_section_lock(&s_initial_buffer.cs);
-		if (s_initial_buffer.data != NULL)
-		{
-			bb_decoded_packet_t decoded = bb_build_appinfo();
-			u8 buf[BB_MAX_PACKET_BUFFER_SIZE];
-			u16 serializedLen = bbpacket_serialize(&decoded, buf + 2, sizeof(buf) - 2);
-			if (serializedLen)
-			{
-				serializedLen += 2;
-				buf[0] = (u8)(serializedLen >> 8);
-				buf[1] = (u8)(serializedLen & 0xFF);
-			}
-
-			s_initial_buffer.start = sizeof(bb_decoded_packet_t) - serializedLen;
-			memcpy((u8*)s_initial_buffer.data + s_initial_buffer.start, buf, serializedLen);
-		}
+		s_initialAppInfo = bb_build_appinfo();
 		bb_critical_section_unlock(&s_initial_buffer.cs);
 	}
 }
 
 static void bb_send_initial(b32 bCallbacks, b32 bSocket, b32 bFile)
 {
-	if (bSocket && s_initial_buffer.cs.initialized)
+	BB_ASSERT(bbpacket_is_app_info_type(s_initialAppInfo.type));
+	bb_send_directed(&s_initialAppInfo, bCallbacks, bSocket, bFile);
+
+	bb_send_ids(&s_bb_pathIds, kBBPacketType_FileId, bCallbacks, bSocket, bFile, true);
+	bb_send_ids(&s_bb_categoryIds, kBBPacketType_CategoryId, bCallbacks, bSocket, bFile, true);
+	bb_send_thread_ids(&s_bb_threadIds, bCallbacks, bSocket, bFile, true);
+
+	 if (s_initial_buffer.cs.initialized)
 	{
 		bb_critical_section_lock(&s_initial_buffer.cs);
 		if (s_initial_buffer.data != NULL && s_initial_buffer.used > 0)
 		{
 			bbcon_send_raw(&s_con, (u8*)s_initial_buffer.data + s_initial_buffer.start, s_initial_buffer.used - s_initial_buffer.start);
-			bSocket = false;
 		}
 		bb_critical_section_unlock(&s_initial_buffer.cs);
 	}
 
-	bb_decoded_packet_t decoded = bb_build_appinfo();
-	bb_send_directed(&decoded, bCallbacks, bSocket, bFile);
-
-	bb_send_ids(&s_bb_pathIds, kBBPacketType_FileId, bCallbacks, bSocket, bFile);
-	bb_send_ids(&s_bb_categoryIds, kBBPacketType_CategoryId, bCallbacks, bSocket, bFile);
-	bb_send_thread_ids(&s_bb_threadIds, bCallbacks, bSocket, bFile);
+	bb_send_ids(&s_bb_pathIds, kBBPacketType_FileId, bCallbacks, bSocket, bFile, false);
+	bb_send_ids(&s_bb_categoryIds, kBBPacketType_CategoryId, bCallbacks, bSocket, bFile, false);
+	bb_send_thread_ids(&s_bb_threadIds, bCallbacks, bSocket, bFile, false);
 }
 
 void bb_init_file(const char* path)
@@ -508,7 +518,7 @@ void bb_init_file(const char* path)
 	{
 		s_fp = bb_file_open_for_write(path);
 
-		if (s_id_cs.initialized)
+		if (s_id_cs.initialized && bbpacket_is_app_info_type(s_initialAppInfo.type))
 		{
 			bb_critical_section_lock(&s_id_cs);
 			bb_send_initial(false, false, true);
@@ -714,6 +724,17 @@ void bb_init(const char* applicationName, const char* sourceApplicationName, con
 	s_sourceIp = sourceIp;
 	bb_save_initial_appinfo();
 
+	if (s_id_cs.initialized)
+	{
+		bb_critical_section_lock(&s_id_cs);
+		if (s_fp != NULL && !s_bFileSentAppInfo)
+		{
+			bb_send_initial(false, false, true);
+			s_bFileSentAppInfo = true;
+		}
+		bb_critical_section_unlock(&s_id_cs);
+	}
+
 #if BB_USING(BB_PLATFORM_WINDOWS)
 	if ((g_bb_initFlags & kBBInitFlag_NoDiscovery) == 0)
 	{
@@ -786,9 +807,13 @@ void bb_set_initial_buffer(void* buffer, uint32_t bufferSize)
 	bb_critical_section_lock(&s_initial_buffer.cs);
 	s_initial_buffer.data = buffer;
 	s_initial_buffer.size = bufferSize;
-	if (bufferSize >= sizeof(bb_decoded_packet_t))
+	if (bufferSize > 0)
 	{
-		s_initial_buffer.used = sizeof(bb_decoded_packet_t);
+		s_initial_buffer.state = kBBInitialBuffer_Set;
+	}
+	else
+	{
+		s_initial_buffer.state = kBBInitialBuffer_Done;
 	}
 	bb_critical_section_unlock(&s_initial_buffer.cs);
 }
@@ -979,6 +1004,7 @@ static void bb_thread_store_id_packet(bb_decoded_packet_t* decoded)
 		{
 			bb_strncpy(newIdData->text, decoded->packet.threadName.text, sizeof(newIdData->text));
 		}
+		newIdData->initialBufferState = (u32)s_initial_buffer.state;
 	}
 	if (s_id_cs.initialized)
 	{
@@ -988,6 +1014,7 @@ static void bb_thread_store_id_packet(bb_decoded_packet_t* decoded)
 
 void bb_thread_start(uint32_t pathId, uint32_t line, const char* name)
 {
+	bb_init_critical_sections();
 	bb_decoded_packet_t decoded;
 	bb_fill_header(&decoded, kBBPacketType_ThreadStart, pathId, line);
 	bb_strncpy(decoded.packet.threadStart.text, name, sizeof(decoded.packet.threadStart.text));
@@ -1004,6 +1031,7 @@ void bb_thread_start_w(uint32_t pathId, uint32_t line, const bb_wchar_t* name)
 
 void bb_thread_set_name(uint32_t pathId, uint32_t line, const char* name)
 {
+	bb_init_critical_sections();
 	bb_decoded_packet_t decoded;
 	bb_fill_header(&decoded, kBBPacketType_ThreadName, pathId, line);
 	bb_strncpy(decoded.packet.threadName.text, name, sizeof(decoded.packet.threadName.text));
@@ -1092,6 +1120,7 @@ static u32 bb_resolve_id(const char* name, bb_ids_t* ids, u32 pathId, u32 line, 
 			{
 				newIdData->id = newId;
 				bb_strncpy(newIdData->text, name, sizeof(newIdData->text));
+				newIdData->initialBufferState = s_initial_buffer.state;
 			}
 			bb_fill_header(&decoded, packetType, (pathId) ? pathId : newId, line);
 			decoded.packet.registerId.id = newId;
