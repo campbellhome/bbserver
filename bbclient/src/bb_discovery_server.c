@@ -29,12 +29,17 @@ static b32 bb_discovery_server_init_addrFamily(bb_discovery_server_t* ds, const 
 
 	// Bind the socket to any available address on the port to check
 	memset(&sin, 0, sizeof(sin));
-	sin.ss_family = (u16)addrFamily;
+	sin.ss_family = (u8)addrFamily;
 	if (addrFamily == AF_INET6)
 	{
+#if !BB_USING(BB_FEATURE_IPV6)
+		BB_ERROR_A("Discovery", "Discovery server failed to create socket for addrFamily %d", addrFamily);
+		return false;
+#else  // #if !BB_USING(BB_FEATURE_IPV6)
 		struct sockaddr_in6* addr = (struct sockaddr_in6*)&sin;
 		addr->sin6_port = htons(BB_DISCOVERY_PORT);
 		addr->sin6_addr = in6addr_any;
+#endif // #if BB_USING(BB_FEATURE_IPV6)
 	}
 	else
 	{
@@ -95,12 +100,17 @@ static void bb_discovery_remove_response(bb_discovery_server_t* ds, const struct
 		bb_discovery_response_t* response = ds->responses + index;
 		if (sin->ss_family == response->clientAddr.ss_family)
 		{
-			const struct sockaddr_in6* incomingAddr6 = (const struct sockaddr_in6*)sin;
 			const struct sockaddr_in* incomingAddr4 = (const struct sockaddr_in*)sin;
-			const struct sockaddr_in6* responseAddr6 = (const struct sockaddr_in6*)&response->clientAddr;
 			const struct sockaddr_in* responseAddr4 = (const struct sockaddr_in*)&response->clientAddr;
-			if ((sin->ss_family == AF_INET && !memcmp(&incomingAddr4->sin_addr, &responseAddr4->sin_addr, sizeof(responseAddr4->sin_addr))) ||
-			    (sin->ss_family == AF_INET6 && !memcmp(&incomingAddr6->sin6_addr, &responseAddr6->sin6_addr, sizeof(responseAddr6->sin6_addr))))
+#if BB_USING(BB_FEATURE_IPV6)
+			const struct sockaddr_in6* incomingAddr6 = (const struct sockaddr_in6*)sin;
+			const struct sockaddr_in6* responseAddr6 = (const struct sockaddr_in6*)&response->clientAddr;
+#endif // #if BB_USING(BB_FEATURE_IPV6)
+			if ((sin->ss_family == AF_INET && !memcmp(&incomingAddr4->sin_addr, &responseAddr4->sin_addr, sizeof(responseAddr4->sin_addr)))
+#if BB_USING(BB_FEATURE_IPV6)
+			    || (sin->ss_family == AF_INET6 && !memcmp(&incomingAddr6->sin6_addr, &responseAddr6->sin6_addr, sizeof(responseAddr6->sin6_addr)))
+#endif // #if BB_USING(BB_FEATURE_IPV6)
+			)
 			{
 				if (index != ds->numResponses - 1)
 				{
@@ -215,10 +225,12 @@ int bb_discovery_server_recv_request(bb_discovery_server_t* ds, s8* buf, size_t 
 	if (FD_ISSET(ds->socket_in6, &set))
 	{
 		memset(sin, 0, sizeof(*sin));
-		struct sockaddr_in6* addr6 = (struct sockaddr_in6*)sin;
+#if BB_USING(BB_FEATURE_IPV6)
+        struct sockaddr_in6* addr6 = (struct sockaddr_in6*)sin;
 		addr6->sin6_family = AF_INET6;
 		addr6->sin6_port = htons(BB_DISCOVERY_PORT);
 		addr6->sin6_addr = in6addr_any;
+#endif // #if BB_USING(BB_FEATURE_IPV6)
 		nBytesRead = recvfrom(ds->socket_in6, (char*)buf, (int)bufSize, 0, (struct sockaddr*)sin, &sinSize);
 		if (nBytesRead > 0)
 		{

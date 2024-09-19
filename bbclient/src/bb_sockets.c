@@ -117,11 +117,19 @@ int bbnet_socket_nonblocking(bb_socket socket, b32 nonblocking)
 
 int bbnet_socket_ipv6only(bb_socket socket, b32 ipv6only)
 {
+#if !BB_USING(BB_FEATURE_IPV6)
+	BB_UNUSED(socket);
+	BB_UNUSED(ipv6only);
+	return -1;
+#else // #if !BB_USING(BB_FEATURE_IPV6)
 	return setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&ipv6only, sizeof(ipv6only));
+#endif // #if BB_USING(BB_FEATURE_IPV6)
 }
 
 b32 bbnet_socket_is6to4(const struct sockaddr* addr)
 {
+	BB_UNUSED(addr);
+#if BB_USING(BB_FEATURE_IPV6)
 	if (addr->sa_family == AF_INET6)
 	{
 		const struct sockaddr_in6* addr6 = (const struct sockaddr_in6*)addr;
@@ -141,9 +149,11 @@ b32 bbnet_socket_is6to4(const struct sockaddr* addr)
 			return true;
 		}
 	}
+#endif // #if BB_USING(BB_FEATURE_IPV6)
 	return false;
 }
 
+#if BB_USING(BB_FEATURE_IPV6)
 void bbnet_socket_build6to4(struct sockaddr_in6* addr, const u32 ip)
 {
 	memset(addr->sin6_addr.s6_addr, 0, sizeof(addr->sin6_addr));
@@ -154,6 +164,7 @@ void bbnet_socket_build6to4(struct sockaddr_in6* addr, const u32 ip)
 	addr->sin6_addr.s6_addr[14] = (u8)(ip >> 8);
 	addr->sin6_addr.s6_addr[15] = (u8)(ip);
 }
+#endif // #if BB_USING(BB_FEATURE_IPV6)
 
 u16 bbnet_get_port_from_sockaddr(const struct sockaddr* addr)
 {
@@ -161,10 +172,12 @@ u16 bbnet_get_port_from_sockaddr(const struct sockaddr* addr)
 	{
 		return ntohs(((const struct sockaddr_in*)addr)->sin_port);
 	}
+#if BB_USING(BB_FEATURE_IPV6)
 	else if (addr->sa_family == AF_INET6)
 	{
 		return ntohs(((const struct sockaddr_in6*)addr)->sin6_port);
 	}
+#endif // #if BB_USING(BB_FEATURE_IPV6)
 	return 0;
 }
 
@@ -174,10 +187,12 @@ void bbnet_set_port_on_sockaddr(struct sockaddr* addr, const u16 port)
 	{
 		((struct sockaddr_in*)addr)->sin_port = htons(port);
 	}
+#if BB_USING(BB_FEATURE_IPV6)
 	else if (addr->sa_family == AF_INET6)
 	{
 		((struct sockaddr_in6*)addr)->sin6_port = htons(port);
 	}
+#endif // #if BB_USING(BB_FEATURE_IPV6)
 }
 
 #endif // #if BB_ENABLED

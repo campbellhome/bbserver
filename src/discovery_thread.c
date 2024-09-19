@@ -89,6 +89,7 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 				}
 			}
 		}
+#if BB_USING(BB_FEATURE_IPV6)
 		else if (sin->ss_family == AF_INET6)
 		{
 			struct sockaddr_in6 addr = *(struct sockaddr_in6*)sin;
@@ -123,6 +124,7 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 				}
 			}
 		}
+#endif // #if BB_USING (BB_FEATURE_IPV6)
 	}
 	return NULL;
 }

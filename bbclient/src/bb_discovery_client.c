@@ -235,10 +235,12 @@ bb_discovery_result_t bb_discovery_client_start(const char* applicationName, con
 				{
 					bMismatch = BB_S_ADDR_UNION(*(const struct sockaddr_in*)&serverAddr) != BB_S_ADDR_UNION(*(const struct sockaddr_in*)&newServerAddr);
 				}
+#if BB_USING(BB_FEATURE_IPV6)
 				else if (serverAddr.ss_family == AF_INET6)
 				{
 					bMismatch = memcmp(&((const struct sockaddr_in6*)&serverAddr)->sin6_addr, &((const struct sockaddr_in6*)&newServerAddr)->sin6_addr, 16) != 0;
 				}
+#endif // if BB_USING(BB_FEATURE_IPV6)
 				else
 				{
 					bMismatch = true;

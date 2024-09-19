@@ -122,8 +122,8 @@ char* bb_format_ip(char* buf, size_t len, u32 addr)
 
 char* bb_format_addr(char* buf, size_t bufLen, const struct sockaddr* addr, size_t addrSize, b32 addPort)
 {
-	if (!buf || !bufLen || !addr || !addrSize)
-		return "";
+	if (!buf || !bufLen)
+		return buf;
 
 	if (!addr || !addrSize)
 	{
@@ -131,6 +131,25 @@ char* bb_format_addr(char* buf, size_t bufLen, const struct sockaddr* addr, size
 		return buf;
 	}
 
+#if !BB_USING(BB_FEATURE_IPV6)
+	if (addr->sa_family != AF_INET)
+	{
+		*buf = '\0';
+		return buf;
+	}
+
+	const struct sockaddr_in* sin = (const struct sockaddr_in*)addr;
+	const u32 hostAddr = ntohl(BB_S_ADDR_UNION(*sin));
+	if (addPort)
+	{
+		const u16 hostPort = ntohs(sin->sin_port);
+		return bb_format_ipport(buf, bufLen, hostAddr, hostPort);
+	}
+	else
+	{
+		return bb_format_ip(buf, bufLen, hostAddr);
+	}
+#else // if !BB_USING(BB_FEATURE_IPV6)
 	char* out = buf;
 
 	if (addr->sa_family == AF_INET6 && addPort)
@@ -162,6 +181,7 @@ char* bb_format_addr(char* buf, size_t bufLen, const struct sockaddr* addr, size
 	}
 
 	return out;
+#endif // BB_USING(BB_FEATURE_IPV6)
 }
 
 #endif // #if BB_ENABLED

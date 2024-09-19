@@ -651,9 +651,10 @@ int32_t bb_connect_str(const char* discoveryAddr, uint16_t discoveryPort)
 	addr.ss_family = (strchr(discoveryAddr, '.') == 0) ? AF_INET6 : AF_INET;
 	if (discoveryAddr)
 	{
+#if BB_USING(BB_FEATURE_IPV6)
 		if (addr.ss_family == AF_INET6)
 		{
-			struct sockaddr_in6 *addr6 = (struct sockaddr_in6*)&addr;
+			struct sockaddr_in6* addr6 = (struct sockaddr_in6*)&addr;
 			if (inet_pton(AF_INET6, discoveryAddr, &addr6->sin6_addr) != 1)
 			{
 				return false;
@@ -661,6 +662,7 @@ int32_t bb_connect_str(const char* discoveryAddr, uint16_t discoveryPort)
 			addr6->sin6_port = htons(discoveryPort ? discoveryPort : BB_DISCOVERY_PORT);
 		}
 		else
+#endif // #if BB_USING(BB_FEATURE_IPV6)
 		{
 			struct sockaddr_in* addr4 = (struct sockaddr_in*)&addr;
 			if (inet_pton(AF_INET, discoveryAddr, &addr4->sin_addr) != 1)
