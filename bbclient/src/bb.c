@@ -737,18 +737,17 @@ void bb_init(const char* applicationName, const char* sourceApplicationName, con
 		bb_critical_section_unlock(&s_id_cs);
 	}
 
-#if BB_USING(BB_PLATFORM_WINDOWS)
-	if ((g_bb_initFlags & kBBInitFlag_NoDiscovery) == 0)
+	if ((g_bb_initFlags & kBBInitFlag_NoConnect) != 0)
+		return; // no connect, with or without discovery
+
+	if ((g_bb_initFlags & kBBInitFlag_NoDiscovery) != 0)
 	{
-		bb_connect((127 << 24) | 1, 0);
+		bb_connect((127 << 24) | 1, 0); // no discovery, so only try connecting to localhost
 	}
 	else
 	{
-		bb_connect(0, 0);
+		bb_connect(0, 0); // full discovery
 	}
-#else
-	bb_connect(0, 0);
-#endif
 }
 
 #if BB_COMPILE_WIDECHAR
