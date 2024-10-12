@@ -183,10 +183,10 @@ enum
 	BB_MAX_PACKET_BUFFER_SIZE = sizeof(bb_decoded_packet_t)
 };
 
-b32 BB_LINKAGE bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded);
-u16 BB_LINKAGE bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len);
-b32 BB_LINKAGE bbpacket_is_app_info_type(bb_packet_type_e type);
-b32 BB_LINKAGE bbpacket_is_log_text_type(bb_packet_type_e type);
+BB_LINKAGE b32 bbpacket_deserialize(u8* buffer, u16 len, bb_decoded_packet_t* decoded);
+BB_LINKAGE u16 bbpacket_serialize(bb_decoded_packet_t* source, u8* buffer, u16 len);
+BB_LINKAGE b32 bbpacket_is_app_info_type(bb_packet_type_e type);
+BB_LINKAGE b32 bbpacket_is_log_text_type(bb_packet_type_e type);
 
 #if defined(__cplusplus)
 }
