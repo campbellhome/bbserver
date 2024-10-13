@@ -2038,15 +2038,18 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 	{
 		ImGui::PushID(viewId);
 
-		// Middle-click to close view
-		ImGuiWindow* window = ImGui::GetCurrentContext()->CurrentWindow;
-		if (!window->SkipItems)
+		if (autoTileViews)
 		{
-			if (IsMouseReleased(ImGuiMouseButton_Middle))
+			// Middle-click to close view
+			ImGuiWindow* window = ImGui::GetCurrentContext()->CurrentWindow;
+			if (!window->SkipItems)
 			{
-				if (IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
+				if (IsMouseReleased(ImGuiMouseButton_Middle))
 				{
-					view_close_and_write_config(view);
+					if (IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup))
+					{
+						view_close_and_write_config(view);
+					}
 				}
 			}
 		}
@@ -2919,7 +2922,6 @@ void UIRecordedView_UpdateAll()
 	const bool autoTileViews = UIRecordedView_EnableTiledViews();
 	if (autoTileViews)
 	{
-
 		int tiledCount = 0;
 		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
 		{

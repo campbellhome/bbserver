@@ -515,28 +515,21 @@ void UIRecordings_Update()
 	if (!config->recordingsOpen)
 		return;
 
-	const bool autoTileViews = UIRecordedView_EnableTiledViews();
-	if (autoTileViews)
+	ImVec2 viewportPos(0.0f, 0.0f);
+	ImGuiViewport* viewport = ImGui::GetViewportForWindow("Recordings");
+	if (viewport)
 	{
-		ImVec2 viewportPos(0.0f, 0.0f);
-		ImGuiViewport* viewport = ImGui::GetViewportForWindow("Recordings");
-		if (viewport)
-		{
-			viewportPos.x += viewport->Pos.x;
-			viewportPos.y += viewport->Pos.y;
-		}
-		float startY = ImGui::GetFrameHeight();
-		ImGuiIO& io = ImGui::GetIO();
-		SetNextWindowSize(ImVec2(config->width, io.DisplaySize.y - startY), ImGuiCond_Always);
-		SetNextWindowPos(ImVec2(viewportPos.x + io.DisplaySize.x - config->width, viewportPos.y + startY), ImGuiCond_Always);
+		viewportPos.x += viewport->Pos.x;
+		viewportPos.y += viewport->Pos.y;
 	}
+	float startY = ImGui::GetFrameHeight();
+	ImGuiIO& io = ImGui::GetIO();
+	SetNextWindowSize(ImVec2(config->width, io.DisplaySize.y - startY), ImGuiCond_Always);
+	SetNextWindowPos(ImVec2(viewportPos.x + io.DisplaySize.x - config->width, viewportPos.y + startY), ImGuiCond_Always);
 
-	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus;
-	if (autoTileViews)
-	{
-		windowFlags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-		PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	}
+	int windowFlags = ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus |
+	                  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+	PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
 	if (Begin("Recordings", &config->recordingsOpen, windowFlags))
 	{
@@ -556,8 +549,5 @@ void UIRecordings_Update()
 	}
 
 	End();
-	if (autoTileViews)
-	{
-		PopStyleVar(); // ImGuiStyleVar_WindowRounding
-	}
+	PopStyleVar(); // ImGuiStyleVar_WindowRounding
 }
