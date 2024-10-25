@@ -72,9 +72,9 @@ static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData* Callb
 	if (CallbackData->EventFlag & ImGuiInputTextFlags_CallbackHistory)
 	{
 		view->consolePopupOpen = true;
+		view->consolePopupScrollReset = true;
 		if (view->consoleMode == kConsoleMode_History)
 		{
-			view->consolePopupScrollReset = true;
 			if (view->consoleHistory.entries.count > 0)
 			{
 				view->consoleHistoryTime = bb_current_time_ms();
