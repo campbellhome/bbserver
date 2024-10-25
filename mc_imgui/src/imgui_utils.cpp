@@ -142,13 +142,64 @@ namespace ImGui
 		return GetCurrentContext()->MovingWindow != nullptr;
 	}
 
+	// InputText resize logic adapted from imgui_stdlib.cpp
+	struct InputTextResizeCallbackUserData
+	{
+		sb_t* sb;
+		ImGuiInputTextCallback userCallback;
+		void* userCallbackUserData;
+	};
+
+	static int InputTextResizeCallback(ImGuiInputTextCallbackData* data)
+	{
+		InputTextResizeCallbackUserData* userData = (InputTextResizeCallbackUserData*)data->UserData;
+		if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
+		{
+			// Resize string callback
+			// If for some reason we refuse the new length (BufTextLen) and/or capacity (BufSize) we need to set them back to what we want.
+			sb_t* sb = userData->sb;
+			IM_ASSERT(data->Buf == sb->data);
+			if (data->BufSize > 0 && (u32)data->BufSize > sb->allocated)
+			{
+				u32 delta = (u32)data->BufSize - sb->allocated;
+				sb_grow(sb, delta);
+
+				data->Buf = sb->data;
+				data->BufSize = (int)sb->allocated;
+			}
+		}
+		else if (userData->userCallback)
+		{
+			// Forward to user callback, if any
+			data->UserData = userData->userCallbackUserData;
+			return userData->userCallback(data);
+		}
+		return 0;
+	}
+
 	bool InputText(const char* label, sb_t* sb, u32 buf_size, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void* user_data)
 	{
 		if (sb->allocated < buf_size)
 		{
 			sb_reserve(sb, buf_size);
 		}
-		bool ret = InputText(label, (char*)sb->data, sb->allocated, flags, callback, user_data);
+
+		bool ret;
+
+		if ((flags & ImGuiInputTextFlags_CallbackResize) == 0)
+		{
+			ret = InputText(label, (char*)sb->data, sb->allocated, flags, callback, user_data);
+		}
+		else
+		{
+			InputTextResizeCallbackUserData resizeCallbackUserData;
+			resizeCallbackUserData.sb = sb;
+			resizeCallbackUserData.userCallback = callback;
+			resizeCallbackUserData.userCallbackUserData = user_data;
+
+			ret = InputText(label, (char*)sb->data, sb->allocated, flags, InputTextResizeCallback, &resizeCallbackUserData);
+		}
+
 		sb->count = sb->data ? (u32)strlen(sb->data) + 1 : 0;
 		if (IsItemActive() && Imgui_Core_HasFocus())
 		{
@@ -163,7 +214,23 @@ namespace ImGui
 		{
 			sb_reserve(sb, buf_size);
 		}
-		bool ret = InputTextMultiline(label, (char*)sb->data, sb->allocated, size, flags, callback, user_data);
+
+		bool ret;
+
+		if ((flags & ImGuiInputTextFlags_CallbackResize) == 0)
+		{
+			ret = InputTextMultiline(label, (char*)sb->data, sb->allocated, size, flags, callback, user_data);
+		}
+		else
+		{
+			InputTextResizeCallbackUserData resizeCallbackUserData;
+			resizeCallbackUserData.sb = sb;
+			resizeCallbackUserData.userCallback = callback;
+			resizeCallbackUserData.userCallbackUserData = user_data;
+
+			ret = InputTextMultiline(label, (char*)sb->data, sb->allocated, size, flags, InputTextResizeCallback, &resizeCallbackUserData);
+		}
+
 		sb->count = sb->data ? (u32)strlen(sb->data) + 1 : 0;
 		if (IsItemActive() && Imgui_Core_HasFocus())
 		{

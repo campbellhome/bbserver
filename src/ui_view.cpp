@@ -1877,7 +1877,7 @@ static bool UIRecordedView_UpdateFilter(view_t* view)
 {
 	const ImVec2 cursorPos = ImGui::GetCursorPos();
 	const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
-	if (ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter, &UIRecordedView_FilterInputCallback, view))
+	if (ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_CallbackResize, &UIRecordedView_FilterInputCallback, view))
 	{
 		UIRecordedView_ApplyFilter(view, EViewFilterCategory::Input);
 	}
