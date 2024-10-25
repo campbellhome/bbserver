@@ -263,20 +263,29 @@ static void recorded_session_read_log(recorded_session_t* session, const char* f
 						bb_strncpy(decoded.packet.logText.text, line.start, lineLen + 1);
 						recorded_session_queue(session, &decoded);
 
-						lineEnd = line.end + 1;
+						lineEnd = line.end + 1; // NOTE: This + 1 is after the current line.  If the current line consumes the entire buffer, the + 1 can be past the end!
 					}
 				}
 
 				if (lineEnd)
 				{
 					u32 nConsumedBytes = (u32)(lineEnd - (const char*)(session->recvBuffer + decodeCursor));
+					if (nConsumedBytes == recvCursor + 1)
+					{
+						// NOTE: lineEnd can be placed one past the end of the buffer, so make sure we don't overflow
+						// https://github.com/campbellhome/bbserver/issues/7
+						nConsumedBytes = recvCursor;
+					}
 					decodeCursor += nConsumedBytes;
 
 					// TODO: rather lame to keep resetting the buffer - this should be a circular buffer
 					if (decodeCursor >= kHalfrecvBufferBytes)
 					{
 						u16 nBytesRemaining = (u16)(recvCursor - decodeCursor);
-						memmove(session->recvBuffer, session->recvBuffer + decodeCursor, nBytesRemaining);
+						if (nBytesRemaining > 0)
+						{
+							memmove(session->recvBuffer, session->recvBuffer + decodeCursor, nBytesRemaining);
+						}
 						decodeCursor = 0;
 						recvCursor = nBytesRemaining;
 					}
