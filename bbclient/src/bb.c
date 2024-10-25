@@ -856,6 +856,7 @@ void bb_tick(void)
 		u64 now = bb_current_time_ms();
 		if (now > s_lastFileFlushTime + kBBFile_FlushIntervalMillis)
 		{
+			s_lastFileFlushTime = now;
 			if (s_bb_flush_callback)
 			{
 				(*s_bb_flush_callback)(s_bb_flush_callback_context);
