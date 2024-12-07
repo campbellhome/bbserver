@@ -131,7 +131,8 @@
     <PostBuildEvent>
       <Command>copy /y $(OutDir)$(TargetName).exe $(OutDir)bbtail.exe
 copy /y $(OutDir)$(TargetName).exe $(OutDir)bbcat.exe
-copy /y $(OutDir)$(TargetName).exe $(OutDir)bbgrep.exe</Command>
+copy /y $(OutDir)$(TargetName).exe $(OutDir)bbgrep.exe
+copy /y $(OutDir)$(TargetName).exe $(OutDir)bboxtojson.exe</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

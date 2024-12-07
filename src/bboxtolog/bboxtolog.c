@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #if defined(_MSC_VER)
@@ -29,6 +29,8 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include <stdlib.h>
 #include <string.h>
 
+#include <parson/parson.h>
+
 #if !defined(BB_NO_SQLITE)
 #include <sqlite/wrap_sqlite3.h>
 #endif
@@ -45,6 +47,7 @@ typedef enum tag_program
 	kProgram_bbcat,
 	kProgram_bbtail,
 	kProgram_bbgrep,
+	kProgram_bboxtojson,
 } program;
 
 typedef enum tag_exitCode
@@ -130,6 +133,11 @@ static int usage(void)
 	{
 		print_stderr(va("Usage: %s filename.bbox <filename.log>\n", g_exe));
 		print_stderr(va("If no output filename is specified, the target will be the source with .bbox\nextension replaced with .log\n"));
+	}
+	else if (g_program == kProgram_bboxtojson)
+	{
+		print_stderr(va("Usage: %s filename.bbox <filename.json>\n", g_exe));
+		print_stderr(va("If no output filename is specified, the target will be the source with .bbox\nextension replaced with .json\n"));
 	}
 	else
 	{
@@ -460,13 +468,13 @@ static void print_queued(FILE* ofp)
 
 typedef struct process_file_data_s process_file_data_t;
 typedef void(tail_catchup_func_t)(process_file_data_t* process_file_data);
-typedef void(log_packet_func_t)(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data);
+typedef void(packet_func_t)(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data);
 
 typedef struct process_file_data_s
 {
 	const char* source;
 	tail_catchup_func_t* tail_catchup_func;
-	log_packet_func_t* log_packet_func;
+	packet_func_t* packet_func;
 	void* userdata;
 } process_file_data_t;
 
@@ -525,7 +533,14 @@ static int process_bbox_file(process_file_data_t* process_file_data)
 
 			if (bbpacket_deserialize(cursor + 2, nPacketBytes - 2, &decoded))
 			{
-				if (bbpacket_is_app_info_type(decoded.type))
+				if (g_program == kProgram_bboxtojson)
+				{
+					if (process_file_data->packet_func)
+					{
+						(*process_file_data->packet_func)(&decoded, process_file_data);
+					}
+				}
+				else if (bbpacket_is_app_info_type(decoded.type))
 				{
 					g_initialTimestamp = decoded.packet.appInfo.initialTimestamp;
 					g_millisPerTick = decoded.packet.appInfo.millisPerTick;
@@ -554,9 +569,9 @@ static int process_bbox_file(process_file_data_t* process_file_data)
 					case kBBPacketType_LogText_v2:
 					case kBBPacketType_LogText:
 					{
-						if (process_file_data->log_packet_func)
+						if (process_file_data->packet_func)
 						{
-							(*process_file_data->log_packet_func)(&decoded, process_file_data);
+							(*process_file_data->packet_func)(&decoded, process_file_data);
 						}
 						break;
 					}
@@ -943,9 +958,9 @@ static int process_plaintext_file(process_file_data_t* process_file_data)
 						decoded.header.line = 0;
 						decoded.packet.logText.level = kBBLogLevel_Log;
 						finalize_plaintext_log_packet(&decoded, line.start, lineLen + 1);
-						if (process_file_data->log_packet_func)
+						if (process_file_data->packet_func)
 						{
-							(*process_file_data->log_packet_func)(&decoded, process_file_data);
+							(*process_file_data->packet_func)(&decoded, process_file_data);
 						}
 
 						lineEnd = line.end + 1;
@@ -1030,7 +1045,7 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 	process_file_data_t process_file_data = { BB_EMPTY_INITIALIZER };
 
 	process_file_data.source = g_pathToPrint;
-	process_file_data.log_packet_func = &bbgrep_log_packet;
+	process_file_data.packet_func = &bbgrep_log_packet;
 	process_file_data.userdata = &vfilter_data;
 
 	process_file(&process_file_data);
@@ -1165,6 +1180,223 @@ static void bboxtolog_log_packet(bb_decoded_packet_t* decoded, process_file_data
 	queue_packet(decoded, bboxtolog_userdata->ofp, NULL);
 }
 
+typedef struct bboxtojson_userdata_s
+{
+	JSON_Value* value;
+} bboxtojson_userdata_t;
+
+static const char* get_packet_type_string(bb_packet_type_e type)
+{
+	switch (type)
+	{
+	case kBBPacketType_Invalid: return "kBBPacketType_Invalid";
+	case kBBPacketType_AppInfo_v1: return "kBBPacketType_AppInfo_v1";
+	case kBBPacketType_ThreadStart: return "kBBPacketType_ThreadStart";
+	case kBBPacketType_ThreadName: return "kBBPacketType_ThreadName";
+	case kBBPacketType_ThreadEnd: return "kBBPacketType_ThreadEnd";
+	case kBBPacketType_FileId: return "kBBPacketType_FileId";
+	case kBBPacketType_CategoryId: return "kBBPacketType_CategoryId";
+	case kBBPacketType_FrameEnd: return "kBBPacketType_FrameEnd";
+	case kBBPacketType_LogText_v1: return "kBBPacketType_LogText_v1";
+	case kBBPacketType_UserToServer: return "kBBPacketType_UserToServer";
+	case kBBPacketType_ConsoleCommand: return "kBBPacketType_ConsoleCommand";
+	case kBBPacketType_UserToClient: return "kBBPacketType_UserToClient";
+	case kBBPacketType_AppInfo_v2: return "kBBPacketType_AppInfo_v2";
+	case kBBPacketType_AppInfo_v3: return "kBBPacketType_AppInfo_v3";
+	case kBBPacketType_LogText_v2: return "kBBPacketType_LogText_v2";
+	case kBBPacketType_LogText: return "kBBPacketType_LogText";
+	case kBBPacketType_AppInfo_v4: return "kBBPacketType_AppInfo_v4";
+	case kBBPacketType_LogTextPartial: return "kBBPacketType_LogTextPartial";
+	case kBBPacketType_Restart: return "kBBPacketType_Restart";
+	case kBBPacketType_StopRecording: return "kBBPacketType_StopRecording";
+	case kBBPacketType_RecordingInfo: return "kBBPacketType_RecordingInfo";
+	case kBBPacketType_ConsoleAutocompleteRequest: return "kBBPacketType_ConsoleAutocompleteRequest";
+	case kBBPacketType_ConsoleAutocompleteResponseHeader: return "kBBPacketType_ConsoleAutocompleteResponseHeader";
+	case kBBPacketType_ConsoleAutocompleteResponseEntry: return "kBBPacketType_ConsoleAutocompleteResponseEntry";
+	case kBBPacketType_AppInfo_v5: return "kBBPacketType_AppInfo_v5";
+	case kBBPacketType_FrameNumber: return "kBBPacketType_FrameNumber";
+	default: return "unknown";
+	}
+}
+
+static const char* get_bb_color_string(bb_color_t color)
+{
+	switch (color)
+	{
+	case kBBColor_Default: return "kBBColor_Default";
+	case kBBColor_Evergreen_Black: return "kBBColor_Evergreen_Black";
+	case kBBColor_Evergreen_Red: return "kBBColor_Evergreen_Red";
+	case kBBColor_Evergreen_Green: return "kBBColor_Evergreen_Green";
+	case kBBColor_Evergreen_Yellow: return "kBBColor_Evergreen_Yellow";
+	case kBBColor_Evergreen_Blue: return "kBBColor_Evergreen_Blue";
+	case kBBColor_Evergreen_Cyan: return "kBBColor_Evergreen_Cyan";
+	case kBBColor_Evergreen_Pink: return "kBBColor_Evergreen_Pink";
+	case kBBColor_Evergreen_White: return "kBBColor_Evergreen_White";
+	case kBBColor_Evergreen_LightBlue: return "kBBColor_Evergreen_LightBlue";
+	case kBBColor_Evergreen_Orange: return "kBBColor_Evergreen_Orange";
+	case kBBColor_Evergreen_LightBlueAlt: return "kBBColor_Evergreen_LightBlueAlt";
+	case kBBColor_Evergreen_OrangeAlt: return "kBBColor_Evergreen_OrangeAlt";
+	case kBBColor_Evergreen_MediumBlue: return "kBBColor_Evergreen_MediumBlue";
+	case kBBColor_Evergreen_Amber: return "kBBColor_Evergreen_Amber";
+	case kBBColor_UE4_Black: return "kBBColor_UE4_Black";
+	case kBBColor_UE4_DarkRed: return "kBBColor_UE4_DarkRed";
+	case kBBColor_UE4_DarkGreen: return "kBBColor_UE4_DarkGreen";
+	case kBBColor_UE4_DarkBlue: return "kBBColor_UE4_DarkBlue";
+	case kBBColor_UE4_DarkYellow: return "kBBColor_UE4_DarkYellow";
+	case kBBColor_UE4_DarkCyan: return "kBBColor_UE4_DarkCyan";
+	case kBBColor_UE4_DarkPurple: return "kBBColor_UE4_DarkPurple";
+	case kBBColor_UE4_DarkWhite: return "kBBColor_UE4_DarkWhite";
+	case kBBColor_UE4_Red: return "kBBColor_UE4_Red";
+	case kBBColor_UE4_Green: return "kBBColor_UE4_Green";
+	case kBBColor_UE4_Blue: return "kBBColor_UE4_Blue";
+	case kBBColor_UE4_Yellow: return "kBBColor_UE4_Yellow";
+	case kBBColor_UE4_Cyan: return "kBBColor_UE4_Cyan";
+	case kBBColor_UE4_Purple: return "kBBColor_UE4_Purple";
+	case kBBColor_UE4_White: return "kBBColor_UE4_White";
+	case kBBColor_Count: return "kBBColor_Count";
+	default: return "unknown";
+	}
+}
+
+static void json_object_set_header(JSON_Object* obj, bb_packet_header_t* header)
+{
+	json_object_set_string(obj, "timestamp", va("%llu", header->timestamp));
+	json_object_set_string(obj, "threadId", va("%llu", header->threadId));
+	json_object_set_number(obj, "fileId", header->fileId);
+	json_object_set_number(obj, "line", header->line);
+}
+
+static void json_object_set_app_info(JSON_Object* obj, bb_packet_app_info_t* packet)
+{
+	json_object_set_string(obj, "initialTimestamp", va("%llu", packet->initialTimestamp));
+	json_object_set_number(obj, "millisPerTick", packet->millisPerTick);
+	json_object_set_string(obj, "applicationName", packet->applicationName);
+	json_object_set_string(obj, "applicationGroup", packet->applicationGroup);
+	json_object_set_number(obj, "initFlags", packet->initFlags);
+	json_object_set_number(obj, "platform", packet->platform);
+	json_object_set_string(obj, "microsecondsFromEpoch", va("%llu", packet->microsecondsFromEpoch));
+}
+
+static void json_object_set_text(JSON_Object* obj, bb_packet_text_t* packet)
+{
+	json_object_set_string(obj, "text", packet->text);
+}
+
+static void json_object_set_log_text(JSON_Object* obj, bb_packet_log_text_t* packet)
+{
+	json_object_set_number(obj, "categoryId", packet->categoryId);
+	json_object_set_number(obj, "level", packet->level);
+	json_object_set_number(obj, "pieInstance", packet->pieInstance);
+	if (packet->colors.bg != kBBColor_Default)
+	{
+		json_object_set_string(obj, "bg", get_bb_color_string(packet->colors.bg));
+	}
+	if (packet->colors.fg != kBBColor_Default)
+	{
+		json_object_set_string(obj, "fg", get_bb_color_string(packet->colors.fg));
+	}
+	json_object_set_string(obj, "text", packet->text);
+}
+
+static void json_object_set_user(JSON_Object* obj, bb_packet_user_t* packet)
+{
+	json_object_set_number(obj, "len", packet->len);
+	json_object_set_number(obj, "echo", packet->echo);
+}
+
+static void json_object_set_register_id(JSON_Object* obj, bb_packet_register_id_t* packet)
+{
+	json_object_set_number(obj, "id", packet->id);
+	json_object_set_string(obj, "name", packet->name);
+}
+
+static void json_object_set_frame_end(JSON_Object* obj, bb_packet_frame_end_t* packet)
+{
+	json_object_set_number(obj, "milliseconds", packet->milliseconds);
+}
+
+static void json_object_set_recording_info(JSON_Object* obj, bb_packet_recording_info_t* packet)
+{
+	json_object_set_string(obj, "machineName", packet->machineName);
+	json_object_set_string(obj, "recordingName", packet->recordingName);
+}
+
+static void json_object_set_console_autocomplete_request(JSON_Object* obj, bb_packet_console_autocomplete_request_t* packet)
+{
+	json_object_set_number(obj, "id", packet->id);
+	json_object_set_string(obj, "text", packet->text);
+}
+
+static void json_object_set_console_autocomplete_response_header(JSON_Object* obj, bb_packet_console_autocomplete_response_header_t* packet)
+{
+	json_object_set_number(obj, "id", packet->id);
+	json_object_set_number(obj, "total", packet->total);
+	json_object_set_number(obj, "reuse", packet->reuse);
+}
+
+static void json_object_set_console_autocomplete_response_entry(JSON_Object* obj, bb_packet_console_autocomplete_response_entry_t* packet)
+{
+	json_object_set_number(obj, "id", packet->id);
+	json_object_set_number(obj, "command", packet->command);
+	json_object_set_number(obj, "flags", packet->flags);
+	json_object_set_string(obj, "text", packet->text);
+	json_object_set_string(obj, "description", packet->description);
+}
+
+static void json_object_set_frame_number(JSON_Object* obj, bb_packet_frame_number_t* header)
+{
+	json_object_set_string(obj, "frameNumber", va("%llu", header->frameNumber));
+}
+
+static void bboxtojson_packet(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data)
+{
+	bboxtojson_userdata_t* bboxtojson_userdata = process_file_data->userdata;
+	JSON_Array* arr = json_value_get_array(bboxtojson_userdata->value);
+	if (!arr)
+		return;
+
+	JSON_Value* value = json_value_init_object();
+	JSON_Object* obj = json_value_get_object(value);
+	if (!value || !obj)
+		return;
+
+	json_object_set_string(obj, "type", get_packet_type_string(decoded->type));
+	json_object_set_header(obj, &decoded->header);
+
+	switch (decoded->type)
+	{
+	case kBBPacketType_Invalid: break;
+	case kBBPacketType_AppInfo_v1: json_object_set_app_info(obj, &decoded->packet.appInfo); break;
+	case kBBPacketType_ThreadStart: json_object_set_text(obj, &decoded->packet.text); break;
+	case kBBPacketType_ThreadName: json_object_set_text(obj, &decoded->packet.text); break;
+	case kBBPacketType_ThreadEnd: json_object_set_text(obj, &decoded->packet.text); break;
+	case kBBPacketType_FileId: json_object_set_register_id(obj, &decoded->packet.registerId); break;
+	case kBBPacketType_CategoryId: json_object_set_register_id(obj, &decoded->packet.registerId); break;
+	case kBBPacketType_FrameEnd: json_object_set_frame_end(obj, &decoded->packet.frameEnd); break;
+	case kBBPacketType_LogText_v1: json_object_set_log_text(obj, &decoded->packet.logText); break;
+	case kBBPacketType_UserToServer: json_object_set_user(obj, &decoded->packet.user); break;
+	case kBBPacketType_ConsoleCommand: json_object_set_text(obj, &decoded->packet.text); break;
+	case kBBPacketType_UserToClient: json_object_set_user(obj, &decoded->packet.user); break;
+	case kBBPacketType_AppInfo_v2: json_object_set_app_info(obj, &decoded->packet.appInfo); break;
+	case kBBPacketType_AppInfo_v3: json_object_set_app_info(obj, &decoded->packet.appInfo); break;
+	case kBBPacketType_LogText_v2: json_object_set_log_text(obj, &decoded->packet.logText); break;
+	case kBBPacketType_LogText: json_object_set_log_text(obj, &decoded->packet.logText); break;
+	case kBBPacketType_AppInfo_v4: json_object_set_app_info(obj, &decoded->packet.appInfo); break;
+	case kBBPacketType_LogTextPartial: json_object_set_log_text(obj, &decoded->packet.logText); break;
+	case kBBPacketType_Restart: break;
+	case kBBPacketType_StopRecording: break;
+	case kBBPacketType_RecordingInfo: json_object_set_recording_info(obj, &decoded->packet.recordingInfo); break;
+	case kBBPacketType_ConsoleAutocompleteRequest: json_object_set_console_autocomplete_request(obj, &decoded->packet.consoleAutocompleteRequest); break;
+	case kBBPacketType_ConsoleAutocompleteResponseHeader: json_object_set_console_autocomplete_response_header(obj, &decoded->packet.consoleAutocompleteResponseHeader); break;
+	case kBBPacketType_ConsoleAutocompleteResponseEntry: json_object_set_console_autocomplete_response_entry(obj, &decoded->packet.consoleAutocompleteResponseEntry); break;
+	case kBBPacketType_AppInfo_v5: json_object_set_app_info(obj, &decoded->packet.appInfo); break;
+	case kBBPacketType_FrameNumber: json_object_set_frame_number(obj, &decoded->packet.frameNumber); break;
+	default: break;
+	}
+
+	json_array_append_value(arr, value);
+}
+
 int main_loop(int argc, char** argv)
 {
 	g_exe = argv[0];
@@ -1196,6 +1428,10 @@ int main_loop(int argc, char** argv)
 	else if (!bb_stricmp(g_exe, "bbgrep"))
 	{
 		g_program = kProgram_bbgrep;
+	}
+	else if (!bb_stricmp(g_exe, "bboxtojson"))
+	{
+		g_program = kProgram_bboxtojson;
 	}
 
 	const char* source = NULL;
@@ -1285,6 +1521,10 @@ int main_loop(int argc, char** argv)
 			{
 				g_program = kProgram_bbgrep;
 			}
+			else if (!strcmp(arg, "-bboxtojson"))
+			{
+				g_program = kProgram_bboxtojson;
+			}
 			else if (!bb_strnicmp(arg, "-sql=", 5))
 			{
 				g_sqlCommand = arg + 5;
@@ -1338,7 +1578,7 @@ int main_loop(int argc, char** argv)
 	if (!source)
 		return usage(); // TODO: read stdin
 
-	if (target && g_program != kProgram_bboxtolog && g_program != kProgram_bbgrep)
+	if (target && g_program != kProgram_bboxtolog && g_program != kProgram_bbgrep && g_program != kProgram_bboxtojson)
 	{
 		bb_free(target);
 		return usage();
@@ -1398,7 +1638,7 @@ int main_loop(int argc, char** argv)
 	}
 
 	size_t sourceLen = strlen(source);
-	if (g_program == kProgram_bboxtolog)
+	if (g_program == kProgram_bboxtolog || g_program == kProgram_bboxtojson)
 	{
 		if (sourceLen < 6 || bb_stricmp(source + sourceLen - 5, ".bbox"))
 		{
@@ -1426,6 +1666,11 @@ int main_loop(int argc, char** argv)
 		target = bb_strdup(source);
 		strcpy(target + sourceLen - 5, ".log");
 	}
+	else if (!target && (g_program == kProgram_bboxtojson))
+	{
+		target = bb_strdup(source);
+		strcpy(target + sourceLen - 5, ".json");
+	}
 
 	// printf("source: %s\n", source);
 	// if(target) {
@@ -1434,26 +1679,53 @@ int main_loop(int argc, char** argv)
 
 	int ret = kExitCode_Success;
 
-	process_file_data_t process_file_data = { BB_EMPTY_INITIALIZER };
-	bboxtolog_userdata_t userdata = { BB_EMPTY_INITIALIZER };
-
-	process_file_data.source = source;
-	process_file_data.tail_catchup_func = &bboxtolog_tail_catchup;
-	process_file_data.log_packet_func = &bboxtolog_log_packet;
-	process_file_data.userdata = &userdata;
-	userdata.ofp = (target) ? fopen(target, "wt") : stdout;
-
-	if (userdata.ofp)
+	if (g_program == kProgram_bboxtojson)
 	{
+		process_file_data_t process_file_data = { BB_EMPTY_INITIALIZER };
+		bboxtojson_userdata_t userdata = { BB_EMPTY_INITIALIZER };
+
+		process_file_data.source = source;
+		process_file_data.packet_func = &bboxtojson_packet;
+		process_file_data.userdata = &userdata;
+		userdata.value = json_value_init_array();
 		ret = process_file(&process_file_data);
+		if (ret == kExitCode_Success)
+		{
+			if (json_serialize_to_file_pretty(userdata.value, target) != JSONSuccess)
+			{
+				if (target)
+				{
+					fprintf(stderr, "Could not write to %s\n", target);
+				}
+				ret = kExitCode_Error_WriteTarget;
+			}
+		}
+
+		json_value_free(userdata.value);
 	}
 	else
 	{
-		if (target)
+		process_file_data_t process_file_data = { BB_EMPTY_INITIALIZER };
+		bboxtolog_userdata_t userdata = { BB_EMPTY_INITIALIZER };
+
+		process_file_data.source = source;
+		process_file_data.tail_catchup_func = &bboxtolog_tail_catchup;
+		process_file_data.packet_func = &bboxtolog_log_packet;
+		process_file_data.userdata = &userdata;
+		userdata.ofp = (target) ? fopen(target, "wt") : stdout;
+
+		if (userdata.ofp)
 		{
-			fprintf(stderr, "Could not write to %s\n", target);
+			ret = process_file(&process_file_data);
 		}
-		ret = kExitCode_Error_WriteTarget;
+		else
+		{
+			if (target)
+			{
+				fprintf(stderr, "Could not write to %s\n", target);
+			}
+			ret = kExitCode_Error_WriteTarget;
+		}
 	}
 
 	if (target)
