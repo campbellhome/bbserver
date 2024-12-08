@@ -222,7 +222,7 @@ static inline void ClearViewTail(view_t* view, const char* reason)
 	}
 }
 
-static SYSTEMTIME SystemTimeFromDecoded(recorded_session_t* session, bb_decoded_packet_t* decoded)
+static FILETIME FileTimeFromDecoded(recorded_session_t* session, bb_decoded_packet_t* decoded)
 {
 	// Windows uses 100 nanosecond intervals since Jan 1, 1601 UTC
 	// https://support.microsoft.com/en-us/help/167296/how-to-convert-a-unix-time-t-to-a-win32-filetime-or-systemtime
@@ -236,6 +236,13 @@ static SYSTEMTIME SystemTimeFromDecoded(recorded_session_t* session, bb_decoded_
 	ft.dwLowDateTime = (DWORD)win32100Nanoseconds;
 	ft.dwHighDateTime = win32100Nanoseconds >> 32;
 	FileTimeToLocalFileTime(&ft, &ft);
+
+	return ft;
+}
+
+static SYSTEMTIME SystemTimeFromDecoded(recorded_session_t* session, bb_decoded_packet_t* decoded)
+{
+	FILETIME ft = FileTimeFromDecoded(session, decoded);
 
 	SYSTEMTIME st = {};
 	FileTimeToSystemTime(&ft, &st);
@@ -1119,6 +1126,29 @@ void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
 		view_category_t* viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
 		viewCategory->visible = true;
 		view_apply_tag(view);
+	}
+	if (ImGui::Selectable("Align views to this time"))
+	{
+		bb_decoded_packet_t* decoded = &sessionLog->packet;
+		FILETIME fileTime = FileTimeFromDecoded(session, decoded);
+		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		{
+			view_t* otherView = s_gathered_views.data[viewIndex];
+			recorded_session_t* otherSession = otherView->session;
+			for (u32 i = 0; i < otherView->visibleLogs.count; ++i)
+			{
+				view_log_t* log = otherView->visibleLogs.data + i;
+				recorded_log_t* otherSessionLog = otherSession->logs.data[log->sessionLogIndex];
+				bb_decoded_packet_t* otherDecoded = &otherSessionLog->packet;
+				FILETIME otherFileTime = FileTimeFromDecoded(otherSession, otherDecoded);
+				if (fileTime.dwHighDateTime > otherFileTime.dwHighDateTime ||
+				    (fileTime.dwHighDateTime == otherFileTime.dwHighDateTime &&
+				     fileTime.dwLowDateTime >= otherFileTime.dwLowDateTime))
+				{
+					otherView->gotoTarget = (int)i;
+				}
+			}
+		}
 	}
 
 	PopUIFont();
