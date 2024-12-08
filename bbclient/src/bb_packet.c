@@ -386,7 +386,8 @@ b32 bbpacket_is_log_text_type(bb_packet_type_e type)
 {
 	return type == kBBPacketType_LogText_v1 ||
 	       type == kBBPacketType_LogText_v2 ||
-	       type == kBBPacketType_LogText;
+	       type == kBBPacketType_LogText ||
+	       type == kBBPacketType_LogTextPartial;
 }
 
 #endif // #if BB_ENABLED

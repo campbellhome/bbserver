@@ -51,9 +51,10 @@ u64 bb_get_current_thread_id(void)
 
 typedef struct bb_id_s
 {
-	char text[1020];
+	bb_packet_header_t header;
+	bb_packet_type_e packetType;
 	u32 id;
-	u64 initialBufferState;
+	char* name;
 } bb_id_t;
 typedef struct bb_ids_s
 {
@@ -66,22 +67,7 @@ typedef struct bb_ids_s
 
 static bb_ids_t s_bb_categoryIds;
 static bb_ids_t s_bb_pathIds;
-
-typedef struct bb_thread_id_s
-{
-	bb_packet_header_t header;
-	bb_packet_type_e packetType;
-	char text[kBBSize_ThreadName];
-	u32 initialBufferState;
-} bb_thread_id_t;
-typedef struct bb_thread_ids_s
-{
-	u32 count;
-	u32 allocated;
-	bb_thread_id_t* data;
-} bb_thread_ids_t;
-
-static bb_thread_ids_t s_bb_threadIds;
+static bb_ids_t s_bb_threadIds;
 
 static bb_connection_t s_con;
 static bb_critical_section s_id_cs;
@@ -268,7 +254,7 @@ static BB_INLINE void bb_send(bb_decoded_packet_t* decoded)
 		return;
 	}
 
-	if (s_initial_buffer.cs.initialized)
+	if (s_initial_buffer.cs.initialized && bbpacket_is_log_text_type(decoded->type))
 	{
 		bb_critical_section_lock(&s_initial_buffer.cs);
 		if (s_initial_buffer.data != NULL)
@@ -416,44 +402,40 @@ static BB_INLINE void bb_send_directed(bb_decoded_packet_t* decoded, b32 bCallba
 	}
 }
 
-static void bb_send_ids(bb_ids_t* ids, bb_packet_type_e packetType, b32 bCallbacks, b32 bSocket, b32 bFile, b32 bBeforeInitialBuffer)
+static void bb_send_ids(bb_ids_t* ids, b32 bCallbacks, b32 bSocket, b32 bFile)
 {
 	for (u32 i = 0; i < ids->count; ++i)
 	{
 		bb_id_t* id = ids->data + i;
-		if (bBeforeInitialBuffer && id->initialBufferState != kBBInitialBuffer_Unset)
-			continue;
-		if (!bBeforeInitialBuffer && id->initialBufferState != kBBInitialBuffer_Done)
-			continue;
-
-		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
-		bb_fill_header(&decoded, packetType, 0, 0);
-		decoded.packet.registerId.id = id->id;
-		bb_strncpy(decoded.packet.registerId.name, id->text, sizeof(decoded.packet.registerId.name));
-		bb_send_directed(&decoded, bCallbacks, bSocket, bFile);
-	}
-}
-
-static void bb_send_thread_ids(bb_thread_ids_t* ids, b32 bCallbacks, b32 bSocket, b32 bFile, b32 bBeforeInitialBuffer)
-{
-	for (u32 i = 0; i < ids->count; ++i)
-	{
-		bb_thread_id_t* id = ids->data + i;
-		if (bBeforeInitialBuffer && id->initialBufferState != kBBInitialBuffer_Unset)
-			continue;
-		if (!bBeforeInitialBuffer && id->initialBufferState != kBBInitialBuffer_Done)
-			continue;
 
 		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
 		decoded.type = id->packetType;
 		decoded.header = id->header;
-		if (id->packetType == kBBPacketType_ThreadStart)
+		decoded.packet.registerId.id = id->id;
+		if (id->name)
 		{
-			bb_strncpy(decoded.packet.threadStart.text, id->text, sizeof(id->text));
+			bb_strncpy(decoded.packet.registerId.name, id->name, sizeof(decoded.packet.registerId.name));
 		}
-		else if (id->packetType == kBBPacketType_ThreadName)
+		bb_send_directed(&decoded, bCallbacks, bSocket, bFile);
+	}
+}
+
+static void bb_send_thread_ids(bb_ids_t* ids, b32 bCallbacks, b32 bSocket, b32 bFile)
+{
+	for (u32 i = 0; i < ids->count; ++i)
+	{
+		bb_id_t* id = ids->data + i;
+
+		bb_decoded_packet_t decoded = { BB_EMPTY_INITIALIZER };
+		decoded.type = id->packetType;
+		decoded.header = id->header;
+		if (id->packetType == kBBPacketType_ThreadStart && id->name)
 		{
-			bb_strncpy(decoded.packet.threadName.text, id->text, sizeof(id->text));
+			bb_strncpy(decoded.packet.threadStart.text, id->name, sizeof(decoded.packet.threadStart.text));
+		}
+		else if (id->packetType == kBBPacketType_ThreadName && id->name)
+		{
+			bb_strncpy(decoded.packet.threadName.text, id->name, sizeof(decoded.packet.threadName.text));
 		}
 		bb_send_directed(&decoded, bCallbacks, bSocket, bFile);
 	}
@@ -492,9 +474,9 @@ static void bb_send_initial(b32 bCallbacks, b32 bSocket, b32 bFile)
 	BB_ASSERT(bbpacket_is_app_info_type(s_initialAppInfo.type));
 	bb_send_directed(&s_initialAppInfo, bCallbacks, bSocket, bFile);
 
-	bb_send_ids(&s_bb_pathIds, kBBPacketType_FileId, bCallbacks, bSocket, bFile, true);
-	bb_send_ids(&s_bb_categoryIds, kBBPacketType_CategoryId, bCallbacks, bSocket, bFile, true);
-	bb_send_thread_ids(&s_bb_threadIds, bCallbacks, bSocket, bFile, true);
+	bb_send_ids(&s_bb_pathIds, bCallbacks, bSocket, bFile);
+	bb_send_ids(&s_bb_categoryIds, bCallbacks, bSocket, bFile);
+	bb_send_thread_ids(&s_bb_threadIds, bCallbacks, bSocket, bFile);
 
 	 if (s_initial_buffer.cs.initialized)
 	{
@@ -505,10 +487,6 @@ static void bb_send_initial(b32 bCallbacks, b32 bSocket, b32 bFile)
 		}
 		bb_critical_section_unlock(&s_initial_buffer.cs);
 	}
-
-	bb_send_ids(&s_bb_pathIds, kBBPacketType_FileId, bCallbacks, bSocket, bFile, false);
-	bb_send_ids(&s_bb_categoryIds, kBBPacketType_CategoryId, bCallbacks, bSocket, bFile, false);
-	bb_send_thread_ids(&s_bb_threadIds, bCallbacks, bSocket, bFile, false);
 }
 
 void bb_init_file(const char* path)
@@ -762,6 +740,19 @@ void bb_init_w(const bb_wchar_t* applicationName, const bb_wchar_t* sourceApplic
 }
 #endif // #if BB_COMPILE_WIDECHAR
 
+static void bb_free_ids(bb_ids_t *ids)
+{
+	for (u32 i = 0; i < ids->count; ++i)
+	{
+		bb_id_t* id = ids->data + i;
+		if (id->name)
+		{
+			bb_free(id->name);
+		}
+	}
+	bba_free(*ids);
+}
+
 void bb_shutdown(const char* file, int line)
 {
 	uint32_t bb_path_id = 0;
@@ -777,9 +768,9 @@ void bb_shutdown(const char* file, int line)
 	bbnet_shutdown();
 	bb_log_shutdown();
 	bb_critical_section_shutdown(&s_id_cs);
-	bba_free(s_bb_categoryIds);
-	bba_free(s_bb_pathIds);
-	bba_free(s_bb_threadIds);
+	bb_free_ids(&s_bb_categoryIds);
+	bb_free_ids(&s_bb_pathIds);
+	bb_free_ids(&s_bb_threadIds);
 	if (s_bb_trace_packet_buffer)
 	{
 		bb_free(s_bb_trace_packet_buffer);
@@ -917,7 +908,7 @@ uint64_t bb_get_total_bytes_received(void)
 void bb_echo_to_stdout(void* context, bb_decoded_packet_t* decoded)
 {
 	BB_UNUSED(context);
-	if (bbpacket_is_log_text_type(decoded->type) || decoded->type == kBBPacketType_LogText)
+	if (bbpacket_is_log_text_type(decoded->type))
 	{
 		switch (decoded->packet.logText.level)
 		{
@@ -993,20 +984,19 @@ static void bb_thread_store_id_packet(bb_decoded_packet_t* decoded)
 	{
 		bb_critical_section_lock(&s_id_cs);
 	}
-	bb_thread_id_t* newIdData = bba_add(s_bb_threadIds, 1);
+	bb_id_t* newIdData = bba_add(s_bb_threadIds, 1);
 	if (newIdData)
 	{
 		newIdData->packetType = decoded->type;
 		newIdData->header = decoded->header;
 		if (decoded->type == kBBPacketType_ThreadStart)
 		{
-			bb_strncpy(newIdData->text, decoded->packet.threadStart.text, sizeof(newIdData->text));
+			newIdData->name = bb_strdup(decoded->packet.threadStart.text);
 		}
 		else if (decoded->type == kBBPacketType_ThreadName)
 		{
-			bb_strncpy(newIdData->text, decoded->packet.threadName.text, sizeof(newIdData->text));
+			newIdData->name = bb_strdup(decoded->packet.threadName.text);
 		}
-		newIdData->initialBufferState = (u32)s_initial_buffer.state;
 	}
 	if (s_id_cs.initialized)
 	{
@@ -1069,13 +1059,13 @@ void bb_start_frame_number(uint32_t pathId, uint32_t line, uint64_t frameNumber)
 	bb_send(&decoded);
 }
 
-static u32 bb_find_id(const char* text, bb_ids_t* ids)
+static u32 bb_find_id(const char* name, bb_ids_t* ids)
 {
 	u32 i;
 	for (i = 0; i < ids->count; ++i)
 	{
 		bb_id_t* id = ids->data + i;
-		if (!strcmp(id->text, text))
+		if (id->name && !bb_stricmp(id->name, name))
 		{
 			return id->id;
 		}
@@ -1118,13 +1108,14 @@ static u32 bb_resolve_id(const char* name, bb_ids_t* ids, u32 pathId, u32 line, 
 			// for(tmp = 0; tmp < 1000; ++tmp) {
 			//	newIdData = bba_add(*ids, 1);
 			// }
+			bb_fill_header(&decoded, packetType, (pathId) ? pathId : newId, line);
 			if (newIdData)
 			{
+				newIdData->header = decoded.header;
 				newIdData->id = newId;
-				bb_strncpy(newIdData->text, name, sizeof(newIdData->text));
-				newIdData->initialBufferState = s_initial_buffer.state;
+				newIdData->packetType = packetType;
+				newIdData->name = bb_strdup(name);
 			}
-			bb_fill_header(&decoded, packetType, (pathId) ? pathId : newId, line);
 			decoded.packet.registerId.id = newId;
 			bb_strncpy(decoded.packet.registerId.name, name, BB_MIN(maxSize, sizeof(decoded.packet.registerId.name)));
 			bb_send(&decoded);
