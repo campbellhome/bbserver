@@ -101,8 +101,10 @@ static void recorded_session_queue_log_appinfo(recorded_session_t* session, cons
 static void recorded_session_read_log(recorded_session_t* session, const char* filename)
 {
 	_locale_t utf8_locale = _create_locale(LC_ALL, ".utf8");
-	u8 recvBuffer[32768 + 1];
-	char mbsBuffer[32768 + 1];
+	u8 sessionRecvBuffer[256 * 1024 + 1];
+	u8 recvBuffer[256 * 1024 + 1];
+	char mbsBuffer[256 * 1024 + 1];
+	memset(sessionRecvBuffer, 0, sizeof(sessionRecvBuffer));
 	memset(recvBuffer, 0, sizeof(recvBuffer));
 	memset(mbsBuffer, 0, sizeof(mbsBuffer));
 
@@ -171,17 +173,17 @@ static void recorded_session_read_log(recorded_session_t* session, const char* f
 				mbsBuffer[numCharsConverted] = '\0';
 				if (numCharsConverted > 0)
 				{
-					if (numCharsConverted - 1 >= sizeof(session->recvBuffer) + recvCursor)
+					if (numCharsConverted - 1 >= sizeof(sessionRecvBuffer) + recvCursor)
 					{
 						break;
 					}
-					memcpy(session->recvBuffer + recvCursor, mbsBuffer, numCharsConverted);
+					memcpy(sessionRecvBuffer + recvCursor, mbsBuffer, numCharsConverted);
 					bytesRead = (u32)numCharsConverted - 1;
 				}
 			}
 			else
 			{
-				memcpy(session->recvBuffer + recvCursor, recvBuffer, bytesRead);
+				memcpy(sessionRecvBuffer + recvCursor, recvBuffer, bytesRead);
 			}
 
 			if (bytesRead)
@@ -213,10 +215,10 @@ static void recorded_session_read_log(recorded_session_t* session, const char* f
 
 			while (!done)
 			{
-				const u32 krecvBufferSize = sizeof(session->recvBuffer);
+				const u32 krecvBufferSize = sizeof(sessionRecvBuffer);
 				const u32 kHalfrecvBufferBytes = krecvBufferSize / 2;
 				bb_decoded_packet_t decoded;
-				u16 nDecodableBytes = (u16)(recvCursor - decodeCursor);
+				ptrdiff_t nDecodableBytes = (recvCursor - decodeCursor);
 				if (nDecodableBytes < 1)
 				{
 					done = true;
@@ -225,8 +227,8 @@ static void recorded_session_read_log(recorded_session_t* session, const char* f
 
 				const char* lineEnd = NULL;
 				span_t cursor = { BB_EMPTY_INITIALIZER };
-				cursor.start = (const char*)(session->recvBuffer + decodeCursor);
-				cursor.end = (const char*)(session->recvBuffer + recvCursor);
+				cursor.start = (const char*)(sessionRecvBuffer + decodeCursor);
+				cursor.end = (const char*)(sessionRecvBuffer + recvCursor);
 				for (span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor))
 				{
 					if (line.end && (*line.end == '\n' || !strncmp(line.end, "\r\n", 2)))
@@ -269,7 +271,7 @@ static void recorded_session_read_log(recorded_session_t* session, const char* f
 
 				if (lineEnd)
 				{
-					u32 nConsumedBytes = (u32)(lineEnd - (const char*)(session->recvBuffer + decodeCursor));
+					u32 nConsumedBytes = (u32)(lineEnd - (const char*)(sessionRecvBuffer + decodeCursor));
 					if (nConsumedBytes == recvCursor + 1)
 					{
 						// NOTE: lineEnd can be placed one past the end of the buffer, so make sure we don't overflow
@@ -284,7 +286,7 @@ static void recorded_session_read_log(recorded_session_t* session, const char* f
 						u16 nBytesRemaining = (u16)(recvCursor - decodeCursor);
 						if (nBytesRemaining > 0)
 						{
-							memmove(session->recvBuffer, session->recvBuffer + decodeCursor, nBytesRemaining);
+							memmove(sessionRecvBuffer, sessionRecvBuffer + decodeCursor, nBytesRemaining);
 						}
 						decodeCursor = 0;
 						recvCursor = nBytesRemaining;
