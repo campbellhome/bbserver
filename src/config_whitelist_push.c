@@ -58,6 +58,9 @@ static void config_push_whitelist_task_statechanged(task* t)
 					BB_LOG("whitelist", "  %s", bb_format_addr(buf, sizeof(buf), (const struct sockaddr*)&result->addrs.data[i], sizeof(result->addrs.data[i]), false));
 					entry.addr = result->addrs.data[i];
 
+					if (!strcmp(buf, "::1"))
+						continue;
+
 					if (entry.addr.ss_family == AF_INET6)
 					{
 						struct sockaddr_in6* addr = (struct sockaddr_in6*)&entry.addr;
