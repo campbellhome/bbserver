@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2021 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -9,6 +9,14 @@ extern "C" {
 
 #include "bb.h"
 #include "sb.h"
+
+AUTOJSON AUTODEFAULT(kConfigListenProtocol_Unknown) typedef enum configListenProtocol_t {
+	kConfigListenProtocol_Unknown = 0,
+	kConfigListenProtocol_IPv4 = 1,
+	kConfigListenProtocol_IPv6 = 2,
+	kConfigListenProtocol_IPv4And6 = 3,
+	kConfigListenProtocol_Count
+} configListenProtocol_t;
 
 AUTOJSON typedef struct site_config_named_filter_t
 {
@@ -41,8 +49,9 @@ AUTOJSON typedef struct site_config_s
 	sb_t bugAssignee;
 	sb_t bugProject;
 	b32 autodetectDevkits;
+	configListenProtocol_t listenProtocol;
 	u16 bugPort;
-	u8 pad[2];
+	u8 pad[6];
 } site_config_t;
 
 extern site_config_t g_site_config;

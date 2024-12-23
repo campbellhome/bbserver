@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_config.h"
@@ -327,6 +327,14 @@ static const char* g_viewTileModeNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(g_viewTileModeNames) == kViewTileMode_Count);
 
+static const char* g_listenProtocolNames[] = {
+	"Unknown",
+	"IPv4",
+	"IPv6",
+	"IPv4 & IPv6",
+};
+BB_CTASSERT(BB_ARRAYSIZE(g_listenProtocolNames) == kConfigListenProtocol_Count);
+
 void UIConfig_Update(config_t* config)
 {
 	if (!s_preferencesOpen)
@@ -589,6 +597,17 @@ void UIConfig_Update(config_t* config)
 					sb_append(&entry->addressPlusMask, "localhost");
 				}
 			}
+			PushItemWidth(120 * Imgui_Core_GetDpiScale());
+			if (ImGui::BeginCombo("Allowed Protocols", g_listenProtocolNames[s_preferencesConfig.listenProtocol]))
+			{
+				for (s32 i = 1; i < BB_ARRAYSIZE(g_listenProtocolNames); ++i)
+					if (ImGui::Selectable(g_listenProtocolNames[i], s_preferencesConfig.listenProtocol == i))
+					{
+						s_preferencesConfig.listenProtocol = (configListenProtocol_t)i;
+					}
+				ImGui::EndCombo();
+			}
+			PopItemWidth();
 		}
 		if (ImGui::CollapsingHeader("Miscellaneous", ImGuiTreeNodeFlags_DefaultOpen))
 		{

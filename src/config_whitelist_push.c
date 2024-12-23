@@ -58,11 +58,14 @@ static void config_push_whitelist_task_statechanged(task* t)
 					BB_LOG("whitelist", "  %s", bb_format_addr(buf, sizeof(buf), (const struct sockaddr*)&result->addrs.data[i], sizeof(result->addrs.data[i]), false));
 					entry.addr = result->addrs.data[i];
 
-					if (!strcmp(buf, "::1"))
-						continue;
-
 					if (entry.addr.ss_family == AF_INET6)
 					{
+						if ((g_config.listenProtocol & kConfigListenProtocol_IPv6) == 0)
+						{
+							BB_LOG("whitelist", "    (skipped)");
+							continue;
+						}
+
 						struct sockaddr_in6* addr = (struct sockaddr_in6*)&entry.addr;
 						struct sockaddr_in6* mask = (struct sockaddr_in6*)&entry.subnetMask;
 
@@ -90,6 +93,12 @@ static void config_push_whitelist_task_statechanged(task* t)
 					}
 					else if (entry.addr.ss_family == AF_INET)
 					{
+						if ((g_config.listenProtocol & kConfigListenProtocol_IPv4) == 0)
+						{
+							BB_LOG("whitelist", "    (skipped)");
+							continue;
+						}
+
 						entry.subnetMask = entry.addr;
 						struct sockaddr_in* mask = (struct sockaddr_in*)&entry.subnetMask;
 						if (subnetMask >=0 && subnetMask < 32)

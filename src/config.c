@@ -128,6 +128,18 @@ b32 config_read(config_t* config)
 	}
 	config->version = kConfigVersion;
 
+	if (config->listenProtocol == kConfigListenProtocol_Unknown)
+	{
+		if (g_site_config.listenProtocol == kConfigListenProtocol_Unknown)
+		{
+			config->listenProtocol = kConfigListenProtocol_IPv4;
+		}
+		else
+		{
+			config->listenProtocol = g_site_config.listenProtocol;
+		}
+	}
+
 	for (u32 entryIndex = 0; entryIndex < config->whitelist.count;)
 	{
 		configWhitelistEntry_t* entry = config->whitelist.data + entryIndex;

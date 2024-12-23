@@ -1,10 +1,11 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
 
 #include "bb.h"
 #include "sb.h"
+#include "site_config.h"
 
 #include "bb_wrap_windows.h"
 
@@ -169,6 +170,8 @@ AUTOJSON typedef struct config_s
 	b32 assertMessageBox;
 	b32 showDebugMenu;
 	b32 showEmptyCategories;
+	configListenProtocol_t listenProtocol;
+	u8 pad[4];
 } config_t;
 
 enum
