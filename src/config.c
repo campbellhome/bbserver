@@ -132,7 +132,7 @@ b32 config_read(config_t* config)
 	{
 		if (g_site_config.listenProtocol == kConfigListenProtocol_Unknown)
 		{
-			config->listenProtocol = kConfigListenProtocol_IPv4;
+			config->listenProtocol = kConfigListenProtocol_IPv4And6;
 		}
 		else
 		{

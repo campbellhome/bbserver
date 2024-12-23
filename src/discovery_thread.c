@@ -70,7 +70,7 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 			for (u32 i = 0; i < host->whitelist.count; ++i)
 			{
 				resolved_whitelist_entry_t* entry = host->whitelist.data + i;
-				if (sin->ss_family == AF_INET)
+				if (entry->addr.ss_family == AF_INET)
 				{
 					const struct sockaddr_in* entryAddr = (const struct sockaddr_in*)&entry->addr;
 					const struct sockaddr_in* subnetMask = (const struct sockaddr_in*)&entry->subnetMask;
