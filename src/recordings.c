@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bb_wrap_windows.h"
@@ -348,7 +348,66 @@ void recording_stopped(char* data)
 	}
 }
 
-static b32 recordings_delete_by_id_internal(u32 id, recordings_t* recordings)
+static void recordings_delete_recording(const char* path)
+{
+	char* ext;
+	sb_t logPath;
+	BOOL ret = DeleteFileA(path);
+	if (ret)
+	{
+		BB_LOG("Recordings", "Deleted '%s'", path);
+	}
+	else
+	{
+		BB_ERROR("Recordings", "Failed to delete '%s' - errno is %d", path, GetLastError());
+	}
+	sb_init(&logPath);
+	sb_append(&logPath, path);
+	ext = strrchr(logPath.data, '.');
+	if (ext)
+	{
+		logPath.count = (u32)(ext + 1 - logPath.data);
+	}
+	sb_append(&logPath, ".log");
+	if (logPath.count > 1)
+	{
+		ret = DeleteFileA(logPath.data);
+		if (ret)
+		{
+			BB_LOG("Recordings", "Deleted '%s'", logPath.data);
+		}
+		else
+		{
+			DWORD err = GetLastError();
+			if (err != ERROR_FILE_NOT_FOUND && err != ERROR_PATH_NOT_FOUND)
+			{
+				BB_ERROR("Recordings", "Failed to delete '%s' - errno is %d", logPath.data, err);
+			}
+		}
+	}
+	sb_reset(&logPath);
+
+	sb_t configPath = view_session_config_get_path(path);
+	if (configPath.data)
+	{
+		ret = DeleteFileA(configPath.data);
+		if (ret)
+		{
+			BB_LOG("Recordings", "Deleted '%s'", configPath.data);
+		}
+		else
+		{
+			DWORD err = GetLastError();
+			if (err != ERROR_FILE_NOT_FOUND && err != ERROR_PATH_NOT_FOUND)
+			{
+				BB_ERROR("Recordings", "Failed to delete '%s' - errno is %d", configPath.data, err);
+			}
+		}
+		sb_reset(&configPath);
+	}
+}
+
+static b32 recordings_delete_by_id_internal(u32 id, recordings_t * recordings)
 {
 	u32 i;
 	for (i = 0; i < recordings->count; ++i)
@@ -356,63 +415,8 @@ static b32 recordings_delete_by_id_internal(u32 id, recordings_t* recordings)
 		recording_t* r = recordings->data + i;
 		if (r->id == id)
 		{
-			char* ext;
-			sb_t logPath;
 			const char* path = recordings->data[i].path;
-			BOOL ret = DeleteFileA(path);
-			if (ret)
-			{
-				BB_LOG("Recordings", "Deleted '%s'", path);
-			}
-			else
-			{
-				BB_ERROR("Recordings", "Failed to delete '%s' - errno is %d", path, GetLastError());
-			}
-			sb_init(&logPath);
-			sb_append(&logPath, path);
-			ext = strrchr(logPath.data, '.');
-			if (ext)
-			{
-				logPath.count = (u32)(ext + 1 - logPath.data);
-			}
-			sb_append(&logPath, ".log");
-			if (logPath.count > 1)
-			{
-				ret = DeleteFileA(logPath.data);
-				if (ret)
-				{
-					BB_LOG("Recordings", "Deleted '%s'", logPath.data);
-				}
-				else
-				{
-					DWORD err = GetLastError();
-					if (err != ERROR_FILE_NOT_FOUND && err != ERROR_PATH_NOT_FOUND)
-					{
-						BB_ERROR("Recordings", "Failed to delete '%s' - errno is %d", logPath.data, err);
-					}
-				}
-			}
-			sb_reset(&logPath);
-
-			sb_t configPath = view_session_config_get_path(path);
-			if (configPath.data)
-			{
-				ret = DeleteFileA(configPath.data);
-				if (ret)
-				{
-					BB_LOG("Recordings", "Deleted '%s'", configPath.data);
-				}
-				else
-				{
-					DWORD err = GetLastError();
-					if (err != ERROR_FILE_NOT_FOUND && err != ERROR_PATH_NOT_FOUND)
-					{
-						BB_ERROR("Recordings", "Failed to delete '%s' - errno is %d", configPath.data, err);
-					}
-				}
-				sb_reset(&configPath);
-			}
-
+			recordings_delete_recording(path);
 			bba_erase(*recordings, i);
 			return true;
 		}
@@ -436,8 +440,9 @@ b32 recordings_delete_by_id(u32 id)
 	return false;
 }
 
-static void recordings_check_autodelete(ULARGE_INTEGER nowInt, recordingIds_t* pendingDeletions, recording_t* recording)
+static b32 recordings_check_autodelete(ULARGE_INTEGER nowInt, recording_t* recording)
 {
+	b32 ret = false;
 	if (!recording->active)
 	{
 		ULARGE_INTEGER fileInt;
@@ -457,11 +462,56 @@ static void recordings_check_autodelete(ULARGE_INTEGER nowInt, recordingIds_t* p
 				if (!hasView)
 				{
 					BB_LOG("Recordings::AutoDelete", "Deleting %s that is %.0f days old", recording->applicationFilename, days);
-					bba_push(*pendingDeletions, recording->id);
+					recording->pendingDelete = true;
+					ret = true;
 				}
 			}
 		}
 	}
+	return ret;
+}
+
+static u32 recordings_autodelete_scan(recordings_t* recordings)
+{
+	u32 numDeleted = 0;
+	FILETIME now;
+	ULARGE_INTEGER nowInt;
+	GetSystemTimeAsFileTime(&now);
+	nowInt.LowPart = now.dwLowDateTime;
+	nowInt.HighPart = now.dwHighDateTime;
+
+	b32 anyDeleted = false;
+	for (u32 i = 0; i < recordings->count; ++i)
+	{
+		recording_t* recording = recordings->data + i;
+		anyDeleted = recordings_check_autodelete(nowInt, recording) || anyDeleted;
+	}
+
+	if (anyDeleted)
+	{
+		recordings_t remaining = { BB_EMPTY_INITIALIZER };
+
+		for (u32 i = 0; i < recordings->count; ++i)
+		{
+			recording_t* recording = recordings->data + i;
+			if (recording->pendingDelete)
+			{
+				const char* path = recording->path;
+				recordings_delete_recording(path);
+				++numDeleted;
+			}
+			else
+			{
+				bba_push(remaining, *recording);
+			}
+		}
+
+		recordings_t tmp = *recordings;
+		*recordings = remaining;
+		bba_free(tmp);
+	}
+
+	return numDeleted;
 }
 
 void recordings_autodelete_old_recordings(void)
@@ -470,37 +520,14 @@ void recordings_autodelete_old_recordings(void)
 	{
 		for (u32 tab = 0; tab < kRecordingTab_Count; ++tab)
 		{
-			u32 i;
-			recordingIds_t pendingDeletions;
-			recordings_t* recordings = recordings_get_all(tab);
-			FILETIME now;
-			ULARGE_INTEGER nowInt;
-			GetSystemTimeAsFileTime(&now);
-			nowInt.LowPart = now.dwLowDateTime;
-			nowInt.HighPart = now.dwHighDateTime;
-
-			memset(&pendingDeletions, 0, sizeof(pendingDeletions));
-
-			for (i = 0; i < recordings->count; ++i)
-			{
-				recording_t* recording = recordings->data + i;
-				recordings_check_autodelete(nowInt, &pendingDeletions, recording);
-			}
-
-			for (i = 0; i < s_invalidRecordings[tab].count; ++i)
-			{
-				recording_t* recording = s_invalidRecordings[tab].data + i;
-				recordings_check_autodelete(nowInt, &pendingDeletions, recording);
-			}
-
-			if (pendingDeletions.count)
+			if (recordings_autodelete_scan(s_recordings + tab))
 			{
 				s_recordingsDirty[tab] = true;
-				for (i = 0; i < pendingDeletions.count; ++i)
-				{
-					recordings_delete_by_id(pendingDeletions.data[i]);
-				}
-				bba_free(pendingDeletions);
+			}
+
+			if (recordings_autodelete_scan(s_invalidRecordings + tab))
+			{
+				s_recordingsDirty[tab] = true;
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -55,6 +55,8 @@ typedef struct recording_s
 	recording_type_t recordingType;
 	u32 outgoingMqId;
 	u32 platform;
+	u32 pendingDelete;
+	u8 pad[4];
 } recording_t;
 
 AUTOJSON typedef struct new_recording_s
