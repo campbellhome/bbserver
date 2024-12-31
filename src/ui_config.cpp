@@ -258,6 +258,86 @@ static void Preferences_PathFixupEntry(u32 index, pathFixupList_t& pathFixups)
 	}
 }
 
+static void Preferences_MaxRecordingsEntry(u32 index, config_max_recordings_t& pathFixups)
+{
+	bool bRemove = false;
+
+	config_max_recordings_entry_t& entry = pathFixups.data[index];
+	PushID((int)index);
+
+	ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue;
+	PushItemWidth(-1.0f);
+	InputText("##filter", &entry.filter, kBBSize_MaxPath, flags);
+	Fonts_CacheGlyphs(sb_get(&entry.filter));
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
+		Imgui_Core_RequestRender();
+	}
+	if (IsTooltipActive(&s_preferencesConfig.tooltips) && entry.filter.data)
+	{
+		SetTooltip("%s\nAllowed: %u", sb_get(&entry.filter), entry.allowed);
+	}
+	if (ImGui::BeginPopupContextItem("maxRecordingsFilterContextMenu"))
+	{
+		if (ImGui::Selectable("Delete row"))
+		{
+			bRemove = true;
+		}
+		ImGui::EndPopup();
+	}
+	PopItemWidth();
+	NextColumn();
+	int val = (int)entry.allowed;
+	ImGui::Text("Allowed:");
+	SameLine();
+	PushItemWidth(100 * Imgui_Core_GetDpiScale());
+	InputInt("##AllowedInput", &val, 0, 9999);
+	PopItemWidth();
+	val = BB_CLAMP(val, 0, 9999);
+	entry.allowed = (u32)val;
+	if (IsItemActive() && Imgui_Core_HasFocus())
+	{
+		Imgui_Core_RequestRender();
+	}
+	if (IsTooltipActive(&s_preferencesConfig.tooltips) && entry.filter.data)
+	{
+		SetTooltip("%s\nAllowed: %u", sb_get(&entry.filter), entry.allowed);
+	}
+	if (ImGui::BeginPopupContextItem("maxRecordingsAllowedContextMenu"))
+	{
+		if (ImGui::Selectable("Delete row"))
+		{
+			bRemove = true;
+		}
+		ImGui::EndPopup();
+	}
+	NextColumn();
+
+	if (Button(" ^ "))
+	{
+		if (index > 0)
+		{
+			config_max_recordings_move_entry(&pathFixups, index, index - 1);
+		}
+	}
+	SameLine();
+	if (Button(" v "))
+	{
+		if (index + 1 < pathFixups.count)
+		{
+			config_max_recordings_move_entry(&pathFixups, index, index + 1);
+		}
+	}
+	NextColumn();
+
+	PopID();
+
+	if (bRemove)
+	{
+		bba_erase(pathFixups, index);
+	}
+}
+
 void UIConfig_Open(config_t* config)
 {
 	if (s_preferencesValid)
@@ -619,6 +699,34 @@ void UIConfig_Update(config_t* config)
 			PopItemWidth();
 			val = BB_CLAMP(val, 0, 9999);
 			s_preferencesConfig.autoDeleteAfterDays = (u32)val;
+
+			if (s_preferencesAdvanced || s_preferencesConfig.maxRecordings.count > 0)
+			{
+				BeginGroup();
+				Columns(3, "maxrecordingscolumns");
+				SetColumnOffset(1, 240.0f * Imgui_Core_GetDpiScale());
+				SetColumnOffset(2, 480.0f * Imgui_Core_GetDpiScale());
+				Separator();
+				Text("Application name filter");
+				NextColumn();
+				Text("Max recordings");
+				NextColumn();
+				Text("Move");
+				NextColumn();
+				Separator();
+				for (u32 i = 0; i < s_preferencesConfig.maxRecordings.count; ++i)
+				{
+					Preferences_MaxRecordingsEntry(i, s_preferencesConfig.maxRecordings);
+				}
+				Columns(1);
+				Separator();
+				if (Button("Add Entry###Add MaxRecordings"))
+				{
+					bba_add(s_preferencesConfig.maxRecordings, 1);
+				}
+				EndGroup();
+			}
+
 			Checkbox("Auto-close all applications instead of just the one starting up", &s_preferencesConfig.autoCloseAll);
 			SameLine();
 			Checkbox("Manually opened views are marked to auto close", &s_preferencesConfig.autoCloseManual);

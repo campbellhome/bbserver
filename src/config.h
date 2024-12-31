@@ -139,12 +139,27 @@ AUTOJSON typedef struct config_named_filters_t
 	config_named_filter_t* data;
 } config_named_filters_t;
 
+AUTOJSON typedef struct config_max_recordings_entry_t
+{
+	sb_t filter;
+	u32 allowed;
+	u8 pad[4];
+} config_max_recordings_entry_t;
+
+AUTOJSON typedef struct config_max_recordings_t
+{
+	u32 count;
+	u32 allocated;
+	config_max_recordings_entry_t* data;
+} config_max_recordings_t;
+
 AUTOJSON typedef struct config_s
 {
 	configWhitelist_t whitelist;
 	openTargetList_t openTargets;
 	pathFixupList_t pathFixups;
 	config_named_filters_t namedFilters;
+	config_max_recordings_t maxRecordings;
 	configFont_t logFontConfig;
 	configFont_t uiFontConfig;
 	sb_t colorscheme;
@@ -192,6 +207,7 @@ void config_validate_whitelist(configWhitelist_t* whitelist);
 void open_target_move_entry(openTargetList_t* openTargets, u32 indexA, u32 indexB);
 void config_validate_open_targets(openTargetList_t* openTargets);
 void path_fixup_move_entry(pathFixupList_t* pathFixups, u32 indexA, u32 indexB);
+void config_max_recordings_move_entry(config_max_recordings_t* arr, u32 indexA, u32 indexB);
 u32 config_getwindowplacement(HWND hwnd);
 float config_get_resizeBarSize(config_t* config);
 

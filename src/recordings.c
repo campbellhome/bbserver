@@ -7,12 +7,14 @@
 #include "bb_json_generated.h"
 #include "bb_structs_generated.h"
 #include "config.h"
+#include "filter.h"
 #include "fonts.h"
 #include "message_queue.h"
 #include "recorded_session.h"
 #include "recordings.h"
 #include "recordings_config.h"
 #include "sb.h"
+#include "sdict.h"
 #include "va.h"
 #include "view_config.h"
 
@@ -29,6 +31,7 @@
 #include <ShlObj.h>
 
 void sanitize_app_filename(const char* applicationName, char* applicationFilename, size_t applicationFilenameLen);
+static u32 recordings_delete_pending_deleted(recordings_t* recordings);
 
 static recordings_t s_recordings[kRecordingTab_Count];
 static recordings_t s_invalidRecordings[kRecordingTab_Count];
@@ -121,6 +124,22 @@ static new_recording_t recording_build_new_recording(char* data)
 	return r;
 }
 
+static int recordings_ptrs_compare_starttime(const void* _a, const void* _b)
+{
+	const recording_t* a = *(const recording_t**)_a;
+	const recording_t* b = *(const recording_t**)_b;
+	ULARGE_INTEGER atime;
+	ULARGE_INTEGER btime;
+	atime.LowPart = a->filetimeLow;
+	atime.HighPart = a->filetimeHigh;
+	btime.LowPart = b->filetimeLow;
+	btime.HighPart = b->filetimeHigh;
+	if (atime.QuadPart != btime.QuadPart)
+	{
+		return (int)(atime.QuadPart > btime.QuadPart) ? 1 : -1;
+	}
+	return strcmp(a->path, b->path);
+}
 static int recordings_compare_starttime(const void* _a, const void* _b)
 {
 	const recording_t* a = (const recording_t*)_a;
@@ -271,6 +290,108 @@ void recording_add_existing(char* data, b32 valid)
 	new_recording_reset(&r);
 }
 
+static sdict_t recordings_build_max_recordings_filter_inplace(const char* applicationName, const char* applicationFilename, sdictEntry_t sdEntries[2])
+{
+	sdictEntry_t* sdEntry = sdEntries;
+	sdEntry->key.data = "name";
+	sdEntry->key.count = sdEntry->key.allocated = (u32)strlen(sdEntry->key.data) + 1;
+	sdEntry->value.data = (char *)applicationName;
+	sdEntry->value.count = sdEntry->value.allocated = (u32)strlen(sdEntry->value.data) + 1;
+
+	sdEntry = sdEntries + 1;
+	sdEntry->key.data = "filename";
+	sdEntry->key.count = sdEntry->key.allocated = (u32)strlen(sdEntry->key.data) + 1;
+	sdEntry->value.data = (char*)applicationFilename;
+	sdEntry->value.count = sdEntry->value.allocated = (u32)strlen(sdEntry->value.data) + 1;
+
+	sdict_t sd = { BB_EMPTY_INITIALIZER };
+	sd.count = sd.allocated = 2;
+	sd.data = sdEntries;
+
+	return sd;
+}
+
+static const char** recordings_build_max_recordings_keys(void)
+{
+	static const char* keys[] = { "name", "filename" };
+	return keys;
+}
+
+static u32 recordings_build_max_recordings_num_keys(void)
+{
+	return 2; // see recordings_build_max_recordings_keys
+}
+
+typedef struct recordings_ptrs_s
+{
+	u32 count;
+	u32 allocated;
+	recording_t** data;
+} recordings_ptrs_t;
+
+static void recordings_keep_latest_recordings(filterTokens* tokens, const char** keys, u32 numKeys, recordings_t* recordings, const config_max_recordings_entry_t* entry)
+{
+	recordings_ptrs_t matches = { BB_EMPTY_INITIALIZER };
+	for (u32 i = 0; i < recordings->count; ++i)
+	{
+		recording_t *recording = recordings->data + i;
+
+		sdictEntry_t sdEntries[2] = { BB_EMPTY_INITIALIZER };
+		sdict_t sd = recordings_build_max_recordings_filter_inplace(recording->applicationName, recording->applicationFilename, sdEntries);
+		b32 passes = passes_filter_tokens(tokens, &sd, keys, numKeys);
+		if (passes)
+		{
+			bba_push(matches, recording);
+		}
+	}
+
+	if (matches.count >= entry->allowed && matches.data)
+	{
+		qsort(matches.data, matches.count, sizeof(matches.data[0]), recordings_ptrs_compare_starttime);
+
+		for (u32 i = 0; i < matches.count - entry->allowed + 1; ++i)
+		{
+			recording_t* recording = matches.data[i];
+			BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", recording->applicationFilename, entry->allowed, sb_get(&entry->filter));
+			recording->pendingDelete = true;
+		}
+
+		recordings_delete_pending_deleted(recordings);
+	}
+
+	bba_free(matches);
+}
+
+static void recordings_validate_max_recordings(const new_recording_t* r)
+{
+	if (g_config.maxRecordings.count > 0)
+	{
+		sdictEntry_t sdEntries[2] = { BB_EMPTY_INITIALIZER };
+		sdict_t sd = recordings_build_max_recordings_filter_inplace(sb_get(&r->applicationName), sb_get(&r->applicationFilename), sdEntries);
+
+		const char** keys = recordings_build_max_recordings_keys();
+		u32 numKeys = recordings_build_max_recordings_num_keys();
+
+		for (u32 i = 0; i < g_config.maxRecordings.count; ++i)
+		{
+			const config_max_recordings_entry_t* entry = g_config.maxRecordings.data + i;
+			if (entry->allowed == 0)
+				continue;
+
+			filterTokens tokens = { BB_EMPTY_INITIALIZER };
+			build_filter_tokens(&tokens, sb_get(&entry->filter));
+			b32 passes = passes_filter_tokens(&tokens, &sd, keys, numKeys);
+
+			if (passes)
+			{
+				recordings_keep_latest_recordings(&tokens, keys, numKeys, s_recordings + kRecordingTab_Internal, entry);
+			}
+
+			reset_filter_tokens(&tokens);
+		}
+	}
+}
+
 void recording_started(char* data)
 {
 	BB_LOG("Recordings", "%s", data);
@@ -278,6 +399,11 @@ void recording_started(char* data)
 	new_recording_t r = recording_build_new_recording(data);
 	if (sb_len(&r.path))
 	{
+		if (g_config.maxRecordings.count > 0)
+		{
+			recordings_validate_max_recordings(&r);
+		}
+
 		recording_tab_t tab = recording_tab_from_recording_type(r.recordingType);
 		existing = recordings_find_by_path(sb_get(&r.path));
 		if (existing)
@@ -471,6 +597,32 @@ static b32 recordings_check_autodelete(ULARGE_INTEGER nowInt, recording_t* recor
 	return ret;
 }
 
+static u32 recordings_delete_pending_deleted(recordings_t* recordings)
+{
+	u32 numDeleted = 0;
+	recordings_t remaining = { BB_EMPTY_INITIALIZER };
+
+	for (u32 i = 0; i < recordings->count; ++i)
+	{
+		recording_t* recording = recordings->data + i;
+		if (recording->pendingDelete)
+		{
+			const char* path = recording->path;
+			recordings_delete_recording(path);
+			++numDeleted;
+		}
+		else
+		{
+			bba_push(remaining, *recording);
+		}
+	}
+
+	recordings_t tmp = *recordings;
+	*recordings = remaining;
+	bba_free(tmp);
+	return numDeleted;
+}
+
 static u32 recordings_autodelete_scan(recordings_t* recordings)
 {
 	u32 numDeleted = 0;
@@ -489,26 +641,7 @@ static u32 recordings_autodelete_scan(recordings_t* recordings)
 
 	if (anyDeleted)
 	{
-		recordings_t remaining = { BB_EMPTY_INITIALIZER };
-
-		for (u32 i = 0; i < recordings->count; ++i)
-		{
-			recording_t* recording = recordings->data + i;
-			if (recording->pendingDelete)
-			{
-				const char* path = recording->path;
-				recordings_delete_recording(path);
-				++numDeleted;
-			}
-			else
-			{
-				bba_push(remaining, *recording);
-			}
-		}
-
-		recordings_t tmp = *recordings;
-		*recordings = remaining;
-		bba_free(tmp);
+		numDeleted = recordings_delete_pending_deleted(recordings);
 	}
 
 	return numDeleted;

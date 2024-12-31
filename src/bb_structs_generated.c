@@ -300,6 +300,47 @@ config_named_filters_t config_named_filters_clone(const config_named_filters_t *
 	return dst;
 }
 
+void config_max_recordings_entry_reset(config_max_recordings_entry_t *val)
+{
+	if(val) {
+		sb_reset(&val->filter);
+	}
+}
+config_max_recordings_entry_t config_max_recordings_entry_clone(const config_max_recordings_entry_t *src)
+{
+	config_max_recordings_entry_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.filter = sb_clone(&src->filter);
+		dst.allowed = src->allowed;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
+	}
+	return dst;
+}
+
+void config_max_recordings_reset(config_max_recordings_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			config_max_recordings_entry_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+config_max_recordings_t config_max_recordings_clone(const config_max_recordings_t *src)
+{
+	config_max_recordings_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = config_max_recordings_entry_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
 void config_reset(config_t *val)
 {
 	if(val) {
@@ -307,6 +348,7 @@ void config_reset(config_t *val)
 		openTargetList_reset(&val->openTargets);
 		pathFixupList_reset(&val->pathFixups);
 		config_named_filters_reset(&val->namedFilters);
+		config_max_recordings_reset(&val->maxRecordings);
 		configFont_reset(&val->logFontConfig);
 		configFont_reset(&val->uiFontConfig);
 		sb_reset(&val->colorscheme);
@@ -323,6 +365,7 @@ config_t config_clone(const config_t *src)
 		dst.openTargets = openTargetList_clone(&src->openTargets);
 		dst.pathFixups = pathFixupList_clone(&src->pathFixups);
 		dst.namedFilters = config_named_filters_clone(&src->namedFilters);
+		dst.maxRecordings = config_max_recordings_clone(&src->maxRecordings);
 		dst.logFontConfig = configFont_clone(&src->logFontConfig);
 		dst.uiFontConfig = configFont_clone(&src->uiFontConfig);
 		dst.colorscheme = sb_clone(&src->colorscheme);

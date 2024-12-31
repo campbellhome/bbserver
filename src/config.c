@@ -304,6 +304,20 @@ void path_fixup_move_entry(pathFixupList_t* pathFixups, u32 indexA, u32 indexB)
 	}
 }
 
+void config_max_recordings_move_entry(config_max_recordings_t* arr, u32 indexA, u32 indexB)
+{
+	if (indexA < arr->count &&
+	    indexB < arr->count &&
+	    indexA != indexB)
+	{
+		config_max_recordings_entry_t* entryA = arr->data + indexA;
+		config_max_recordings_entry_t* entryB = arr->data + indexB;
+		config_max_recordings_entry_t tmp = *entryA;
+		*entryA = *entryB;
+		*entryB = tmp;
+	}
+}
+
 float config_get_resizeBarSize(config_t* config)
 {
 	return ((config->sizes.resizeBarSize > 0) ? config->sizes.resizeBarSize : 3) * config->dpiScale;

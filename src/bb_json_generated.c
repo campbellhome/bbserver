@@ -248,6 +248,38 @@ config_named_filters_t json_deserialize_config_named_filters_t(JSON_Value *src)
 	return dst;
 }
 
+config_max_recordings_entry_t json_deserialize_config_max_recordings_entry_t(JSON_Value *src)
+{
+	config_max_recordings_entry_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.filter = json_deserialize_sb_t(json_object_get_value(obj, "filter"));
+			dst.allowed = (u32)json_object_get_number(obj, "allowed");
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
+				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
+			}
+		}
+	}
+	return dst;
+}
+
+config_max_recordings_t json_deserialize_config_max_recordings_t(JSON_Value *src)
+{
+	config_max_recordings_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Array *arr = json_value_get_array(src);
+		if(arr) {
+			for(u32 i = 0; i < json_array_get_count(arr); ++i) {
+				bba_push(dst, json_deserialize_config_max_recordings_entry_t(json_array_get_value(arr, i)));
+			}
+		}
+	}
+	return dst;
+}
+
 config_t json_deserialize_config_t(JSON_Value *src)
 {
 	config_t dst;
@@ -259,6 +291,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.openTargets = json_deserialize_openTargetList_t(json_object_get_value(obj, "openTargets"));
 			dst.pathFixups = json_deserialize_pathFixupList_t(json_object_get_value(obj, "pathFixups"));
 			dst.namedFilters = json_deserialize_config_named_filters_t(json_object_get_value(obj, "namedFilters"));
+			dst.maxRecordings = json_deserialize_config_max_recordings_t(json_object_get_value(obj, "maxRecordings"));
 			dst.logFontConfig = json_deserialize_configFont_t(json_object_get_value(obj, "logFontConfig"));
 			dst.uiFontConfig = json_deserialize_configFont_t(json_object_get_value(obj, "uiFontConfig"));
 			dst.colorscheme = json_deserialize_sb_t(json_object_get_value(obj, "colorscheme"));
@@ -1072,6 +1105,35 @@ JSON_Value *json_serialize_config_named_filters_t(const config_named_filters_t *
 	return val;
 }
 
+JSON_Value *json_serialize_config_max_recordings_entry_t(const config_max_recordings_entry_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "filter", json_serialize_sb_t(&src->filter));
+		json_object_set_number(obj, "allowed", src->allowed);
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
+		}
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_config_max_recordings_t(const config_max_recordings_t *src)
+{
+	JSON_Value *val = json_value_init_array();
+	JSON_Array *arr = json_value_get_array(val);
+	if(arr) {
+		for(u32 i = 0; i < src->count; ++i) {
+			JSON_Value *child = json_serialize_config_max_recordings_entry_t(src->data + i);
+			if(child) {
+				json_array_append_value(arr, child);
+			}
+		}
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_config_t(const config_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -1081,6 +1143,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "openTargets", json_serialize_openTargetList_t(&src->openTargets));
 		json_object_set_value(obj, "pathFixups", json_serialize_pathFixupList_t(&src->pathFixups));
 		json_object_set_value(obj, "namedFilters", json_serialize_config_named_filters_t(&src->namedFilters));
+		json_object_set_value(obj, "maxRecordings", json_serialize_config_max_recordings_t(&src->maxRecordings));
 		json_object_set_value(obj, "logFontConfig", json_serialize_configFont_t(&src->logFontConfig));
 		json_object_set_value(obj, "uiFontConfig", json_serialize_configFont_t(&src->uiFontConfig));
 		json_object_set_value(obj, "colorscheme", json_serialize_sb_t(&src->colorscheme));
