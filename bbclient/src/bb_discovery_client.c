@@ -48,7 +48,7 @@ static b32 bb_discovery_send_request(bb_socket discoverySocket, bb_discovery_pac
 		return false;
 	}
 
-	nBytesSent = sendto(discoverySocket, (const char*)buf, serializedLen, 0, (const struct sockaddr*)addrStorage, sizeof(*addrStorage));
+	nBytesSent = sendto(discoverySocket, (const char*)buf, serializedLen, 0, (const struct sockaddr*)addrStorage, bbnet_get_addr_storage_size(addrStorage, sizeof(*addrStorage)));
 	if (nBytesSent < 0)
 	{
 		int err = BBNET_ERRNO;
@@ -94,7 +94,7 @@ static b32 bb_discovery_client_recvfrom(bb_socket socket, struct sockaddr_storag
 			fd_set set;
 			BB_TIMEVAL tv;
 			long remainingMillis = (long)(endMillis - now);
-			socklen_t sinSize = sizeof(*addr);
+			socklen_t sinSize = bbnet_get_addr_storage_size(addr, sizeof(*addr));
 
 			tv.tv_sec = 0;
 			tv.tv_usec = remainingMillis * 1000;

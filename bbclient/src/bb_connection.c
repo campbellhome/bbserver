@@ -105,7 +105,7 @@ b32 bbcon_connect_client_async(bb_connection_t* con, const struct sockaddr* remo
 
 	int ret;
 	BBCON_LOG("BlackBox client trying to async connect...");
-	ret = connect(testSocket, remoteAddr, (int)remoteAddrSize);
+	ret = connect(testSocket, remoteAddr, (int)bbnet_get_addr_size(remoteAddr, (socklen_t)remoteAddrSize));
 	if (ret == BB_SOCKET_ERROR)
 	{
 		int err = BBNET_ERRNO;

@@ -195,4 +195,36 @@ void bbnet_set_port_on_sockaddr(struct sockaddr* addr, const u16 port)
 #endif // #if BB_USING(BB_FEATURE_IPV6)
 }
 
+socklen_t bbnet_get_addr_size(const struct sockaddr* addr, socklen_t storageSize)
+{
+	if (!addr)
+		return 0;
+
+	if (addr->sa_family == AF_INET)
+		return BB_MIN(storageSize, sizeof(struct sockaddr_in));
+
+#if BB_USING(BB_FEATURE_IPV6)
+	if (addr->sa_family == AF_INET6)
+		return BB_MIN(storageSize, sizeof(struct sockaddr_in6));
+#endif // #if BB_USING(BB_FEATURE_IPV6)
+
+	return storageSize;
+}
+
+socklen_t bbnet_get_addr_storage_size(const struct sockaddr_storage* addr, socklen_t storageSize)
+{
+	if (!addr)
+		return 0;
+
+	if (addr->ss_family == AF_INET)
+		return BB_MIN(storageSize, sizeof(struct sockaddr_in));
+
+#if BB_USING(BB_FEATURE_IPV6)
+	if (addr->ss_family == AF_INET6)
+		return BB_MIN(storageSize, sizeof(struct sockaddr_in6));
+#endif // #if BB_USING(BB_FEATURE_IPV6)
+
+	return storageSize;
+}
+
 #endif // #if BB_ENABLED
