@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2022 Matt Campbell
+// Copyright (c) Matt Campbell
 // MIT license (see License.txt)
 
 #include "system_tray.h"

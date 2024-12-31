@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2020 Matt Campbell
+// Copyright (c) Matt Campbell
 // MIT license (see License.txt)
 
 #include "ui_view_files.h"

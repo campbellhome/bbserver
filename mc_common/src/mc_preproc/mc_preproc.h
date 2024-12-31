@@ -1,7 +1,7 @@
 #define _HAS_EXCEPTIONS 0
 #define _ITERATOR_DEBUG_LEVEL 0
 
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once

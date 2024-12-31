@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) Matt Campbell
 // MIT license (see License.txt)
 
 #include "imgui_input_text.h"
