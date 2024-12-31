@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "app_update.h"
@@ -503,6 +503,10 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 								BBServer_Update();
 								ImVec4 clear_col = ImColor(34, 35, 34);
 								Imgui_Core_EndFrame(clear_col);
+							}
+							else
+							{
+								BBServer_UpdateMinimal();
 							}
 						}
 						DragDrop_Shutdown();

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2019 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #pragma once
@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 void BBServer_Update(void);
+void BBServer_UpdateMinimal(void);
 
 #if defined(__cplusplus)
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2023 Matt Campbell
+// Copyright (c) 2012-2024 Matt Campbell
 // MIT license (see License.txt)
 
 #include "bbserver_update.h"
@@ -587,6 +587,14 @@ static void BBServer_DispatchToUIMessageQueue()
 			break;
 		}
 	}
+}
+
+extern "C" void BBServer_UpdateMinimal(void)
+{
+	devkit_autodetect_tick();
+	tasks_tick();
+	BBServer_DispatchToUIMessageQueue();
+	recordings_autodelete_old_recordings();
 }
 
 extern "C" void BBServer_Update(void)
