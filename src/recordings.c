@@ -295,7 +295,7 @@ static sdict_t recordings_build_max_recordings_filter_inplace(const char* applic
 	sdictEntry_t* sdEntry = sdEntries;
 	sdEntry->key.data = "name";
 	sdEntry->key.count = sdEntry->key.allocated = (u32)strlen(sdEntry->key.data) + 1;
-	sdEntry->value.data = (char *)applicationName;
+	sdEntry->value.data = (char*)applicationName;
 	sdEntry->value.count = sdEntry->value.allocated = (u32)strlen(sdEntry->value.data) + 1;
 
 	sdEntry = sdEntries + 1;
@@ -329,6 +329,20 @@ typedef struct recordings_ptrs_s
 	recording_t** data;
 } recordings_ptrs_t;
 
+static recordings_ptrs_t recordings_filter_latest_recordings(recordings_ptrs_t *matches, const char* applicationName)
+{
+	recordings_ptrs_t filteredMatches = { BB_EMPTY_INITIALIZER };
+	for (u32 i = 0; i < matches->count; ++i)
+	{
+		recording_t* recording = matches->data[i];
+		if (!bb_stricmp(applicationName, recording->applicationName))
+		{
+			bba_push(filteredMatches, recording);
+		}
+	}
+	return filteredMatches;
+}
+
 static void recordings_keep_latest_recordings(filterTokens* tokens, const char** keys, u32 numKeys, recordings_t* recordings, const config_max_recordings_entry_t* entry)
 {
 	recordings_ptrs_t matches = { BB_EMPTY_INITIALIZER };
@@ -349,14 +363,35 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 	{
 		qsort(matches.data, matches.count, sizeof(matches.data[0]), recordings_ptrs_compare_starttime);
 
+		sbs_t seenNames = { BB_EMPTY_INITIALIZER };
+
 		for (u32 i = 0; i < matches.count - entry->allowed + 1; ++i)
 		{
 			recording_t* recording = matches.data[i];
-			BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", recording->applicationFilename, entry->allowed, sb_get(&entry->filter));
-			recording->pendingDelete = true;
+			u32 nameLen = (u32)strlen(recording->applicationName) + 1;
+			sb_t recordingName = { nameLen, nameLen, recording->applicationName };
+			if (sbs_contains(&seenNames, recordingName))
+			{
+				continue;
+			}
+
+			bba_push(seenNames, sb_from_c_string(recording->applicationName));
+
+			recordings_ptrs_t filteredMatches = recordings_filter_latest_recordings(&matches, recording->applicationName);
+
+			for (u32 j = 0; j < filteredMatches.count - entry->allowed + 1; ++j)
+			{
+				recording_t* filteredRecording = filteredMatches.data[j];
+				BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", filteredRecording->applicationFilename, entry->allowed, sb_get(&entry->filter));
+				filteredRecording->pendingDelete = true;
+			}
+
+			bba_free(filteredMatches);
 		}
 
 		recordings_delete_pending_deleted(recordings);
+
+		sbs_reset(&seenNames);
 	}
 
 	bba_free(matches);
