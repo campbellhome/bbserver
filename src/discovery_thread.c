@@ -107,7 +107,7 @@ static resolved_whitelist_entry_t* find_whitelist_match(discovery_data_t* host, 
 					struct sockaddr_in6 b = *(const struct sockaddr_in6*)&entry->addr;
 					const struct sockaddr_in6* subnetMask = (const struct sockaddr_in6*)&entry->subnetMask;
 
-					for (int byteIndex = 0; byteIndex < sizeof(addr.sin6_addr); ++byteIndex)
+					for (size_t byteIndex = 0; byteIndex < sizeof(addr.sin6_addr); ++byteIndex)
 					{
 						a.sin6_addr.s6_addr[byteIndex] &= subnetMask->sin6_addr.s6_addr[byteIndex];
 						b.sin6_addr.s6_addr[byteIndex] &= subnetMask->sin6_addr.s6_addr[byteIndex];

@@ -448,14 +448,14 @@ void UIConfig_Update(config_t* config)
 			int colorUsageIndex = s_preferencesConfig.logColorUsage;
 			if (ImGui::Combo("Log colors", &colorUsageIndex, g_colorUsageNames, BB_ARRAYSIZE(g_colorUsageNames)))
 			{
-				if (colorUsageIndex >= 0 && colorUsageIndex < BB_ARRAYSIZE(g_colorUsageNames))
+				if (colorUsageIndex >= 0 && colorUsageIndex < (int)BB_ARRAYSIZE(g_colorUsageNames))
 				{
 					s_preferencesConfig.logColorUsage = (configColorUsage)colorUsageIndex;
 				}
 			}
 
 			int colorschemeIndex = -1;
-			for (int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i)
+			for (int i = 0; i < (int)BB_ARRAYSIZE(s_colorschemes); ++i)
 			{
 				if (!strcmp(sb_get(&s_preferencesConfig.colorscheme), s_colorschemes[i]))
 				{
@@ -465,7 +465,7 @@ void UIConfig_Update(config_t* config)
 			}
 			if (ImGui::Combo("Colorscheme", &colorschemeIndex, s_colorschemes, BB_ARRAYSIZE(s_colorschemes)))
 			{
-				if (colorschemeIndex >= 0 && colorschemeIndex < BB_ARRAYSIZE(s_colorschemes))
+				if (colorschemeIndex >= 0 && colorschemeIndex < (int)BB_ARRAYSIZE(s_colorschemes))
 				{
 					sb_reset(&s_preferencesConfig.colorscheme);
 					sb_append(&s_preferencesConfig.colorscheme, s_colorschemes[colorschemeIndex]);
@@ -680,7 +680,7 @@ void UIConfig_Update(config_t* config)
 			PushItemWidth(120 * Imgui_Core_GetDpiScale());
 			if (ImGui::BeginCombo("Allowed Protocols", g_listenProtocolNames[s_preferencesConfig.listenProtocol]))
 			{
-				for (s32 i = 1; i < BB_ARRAYSIZE(g_listenProtocolNames); ++i)
+				for (s32 i = 1; i < (int)BB_ARRAYSIZE(g_listenProtocolNames); ++i)
 					if (ImGui::Selectable(g_listenProtocolNames[i], s_preferencesConfig.listenProtocol == i))
 					{
 						s_preferencesConfig.listenProtocol = (configListenProtocol_t)i;

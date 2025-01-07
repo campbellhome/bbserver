@@ -588,7 +588,7 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		Imgui_Core_RequestRender();
 		g_trackingMouse = false;
 		ImGui::GetIO().MousePos = ImVec2(-1, -1);
-		for (int i = 0; i < BB_ARRAYSIZE(ImGui::GetIO().MouseDown); ++i)
+		for (size_t i = 0; i < BB_ARRAYSIZE(ImGui::GetIO().MouseDown); ++i)
 		{
 			ImGui::GetIO().MouseDown[i] = false;
 		}

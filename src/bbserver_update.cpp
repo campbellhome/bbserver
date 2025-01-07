@@ -334,7 +334,7 @@ void BBServer_MainMenuBar(void)
 				if (ImGui::BeginMenu("Color schemes"))
 				{
 					const char* colorscheme = Imgui_Core_GetColorScheme();
-					for (int i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i)
+					for (size_t i = 0; i < BB_ARRAYSIZE(s_colorschemes); ++i)
 					{
 						bool bSelected = !strcmp(colorscheme, s_colorschemes[i]);
 						if (ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected))
