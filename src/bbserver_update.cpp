@@ -582,6 +582,9 @@ static void BBServer_DispatchToUIMessageQueue()
 				s_failedDiscoveryCount = 0;
 			}
 			break;
+		case kToUI_RecordingScanComplete:
+			recordings_validate_max_recordings();
+			break;
 		default:
 			bb_log("to_ui type:%d msg:%s", message.command, message.text);
 			break;

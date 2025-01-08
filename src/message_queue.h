@@ -16,6 +16,7 @@ typedef enum
 	kToUI_AddInvalidExistingFile,
 	kToUI_RecordingStart,
 	kToUI_RecordingStop,
+	kToUI_RecordingScanComplete,
 } to_ui_command_e;
 
 enum

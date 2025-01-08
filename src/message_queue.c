@@ -119,7 +119,7 @@ b32 mq_vqueue(u32 queueId, u32 command, const char* fmt, va_list args)
 		return true;
 
 	len = vsnprintf(szBuffer, sizeof(szBuffer), fmt, args);
-	if (len == 0)
+	if (len == 0 && *fmt != '\0')
 		return true;
 
 	if (len < 0)

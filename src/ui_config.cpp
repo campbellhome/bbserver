@@ -11,6 +11,7 @@
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
+#include "recordings.h"
 #include "theme_config.h"
 #include "ui_recordings.h"
 
@@ -756,6 +757,8 @@ void UIConfig_Update(config_t* config)
 				UIConfig_Open(config);
 			}
 			config_write(config);
+
+			recordings_validate_max_recordings();
 		}
 		SameLine();
 		if (Button("Cancel"))

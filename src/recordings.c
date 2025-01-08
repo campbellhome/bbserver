@@ -343,8 +343,9 @@ static recordings_ptrs_t recordings_filter_latest_recordings(recordings_ptrs_t *
 	return filteredMatches;
 }
 
-static void recordings_keep_latest_recordings(filterTokens* tokens, const char** keys, u32 numKeys, recordings_t* recordings, const config_max_recordings_entry_t* entry)
+static void recordings_keep_latest_recordings(filterTokens* tokens, const char** keys, u32 numKeys, recording_tab_t tab, const config_max_recordings_entry_t* entry)
 {
+	recordings_t* recordings = s_recordings + tab;
 	recordings_ptrs_t matches = { BB_EMPTY_INITIALIZER };
 	for (u32 i = 0; i < recordings->count; ++i)
 	{
@@ -359,13 +360,13 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 		}
 	}
 
-	if (matches.count >= entry->allowed && matches.data)
+	if (matches.count > entry->allowed && matches.data)
 	{
 		qsort(matches.data, matches.count, sizeof(matches.data[0]), recordings_ptrs_compare_starttime);
 
 		sbs_t seenNames = { BB_EMPTY_INITIALIZER };
 
-		for (u32 i = 0; i < matches.count - entry->allowed + 1; ++i)
+		for (u32 i = 0; i < matches.count - entry->allowed; ++i)
 		{
 			recording_t* recording = matches.data[i];
 			u32 nameLen = (u32)strlen(recording->applicationName) + 1;
@@ -379,11 +380,12 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 
 			recordings_ptrs_t filteredMatches = recordings_filter_latest_recordings(&matches, recording->applicationName);
 
-			for (u32 j = 0; j < filteredMatches.count - entry->allowed + 1; ++j)
+			for (u32 j = 0; j < filteredMatches.count - entry->allowed; ++j)
 			{
 				recording_t* filteredRecording = filteredMatches.data[j];
 				BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", filteredRecording->applicationFilename, entry->allowed, sb_get(&entry->filter));
 				filteredRecording->pendingDelete = true;
+				s_recordingsDirty[tab] = true;
 			}
 
 			bba_free(filteredMatches);
@@ -397,7 +399,7 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 	bba_free(matches);
 }
 
-static void recordings_validate_max_recordings(const new_recording_t* r)
+static void recordings_validate_max_recordings_for_new_recording(const new_recording_t* r)
 {
 	if (g_config.maxRecordings.count > 0)
 	{
@@ -419,8 +421,31 @@ static void recordings_validate_max_recordings(const new_recording_t* r)
 
 			if (passes)
 			{
-				recordings_keep_latest_recordings(&tokens, keys, numKeys, s_recordings + kRecordingTab_Internal, entry);
+				recordings_keep_latest_recordings(&tokens, keys, numKeys, kRecordingTab_Internal, entry);
 			}
+
+			reset_filter_tokens(&tokens);
+		}
+	}
+}
+
+void recordings_validate_max_recordings(void)
+{
+	if (g_config.maxRecordings.count > 0)
+	{
+		const char** keys = recordings_build_max_recordings_keys();
+		u32 numKeys = recordings_build_max_recordings_num_keys();
+
+		for (u32 i = 0; i < g_config.maxRecordings.count; ++i)
+		{
+			const config_max_recordings_entry_t* entry = g_config.maxRecordings.data + i;
+			if (entry->allowed == 0)
+				continue;
+
+			filterTokens tokens = { BB_EMPTY_INITIALIZER };
+			build_filter_tokens(&tokens, sb_get(&entry->filter));
+
+			recordings_keep_latest_recordings(&tokens, keys, numKeys, kRecordingTab_Internal, entry);
 
 			reset_filter_tokens(&tokens);
 		}
@@ -434,11 +459,6 @@ void recording_started(char* data)
 	new_recording_t r = recording_build_new_recording(data);
 	if (sb_len(&r.path))
 	{
-		if (g_config.maxRecordings.count > 0)
-		{
-			recordings_validate_max_recordings(&r);
-		}
-
 		recording_tab_t tab = recording_tab_from_recording_type(r.recordingType);
 		existing = recordings_find_by_path(sb_get(&r.path));
 		if (existing)
@@ -482,6 +502,11 @@ void recording_started(char* data)
 			{
 				recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), recording->applicationName, recording->recordingType != kRecordingType_ExternalFile, true, recording->outgoingMqId);
 			}
+		}
+
+		if (g_config.maxRecordings.count > 0)
+		{
+			recordings_validate_max_recordings_for_new_recording(&r);
 		}
 	}
 	new_recording_reset(&r);
@@ -808,6 +833,8 @@ static bb_thread_return_t recordings_init_thread_func(void* args)
 	{
 		recordings_find_files_in_dir(basePath, true);
 	}
+
+	to_ui(kToUI_RecordingScanComplete, "");
 
 	bb_thread_exit(0);
 }
