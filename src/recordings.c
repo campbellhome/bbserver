@@ -380,12 +380,15 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 
 			recordings_ptrs_t filteredMatches = recordings_filter_latest_recordings(&matches, recording->applicationName);
 
-			for (u32 j = 0; j < filteredMatches.count - entry->allowed; ++j)
+			if (filteredMatches.count > entry->allowed && filteredMatches.data)
 			{
-				recording_t* filteredRecording = filteredMatches.data[j];
-				BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", filteredRecording->applicationFilename, entry->allowed, sb_get(&entry->filter));
-				filteredRecording->pendingDelete = true;
-				s_recordingsDirty[tab] = true;
+				for (u32 j = 0; j < filteredMatches.count - entry->allowed; ++j)
+				{
+					recording_t* filteredRecording = filteredMatches.data[j];
+					BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", filteredRecording->applicationFilename, entry->allowed, sb_get(&entry->filter));
+					filteredRecording->pendingDelete = true;
+					s_recordingsDirty[tab] = true;
+				}
 			}
 
 			bba_free(filteredMatches);
