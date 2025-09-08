@@ -1,0 +1,18 @@
+{
+	"input": {
+		"sourceDirs": [
+			{ "dir": "include" }
+		],
+		"includeDirs": [
+			{ "dir": "../mc_common/include" },
+			{ "dir": "../mc_common/include/uuid_rfc4122", "base": "../mc_common/include/" },
+			{ "dir": "../mc_imgui/include" }
+		]
+	},
+	"output": {
+		"prefix": "mc_imgui_",
+		"sourceDir": "src",
+		"includeDir": "include",
+		"baseDir": "include"
+	}
+}

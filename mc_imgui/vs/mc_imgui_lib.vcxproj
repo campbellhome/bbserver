@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\include\app_update.h" />
+    <ClInclude Include="..\include\bb_colors.h" />
     <ClInclude Include="..\include\fonts.h" />
     <ClInclude Include="..\include\forkawesome-webfont.h" />
     <ClInclude Include="..\include\imgui_core.h" />
@@ -142,8 +143,13 @@
     <ClInclude Include="..\include\imgui_core_windows.h" />
     <ClInclude Include="..\include\imgui_image.h" />
     <ClInclude Include="..\include\imgui_input_text.h" />
+    <ClInclude Include="..\include\imgui_text_shadows.h" />
     <ClInclude Include="..\include\imgui_themes.h" />
     <ClInclude Include="..\include\imgui_utils.h" />
+    <ClInclude Include="..\include\mc_imgui_json_generated.h" />
+    <ClInclude Include="..\include\mc_imgui_structs_generated.h" />
+    <ClInclude Include="..\include\theme_config.h" />
+    <ClInclude Include="..\include\ui_loglevel_colorizer.h" />
     <ClInclude Include="..\include\ui_message_box.h" />
     <ClInclude Include="..\include\wrap_dx9.h" />
     <ClInclude Include="..\include\wrap_imgui.h" />
@@ -161,13 +167,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\app_update.c" />
+    <ClCompile Include="..\src\bb_colors.cpp" />
     <ClCompile Include="..\src\fonts.cpp" />
     <ClCompile Include="..\src\imgui_core.cpp" />
     <ClCompile Include="..\src\imgui_core_freetype.c" />
     <ClCompile Include="..\src\imgui_image.cpp" />
     <ClCompile Include="..\src\imgui_input_text.cpp" />
+    <ClCompile Include="..\src\imgui_text_shadows.cpp" />
     <ClCompile Include="..\src\imgui_themes.cpp" />
     <ClCompile Include="..\src\imgui_utils.cpp" />
+    <ClCompile Include="..\src\mc_imgui_json_generated.c" />
+    <ClCompile Include="..\src\mc_imgui_structs_generated.c" />
+    <ClCompile Include="..\src\theme_config.c" />
+    <ClCompile Include="..\src\ui_loglevel_colorizer.cpp" />
     <ClCompile Include="..\src\ui_message_box.cpp" />
     <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.cpp">
       <WarningLevel>Level3</WarningLevel>
@@ -207,6 +219,14 @@
       <Project>{383FD59A-3CD9-4ECC-9395-6EE453A114FA}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\mc_imgui_preproc.json" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <PreBuildEvent>
+      <Command>..\..\mc_common\bin\mc_common_preproc_$(Configuration)_$(PlatformToolset)\mc_common_preproc.exe -config=..\mc_imgui_preproc.json</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="..\src\forkawesome-webfont.inc" />
   </ItemGroup>

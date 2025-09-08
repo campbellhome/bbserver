@@ -139,8 +139,6 @@
     <ClInclude Include="..\src\devkit_autodetect.h" />
     <ClInclude Include="..\src\discovery_thread.h" />
     <ClInclude Include="..\src\dragdrop.h" />
-    <ClInclude Include="..\src\bb_colors.h" />
-    <ClInclude Include="..\src\imgui_text_shadows.h" />
     <ClInclude Include="..\src\imgui_tooltips.h" />
     <ClInclude Include="..\src\line_parser.h" />
     <ClInclude Include="..\src\message_queue.h" />
@@ -152,9 +150,7 @@
     <ClInclude Include="..\src\site_config.h" />
     <ClInclude Include="..\src\system_tray.h" />
     <ClInclude Include="..\src\tags.h" />
-    <ClInclude Include="..\src\theme_config.h" />
     <ClInclude Include="..\src\ui_config.h" />
-    <ClInclude Include="..\src\ui_loglevel_colorizer.h" />
     <ClInclude Include="..\src\ui_recordings.h" />
     <ClInclude Include="..\src\ui_tags.h" />
     <ClInclude Include="..\src\ui_view.h" />
@@ -184,8 +180,6 @@
     <ClCompile Include="..\src\devkit_autodetect.c" />
     <ClCompile Include="..\src\discovery_thread.c" />
     <ClCompile Include="..\src\dragdrop.c" />
-    <ClCompile Include="..\src\bb_colors.cpp" />
-    <ClCompile Include="..\src\imgui_text_shadows.cpp" />
     <ClCompile Include="..\src\imgui_tooltips.cpp" />
     <ClCompile Include="..\src\line_parser.c" />
     <ClCompile Include="..\src\message_queue.c" />
@@ -197,9 +191,7 @@
     <ClCompile Include="..\src\site_config.c" />
     <ClCompile Include="..\src\system_tray.c" />
     <ClCompile Include="..\src\tags.c" />
-    <ClCompile Include="..\src\theme_config.c" />
     <ClCompile Include="..\src\ui_config.cpp" />
-    <ClCompile Include="..\src\ui_loglevel_colorizer.cpp" />
     <ClCompile Include="..\src\ui_recordings.cpp" />
     <ClCompile Include="..\src\ui_tags.cpp" />
     <ClCompile Include="..\src\ui_view.cpp" />

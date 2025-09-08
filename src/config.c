@@ -13,6 +13,7 @@
 #include "env_utils.h"
 #include "file_utils.h"
 #include "fonts.h"
+#include "imgui_text_shadows.h"
 #include "line_parser.h"
 #include "process_task.h"
 #include "sb.h"
@@ -25,6 +26,11 @@
 BB_CTASSERT(sizeof(WINDOWPLACEMENT) == sizeof(configWindowplacement_t));
 
 config_t g_config;
+
+void config_apply(config_t* config)
+{
+	EnableTextShadows(config->textShadows);
+}
 
 u32 config_getwindowplacement(HWND hwnd)
 {
@@ -188,11 +194,15 @@ b32 config_read(config_t* config)
 		}
 	}
 
+	config_apply(config);
+
 	return ret;
 }
 
 b32 config_write(config_t* config)
 {
+	config_apply(config);
+
 	b32 result = false;
 	JSON_Value* val = json_serialize_config_t(config);
 	if (val)

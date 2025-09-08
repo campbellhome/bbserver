@@ -304,7 +304,7 @@ static void UIRecordings_Recording(recording_tab_t tab, grouped_recording_entry_
 	PushID((int)recording->id);
 	const styleColor_e styleColor = recording->active ? kStyleColor_ActiveSession : kStyleColor_InactiveSession;
 	PushStyleColor(ImGuiCol_Text, MakeColor(styleColor));
-	bool oldShadow = PushTextShadows(styleColor);
+	b32 oldShadow = PushTextShadows(styleColor);
 	const char* label = nullptr;
 	if (config->tabs[tab].showDate && config->tabs[tab].showTime)
 	{

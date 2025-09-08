@@ -13,7 +13,7 @@ styleColor_e GetStyleColorForLogLevel(bb_log_level_e logLevel);
 
 class LogLevelColorizer
 {
-	bool bTextShadows = false;
+	b32 bTextShadows = false;
 
 public:
 	LogLevelColorizer(bb_log_level_e logLevel, bool bCanShadow = true);

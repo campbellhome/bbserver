@@ -804,65 +804,6 @@ tagData_t tagData_clone(const tagData_t *src)
 	return dst;
 }
 
-void color_config_reset(color_config_t *val)
-{
-	if(val) {
-	}
-}
-color_config_t color_config_clone(const color_config_t *src)
-{
-	color_config_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		dst.colorName = src->colorName;
-		dst.r = src->r;
-		dst.g = src->g;
-		dst.b = src->b;
-		dst.a = src->a;
-		dst.bTextShadows = src->bTextShadows;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
-	}
-	return dst;
-}
-
-void colors_config_reset(colors_config_t *val)
-{
-	if(val) {
-		for(u32 i = 0; i < val->count; ++i) {
-			color_config_reset(val->data + i);
-		}
-		bba_free(*val);
-	}
-}
-colors_config_t colors_config_clone(const colors_config_t *src)
-{
-	colors_config_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		for(u32 i = 0; i < src->count; ++i) {
-			if(bba_add_noclear(dst, 1)) {
-				bba_last(dst) = color_config_clone(src->data + i);
-			}
-		}
-	}
-	return dst;
-}
-
-void theme_config_reset(theme_config_t *val)
-{
-	if(val) {
-		colors_config_reset(&val->colors);
-	}
-}
-theme_config_t theme_config_clone(const theme_config_t *src)
-{
-	theme_config_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		dst.colors = colors_config_clone(&src->colors);
-	}
-	return dst;
-}
-
 void uuidState_reset(uuidState_t *val)
 {
 	if(val) {

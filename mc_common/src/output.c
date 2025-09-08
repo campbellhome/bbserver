@@ -21,6 +21,11 @@ void output_init(output_init_flags_t flags)
 void output_shutdown(void)
 {
 	sb_reset(&g_outputBuf);
+	output_reset_buffer();
+}
+
+void output_reset_buffer(void)
+{
 	for (u32 i = 0; i < g_output.count; ++i)
 	{
 		sb_reset(&g_output.data[i].text);

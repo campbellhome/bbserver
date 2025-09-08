@@ -10,8 +10,10 @@
 #include "imgui_image.h"
 #include "imgui_input_text.h"
 #include "message_box.h"
+#include "output.h"
 #include "str.h"
 #include "tokenize.h"
+#include "ui_loglevel_colorizer.h"
 #include "va.h"
 
 static bool s_showImguiDemo;
@@ -65,6 +67,7 @@ static void MC_Imgui_Example_MainMenuBar(void)
 					if (ImGui::MenuItem(s_colorschemes[i], nullptr, &bSelected))
 					{
 						Imgui_Core_SetColorScheme(s_colorschemes[i]);
+						Style_ReadConfig(s_colorschemes[i]);
 					}
 				}
 				ImGui::EndMenu();
@@ -137,6 +140,9 @@ static void MC_Imgui_Example_Image(void)
 	}
 }
 
+static bool s_MCCommonTests = true;
+static bool s_InputTest = false;
+static bool s_DebugWindowTest = false;
 static char s_inputBufferMulti[8192];
 static char s_inputBufferSingle[8192];
 void MC_Imgui_Example_Update(void)
@@ -144,7 +150,63 @@ void MC_Imgui_Example_Update(void)
 	MC_Imgui_Example_MainMenuBar();
 	MC_Imgui_Example_Image();
 
-	if (ImGui::Begin("InputTest"))
+	if (ImGui::Begin("Tests", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Checkbox("mc_common tests", &s_MCCommonTests);
+		ImGui::Checkbox("input test", &s_InputTest);
+		ImGui::Checkbox("debug window test", &s_DebugWindowTest);
+		ImGui::End();
+	}
+
+	if (s_MCCommonTests && ImGui::Begin("mc_common tests", &s_MCCommonTests, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+#if defined(MC_COMMON_TESTS) && MC_COMMON_TESTS
+		ImGui::TextUnformatted("mc_common tests");
+		if (ImGui::Button("run"))
+		{
+			output_reset_buffer();
+			if (test_tokenize())
+			{
+				ImGui::TextUnformatted("tokenize: PASS");
+			}
+			else
+			{
+				ImGui::TextUnformatted("tokenize: FAIL");
+			}
+		}
+		if (ImGui::Button("clear"))
+		{
+			output_reset_buffer();
+		}
+
+		for (u32 i = 0; i < g_output.count; ++i)
+		{
+			output_line_t *line = g_output.data + i;
+			bb_log_level_e logLevel = kBBLogLevel_Verbose;
+			switch (line->level)
+			{
+				case kOutput_Log:
+					logLevel = kBBLogLevel_Log;
+					break;
+				case kOutput_Warning:
+					logLevel = kBBLogLevel_Warning;
+					break;
+				case kOutput_Error:
+					logLevel = kBBLogLevel_Error;
+					break;
+				default:
+					break;
+			}
+			LogLevelColorizer colorizer(logLevel);
+			ImGui::TextUnformatted(sb_get(&line->text));
+		}
+#else
+		ImGui::TextUnformatted("No mc_common tests available");
+#endif
+		ImGui::End();
+	}
+
+	if (s_InputTest && ImGui::Begin("InputTest", &s_InputTest))
 	{
 		if (ImGui::Button("Copy Long Line 1"))
 		{
@@ -167,8 +229,8 @@ void MC_Imgui_Example_Update(void)
 
 		ImVec2 inputSize(1000.0f, -40.0f);
 		ImGui::InputTextMultilineScrolling("##InputTestMulti", s_inputBufferMulti, sizeof(s_inputBufferMulti), inputSize, ImGuiInputTextFlags_None);
+		ImGui::End();
 	}
-	ImGui::End();
 
 	if (s_showImguiDemo)
 	{
@@ -190,6 +252,25 @@ void MC_Imgui_Example_Update(void)
 	{
 		ImGui::ShowStyleEditor();
 	}
+
+	if (s_DebugWindowTest)
+	{
+		const char* testCommandLine = R"("-test \"_\\\" !" test2)";
+		ImGui::TextUnformatted(testCommandLine);
+		const char* cursor = testCommandLine;
+		span_t token = tokenize(&cursor, " ");
+		while (token.start)
+		{
+			ImGui::TextUnformatted(token.start, token.end);
+			//BB_LOG("Tokens", "%.*s", token.end - token.start, token.start);
+
+			char* tmp = va("%.*s", token.end - token.start, token.start);
+			strunescape(tmp);
+			ImGui::TextUnformatted(tmp);
+
+			token = tokenize(&cursor, " ");
+		}
+	}
 }
 
 int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
@@ -200,6 +281,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	BB_THREAD_SET_NAME("main");
 	BB_LOG("Startup", "Arguments: %s", CommandLine);
 
+	output_init(kOutputInit_ToBuffer);
 	Imgui_Core_Init(CommandLine);
 
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -209,6 +291,8 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	if (Imgui_Core_InitWindow("mc_imgui_example_wndclass", "mc_imgui_example", LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), wp))
 	{
 		s_imageId = ImGui_Image_CreateFromFile(R"(..\examples\mc_imgui_example.png)");
+
+		Style_ReadConfig("ImGui Dark");
 
 		while (!Imgui_Core_IsShuttingDown())
 		{
@@ -220,22 +304,6 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 			{
 				MC_Imgui_Example_Update();
 
-				const char* testCommandLine = R"("-test \"_\\\" !" test2)";
-				ImGui::TextUnformatted(testCommandLine);
-				const char* cursor = testCommandLine;
-				span_t token = tokenize(&cursor, " ");
-				while (token.start)
-				{
-					ImGui::TextUnformatted(token.start, token.end);
-					//BB_LOG("Tokens", "%.*s", token.end - token.start, token.start);
-
-					char* tmp = va("%.*s", token.end - token.start, token.start);
-					strunescape(tmp);
-					ImGui::TextUnformatted(tmp);
-
-					token = tokenize(&cursor, " ");
-				}
-
 				ImVec4 clear_col = ImColor(34, 35, 34);
 				Imgui_Core_EndFrame(clear_col);
 			}
@@ -245,6 +313,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	}
 
 	Imgui_Core_Shutdown();
+	output_shutdown();
 
 	BB_SHUTDOWN();
 

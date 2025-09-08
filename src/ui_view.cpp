@@ -1264,7 +1264,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	}
 
 	float scrollX = ImGui::GetScrollX();
-	bool oldShadows = false;
+	b32 oldShadows = false;
 	if (viewLog->subLine != 0)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_Multiline));

@@ -46,6 +46,7 @@ typedef enum
 
 void output_init(output_init_flags_t flags);
 void output_shutdown(void);
+void output_reset_buffer(void);
 
 void output_log_impl(const char* fmt, ...);
 void output_warning_impl(const char* fmt, ...);
