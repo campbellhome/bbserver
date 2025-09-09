@@ -186,7 +186,7 @@ AUTOJSON typedef struct config_s
 	b32 showDebugMenu;
 	b32 showEmptyCategories;
 	configListenProtocol_t listenProtocol;
-	u8 pad[4];
+	b32 disableLogDeletion;
 } config_t;
 
 enum

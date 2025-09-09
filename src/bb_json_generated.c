@@ -318,9 +318,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.showDebugMenu = json_object_get_boolean_safe(obj, "showDebugMenu");
 			dst.showEmptyCategories = json_object_get_boolean_safe(obj, "showEmptyCategories");
 			dst.listenProtocol = json_deserialize_configListenProtocol_t(json_object_get_value(obj, "listenProtocol"));
-			for(u32 i = 0; i < BB_ARRAYSIZE(dst.pad); ++i) {
-				dst.pad[i] = (u8)json_object_get_number(obj, va("pad.%u", i));
-			}
+			dst.disableLogDeletion = json_object_get_boolean_safe(obj, "disableLogDeletion");
 		}
 	}
 	return dst;
@@ -1121,9 +1119,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "showDebugMenu", src->showDebugMenu);
 		json_object_set_boolean(obj, "showEmptyCategories", src->showEmptyCategories);
 		json_object_set_value(obj, "listenProtocol", json_serialize_configListenProtocol_t(src->listenProtocol));
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			json_object_set_number(obj, va("pad.%u", i), src->pad[i]);
-		}
+		json_object_set_boolean(obj, "disableLogDeletion", src->disableLogDeletion);
 	}
 	return val;
 }

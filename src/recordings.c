@@ -541,7 +541,7 @@ static void recordings_delete_recording(const char* path)
 {
 	char* ext;
 	sb_t logPath;
-	BOOL ret = DeleteFileA(path);
+	BOOL ret = (g_config.disableLogDeletion) ? false : DeleteFileA(path);
 	if (ret)
 	{
 		BB_LOG("Recordings", "Deleted '%s'", path);
@@ -560,7 +560,7 @@ static void recordings_delete_recording(const char* path)
 	sb_append(&logPath, ".log");
 	if (logPath.count > 1)
 	{
-		ret = DeleteFileA(logPath.data);
+		ret = (g_config.disableLogDeletion) ? false : DeleteFileA(logPath.data);
 		if (ret)
 		{
 			BB_LOG("Recordings", "Deleted '%s'", logPath.data);
@@ -579,7 +579,7 @@ static void recordings_delete_recording(const char* path)
 	sb_t configPath = view_session_config_get_path(path);
 	if (configPath.data)
 	{
-		ret = DeleteFileA(configPath.data);
+		ret = (g_config.disableLogDeletion) ? false : DeleteFileA(configPath.data);
 		if (ret)
 		{
 			BB_LOG("Recordings", "Deleted '%s'", configPath.data);

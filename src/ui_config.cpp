@@ -731,6 +731,10 @@ void UIConfig_Update(config_t* config)
 			Checkbox("Auto-close all applications instead of just the one starting up", &s_preferencesConfig.autoCloseAll);
 			SameLine();
 			Checkbox("Manually opened views are marked to auto close", &s_preferencesConfig.autoCloseManual);
+			if (s_preferencesAdvanced)
+			{
+				Checkbox("Disable log deletion", &s_preferencesConfig.disableLogDeletion);
+			}
 			Checkbox("Show advanced config", &s_preferencesAdvanced);
 		}
 		Separator();

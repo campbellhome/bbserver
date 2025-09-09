@@ -392,9 +392,7 @@ config_t config_clone(const config_t *src)
 		dst.showDebugMenu = src->showDebugMenu;
 		dst.showEmptyCategories = src->showEmptyCategories;
 		dst.listenProtocol = src->listenProtocol;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
+		dst.disableLogDeletion = src->disableLogDeletion;
 	}
 	return dst;
 }
