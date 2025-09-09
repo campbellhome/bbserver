@@ -532,6 +532,83 @@ recordings_config_t recordings_config_clone(const recordings_config_t *src)
 	return dst;
 }
 
+void recording_reset(recording_t *val)
+{
+	if(val) {
+	}
+}
+recording_t recording_clone(const recording_t *src)
+{
+	recording_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->applicationName); ++i) {
+			dst.applicationName[i] = src->applicationName[i];
+		}
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->applicationFilename); ++i) {
+			dst.applicationFilename[i] = src->applicationFilename[i];
+		}
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->path); ++i) {
+			dst.path[i] = src->path[i];
+		}
+		dst.id = src->id;
+		dst.filetimeHigh = src->filetimeHigh;
+		dst.filetimeLow = src->filetimeLow;
+		dst.active = src->active;
+		dst.recordingType = src->recordingType;
+		dst.outgoingMqId = src->outgoingMqId;
+		dst.platform = src->platform;
+		dst.pendingDelete = src->pendingDelete;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
+	}
+	return dst;
+}
+
+void recordings_reset(recordings_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			recording_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+recordings_t recordings_clone(const recordings_t *src)
+{
+	recordings_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = recording_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void recordings_tab_data_reset(recordings_tab_data_t *val)
+{
+	if(val) {
+		recordings_reset(&val->allRecordings);
+		recordings_reset(&val->invalidRecordings);
+	}
+}
+recordings_tab_data_t recordings_tab_data_clone(const recordings_tab_data_t *src)
+{
+	recordings_tab_data_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.allRecordings = recordings_clone(&src->allRecordings);
+		dst.invalidRecordings = recordings_clone(&src->invalidRecordings);
+		dst.groupedRecordings = src->groupedRecordings;
+		dst.dirty = src->dirty;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
+	}
+	return dst;
+}
+
 void site_config_named_filter_reset(site_config_named_filter_t *val)
 {
 	if(val) {

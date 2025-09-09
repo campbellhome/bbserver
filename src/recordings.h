@@ -43,7 +43,7 @@ AUTOJSON typedef enum recording_type_e {
 	kRecordingType_Count
 } recording_type_t;
 
-typedef struct recording_s
+AUTOSTRUCT typedef struct recording_s
 {
 	char applicationName[kBBSize_ApplicationName];
 	char applicationFilename[kBBSize_ApplicationName];
@@ -95,7 +95,7 @@ AUTOJSON typedef struct recordings_config_s
 	b32 recordingsOpen;
 } recordings_config_t;
 
-typedef struct recordings_s
+AUTOSTRUCT typedef struct recordings_s
 {
 	u32 count;
 	u32 allocated;
@@ -117,6 +117,15 @@ typedef struct grouped_recordings_s
 	u8 pad[4];
 	grouped_recording_entry_t* data;
 } grouped_recordings_t;
+
+AUTOSTRUCT typedef struct recordings_tab_data_s
+{
+	recordings_t allRecordings;
+	recordings_t invalidRecordings;
+	grouped_recordings_t groupedRecordings;
+	b32 dirty;
+	u8 pad[4];
+} recordings_tab_data_t;
 
 void recordings_init(void);
 void recordings_shutdown(void);

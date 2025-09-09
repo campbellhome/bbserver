@@ -48,6 +48,9 @@ struct _FILETIME;
 struct new_recording_s;
 struct recordings_tab_config_s;
 struct recordings_config_s;
+struct recording_s;
+struct recordings_s;
+struct recordings_tab_data_s;
 struct site_config_named_filter_t;
 struct site_config_named_filters_t;
 struct updateConfig_s;
@@ -124,6 +127,9 @@ typedef struct _FILETIME FILETIME;
 typedef struct new_recording_s new_recording_t;
 typedef struct recordings_tab_config_s recordings_tab_config_t;
 typedef struct recordings_config_s recordings_config_t;
+typedef struct recording_s recording_t;
+typedef struct recordings_s recordings_t;
+typedef struct recordings_tab_data_s recordings_tab_data_t;
 typedef struct site_config_named_filter_t site_config_named_filter_t;
 typedef struct site_config_named_filters_t site_config_named_filters_t;
 typedef struct updateConfig_s updateConfig_t;
@@ -200,6 +206,9 @@ void FILETIME_reset(FILETIME *val);
 void new_recording_reset(new_recording_t *val);
 void recordings_tab_config_reset(recordings_tab_config_t *val);
 void recordings_config_reset(recordings_config_t *val);
+void recording_reset(recording_t *val);
+void recordings_reset(recordings_t *val);
+void recordings_tab_data_reset(recordings_tab_data_t *val);
 void site_config_named_filter_reset(site_config_named_filter_t *val);
 void site_config_named_filters_reset(site_config_named_filters_t *val);
 void updateConfig_reset(updateConfig_t *val);
@@ -345,6 +354,15 @@ recordings_tab_config_t recordings_tab_config_clone(const recordings_tab_config_
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_recordings_config_clone)
 recordings_config_t recordings_config_clone(const recordings_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_recording_clone)
+recording_t recording_clone(const recording_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_recordings_clone)
+recordings_t recordings_clone(const recordings_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_recordings_tab_data_clone)
+recordings_tab_data_t recordings_tab_data_clone(const recordings_tab_data_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_site_config_named_filter_clone)
 site_config_named_filter_t site_config_named_filter_clone(const site_config_named_filter_t *src);
