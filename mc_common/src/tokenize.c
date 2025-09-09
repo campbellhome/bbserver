@@ -162,7 +162,7 @@ typedef struct tokenize_test_data_t {
 	const char* source;
 	const char** outputLines;
 	int expectedOutputLines;
-	u8 pad[4];
+	u32 optionalSourceLen;
 } tokenize_test_data_t;
 
 static b32 report_test(const tokenize_test_data_t* testData, b32 bSuccess)
@@ -179,16 +179,21 @@ static b32 report_test(const tokenize_test_data_t* testData, b32 bSuccess)
 	}
 }
 
-static b32 test_tokenize_lines(const tokenize_test_data_t* testData)
+static b32 test_tokenize_lines_from_span(const tokenize_test_data_t* testData, span_t cursor)
 {
 	b32 pass = true;
 	int numLines = 0;
-	const char* cursor = testData->source;
-	span_t token = tokenize(&cursor, "\r\n");
+	span_t token = tokenizeLine(&cursor);
 	while (token.start)
 	{
+		sb_t saw_sb = sb_from_span(token);
 		char* saw = va("%.*s", token.end - token.start, token.start);
-		if (numLines < testData->expectedOutputLines)
+		if (bb_stricmp(sb_get(&saw_sb), saw) != 0)
+		{
+			output_warning("[%s] lines[%d] mismatch: saw [%s], sb_from_span [%s]", testData->name, numLines, saw, sb_get(&saw_sb));
+			pass = false;
+		}
+		else if (numLines < testData->expectedOutputLines)
 		{
 			const char* expected = testData->outputLines[numLines];
 			if (bb_stricmp(saw, expected) != 0)
@@ -201,9 +206,10 @@ static b32 test_tokenize_lines(const tokenize_test_data_t* testData)
 		{
 			pass = false;
 		}
+		sb_reset(&saw_sb);
 
 		++numLines;
-		token = tokenize(&cursor, "\r\n");
+		token = tokenizeLine(&cursor);
 	}
 
 	if (numLines != testData->expectedOutputLines)
@@ -212,6 +218,16 @@ static b32 test_tokenize_lines(const tokenize_test_data_t* testData)
 		pass = false;
 	}
 	return report_test(testData, pass);
+}
+
+static b32 test_tokenize_lines(const tokenize_test_data_t* testData)
+{
+	span_t cursor = span_from_string(testData->source);
+	if (testData->optionalSourceLen > 0)
+	{
+		cursor.end = testData->source + testData->optionalSourceLen;
+	}
+	return test_tokenize_lines_from_span(testData, cursor);
 }
 
 static tokenize_test_data_t g_emptyTestData = {
@@ -231,33 +247,24 @@ static tokenize_test_data_t g_singleLineTestData = {
 	1
 };
 
-static const char* g_singleLineCRTestResults[] = {
-	"This is a single line with a CR"
-};
 static tokenize_test_data_t g_singleLineCRTestData = {
 	"tokenize single line ending in CR",
-	"This is a single line with a CR\r",
-	g_singleLineCRTestResults,
+	"This is a single line\r",
+	g_singleLineTestResults,
 	1
 };
 
-static const char* g_singleLineLFTestResults[] = {
-	"This is a single line with an LF"
-};
 static tokenize_test_data_t g_singleLineLFTestData = {
 	"tokenize single line ending in LF",
-	"This is a single line with an LF\r",
-	g_singleLineLFTestResults,
+	"This is a single line\r",
+	g_singleLineTestResults,
 	1
 };
 
-static const char* g_singleLineCRLFTestResults[] = {
-	"This is a single line with a CRLF"
-};
 static tokenize_test_data_t g_singleLineCRLFTestData = {
 	"tokenize single line ending in CRLF",
-	"This is a single line with a CRLF\r\n",
-	g_singleLineCRLFTestResults,
+	"This is a single line\r\n",
+	g_singleLineTestResults,
 	1
 };
 
@@ -272,15 +279,19 @@ static tokenize_test_data_t g_doubleLineTestData = {
 	2
 };
 
-static const char* g_doubleLineLFTestResults[] = {
-	"This is the first line",
-	"This is the second."
-};
 static tokenize_test_data_t g_doubleLineLFTestData = {
 	"tokenize two lines ending in LF",
 	"This is the first line\nThis is the second.\n",
-	g_doubleLineLFTestResults,
+	g_doubleLineTestResults,
 	2
+};
+
+static tokenize_test_data_t g_doubleLineNullTestData = {
+	"tokenize two lines ending in Null (\\0)",
+	"This is the first line\nThis is the second.\0",
+	g_doubleLineTestResults,
+	2,
+	44
 };
 
 b32 test_tokenize(void)
@@ -310,6 +321,10 @@ b32 test_tokenize(void)
 		return false;
 	}
 	if (!test_tokenize_lines(&g_doubleLineLFTestData))
+	{
+		return false;
+	}
+	if (!test_tokenize_lines(&g_doubleLineNullTestData))
 	{
 		return false;
 	}
