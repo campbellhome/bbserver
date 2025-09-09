@@ -395,15 +395,15 @@ void UIRecordings_UpdateTab(recording_tab_t tab)
 
 	ImGui::SameLine();
 
+	if (recordings_are_dirty(tab))
+	{
+		scrollToBottom = true;
+		recordings_sort(tab);
+		recordings_clear_dirty(tab);
+	}
+
 	if (ImGui::BeginChild(va("Recordings%d", tab)))
 	{
-		if (recordings_are_dirty(tab))
-		{
-			scrollToBottom = true;
-			recordings_sort(tab);
-			recordings_clear_dirty(tab);
-		}
-
 		recordingIds_t pendingDeletions;
 		memset(&pendingDeletions, 0, sizeof(pendingDeletions));
 		if (config->tabs[tab].group == kRecordingGroup_None)
@@ -513,7 +513,17 @@ void UIRecordings_Update()
 {
 	recordings_config_t* config = recordings_get_config();
 	if (!config->recordingsOpen)
+	{
+		for (u32 tab = 0; tab < kRecordingTab_Count; ++tab)
+		{
+			if (recordings_are_dirty((recording_tab_t)tab))
+			{
+				recordings_sort((recording_tab_t)tab);
+				recordings_clear_dirty((recording_tab_t)tab);
+			}
+		}
 		return;
+	}
 
 	ImVec2 viewportPos(0.0f, 0.0f);
 	ImGuiViewport* viewport = ImGui::GetViewportForWindow("Recordings");
