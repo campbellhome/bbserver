@@ -33,7 +33,7 @@
 void sanitize_app_filename(const char* applicationName, char* applicationFilename, size_t applicationFilenameLen);
 static u32 recordings_delete_pending_deleted(recordings_t* recordings);
 
-static recordings_t s_recordings[kRecordingTab_Count];
+static recordings_t s_allRecordings[kRecordingTab_Count];
 static recordings_t s_invalidRecordings[kRecordingTab_Count];
 static grouped_recordings_t s_groupedRecordings[kRecordingTab_Count];
 static u32 s_nextRecordingId;
@@ -49,9 +49,9 @@ recording_t* recordings_find_by_id(u32 id)
 {
 	for (u32 tab = 0; tab < kRecordingTab_Count; ++tab)
 	{
-		for (u32 i = 0; i < s_recordings[tab].count; ++i)
+		for (u32 i = 0; i < s_allRecordings[tab].count; ++i)
 		{
-			recording_t* r = s_recordings[tab].data + i;
+			recording_t* r = s_allRecordings[tab].data + i;
 			if (r->id == id)
 				return r;
 		}
@@ -63,9 +63,9 @@ recording_t* recordings_find_by_path(const char* path)
 {
 	for (u32 tab = 0; tab < kRecordingTab_Count; ++tab)
 	{
-		for (u32 i = 0; i < s_recordings[tab].count; ++i)
+		for (u32 i = 0; i < s_allRecordings[tab].count; ++i)
 		{
-			recording_t* r = s_recordings[tab].data + i;
+			recording_t* r = s_allRecordings[tab].data + i;
 			if (!strcmp(r->path, path))
 				return r;
 		}
@@ -76,9 +76,9 @@ recording_t* recordings_find_by_path(const char* path)
 recording_t* recordings_find_main_log(void)
 {
 	u32 i;
-	for (i = 0; i < s_recordings[kRecordingTab_Internal].count; ++i)
+	for (i = 0; i < s_allRecordings[kRecordingTab_Internal].count; ++i)
 	{
-		recording_t* r = s_recordings[kRecordingTab_Internal].data + i;
+		recording_t* r = s_allRecordings[kRecordingTab_Internal].data + i;
 		if (r->recordingType == kRecordingType_MainLog)
 			return r;
 	}
@@ -204,10 +204,10 @@ void recordings_sort(recording_tab_t tab)
 	switch (s_recordingsConfig.tabs[tab].sort)
 	{
 	case kRecordingSort_StartTime:
-		qsort(s_recordings[tab].data, s_recordings[tab].count, sizeof(s_recordings[tab].data[0]), recordings_compare_starttime);
+		qsort(s_allRecordings[tab].data, s_allRecordings[tab].count, sizeof(s_allRecordings[tab].data[0]), recordings_compare_starttime);
 		break;
 	case kRecordingSort_Application:
-		qsort(s_recordings[tab].data, s_recordings[tab].count, sizeof(s_recordings[tab].data[0]), recordings_compare_application);
+		qsort(s_allRecordings[tab].data, s_allRecordings[tab].count, sizeof(s_allRecordings[tab].data[0]), recordings_compare_application);
 		break;
 	case kRecordingSort_Count:
 	default:
@@ -219,9 +219,9 @@ void recordings_sort(recording_tab_t tab)
 	switch (s_recordingsConfig.tabs[tab].group)
 	{
 	case kRecordingGroup_None:
-		for (i = 0; i < s_recordings[tab].count; ++i)
+		for (i = 0; i < s_allRecordings[tab].count; ++i)
 		{
-			recording_t* r = s_recordings[tab].data + i;
+			recording_t* r = s_allRecordings[tab].data + i;
 			grouped_recording_entry_t* g = bba_add(s_groupedRecordings[tab], 1);
 			if (g)
 			{
@@ -231,9 +231,9 @@ void recordings_sort(recording_tab_t tab)
 		}
 		break;
 	case kRecordingGroup_Application:
-		for (i = 0; i < s_recordings[tab].count; ++i)
+		for (i = 0; i < s_allRecordings[tab].count; ++i)
 		{
-			recording_t* r = s_recordings[tab].data + i;
+			recording_t* r = s_allRecordings[tab].data + i;
 			if (bFirst)
 			{
 				recordings_add_group(tab);
@@ -242,7 +242,7 @@ void recordings_sort(recording_tab_t tab)
 			}
 			else
 			{
-				recording_t* prev = s_recordings[tab].data + i - 1;
+				recording_t* prev = s_allRecordings[tab].data + i - 1;
 				if (strcmp(prev->applicationName, r->applicationName))
 				{
 					recordings_add_group(tab);
@@ -266,7 +266,7 @@ void recording_add_existing(char* data, b32 valid)
 		if (!recordings_find_by_path(sb_get(&r.path)))
 		{
 			recording_tab_t tab = recording_tab_from_recording_type(r.recordingType);
-			recordings_t* recordings = (valid) ? s_recordings + tab : s_invalidRecordings + tab;
+			recordings_t* recordings = (valid) ? s_allRecordings + tab : s_invalidRecordings + tab;
 			recording = bba_add(*recordings, 1);
 			if (recording)
 			{
@@ -345,7 +345,7 @@ static recordings_ptrs_t recordings_filter_latest_recordings(recordings_ptrs_t *
 
 static void recordings_keep_latest_recordings(filterTokens* tokens, const char** keys, u32 numKeys, recording_tab_t tab, const config_max_recordings_entry_t* entry)
 {
-	recordings_t* recordings = s_recordings + tab;
+	recordings_t* recordings = s_allRecordings + tab;
 	recordings_ptrs_t matches = { BB_EMPTY_INITIALIZER };
 	for (u32 i = 0; i < recordings->count; ++i)
 	{
@@ -471,7 +471,7 @@ void recording_started(char* data)
 		}
 		else
 		{
-			recording = bba_add(s_recordings[tab], 1);
+			recording = bba_add(s_allRecordings[tab], 1);
 			if (recording)
 			{
 				recording->id = ++s_nextRecordingId;
@@ -524,9 +524,9 @@ void recording_stopped(char* data)
 	++path;
 	for (u32 tab = 0; tab < kRecordingTab_Count; ++tab)
 	{
-		for (i = 0; i < s_recordings[tab].count; ++i)
+		for (i = 0; i < s_allRecordings[tab].count; ++i)
 		{
-			recording_t* recording = s_recordings[tab].data + i;
+			recording_t* recording = s_allRecordings[tab].data + i;
 			if (!strcmp(recording->path, path))
 			{
 				recording->active = false;
@@ -617,7 +617,7 @@ b32 recordings_delete_by_id(u32 id)
 {
 	for (u32 tab = 0; tab < kRecordingTab_Count; ++tab)
 	{
-		if (recordings_delete_by_id_internal(id, s_recordings + tab))
+		if (recordings_delete_by_id_internal(id, s_allRecordings + tab))
 		{
 			return true;
 		}
@@ -716,7 +716,7 @@ void recordings_autodelete_old_recordings(void)
 	{
 		for (u32 tab = 0; tab < kRecordingTab_Count; ++tab)
 		{
-			if (recordings_autodelete_scan(s_recordings + tab))
+			if (recordings_autodelete_scan(s_allRecordings + tab))
 			{
 				s_recordingsDirty[tab] = true;
 			}
@@ -856,7 +856,7 @@ void recordings_shutdown(void)
 	recordings_config_write(&s_recordingsConfig);
 	for (u32 tab = 0; tab < kRecordingTab_Count; ++tab)
 	{
-		bba_free(s_recordings[tab]);
+		bba_free(s_allRecordings[tab]);
 		bba_free(s_invalidRecordings[tab]);
 		bba_free(s_groupedRecordings[tab]);
 	}
@@ -884,7 +884,7 @@ void recordings_clear_dirty(recording_tab_t tab)
 
 recordings_t* recordings_get_all(recording_tab_t tab)
 {
-	return &s_recordings[tab];
+	return &s_allRecordings[tab];
 }
 
 grouped_recordings_t* grouped_recordings_get_all(recording_tab_t tab)
