@@ -9,6 +9,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //
 
+#include "bbserver_fileopendialog.h"
+
 #include "sb.h"
 BB_WARNING_PUSH(4577 4668 4820 4946)
 #define WIN32_LEAN_AND_MEAN
@@ -32,6 +34,18 @@ BB_WARNING_POP
 #pragma comment(lib, "Propsys.lib")
 
 static bool s_bInitialized = false;
+
+struct filterSpecs_t
+{
+	COMDLG_FILTERSPEC* data;
+	u32 count;
+	u32 allocated;
+};
+static COMDLG_FILTERSPEC* s_filterSpecs = nullptr;
+static size_t s_numFilterSpecs = 0;
+static const wchar_t *s_defaultExtension = L"";
+static unsigned int s_defaultIndex = 1;
+
 extern "C" void FileOpenDialog_Init(void)
 {
 	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -46,15 +60,20 @@ extern "C" void FileOpenDialog_Shutdown(void)
 	}
 }
 
-const COMDLG_FILTERSPEC c_rgSaveTypes[] = {
-	{ L"Blackbox Logs (*.bbox)", L"*.bbox" },
-	{ L"Text Logs (*.txt; *.log)", L"*.txt;*.log" },
-	{ L"All Documents (*.*)", L"*.*" }
-};
-
-// Indices of file types
-#define INDEX_BLACKBOX 1
-#define EXTENSION_BLACKBOX L"bbox"
+extern "C" void FileOpenDialog_SetFilters(const fileOpenFilter_t* filters, size_t numFilters, unsigned int defaultIndex, const wchar_t* defaultExtension)
+{
+	s_filterSpecs = (COMDLG_FILTERSPEC *)filters;
+	s_numFilterSpecs = numFilters;
+	if (defaultExtension)
+	{
+		s_defaultExtension = defaultExtension;
+	}
+	else
+	{
+		s_defaultExtension = L"";
+	}
+	s_defaultIndex = defaultIndex;
+}
 
 /* File Dialog Event Handler *****************************************************************************************************/
 
@@ -127,7 +146,7 @@ HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void** ppv)
 /* Common File Dialog Snippets ***************************************************************************************************/
 
 // This code snippet demonstrates how to work with the common file dialog interface
-extern "C" sb_t FileOpenDialog_Show(void)
+extern "C" sb_t FileOpenDialog_Show(bool bSave)
 {
 	sb_t result = { BB_EMPTY_INITIALIZER };
 	if (!s_bInitialized)
@@ -135,7 +154,7 @@ extern "C" sb_t FileOpenDialog_Show(void)
 
 	// CoCreate the File Open Dialog object.
 	IFileDialog* pfd = NULL;
-	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
+	HRESULT hr = CoCreateInstance(bSave ? CLSID_FileSaveDialog : CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
 	if (SUCCEEDED(hr))
 	{
 		// Create an event handling object, and hook it up to the dialog.
@@ -149,7 +168,7 @@ extern "C" sb_t FileOpenDialog_Show(void)
 			if (SUCCEEDED(hr))
 			{
 				// Set the options on the dialog.
-				DWORD dwFlags;
+				DWORD dwFlags = 0;
 
 				// Before setting, always get the options first in order not to override existing options.
 				hr = pfd->GetOptions(&dwFlags);
@@ -160,15 +179,15 @@ extern "C" sb_t FileOpenDialog_Show(void)
 					if (SUCCEEDED(hr))
 					{
 						// Set the file types to display only. Notice that, this is a 1-based array.
-						hr = pfd->SetFileTypes(ARRAYSIZE(c_rgSaveTypes), c_rgSaveTypes);
+						hr = pfd->SetFileTypes((UINT)s_numFilterSpecs, s_filterSpecs);
 						if (SUCCEEDED(hr))
 						{
-							// Set the selected file type index to Word Docs for this example.
-							hr = pfd->SetFileTypeIndex(INDEX_BLACKBOX);
+							// Set the selected file type.
+							hr = pfd->SetFileTypeIndex(s_defaultIndex);
 							if (SUCCEEDED(hr))
 							{
-								// Set the default extension to be ".doc" file.
-								hr = pfd->SetDefaultExtension(EXTENSION_BLACKBOX);
+								// Set the default extension.
+								hr = pfd->SetDefaultExtension(s_defaultExtension);
 								if (SUCCEEDED(hr))
 								{
 									// Show the dialog
@@ -181,7 +200,6 @@ extern "C" sb_t FileOpenDialog_Show(void)
 										hr = pfd->GetResult(&psiResult);
 										if (SUCCEEDED(hr))
 										{
-											// We are just going to print out the name of the file for sample sake.
 											PWSTR pszFilePath = NULL;
 											hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
 											if (SUCCEEDED(hr))
@@ -193,7 +211,6 @@ extern "C" sb_t FileOpenDialog_Show(void)
 													wcstombs_s(&numCharsConverted, result.data, result.allocated, pszFilePath, _TRUNCATE);
 													result.count = (u32)strlen(result.data) + 1;
 												}
-												//result = sb_from_c_string(pszFilePath);
 												CoTaskMemFree(pszFilePath);
 											}
 											psiResult->Release();
@@ -202,6 +219,9 @@ extern "C" sb_t FileOpenDialog_Show(void)
 								}
 							}
 						}
+
+						// restore old options
+						hr = pfd->SetOptions(dwFlags);
 					}
 				}
 				// Unhook the event handler.

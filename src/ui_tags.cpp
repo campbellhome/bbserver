@@ -516,8 +516,7 @@ static void UITags_CountCategoryVisibility(view_t* view, tag_t* tag, u32* visibl
 
 void UITags_Update(view_t* view)
 {
-	ImGuiTreeNodeFlags tagNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow |
-	                                  ImGuiTreeNodeFlags_OpenOnDoubleClick;
+	ImGuiTreeNodeFlags tagNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
 	if (ImGui::CollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen))
 	{

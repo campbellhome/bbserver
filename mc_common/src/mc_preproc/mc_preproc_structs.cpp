@@ -477,7 +477,7 @@ static void GenerateStructsSource(const char* prefix, const char* includePrefix,
 		}
 		va(s, "{\n");
 		va(s, "\tif(val) {\n");
-		if (bbArrayData.bExact)
+		if (bbArrayData.bValid)
 		{
 			va(s, "\t\tfor(u32 i = 0; i < val->count; ++i) {\n");
 			if (o.fromLoc && IsFromLoc(bbArrayData.data->typeStr))
@@ -491,10 +491,17 @@ static void GenerateStructsSource(const char* prefix, const char* includePrefix,
 			va(s, "\t\t}\n");
 			va(s, "\t\tbba_free(*val);\n", bbArrayData.data->name.c_str());
 		}
-		else
+		if (!bbArrayData.bExact)
 		{
 			for (const struct_member_s& m : o.members)
 			{
+				if (bbArrayData.bValid)
+				{
+					if (m.name == "data" || m.name == "count" || m.name == "allocated")
+					{
+						continue;
+					}
+				}
 				if (ClassifyMemberJson(m) != kMemberJsonObject)
 				{
 					continue;
@@ -538,7 +545,7 @@ static void GenerateStructsSource(const char* prefix, const char* includePrefix,
 		va(s, "{\n");
 		va(s, "\t%s dst = { BB_EMPTY_INITIALIZER };\n", o.name.c_str());
 		va(s, "\tif(src) {\n");
-		if (bbArrayData.bExact)
+		if (bbArrayData.bValid)
 		{
 			va(s, "\t\tfor(u32 i = 0; i < src->count; ++i) {\n");
 			va(s, "\t\t\tif(bba_add_noclear(dst, 1)) {\n");
@@ -553,10 +560,17 @@ static void GenerateStructsSource(const char* prefix, const char* includePrefix,
 			va(s, "\t\t\t}\n");
 			va(s, "\t\t}\n");
 		}
-		else
+		if (!bbArrayData.bExact)
 		{
 			for (const struct_member_s& m : o.members)
 			{
+				if (bbArrayData.bValid)
+				{
+					if (m.name == "data" || m.name == "count" || m.name == "allocated")
+					{
+						continue;
+					}
+				}
 				if (m.arr.empty())
 				{
 					if (ClassifyMemberJson(m) == kMemberJsonObject)

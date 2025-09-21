@@ -1,0 +1,17 @@
+// raddbg 0.9.21 project file
+
+recent_file: path: "../src/ui_tags_import.cpp"
+recent_file: path: "../src/bbserver_fileopendialog.cpp"
+recent_file: path: "../mc_imgui/src/imgui_core.cpp"
+recent_file: path: "../bbclient/src/bb_time.c"
+recent_file: path: "../src/ui_tags.cpp"
+recent_file: path: "../src/ui_tags.h"
+recent_file: path: "../mc_imgui/examples/mc_imgui_example.cpp"
+tab_width: 4
+target:
+{
+  executable: "../bin/Debug_v143/bb_d.exe"
+  working_directory: "../bin/Debug_v143"
+  enabled: 1
+  label: "Blackbox Debug"
+}

@@ -102,14 +102,14 @@ AUTOSTRUCT typedef struct recordings_s
 	recording_t* data;
 } recordings_t;
 
-typedef struct grouped_recording_entry_s
+AUTOSTRUCT typedef struct grouped_recording_entry_s
 {
 	recording_t* recording;
 	u32 groupId;
 	b32 selected;
 } grouped_recording_entry_t;
 
-typedef struct grouped_recordings_s
+AUTOSTRUCT typedef struct grouped_recordings_s
 {
 	u32 count;
 	u32 allocated;

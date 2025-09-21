@@ -54,7 +54,7 @@ void tags_init(void)
 	sb_reset(&path);
 }
 
-void tags_write(void)
+void tags_write_location(const char* target)
 {
 	tags_config_t tagsConfig = { BB_EMPTY_INITIALIZER };
 	tagsConfig.tags = g_tags.tags;
@@ -62,8 +62,7 @@ void tags_write(void)
 	JSON_Value* val = json_serialize_tags_config_t(&tagsConfig);
 	if (val)
 	{
-		sb_t path = tags_get_path();
-		FILE* fp = fopen(sb_get(&path), "wb");
+		FILE* fp = fopen(target, "wb");
 		if (fp)
 		{
 			char* serialized_string = json_serialize_to_string_pretty(val);
@@ -71,9 +70,15 @@ void tags_write(void)
 			fclose(fp);
 			json_free_serialized_string(serialized_string);
 		}
-		sb_reset(&path);
 	}
 	json_value_free(val);
+}
+
+void tags_write(void)
+{
+	sb_t path = tags_get_path();
+	tags_write_location(sb_get(&path));
+	sb_reset(&path);
 }
 
 void tags_shutdown(void)

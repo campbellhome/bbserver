@@ -23,11 +23,13 @@
 #include "recorded_session.h"
 #include "recordings.h"
 #include "site_config.h"
+#include "tags.h"
 #include "tasks.h"
 #include "theme_config.h"
 #include "ui_config.h"
 #include "ui_message_box.h"
 #include "ui_recordings.h"
+#include "ui_tags_import.h"
 #include "ui_view.h"
 #include "va.h"
 #include "view.h"
@@ -288,10 +290,47 @@ void BBServer_MainMenuBar(void)
 		{
 			if (ImGui::MenuItem("Open..."))
 			{
+				const fileOpenFilter_s filters[] = {
+					{ L"Blackbox Logs (*.bbox)", L"*.bbox" },
+					{ L"Text Logs (*.txt; *.log)", L"*.txt;*.log" },
+					{ L"All Documents (*.*)", L"*.*" }
+				};
+				FileOpenDialog_SetFilters(filters, BB_ARRAYSIZE(filters), 1, L"bbox");
+
 				sb_t path = FileOpenDialog_Show();
 				if (sb_len(&path))
 				{
 					DragDrop_ProcessPath(sb_get(&path));
+				}
+				sb_reset(&path);
+			}
+			if (ImGui::MenuItem("Import Tags..."))
+			{
+				const fileOpenFilter_s filters[] = {
+					{ L"JSON Files (*.json)", L"*.json" },
+					{ L"All Documents (*.*)", L"*.*" }
+				};
+				FileOpenDialog_SetFilters(filters, BB_ARRAYSIZE(filters), 1, L"json");
+
+				sb_t path = FileOpenDialog_Show();
+				if (sb_len(&path))
+				{
+					UITagsImport_StartImport(sb_get(&path));
+				}
+				sb_reset(&path);
+			}
+			if (ImGui::MenuItem("Export Tags..."))
+			{
+				const fileOpenFilter_s filters[] = {
+					{ L"JSON Files (*.json)", L"*.json" },
+					{ L"All Documents (*.*)", L"*.*" }
+				};
+				FileOpenDialog_SetFilters(filters, BB_ARRAYSIZE(filters), 1, L"json");
+
+				sb_t path = FileOpenDialog_Show(true);
+				if (sb_len(&path))
+				{
+					tags_write_location(sb_get(&path));
 				}
 				sb_reset(&path);
 			}
@@ -634,6 +673,8 @@ extern "C" void BBServer_Update(void)
 
 	BBServer_DispatchToUIMessageQueue();
 	recordings_autodelete_old_recordings();
+
+	UITagsImport_Update();
 
 	if (s_showImguiDemo)
 	{

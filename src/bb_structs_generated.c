@@ -587,11 +587,54 @@ recordings_t recordings_clone(const recordings_t *src)
 	return dst;
 }
 
+void grouped_recording_entry_reset(grouped_recording_entry_t *val)
+{
+	if(val) {
+	}
+}
+grouped_recording_entry_t grouped_recording_entry_clone(const grouped_recording_entry_t *src)
+{
+	grouped_recording_entry_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.recording = src->recording;
+		dst.groupId = src->groupId;
+		dst.selected = src->selected;
+	}
+	return dst;
+}
+
+void grouped_recordings_reset(grouped_recordings_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			grouped_recording_entry_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+grouped_recordings_t grouped_recordings_clone(const grouped_recordings_t *src)
+{
+	grouped_recordings_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = grouped_recording_entry_clone(src->data + i);
+			}
+		}
+		dst.lastClickIndex = src->lastClickIndex;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
+			dst.pad[i] = src->pad[i];
+		}
+	}
+	return dst;
+}
+
 void recordings_tab_data_reset(recordings_tab_data_t *val)
 {
 	if(val) {
 		recordings_reset(&val->allRecordings);
 		recordings_reset(&val->invalidRecordings);
+		grouped_recordings_reset(&val->groupedRecordings);
 	}
 }
 recordings_tab_data_t recordings_tab_data_clone(const recordings_tab_data_t *src)
@@ -600,7 +643,7 @@ recordings_tab_data_t recordings_tab_data_clone(const recordings_tab_data_t *src
 	if(src) {
 		dst.allRecordings = recordings_clone(&src->allRecordings);
 		dst.invalidRecordings = recordings_clone(&src->invalidRecordings);
-		dst.groupedRecordings = src->groupedRecordings;
+		dst.groupedRecordings = grouped_recordings_clone(&src->groupedRecordings);
 		dst.dirty = src->dirty;
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
 			dst.pad[i] = src->pad[i];

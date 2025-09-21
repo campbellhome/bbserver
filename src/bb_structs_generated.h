@@ -50,6 +50,8 @@ struct recordings_tab_config_s;
 struct recordings_config_s;
 struct recording_s;
 struct recordings_s;
+struct grouped_recording_entry_s;
+struct grouped_recordings_s;
 struct recordings_tab_data_s;
 struct site_config_named_filter_t;
 struct site_config_named_filters_t;
@@ -129,6 +131,8 @@ typedef struct recordings_tab_config_s recordings_tab_config_t;
 typedef struct recordings_config_s recordings_config_t;
 typedef struct recording_s recording_t;
 typedef struct recordings_s recordings_t;
+typedef struct grouped_recording_entry_s grouped_recording_entry_t;
+typedef struct grouped_recordings_s grouped_recordings_t;
 typedef struct recordings_tab_data_s recordings_tab_data_t;
 typedef struct site_config_named_filter_t site_config_named_filter_t;
 typedef struct site_config_named_filters_t site_config_named_filters_t;
@@ -208,6 +212,8 @@ void recordings_tab_config_reset(recordings_tab_config_t *val);
 void recordings_config_reset(recordings_config_t *val);
 void recording_reset(recording_t *val);
 void recordings_reset(recordings_t *val);
+void grouped_recording_entry_reset(grouped_recording_entry_t *val);
+void grouped_recordings_reset(grouped_recordings_t *val);
 void recordings_tab_data_reset(recordings_tab_data_t *val);
 void site_config_named_filter_reset(site_config_named_filter_t *val);
 void site_config_named_filters_reset(site_config_named_filters_t *val);
@@ -360,6 +366,12 @@ recording_t recording_clone(const recording_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_recordings_clone)
 recordings_t recordings_clone(const recordings_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_grouped_recording_entry_clone)
+grouped_recording_entry_t grouped_recording_entry_clone(const grouped_recording_entry_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_grouped_recordings_clone)
+grouped_recordings_t grouped_recordings_clone(const grouped_recordings_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_recordings_tab_data_clone)
 recordings_tab_data_t recordings_tab_data_clone(const recordings_tab_data_t *src);

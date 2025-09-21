@@ -82,7 +82,11 @@ extern tagData_t g_tags;
 
 void tags_init(void);
 void tags_write(void);
+void tags_write_location(const char* target);
 void tags_shutdown(void);
+
+void tags_config_reset(tags_config_t *val);
+tags_config_t json_deserialize_tags_config_t(JSON_Value *src);
 
 tag_t* tag_find(const char* tagName);
 void tag_remove(tag_t* tag);

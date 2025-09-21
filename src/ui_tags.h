@@ -8,6 +8,7 @@
 
 typedef struct view_s view_t;
 
+void UITags_UpdateImport();
 void UITags_Update(view_t* view);
 void UITags_Shutdown();
 

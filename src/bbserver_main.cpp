@@ -42,6 +42,7 @@
 #include "ui_config.h"
 #include "ui_message_box.h"
 #include "ui_tags.h"
+#include "ui_tags_import.h"
 #include "ui_view.h"
 #include "uuid_config.h"
 #include "uuid_rfc4122/uuid.h"
@@ -189,6 +190,7 @@ static void BBServer_Shutdown(void)
 	process_shutdown();
 	devkit_autodetect_shutdown();
 	UITags_Shutdown();
+	UITagsImport_Shutdown();
 	UIConfig_Reset();
 	UIRecordedView_Shutdown();
 	recordings_shutdown();
@@ -441,8 +443,10 @@ static void LoggingFreeWrapper(void* ptr, void* user_data)
 int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
 {
 	crt_leak_check_init();
-	// bb_tracked_malloc_enable(true);
-	// bba_set_logging(true, true);
+#ifdef _DEBUG
+	bb_tracked_malloc_enable(true);
+	bba_set_logging(true, true);
+#endif
 
 	cmdline_init_composite(CommandLine);
 	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");
