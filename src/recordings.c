@@ -248,7 +248,7 @@ void recordings_sort(recording_tab_t tab)
 			}
 		}
 		break;
-	case kRecordingSort_Count:
+	case kRecordingGroup_Count:
 	default:
 		BB_ASSERT(0);
 	}

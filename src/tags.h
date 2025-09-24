@@ -90,6 +90,7 @@ tags_config_t json_deserialize_tags_config_t(JSON_Value *src);
 
 tag_t* tag_find(const char* tagName);
 void tag_remove(tag_t* tag);
+void tag_rename(tag_t* tag, const char* newTagName);
 
 tagCategory_t* tagCategory_find(const char* categoryName);
 

@@ -103,6 +103,28 @@ static void UITags_TagPopup(tag_t* tag, view_t* view)
 			{
 				tag_remove(tag);
 				tags_write();
+
+				// tag array may have been reallocated, invalidating `tag`
+				ImGui::EndMenu();
+				ImGui::EndPopup();
+				return;
+			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Rename tag..."))
+		{
+			ImGui::Text("Rename \"%s\"", sb_get(&tag->name));
+			if (ImGui::InputText("##NewTag", &s_newTagName, 64, ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				tag_rename(tag, sb_get(&s_newTagName));
+				tags_write();
+				sb_reset(&s_newTagName);
+
+				// tag array may have been reallocated, invalidating `tag`
+				ImGui::EndMenu();
+				ImGui::EndPopup();
+				return;
 			}
 			ImGui::EndMenu();
 		}
@@ -370,6 +392,7 @@ static void UITags_SelectedCategories_RemoveTag(view_t* view, const char* tagNam
 		}
 	}
 	tags_write();
+	tag_apply_tag_to_all_views();
 }
 
 static void UITags_CategoryPopup(view_t* view, u32 viewCategoryIndex)

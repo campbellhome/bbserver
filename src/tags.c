@@ -8,11 +8,14 @@
 #include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
 #include "recorded_session.h"
+#include "va.h"
 #include "view.h"
 #include <stdlib.h>
 #include <string.h>
 
 tagData_t g_tags;
+
+static tag_t* tag_find_or_add(const char* tagName);
 
 static sb_t tags_get_path(void)
 {
@@ -164,6 +167,44 @@ void tag_remove(tag_t* tag)
 	bba_erase(g_tags.tags, tagIndex);
 }
 
+void tag_rename(tag_t* tag, const char* newTagName)
+{
+	// make sure new tag doesn't already exist
+	tag_t* newTag = tag_find(newTagName);
+	if (newTag)
+	{
+		return;
+	}
+
+	const char* oldTagName = va("%s", sb_get(&tag->name));
+
+	// add new tag
+	newTag = tag_find_or_add(newTagName);
+	if (!newTag)
+	{
+		return;
+	}
+
+	// re-find tag after array may have been reallocated
+	tag = tag_find(oldTagName);
+	if (!tag)
+	{
+		return;
+	}
+
+	// copy data to new tag
+	newTag->visibility = tag->visibility;
+	newTag->noColor = tag->noColor;
+	for (u32 i = 0; i < tag->categories.count; ++i)
+	{
+		const char* categoryName = sb_get(tag->categories.data + i);
+		tag_add_category(newTagName, categoryName);
+	}
+
+	// remove old tag
+	tag_remove(tag);
+}
+
 static int tag_sort(const void* _a, const void* _b)
 {
 	const tag_t* a = (const tag_t*)_a;
@@ -171,7 +212,7 @@ static int tag_sort(const void* _a, const void* _b)
 	return strcmp(sb_get(&a->name), sb_get(&b->name));
 }
 
-tag_t* tag_find_or_add(const char* tagName)
+static tag_t* tag_find_or_add(const char* tagName)
 {
 	tag_t* tag = tag_find(tagName);
 	if (!tag)
