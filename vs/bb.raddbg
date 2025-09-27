@@ -1,5 +1,7 @@
 // raddbg 0.9.21 project file
 
+recent_file: path: "../mc_imgui/src/fonts.cpp"
+recent_file: path: "../thirdparty/imgui/imgui_draw.cpp"
 recent_file: path: "../src/bb_json_generated.c"
 recent_file: path: "../mc_common/src/sb.c"
 recent_file: path: "../thirdparty/parson/parson.c"

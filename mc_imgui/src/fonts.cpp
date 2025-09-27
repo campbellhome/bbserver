@@ -3,6 +3,7 @@
 
 #include "fonts.h"
 #include "bb_array.h"
+#include "bb_file.h"
 #include "common.h"
 #include "imgui_core.h"
 #include "imgui_utils.h"
@@ -15,6 +16,8 @@
 static fontConfigs_t s_fontConfigs;
 
 #include "forkawesome-webfont.inc"
+
+static void Fonts_MergeIconFont(float fontSize);
 
 #if BB_USING(FEATURE_FREETYPE)
 
@@ -50,7 +53,13 @@ struct fontBuilder
 		if (!rebuild)
 			return false;
 		ImGuiIO& io = ImGui::GetIO();
-		io.Fonts->Build();
+		if (!io.Fonts->Build())
+		{
+			io.Fonts->Clear();
+			io.Fonts->AddFontDefault();
+			Fonts_MergeIconFont(12.0f);
+			io.Fonts->Build();
+		}
 		rebuild = false;
 		return true;
 	}
@@ -202,10 +211,14 @@ void Fonts_InitFonts(void)
 		for (u32 i = 0; i < s_fontConfigs.count; ++i)
 		{
 			fontConfig_t* fontConfig = s_fontConfigs.data + i;
-			if (fontConfig->enabled && fontConfig->size > 0 && *sb_get(&fontConfig->path))
+			const char* path = sb_get(&fontConfig->path);
+			if (fontConfig->enabled && fontConfig->size > 0 && *path)
 			{
 				float fontSize = (float)fontConfig->size * dpiScale;
-				io.Fonts->AddFontFromFileTTF(sb_get(&fontConfig->path), fontSize, nullptr, glyphRanges.Data);
+				if (!bb_file_readable(path) || !io.Fonts->AddFontFromFileTTF(path, fontSize, nullptr, glyphRanges.Data))
+				{
+					io.Fonts->AddFontDefault();
+				}
 				Fonts_MergeIconFont(fontSize);
 
 				// io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\L_10646.ttf", fontSize, &config, fallbackRanges);
