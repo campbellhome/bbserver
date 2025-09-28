@@ -423,12 +423,14 @@ static b32 test_vfilter(vfilter_data_t* vfilter_data)
 static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp, vfilter_data_t* vfilter_data)
 {
 	sb_t lines = { BB_EMPTY_INITIALIZER };
+	u32 numPartialLogsUsed = 0;
 	for (u32 i = 0; i < g_partialLogs.count; ++i)
 	{
 		const bb_decoded_packet_t* partial = g_partialLogs.data + i;
 		if (partial->header.threadId == decoded->header.threadId)
 		{
 			sb_append(&lines, partial->packet.logText.text);
+			++numPartialLogsUsed;
 		}
 	}
 	sb_append(&lines, decoded->packet.logText.text);
@@ -443,16 +445,19 @@ static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp, vfilter_
 		sb_reset(&lines);
 	}
 
-	for (u32 i = 0; i < g_partialLogs.count;)
+	if (!numPartialLogsUsed)
 	{
+		return;
+	}
+
+	u32 numPartialLogs = g_partialLogs.count;
+	for (u32 reverseIndex = 0; reverseIndex < numPartialLogs; ++reverseIndex)
+	{
+		u32 i = numPartialLogs - reverseIndex - 1;
 		const bb_decoded_packet_t* partial = g_partialLogs.data + i;
 		if (partial->header.threadId == decoded->header.threadId)
 		{
 			bba_erase(g_partialLogs, i);
-		}
-		else
-		{
-			++i;
 		}
 	}
 }
@@ -1788,6 +1793,8 @@ int main(int argc, char** argv)
 #else
 	int ret = sqlite_main_loop(argc, argv);
 #endif
+
+	bba_free(g_partialLogs);
 
 	BB_SHUTDOWN();
 

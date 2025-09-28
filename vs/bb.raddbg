@@ -1,6 +1,15 @@
 // raddbg 0.9.21 project file
 
+recent_file: path: "../src/ui_view.cpp"
+recent_file: path: "../mc_common/src/span.c"
 recent_file: path: "../mc_imgui/src/fonts.cpp"
+recent_file: path: "../thirdparty/imgui/imgui.cpp"
+recent_file: path: "../thirdparty/imgui/imgui.h"
+recent_file: path: "../src/recorded_session.c"
+recent_file: path: "../src/bboxtolog/bboxtolog.c"
+recent_file: path: "../bbclient/examples/bbclient_example_wchar.cpp"
+recent_file: path: "../bbclient/src/bb.c"
+recent_file: path: "D:/a/_work/1/s/src/vctools/crt/vcstartup/src/misc/debugger_jmc.c"
 recent_file: path: "../thirdparty/imgui/imgui_draw.cpp"
 recent_file: path: "../src/bb_json_generated.c"
 recent_file: path: "../mc_common/src/sb.c"
@@ -18,6 +27,23 @@ target:
 {
   executable: "../bin/Debug_v143/bb_d.exe"
   working_directory: "../bin/Debug_v143"
-  enabled: 1
   label: "Blackbox Debug"
+  enabled: 1
+}
+target:
+{
+  executable: "../bbclient/bin/bbclient_example_wchar_Debug_v143/bbclient_example_wchar.exe"
+  working_directory: "../bbclient/bin/bbclient_example_wchar_Debug_v143"
+}
+breakpoint:
+{
+  source_location: "../bbclient/src/bb.c:1614:8"
+  hit_count: 0
+}
+target:
+{
+  executable: "../bin/Debug_v143/bboxtolog.exe"
+  working_directory: "../bin/Debug_v143"
+  enabled: 0
+  arguments: "\"C:\\Users\\campb\\AppData\\Local\\bb\\bbclient matt\\{bac26e82-9caa-11f0-9d1e-fff30e766d60}bbclient matt.bbox\""
 }

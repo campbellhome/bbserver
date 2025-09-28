@@ -315,6 +315,19 @@ int main(int argc, const char** argv)
 
 	bb_trace_dynamic_preformatted(nullptr, 0u, nullptr, kBBLogLevel_Log, 0, "NULL file and category");
 
+	size_t largeLen = 1024 * 1024 * 1024;
+	char *large = (char *)malloc(largeLen + 1);
+	if (large)
+	{
+		for (size_t i = 0; i < largeLen; ++i)
+		{
+			large[i] = '0' + (char)(i % 10);
+		}
+		large[largeLen] = '\0';
+		bb_trace_dynamic_preformatted(__FILE__, __LINE__, "test::LongLine::ExtraLongLine", kBBLogLevel_Log, -1, large);
+		free(large);
+	}
+
 	BB_LOG(L"test::category::deep", L"this is a __%s__ test at time %zu", L"simple", bb_current_time_ms());
 	BB_WARNING(L"test::other", L"monkey");
 	BB_LOG(L"test::a", L"fred");
