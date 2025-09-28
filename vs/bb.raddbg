@@ -1,24 +1,29 @@
 // raddbg 0.9.21 project file
 
 recent_file: path: "../src/ui_view.cpp"
+recent_file: path: "D:/a/_work/1/s/src/vctools/crt/vcstartup/src/misc/debugger_jmc.c"
+recent_file: path: "../mc_imgui/src/imgui_utils.cpp"
+recent_file: path: "../mc_common/src/va.c"
+recent_file: path: "../mc_common/src/sb.c"
+recent_file: path: "../mc_imgui/src/imgui_core.cpp"
+recent_file: path: "../bbclient/src/bb_array.c"
+recent_file: path: "../thirdparty/imgui/imgui_draw.cpp"
+recent_file: path: "../mc_common/src/tokenize.c"
+recent_file: path: "../src/recorded_session.c"
+recent_file: path: "../bbclient/src/bb_string.c"
+recent_file: path: "../thirdparty/imgui/imgui.cpp"
 recent_file: path: "../mc_common/src/span.c"
 recent_file: path: "../mc_imgui/src/fonts.cpp"
-recent_file: path: "../thirdparty/imgui/imgui.cpp"
 recent_file: path: "../thirdparty/imgui/imgui.h"
-recent_file: path: "../src/recorded_session.c"
 recent_file: path: "../src/bboxtolog/bboxtolog.c"
 recent_file: path: "../bbclient/examples/bbclient_example_wchar.cpp"
 recent_file: path: "../bbclient/src/bb.c"
-recent_file: path: "D:/a/_work/1/s/src/vctools/crt/vcstartup/src/misc/debugger_jmc.c"
-recent_file: path: "../thirdparty/imgui/imgui_draw.cpp"
 recent_file: path: "../src/bb_json_generated.c"
-recent_file: path: "../mc_common/src/sb.c"
 recent_file: path: "../thirdparty/parson/parson.c"
 recent_file: path: "../src/tags.c"
 recent_file: path: "../src/ui_tags.cpp"
 recent_file: path: "../src/ui_tags_import.cpp"
 recent_file: path: "../src/bbserver_fileopendialog.cpp"
-recent_file: path: "../mc_imgui/src/imgui_core.cpp"
 recent_file: path: "../bbclient/src/bb_time.c"
 recent_file: path: "../src/ui_tags.h"
 recent_file: path: "../mc_imgui/examples/mc_imgui_example.cpp"
@@ -29,6 +34,13 @@ target:
   working_directory: "../bin/Debug_v143"
   label: "Blackbox Debug"
   enabled: 1
+}
+target:
+{
+  executable: "../bin/Release_v143/bb.exe"
+  working_directory: "../bin/Release_v143"
+  enabled: 0
+  label: "Blackbox Release"
 }
 target:
 {

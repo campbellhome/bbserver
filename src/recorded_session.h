@@ -32,11 +32,23 @@ typedef struct views_s
 	view_t* data;
 } views_t;
 
+typedef struct recorded_log_line_s
+{
+	u32 offset;
+	u32 len;
+} recorded_log_line_t;
+typedef struct recorded_log_lines_s
+{
+	recorded_log_line_t *data;
+	u32 count;
+	u32 allocated;
+} recorded_log_lines_t;
 typedef struct recorded_log_s
 {
 	u32 sessionLogIndex;
-	u32 numLines;
+	u32 pad;
 	u64 frameNumber;
+	recorded_log_lines_t lines;
 	bb_decoded_packet_t packet;
 } recorded_log_t;
 typedef struct recorded_logs_s

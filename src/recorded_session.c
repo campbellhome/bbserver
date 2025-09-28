@@ -17,6 +17,7 @@
 
 #include "bb.h"
 #include "bb_array.h"
+#include "bb_assert.h"
 #include "bb_malloc.h"
 #include "bb_packet.h"
 #include "bb_string.h"
@@ -47,7 +48,9 @@ static void recorded_logs_reset(recorded_logs_t* logs)
 {
 	for (u32 i = 0; i < logs->count; ++i)
 	{
-		bb_free(logs->data[i]);
+		recorded_log_t *recordedLog = logs->data[i];
+		bba_free(recordedLog->lines);
+		bb_free(recordedLog);
 	}
 	bba_free(*logs);
 }
@@ -622,16 +625,21 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 		}
 	}
 	sb_append(&s_reconstructedLogText, decoded->packet.logText.text);
-	const char* text = sb_get(&s_reconstructedLogText);
 
-	u32 numLines = 0;
-	span_t linesCursor = span_from_string(text);
+	recorded_log_lines_t recordedLogLines = { BB_EMPTY_INITIALIZER };
+	span_t linesCursor = { s_reconstructedLogText.data, s_reconstructedLogText.data + s_reconstructedLogText.count - 1 };
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
 	{
-		++numLines;
+		recorded_log_line_t *recordedLogLine = bba_add(recordedLogLines, 1);
+		if (recordedLogLine)
+		{
+			recordedLogLine->offset = (u32)(line.start - s_reconstructedLogText.data);
+			recordedLogLine->len = (u32)(line.end - line.start);
+		}
 	}
-	if (!numLines)
+	if (!recordedLogLines.count)
 	{
+		bba_free(recordedLogLines);
 		return;
 	}
 
@@ -663,7 +671,7 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 	plog = bba_add(session->logs, 1);
 	if (plog)
 	{
-		size_t textLen = strlen(text);
+		size_t textLen = sb_len(&s_reconstructedLogText);
 		size_t preTextSize = (u8*)decoded->packet.logText.text - (u8*)decoded;
 		size_t decodedSize = preTextSize + textLen + 1;
 		size_t logSize = decodedSize + offsetof(recorded_log_t, packet);
@@ -671,12 +679,12 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 		log = *plog;
 		if (log)
 		{
-			Fonts_CacheGlyphs(text);
+			log->lines = recordedLogLines;
+			//Fonts_CacheGlyphs_Range(text, text + textLen);
 			log->sessionLogIndex = session->logs.count - 1;
-			log->numLines = numLines;
 			log->frameNumber = session->currentFrameNumber;
 			memcpy(&log->packet, decoded, preTextSize);
-			bb_strncpy(log->packet.packet.logText.text, text, textLen + 1);
+			memcpy(log->packet.packet.logText.text, sb_get(&s_reconstructedLogText), textLen + 1);
 			for (u32 i = 0; i < session->views.count; ++i)
 			{
 				view_add_log(session->views.data + i, log);
@@ -685,6 +693,7 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 		else
 		{
 			--session->logs.count;
+			bba_free(recordedLogLines);
 		}
 		for (u32 i = 0; i < session->partialLogs.count;)
 		{
@@ -711,6 +720,10 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 				++i;
 			}
 		}
+	}
+	else
+	{
+		bba_free(recordedLogLines);
 	}
 }
 

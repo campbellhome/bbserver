@@ -45,6 +45,7 @@ void Fonts_ClearFonts(void);
 void Fonts_AddFont(fontConfig_t font);
 
 void Fonts_CacheGlyphs(const char* text);
+void Fonts_CacheGlyphs_Range(const char* text, const char* text_end);
 
 sb_t Fonts_GetSystemFontDir(void);
 

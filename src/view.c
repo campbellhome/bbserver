@@ -186,7 +186,7 @@ void view_init(view_t* view, recorded_session_t* session, b8 autoClose)
 	for (i = 0; i < session->logs.count; ++i)
 	{
 		recorded_log_t* log = session->logs.data[i];
-		for (j = 0; j < log->numLines; ++j)
+		for (j = 0; j < log->lines.count; ++j)
 		{
 			view_persistent_log_t* persistent = bba_add(view->persistentLogs, 1);
 			persistent->sessionLogIndex = log->sessionLogIndex;
@@ -1209,7 +1209,7 @@ void view_add_log(view_t* view, recorded_log_t* log)
 {
 	u32 i;
 	u32 persistentLogIndex = view->persistentLogs.count;
-	for (i = 0; i < log->numLines; ++i)
+	for (i = 0; i < log->lines.count; ++i)
 	{
 		view_persistent_log_t* persistent = bba_add(view->persistentLogs, 1);
 		persistent->sessionLogIndex = log->sessionLogIndex;
@@ -1254,11 +1254,11 @@ static void view_add_log_internal(view_t* view, recorded_log_t* log, u32 persist
 			visibleLog->subLine = 0;
 			visibleLog->persistentLogIndex = persistentLogIndex;
 			visibleLog->bookmarked = persistent->bookmarked;
-			if (log->numLines > 1)
+			if (log->lines.count > 1)
 			{
 				view_log_t baseLog = *visibleLog; // the sub-lines' bba_add_noclear can reallocate and invalidate visibleLog
 				u32 i;
-				for (i = 1; i < log->numLines; ++i)
+				for (i = 1; i < log->lines.count; ++i)
 				{
 					view_log_t* subLineLog = bba_add_noclear(view->visibleLogs, 1);
 					if (subLineLog)

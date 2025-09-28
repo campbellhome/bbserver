@@ -59,6 +59,7 @@ static gathered_views_t s_gathered_views;
 static sb_t s_strippedLine;
 static sb_t s_textSpan;
 static sb_t s_newFilterName;
+static sb_t s_wrappedLine;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 static int s_visibleLogLines;
@@ -495,7 +496,14 @@ static void BuildLogLine(view_t* view, view_log_t* viewLog, bool allColumns, sb_
 		}
 	}
 
-	span_t line = tokenizeNthLine(span_from_string(decoded->packet.logText.text), subLine);
+	recorded_log_line_t recordedLogLine = sessionLog->lines.data[subLine];
+	bool bTrimmed = recordedLogLine.len > 16 * 1024;
+	if (bTrimmed)
+	{
+		recordedLogLine.len = 16 * 1024;
+	}
+	span_t line = { decoded->packet.logText.text + recordedLogLine.offset, decoded->packet.logText.text + recordedLogLine.offset + recordedLogLine.len };
+
 	sb_t stripped = StripColorCodes(line);
 	bool bJson = false;
 	if (!allColumns && jsonExpansion == kJsonExpansion_On && line_can_be_json(stripped))
@@ -696,29 +704,27 @@ void UIRecordedView_TooltipLevelText(const char* fmt, u32 count, bb_log_level_e 
 	}
 }
 
-static void TextWrappedMaxLines(const char* text, s32 numLines, bool bShadowed)
+static int TextWrappedMaxLines(const char* text, s32 maxLines, bool bShadowed, bool bTrimmed)
 {
 	span_t span = span_from_string(text);
-
-	s32 lineIndex = 0;
+	s32 numLines = 0;
 	for (span_t line = tokenizeLine(&span); line.start; line = tokenizeLine(&span))
 	{
-		if (lineIndex == numLines)
+		if (numLines == maxLines)
 		{
+			bTrimmed = true;
 			break;
 		}
-		++lineIndex;
+		++numLines;
 
 		ptrdiff_t len = line.end - line.start;
 		if (len > 0)
 		{
-			if (len > 1024)
-			{
-				len = 1024;
-			}
 			if (bShadowed)
 			{
-				TextWrappedShadowed(va("%.*s", len, line.start));
+				s_wrappedLine.count = 0;
+				sb_append_range(&s_wrappedLine, line.start, line.end);
+				TextWrappedShadowed(sb_get(&s_wrappedLine));
 			}
 			else
 			{
@@ -726,6 +732,18 @@ static void TextWrappedMaxLines(const char* text, s32 numLines, bool bShadowed)
 			}
 		}
 	}
+	if (bTrimmed)
+	{
+		if (bShadowed)
+		{
+			TextWrappedShadowed("...");
+		}
+		else
+		{
+			TextWrapped("...");
+		}
+	}
+	return numLines;
 }
 
 static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* category, recorded_session_t* session, view_t* view, recorded_log_t* sessionLog)
@@ -766,10 +784,19 @@ static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* cat
 		}
 		Separator();
 		PopUIFont();
-		span_t cursor = span_from_string(decoded->packet.logText.text);
+
 		int numLines = 0;
-		for (span_t line = tokenizeLine(&cursor); line.start; line = tokenizeLine(&cursor))
+
+		for (u32 lineIndex = 0; lineIndex < sessionLog->lines.count; ++lineIndex)
 		{
+			recorded_log_line_t recordedLogLine = sessionLog->lines.data[lineIndex];
+			bool bTrimmed = recordedLogLine.len > 16 * 1024;
+			if (bTrimmed)
+			{
+				recordedLogLine.len = 16 * 1024;
+			}
+			span_t line = { decoded->packet.logText.text + recordedLogLine.offset, decoded->packet.logText.text + recordedLogLine.offset + recordedLogLine.len };
+
 			bool bJson = false;
 			sb_t stripped = StripColorCodes(line);
 			if (line_can_be_json(stripped))
@@ -782,7 +809,7 @@ static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* cat
 					{
 						bJson = true;
 						PushTextWrapPos(1800.0f);
-						TextWrappedMaxLines(json, 40, Imgui_Core_GetTextShadows() != 0);
+						numLines += TextWrappedMaxLines(json, 40, Imgui_Core_GetTextShadows() != 0, bTrimmed);
 						PopTextWrapPos();
 						json_free_serialized_string(json);
 					}
@@ -792,11 +819,11 @@ static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* cat
 			if (!bJson)
 			{
 				PushTextWrapPos(1200.0f);
-				TextWrappedMaxLines(sb_get(&stripped), 40, Imgui_Core_GetTextShadows() != 0);
+				numLines += TextWrappedMaxLines(sb_get(&stripped), 40, Imgui_Core_GetTextShadows() != 0, bTrimmed);
 				PopTextWrapPos();
 			}
 
-			if (++numLines >= s_visibleLogLines)
+			if (numLines >= s_visibleLogLines)
 				break;
 		}
 		EndTooltip();
@@ -877,6 +904,10 @@ static colored_text_t UIRecordedView_GetColoredTextInternal(colored_text_t prev)
 			    return ret;
 			}
 			*/
+			if (marker > ret.start + 8 * 1024)
+			{
+				break;
+			}
 		}
 	}
 	if (marker > ret.start)
@@ -1297,7 +1328,9 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	SameLine(textOffset);
 	bool bNeedText = true;
 
-	span_t subLineSpan = tokenizeNthLine(span_from_string(decoded->packet.logText.text), viewLog->subLine);
+	BB_ASSERT(sessionLog->lines.count > viewLog->subLine);
+	recorded_log_line_t recordedLogLine = sessionLog->lines.data[viewLog->subLine];
+	span_t subLineSpan = { decoded->packet.logText.text + recordedLogLine.offset, decoded->packet.logText.text + recordedLogLine.offset + recordedLogLine.len };
 
 	bool first = true;
 
@@ -1341,6 +1374,10 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 			}
 		} while (other.next);
 	}
+
+	ImFont* font = GetFont();
+	float totalTextSizeX = 0.0f;
+	u32 totalLineLen = 0;
 
 	span.next = subLineSpan.start;
 	span.end = subLineSpan.end;
@@ -1389,18 +1426,38 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 				PopTextShadows(oldShadows);
 			}
 			bNeedText = false;
+
+			ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, sb_get(&s_textSpan), sb_get(&s_textSpan) + sb_len(&s_textSpan));
+			totalTextSizeX += textSize.x;
+			totalLineLen += span.len;
 		}
-	} while (span.next);
+	} while (span.next && totalLineLen < 8 * 1024);
+
+	if (span.next && totalLineLen >= 8 * 1024)
+	{
+		if (g_config.logColorUsage != kConfigColors_None)
+		{
+			oldShadows = PushTextShadows(span.styleColor);
+		}
+		SameLine(0.0f, 0.0f);
+		TextShadowed("...");
+		if (g_config.logColorUsage != kConfigColors_None)
+		{
+			PopTextShadows(oldShadows);
+		}
+		bNeedText = false;
+
+		ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "...");
+		totalTextSizeX += textSize.x;
+	}
 
 	if (bNeedText)
 	{
 		TextUnformatted("");
 	}
 
-	ImFont* font = GetFont();
-	ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, decoded->packet.logText.text);
 	ImVec2 blankSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "            ");
-	float requiredWidth = textOffset + textSize.x + blankSize.x;
+	float requiredWidth = textOffset + totalTextSizeX + blankSize.x;
 	return requiredWidth;
 }
 
@@ -3074,4 +3131,5 @@ void UIRecordedView_Shutdown(void)
 	sb_reset(&s_strippedLine);
 	sb_reset(&s_textSpan);
 	sb_reset(&s_newFilterName);
+	sb_reset(&s_wrappedLine);
 }

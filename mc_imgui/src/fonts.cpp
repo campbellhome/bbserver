@@ -122,6 +122,14 @@ extern "C" void Fonts_CacheGlyphs(const char* text)
 	}
 }
 
+extern "C" void Fonts_CacheGlyphs_Range(const char* text, const char* text_end)
+{
+	if (Glyphs_CacheText(&s_glyphs, text, text_end))
+	{
+		Imgui_Core_QueueUpdateDpiDependentResources();
+	}
+}
+
 void Fonts_GetGlyphRanges(ImVector<ImWchar>* glyphRanges)
 {
 	ImFontAtlas tmp;
