@@ -626,6 +626,12 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 	}
 	sb_append(&s_reconstructedLogText, decoded->packet.logText.text);
 
+	// TODO: hack add trailing \n or tokenizeLine below will include the \0 in the contents of the last subline
+	if (s_reconstructedLogText.count > 1 && s_reconstructedLogText.data[s_reconstructedLogText.count - 2] != '\n')
+	{
+		sb_append_char(&s_reconstructedLogText, '\n');
+	}
+
 	recorded_log_lines_t recordedLogLines = { BB_EMPTY_INITIALIZER };
 	span_t linesCursor = { s_reconstructedLogText.data, s_reconstructedLogText.data + s_reconstructedLogText.count - 1 };
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
@@ -680,7 +686,6 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 		if (log)
 		{
 			log->lines = recordedLogLines;
-			//Fonts_CacheGlyphs_Range(text, text + textLen);
 			log->sessionLogIndex = session->logs.count - 1;
 			log->frameNumber = session->currentFrameNumber;
 			memcpy(&log->packet, decoded, preTextSize);
@@ -688,6 +693,13 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 			for (u32 i = 0; i < session->views.count; ++i)
 			{
 				view_add_log(session->views.data + i, log);
+			}
+			for (u32 i = 0; i < recordedLogLines.count; ++i)
+			{
+				recorded_log_line_t logLine = recordedLogLines.data[i];
+				u32 len = (logLine.len > 16 * 1024) ? 16 * 1024 : logLine.len;
+				const char* start = log->packet.packet.logText.text + logLine.offset;
+				Fonts_CacheGlyphs_Range(start, start + len);
 			}
 		}
 		else
