@@ -162,16 +162,16 @@ void MC_Imgui_Example_Update(void)
 	{
 #if defined(MC_COMMON_TESTS) && MC_COMMON_TESTS
 		ImGui::TextUnformatted("mc_common tests");
-		if (ImGui::Button("run"))
+		if (ImGui::Button("run") || true)
 		{
 			output_reset_buffer();
 			if (test_tokenize())
 			{
-				ImGui::TextUnformatted("tokenize: PASS");
+				output_log("[tokenize] pass");
 			}
 			else
 			{
-				ImGui::TextUnformatted("tokenize: FAIL");
+				output_error("[tokenize] FAIL");
 			}
 		}
 		if (ImGui::Button("clear"))

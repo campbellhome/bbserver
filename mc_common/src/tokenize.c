@@ -94,44 +94,46 @@ span_t tokenize(const char** bufferCursor, const char* delimiters)
 
 span_t tokenizeLine(span_t* cursor)
 {
-	span_t ret = { BB_EMPTY_INITIALIZER };
+	const char* retStart = NULL; // not using span_t internally because VS is not showing the var in locals, watch, etc
+	const char* retEnd = NULL;
 	if (cursor && cursor->start)
 	{
-		ret.start = cursor->start;
-		ret.end = ret.start;
-		while (ret.end <= cursor->end)
+		retStart = cursor->start;
+		retEnd = retStart;
+		while (retEnd <= cursor->end)
 		{
-			if (*ret.end == '\n')
+			if (*retEnd == '\n' || *retEnd == '\0')
 			{
 				break;
 			}
-			else if (*ret.end == '\r' && !(ret.end < cursor->end && ret.end[1] == '\n'))
+			else if (*retEnd == '\r' && !(retEnd < cursor->end && retEnd[1] == '\n'))
 			{
 				break;
 			}
 			else
 			{
-				++ret.end;
+				++retEnd;
 			}
 		}
 
-		if (ret.end < cursor->end)
+		if (retEnd < cursor->end && *retEnd) // if the cursor span has an embedded null, don't step past the end
 		{
-			cursor->start = ret.end + 1;
+			cursor->start = retEnd + 1;
 		}
 		else
 		{
 			cursor->start = NULL;
 		}
-		if (!cursor->start && ret.end - ret.start == 1)
+		if (!cursor->start && retEnd - retStart <= 1)
 		{
-			ret.start = ret.end = NULL;
+			retStart = retEnd = NULL;
 		}
-		if (ret.end > ret.start && ret.end[-1] == '\r')
+		if (retEnd > retStart && retEnd[-1] == '\r')
 		{
-			--ret.end;
+			--retEnd;
 		}
 	}
+	span_t ret = { retStart, retEnd };
 	return ret;
 }
 
@@ -170,13 +172,8 @@ static b32 report_test(const tokenize_test_data_t* testData, b32 bSuccess)
 	if (bSuccess)
 	{
 		output_log("[%s] pass", testData->name);
-		return true;
 	}
-	else
-	{
-		output_error("[%s] FAIL", testData->name);
-		return false;
-	}
+	return bSuccess;
 }
 
 static b32 test_tokenize_lines_from_span(const tokenize_test_data_t* testData, span_t cursor)
@@ -201,6 +198,16 @@ static b32 test_tokenize_lines_from_span(const tokenize_test_data_t* testData, s
 				output_warning("[%s] lines[%d] mismatch: saw [%s], expected [%s]", testData->name, numLines, saw, expected);
 				pass = false;
 			}
+			else
+			{
+				size_t tokenLen = token.end - token.start;
+				size_t expectedLen = strlen(expected);
+				if (tokenLen != expectedLen)
+				{
+					output_warning("[%s] lines[%d] mismatch: saw [%s] len:%u, expected [%s] len:%u", testData->name, numLines, saw, tokenLen, expected, expectedLen);
+					pass = false;
+				}
+			}
 		}
 		else
 		{
@@ -222,12 +229,15 @@ static b32 test_tokenize_lines_from_span(const tokenize_test_data_t* testData, s
 
 static b32 test_tokenize_lines(const tokenize_test_data_t* testData)
 {
-	span_t cursor = span_from_string(testData->source);
+	sb_t source = sb_from_c_string(testData->source);
+	span_t cursor = { source.data, source.data + source.count - 1 };
 	if (testData->optionalSourceLen > 0)
 	{
-		cursor.end = testData->source + testData->optionalSourceLen;
+		cursor.end = cursor.start + testData->optionalSourceLen;
 	}
-	return test_tokenize_lines_from_span(testData, cursor);
+	b32 ret = test_tokenize_lines_from_span(testData, cursor);
+	sb_reset(&source);
+	return ret;
 }
 
 static tokenize_test_data_t g_emptyTestData = {
@@ -296,39 +306,16 @@ static tokenize_test_data_t g_doubleLineNullTestData = {
 
 b32 test_tokenize(void)
 {
-	if (!test_tokenize_lines(&g_emptyTestData))
-	{
-		return false;
-	}
-	if (!test_tokenize_lines(&g_singleLineTestData))
-	{
-		return false;
-	}
-	if (!test_tokenize_lines(&g_singleLineCRTestData))
-	{
-		return false;
-	}
-	if (!test_tokenize_lines(&g_singleLineLFTestData))
-	{
-		return false;
-	}
-	if (!test_tokenize_lines(&g_singleLineCRLFTestData))
-	{
-		return false;
-	}
-	if (!test_tokenize_lines(&g_doubleLineTestData))
-	{
-		return false;
-	}
-	if (!test_tokenize_lines(&g_doubleLineLFTestData))
-	{
-		return false;
-	}
-	if (!test_tokenize_lines(&g_doubleLineNullTestData))
-	{
-		return false;
-	}
-	return true;
+	b32 ret = true;
+	ret = test_tokenize_lines(&g_emptyTestData) && ret;
+	ret = test_tokenize_lines(&g_singleLineTestData) && ret;
+	ret = test_tokenize_lines(&g_singleLineCRTestData) && ret;
+	ret = test_tokenize_lines(&g_singleLineLFTestData) && ret;
+	ret = test_tokenize_lines(&g_singleLineCRLFTestData) && ret;
+	ret = test_tokenize_lines(&g_doubleLineTestData) && ret;
+	ret = test_tokenize_lines(&g_doubleLineLFTestData) && ret;
+	ret = test_tokenize_lines(&g_doubleLineNullTestData) && ret;
+	return ret;
 }
 
 #endif // #if defined(MC_COMMON_TESTS) && MC_COMMON_TESTS

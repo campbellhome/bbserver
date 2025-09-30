@@ -1,8 +1,8 @@
 // raddbg 0.9.21 project file
 
+recent_file: path: "../mc_common/src/tokenize.c"
 recent_file: path: "../mc_imgui/src/fonts.cpp"
 recent_file: path: "../src/recorded_session.c"
-recent_file: path: "../mc_common/src/tokenize.c"
 recent_file: path: "../thirdparty/imgui/imgui_draw.cpp"
 recent_file: path: "../thirdparty/imgui/misc/freetype/imgui_freetype.cpp"
 recent_file: path: "../src/ui_view.cpp"
@@ -34,13 +34,11 @@ target:
   executable: "../bin/Debug_v143/bb_d.exe"
   working_directory: "../bin/Debug_v143"
   label: "Blackbox Debug"
-  enabled: 1
 }
 target:
 {
   executable: "../bin/Release_v143/bb.exe"
   working_directory: "../bin/Release_v143"
-  enabled: 0
   label: "Blackbox Release"
 }
 target:
@@ -57,6 +55,11 @@ target:
 {
   executable: "../bin/Debug_v143/bboxtolog.exe"
   working_directory: "../bin/Debug_v143"
-  enabled: 0
   arguments: "\"C:\\Users\\campb\\AppData\\Local\\bb\\bbclient matt\\{bac26e82-9caa-11f0-9d1e-fff30e766d60}bbclient matt.bbox\""
+}
+target:
+{
+  executable: "../mc_imgui/bin/mc_imgui_example_Debug_v143/mc_imgui_example_d.exe"
+  working_directory: "../mc_imgui/bin/mc_imgui_example_Debug_v143/"
+  enabled: 1
 }

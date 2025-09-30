@@ -626,12 +626,6 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 	}
 	sb_append(&s_reconstructedLogText, decoded->packet.logText.text);
 
-	// TODO: hack add trailing \n or tokenizeLine below will include the \0 in the contents of the last subline
-	if (s_reconstructedLogText.count > 1 && s_reconstructedLogText.data[s_reconstructedLogText.count - 2] != '\n')
-	{
-		sb_append_char(&s_reconstructedLogText, '\n');
-	}
-
 	recorded_log_lines_t recordedLogLines = { BB_EMPTY_INITIALIZER };
 	span_t linesCursor = { s_reconstructedLogText.data, s_reconstructedLogText.data + s_reconstructedLogText.count - 1 };
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))

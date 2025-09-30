@@ -1026,15 +1026,6 @@ static void bbgrep_log_packet(bb_decoded_packet_t* decoded, process_file_data_t*
 {
 	vfilter_data_t* vfilter_data = process_file_data->userdata;
 	vfilter_data->recordedLog.packet = *decoded;
-	vfilter_data->recordedLog.numLines = 0;
-	for (u32 i = 0; i < g_partialLogs.count; ++i)
-	{
-		const bb_decoded_packet_t* partial = g_partialLogs.data + i;
-		if (partial->header.threadId == decoded->header.threadId)
-		{
-			++vfilter_data->recordedLog.numLines;
-		}
-	}
 	queue_packet(decoded, stdout, vfilter_data);
 	vfilter_data->recordedLog.sessionLogIndex++;
 }
