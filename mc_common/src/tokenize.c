@@ -124,7 +124,7 @@ span_t tokenizeLine(span_t* cursor)
 		{
 			cursor->start = NULL;
 		}
-		if (!cursor->start && retEnd - retStart <= 1)
+		if (!cursor->start && retEnd - retStart == 0)
 		{
 			retStart = retEnd = NULL;
 		}
@@ -304,6 +304,18 @@ static tokenize_test_data_t g_doubleLineNullTestData = {
 	44
 };
 
+static const char* g_jsonTestResults[] = {
+	"{",
+	"    \"test\": true",
+	"}"
+};
+static tokenize_test_data_t g_jsonTestData = {
+	"tokenize json",
+	"{\n    \"test\": true\n}",
+	g_jsonTestResults,
+	3
+};
+
 b32 test_tokenize(void)
 {
 	b32 ret = true;
@@ -315,6 +327,7 @@ b32 test_tokenize(void)
 	ret = test_tokenize_lines(&g_doubleLineTestData) && ret;
 	ret = test_tokenize_lines(&g_doubleLineLFTestData) && ret;
 	ret = test_tokenize_lines(&g_doubleLineNullTestData) && ret;
+	ret = test_tokenize_lines(&g_jsonTestData) && ret;
 	return ret;
 }
 
