@@ -11,6 +11,7 @@
 #include "str.h"
 #include "va.h"
 
+#include "bbstats.h"
 #include "sb.h"
 #include "sdict.h"
 #include "uuid_rfc4122/sysdep.h"
@@ -18,6 +19,20 @@
 
 #include <string.h>
 
+
+void bbstats_process_file_data_reset(bbstats_process_file_data_t *val)
+{
+	if(val) {
+	}
+}
+bbstats_process_file_data_t bbstats_process_file_data_clone(const bbstats_process_file_data_t *src)
+{
+	bbstats_process_file_data_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.elapsedMillis = src->elapsedMillis;
+	}
+	return dst;
+}
 
 void vfilter_token_reset(vfilter_token_t *val)
 {

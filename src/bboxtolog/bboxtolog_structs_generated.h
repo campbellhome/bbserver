@@ -19,6 +19,7 @@ struct sdictEntry_s;
 struct sdict_s;
 struct tag_sdicts;
 struct uuid_node_s;
+struct bbstats_process_file_data_s;
 struct vfilter_token_s;
 struct vfilter_tokens_s;
 struct vfilter_error_s;
@@ -33,6 +34,7 @@ typedef struct sdictEntry_s sdictEntry_t;
 typedef struct sdict_s sdict_t;
 typedef struct tag_sdicts sdicts;
 typedef struct uuid_node_s uuid_node_t;
+typedef struct bbstats_process_file_data_s bbstats_process_file_data_t;
 typedef struct vfilter_token_s vfilter_token_t;
 typedef struct vfilter_tokens_s vfilter_tokens_t;
 typedef struct vfilter_error_s vfilter_error_t;
@@ -47,6 +49,7 @@ void sdictEntry_reset(sdictEntry_t *val);
 void sdict_reset(sdict_t *val);
 void sdicts_reset(sdicts *val);
 void uuid_node_reset(uuid_node_t *val);
+void bbstats_process_file_data_reset(bbstats_process_file_data_t *val);
 void vfilter_token_reset(vfilter_token_t *val);
 void vfilter_tokens_reset(vfilter_tokens_t *val);
 void vfilter_error_reset(vfilter_error_t *val);
@@ -72,6 +75,9 @@ sdicts sdicts_clone(const sdicts *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_uuid_node_clone)
 uuid_node_t uuid_node_clone(const uuid_node_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_bbstats_process_file_data_clone)
+bbstats_process_file_data_t bbstats_process_file_data_clone(const bbstats_process_file_data_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_vfilter_token_clone)
 vfilter_token_t vfilter_token_clone(const vfilter_token_t *src);

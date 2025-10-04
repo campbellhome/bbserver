@@ -6,12 +6,14 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #endif
 
 #include "bb.h"
+#include "bbstats.h"
 #include "bbclient/bb_array.h"
 #include "bbclient/bb_file.h"
 #include "bbclient/bb_malloc.h"
 #include "bbclient/bb_packet.h"
 #include "bbclient/bb_string.h"
 #include "bbclient/bb_time.h"
+#include "bboxtolog_utils.h"
 #include "crt_leak_check.h"
 #include "path_utils.h"
 #include "sb.h"
@@ -48,6 +50,7 @@ typedef enum tag_program
 	kProgram_bbtail,
 	kProgram_bbgrep,
 	kProgram_bboxtojson,
+	kProgram_bbstats,
 } program;
 
 typedef enum tag_exitCode
@@ -119,9 +122,25 @@ static sqlite3* db;
 #endif
 static const char* g_sqlCommand;
 
-static void print_stderr(const char* text)
+void print_stderr(const char* text)
 {
 	fputs(text, stderr);
+#if BB_USING(BB_PLATFORM_WINDOWS)
+	OutputDebugStringA(text);
+#endif
+}
+
+void print_stdout(const char* text)
+{
+	fputs(text, stdout);
+#if BB_USING(BB_PLATFORM_WINDOWS)
+	OutputDebugStringA(text);
+#endif
+}
+
+void print_fp(const char* text, FILE *fp)
+{
+	fputs(text, fp);
 #if BB_USING(BB_PLATFORM_WINDOWS)
 	OutputDebugStringA(text);
 #endif
@@ -228,10 +247,7 @@ static void print_lines(logPacket_t packet, FILE* ofp)
 		const char* filename = (g_pathToPrint && g_printFilename) ? va("%s: ", g_pathToPrint) : "";
 		const char* logLevel = (packet.logLevel != kBBLogLevel_Log) ? va("[%s]", bb_get_log_level_name(packet.logLevel, "")) : "";
 		sb_t text = sb_from_va("%s[%lld][%s]%s %.*s\n", filename, packet.ms, category, logLevel, (int)(line.end - line.start), line.start);
-		fputs(sb_get(&text), ofp);
-#if BB_USING(BB_PLATFORM_WINDOWS)
-		OutputDebugStringA(sb_get(&text));
-#endif
+		print_fp(sb_get(&text), ofp);
 		sb_reset(&text);
 	}
 }
@@ -420,46 +436,58 @@ static b32 test_vfilter(vfilter_data_t* vfilter_data)
 	return true;
 }
 
-static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp, vfilter_data_t* vfilter_data)
+process_packet_data_t build_packet_data(const bb_decoded_packet_t* decoded)
 {
-	sb_t lines = { BB_EMPTY_INITIALIZER };
-	u32 numPartialLogsUsed = 0;
+	process_packet_data_t data = { BB_EMPTY_INITIALIZER };
+	data.threadId = decoded->header.threadId;
+	data.milliseconds = (s64)((decoded->header.timestamp - g_initialTimestamp) * g_millisPerTick);
+
 	for (u32 i = 0; i < g_partialLogs.count; ++i)
 	{
 		const bb_decoded_packet_t* partial = g_partialLogs.data + i;
 		if (partial->header.threadId == decoded->header.threadId)
 		{
-			sb_append(&lines, partial->packet.logText.text);
-			++numPartialLogsUsed;
+			sb_append(&data.lines, partial->packet.logText.text);
+			++data.numPartialLogsUsed;
 		}
 	}
-	sb_append(&lines, decoded->packet.logText.text);
+	sb_append(&data.lines, decoded->packet.logText.text);
 
-	s64 ms = (s64)((decoded->header.timestamp - g_initialTimestamp) * g_millisPerTick);
-	if (test_verbosity(decoded) && test_sql(decoded, sb_get(&lines)) && test_vfilter(vfilter_data))
-	{
-		queue_lines(lines, decoded->packet.logText.categoryId, decoded->packet.logText.level, ms, ofp);
-	}
-	else
-	{
-		sb_reset(&lines);
-	}
+	return data;
+}
 
-	if (!numPartialLogsUsed)
+void reset_packet_data(process_packet_data_t *data)
+{
+	if (data->numPartialLogsUsed)
 	{
-		return;
-	}
-
-	u32 numPartialLogs = g_partialLogs.count;
-	for (u32 reverseIndex = 0; reverseIndex < numPartialLogs; ++reverseIndex)
-	{
-		u32 i = numPartialLogs - reverseIndex - 1;
-		const bb_decoded_packet_t* partial = g_partialLogs.data + i;
-		if (partial->header.threadId == decoded->header.threadId)
+		u32 numPartialLogs = g_partialLogs.count;
+		for (u32 reverseIndex = 0; reverseIndex < numPartialLogs; ++reverseIndex)
 		{
-			bba_erase(g_partialLogs, i);
+			u32 i = numPartialLogs - reverseIndex - 1;
+			const bb_decoded_packet_t* partial = g_partialLogs.data + i;
+			if (partial->header.threadId == data->threadId)
+			{
+				bba_erase(g_partialLogs, i);
+			}
 		}
 	}
+	sb_reset(&data->lines);
+}
+
+static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp, vfilter_data_t* vfilter_data)
+{
+	process_packet_data_t packetData = build_packet_data(decoded);
+
+	if (test_verbosity(decoded) && test_sql(decoded, sb_get(&packetData.lines)) && test_vfilter(vfilter_data))
+	{
+		queue_lines(packetData.lines, decoded->packet.logText.categoryId, decoded->packet.logText.level, packetData.milliseconds, ofp);
+		
+		// ownership of packetData.lines transferred, so clear out packetData.lines to avoid reset
+		sb_t empty = { BB_EMPTY_INITIALIZER };
+		packetData.lines = empty;
+	}
+
+	reset_packet_data(&packetData);
 }
 
 static void print_queued(FILE* ofp)
@@ -470,18 +498,6 @@ static void print_queued(FILE* ofp)
 		print_lines(*packet, ofp);
 	}
 }
-
-typedef struct process_file_data_s process_file_data_t;
-typedef void(tail_catchup_func_t)(process_file_data_t* process_file_data);
-typedef void(packet_func_t)(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data);
-
-typedef struct process_file_data_s
-{
-	const char* source;
-	tail_catchup_func_t* tail_catchup_func;
-	packet_func_t* packet_func;
-	void* userdata;
-} process_file_data_t;
 
 static int process_bbox_file(process_file_data_t* process_file_data)
 {
@@ -1007,7 +1023,7 @@ static int process_plaintext_file(process_file_data_t* process_file_data)
 	return process_file_data != 0;
 }
 
-static int process_file(process_file_data_t* process_file_data)
+int process_file(process_file_data_t* process_file_data)
 {
 	const char* ext = strrchr(process_file_data->source, '.');
 	b32 plaintext = !ext || bb_stricmp(ext, ".bbox");
@@ -1048,34 +1064,6 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 
 	g_pathToPrint = NULL;
 	vfilter_reset(&vfilter_data.view.vfilter);
-}
-
-static void separateFilename(const char* filename, sb_t* base, sb_t* ext)
-{
-	const char* separator = strrchr(filename, '.');
-	if (separator)
-	{
-		span_t baseSpan = { filename, separator };
-		*base = sb_from_span(baseSpan);
-		*ext = sb_from_c_string(separator + 1);
-	}
-	else
-	{
-		*base = sb_from_c_string(filename);
-	}
-}
-
-static b32 wildcardMatch(const char* pattern, const char* input)
-{
-	// skip UE backups for now
-	if (bb_stristr(input, "-backup-") != NULL)
-		return false;
-
-	// only support * or full match for now
-	if (!*pattern || bb_stricmp(pattern, "*") == 0)
-		return true;
-
-	return bb_stristr(input, pattern) != NULL;
 }
 
 static int bbgrep(const char* filter, sb_t* dirName, const char* pattern, b32 bRecursive)
@@ -1429,6 +1417,10 @@ int main_loop(int argc, char** argv)
 	{
 		g_program = kProgram_bboxtojson;
 	}
+	else if (!bb_stricmp(g_exe, "bbstats"))
+	{
+		g_program = kProgram_bbstats;
+	}
 
 	const char* source = NULL;
 	char* target = NULL;
@@ -1521,6 +1513,10 @@ int main_loop(int argc, char** argv)
 			{
 				g_program = kProgram_bboxtojson;
 			}
+			else if (!strcmp(arg, "-bbstats"))
+			{
+				g_program = kProgram_bbstats;
+			}
 			else if (!bb_strnicmp(arg, "-sql=", 5))
 			{
 				g_sqlCommand = arg + 5;
@@ -1569,6 +1565,15 @@ int main_loop(int argc, char** argv)
 				return usage();
 			}
 		}
+	}
+
+	if (g_program == kProgram_bbstats)
+	{
+		if (target)
+		{
+			bb_free(target);
+		}
+		return bbstats_main(argc, argv);
 	}
 
 	if (!source)

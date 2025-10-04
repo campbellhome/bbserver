@@ -142,11 +142,15 @@ copy /y $(OutDir)$(TargetName).exe $(OutDir)bboxtojson.exe</Command>
     <ClCompile Include="..\src\view_filter\view_filter.c" />
     <ClCompile Include="..\src\view_filter\view_filter_legacy.c" />
     <ClCompile Include="..\src\view_filter\view_filter_sql.c" />
+    <ClCompile Include="..\src\bboxtolog\bbstats.c" />
+    <ClCompile Include="..\src\bboxtolog\bboxtolog_utils.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\bboxtolog\bboxtolog_preproc.json" />
     <None Include="..\src\bboxtolog\bboxtolog_structs_generated.h" />
     <None Include="..\src\bboxtolog\bboxtolog_json_generated.h" />
+    <None Include="..\src\bboxtolog\bbstats.h" />
+    <None Include="..\src\bboxtolog\bboxtolog_utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
