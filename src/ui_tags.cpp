@@ -71,6 +71,30 @@ static void UITags_CategoryToolTip(recorded_category_t* category)
 	}
 }
 
+static void UITags_TagsPopup(void)
+{
+	if (ImGui::BeginPopupContextItem("TagsPopup"))
+	{
+		if (g_config.showUnusedTagCategories)
+		{
+			if (ImGui::MenuItem("Hide unused categories"))
+			{
+				g_config.showUnusedTagCategories = false;
+				config_write(&g_config);
+			}
+		}
+		else
+		{
+			if (ImGui::MenuItem("Show unused categories"))
+			{
+				g_config.showUnusedTagCategories = true;
+				config_write(&g_config);
+			}
+		}
+		ImGui::EndPopup();
+	}
+}
+
 static void UITags_TagToolTip(tag_t* tag)
 {
 	if (ImGui::IsTooltipActive())
@@ -395,6 +419,26 @@ static void UITags_SelectedCategories_RemoveTag(view_t* view, const char* tagNam
 	tag_apply_tag_to_all_views();
 }
 
+static void UITags_UnusedTagCategoryPopup(tag_t *tag, const char* categoryName)
+{
+	if (ImGui::BeginPopupContextItem(va("%sContextMenu", categoryName)))
+	{
+		if (ImGui::BeginMenu("Remove Tag"))
+		{
+			const char* tagName = sb_get(&tag->name);
+			if (ImGui::MenuItem(tagName))
+			{
+				tag_remove_category(tagName, categoryName);
+				tags_write();
+				tag_apply_tag_to_all_views();
+			}
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
 static void UITags_CategoryPopup(view_t* view, u32 viewCategoryIndex)
 {
 	view_category_t* viewCategory = view->categories.data + viewCategoryIndex;
@@ -544,6 +588,7 @@ void UITags_Update(view_t* view)
 	if (ImGui::CollapsingHeader("Tags", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		ImGui::PushID("TagsHeader");
+		UITags_TagsPopup();
 		for (u32 tagIndex = 0; tagIndex < g_tags.tags.count; ++tagIndex)
 		{
 			tag_t* tag = g_tags.tags.data + tagIndex;
@@ -624,6 +669,31 @@ void UITags_Update(view_t* view)
 					}
 					else
 					{
+						if (g_config.showUnusedTagCategories)
+						{
+							ImGui::PushID((int)categoryIndex);
+							ImGui::BeginDisabled();
+							b32 checked = false;
+							ImGui::Checkbox("", &checked);
+							ImGui::EndDisabled();
+							ImGui::SameLine();
+							bb_log_level_e logLevel = kBBLogLevel_VeryVerbose;
+							LogLevelColorizer colorizer(logLevel);
+							ScopedTextShadows shadows(logLevel);
+							ImVec2 pos = ImGui::GetIconPosForText();
+							ImGui::TextShadow(categoryName);
+							selected = &checked;
+							ImGui::Selectable(categoryName, selected);
+							if (tag->visibility == kTagVisibility_AlwaysHidden)
+							{
+								ImVec4 color4 = GetTextColorForLogLevel(logLevel);
+								color4.w *= 0.8f;
+								ImColor color = ImGui::GetColorU32(color4);
+								ImGui::DrawStrikethrough(categoryName, color, pos);
+							}
+							UITags_UnusedTagCategoryPopup(tag, categoryName);
+							ImGui::PopID();
+						}
 						continue;
 					}
 
@@ -666,6 +736,7 @@ void UITags_Update(view_t* view)
 						ImGui::DrawStrikethrough(categoryName, color, pos);
 					}
 					UITags_CategoryToolTip(recordedCategory);
+					UITags_CategoryPopup(view, viewCategoryIndex);
 					ImGui::PopID();
 				}
 				ImGui::TreePop();

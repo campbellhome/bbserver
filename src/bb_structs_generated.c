@@ -393,6 +393,8 @@ config_t config_clone(const config_t *src)
 		dst.showEmptyCategories = src->showEmptyCategories;
 		dst.listenProtocol = src->listenProtocol;
 		dst.disableLogDeletion = src->disableLogDeletion;
+		dst.showUnusedTagCategories = src->showUnusedTagCategories;
+		dst.pad = src->pad;
 	}
 	return dst;
 }

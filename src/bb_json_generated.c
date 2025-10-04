@@ -319,6 +319,8 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.showEmptyCategories = json_object_get_boolean_safe(obj, "showEmptyCategories");
 			dst.listenProtocol = json_deserialize_configListenProtocol_t(json_object_get_value(obj, "listenProtocol"));
 			dst.disableLogDeletion = json_object_get_boolean_safe(obj, "disableLogDeletion");
+			dst.showUnusedTagCategories = json_object_get_boolean_safe(obj, "showUnusedTagCategories");
+			dst.pad = (u32)json_object_get_number(obj, "pad");
 		}
 	}
 	return dst;
@@ -1120,6 +1122,8 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "showEmptyCategories", src->showEmptyCategories);
 		json_object_set_value(obj, "listenProtocol", json_serialize_configListenProtocol_t(src->listenProtocol));
 		json_object_set_boolean(obj, "disableLogDeletion", src->disableLogDeletion);
+		json_object_set_boolean(obj, "showUnusedTagCategories", src->showUnusedTagCategories);
+		json_object_set_number(obj, "pad", src->pad);
 	}
 	return val;
 }
