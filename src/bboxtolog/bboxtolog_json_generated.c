@@ -11,6 +11,7 @@
 #include "json_utils.h"
 #include "va.h"
 
+#include "bboxtolog_utils.h"
 #include "bbstats.h"
 #include "sb.h"
 #include "sdict.h"

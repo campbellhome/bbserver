@@ -19,7 +19,15 @@ struct sdictEntry_s;
 struct sdict_s;
 struct tag_sdicts;
 struct uuid_node_s;
+struct id_name_s;
+struct id_names_s;
+struct bbstats_bucket_s;
+struct bbstats_buckets_s;
+struct bbstats_fileHashEntry;
+struct bbstats_fileHashChain;
+struct bbstats_fileHashTable;
 struct bbstats_process_file_data_s;
+struct bbstats_data_s;
 struct vfilter_token_s;
 struct vfilter_tokens_s;
 struct vfilter_error_s;
@@ -34,7 +42,15 @@ typedef struct sdictEntry_s sdictEntry_t;
 typedef struct sdict_s sdict_t;
 typedef struct tag_sdicts sdicts;
 typedef struct uuid_node_s uuid_node_t;
+typedef struct id_name_s id_name_t;
+typedef struct id_names_s id_names_t;
+typedef struct bbstats_bucket_s bbstats_bucket_t;
+typedef struct bbstats_buckets_s bbstats_buckets_t;
+typedef struct bbstats_fileHashEntry bbstats_fileHashEntry;
+typedef struct bbstats_fileHashChain bbstats_fileHashChain;
+typedef struct bbstats_fileHashTable bbstats_fileHashTable;
 typedef struct bbstats_process_file_data_s bbstats_process_file_data_t;
+typedef struct bbstats_data_s bbstats_data_t;
 typedef struct vfilter_token_s vfilter_token_t;
 typedef struct vfilter_tokens_s vfilter_tokens_t;
 typedef struct vfilter_error_s vfilter_error_t;
@@ -49,7 +65,15 @@ void sdictEntry_reset(sdictEntry_t *val);
 void sdict_reset(sdict_t *val);
 void sdicts_reset(sdicts *val);
 void uuid_node_reset(uuid_node_t *val);
+void id_name_reset(id_name_t *val);
+void id_names_reset(id_names_t *val);
+void bbstats_bucket_reset_from_loc(const char *file, int line, bbstats_bucket_t *val);
+void bbstats_buckets_reset(bbstats_buckets_t *val);
+void bbstats_fileHashEntry_reset_from_loc(const char *file, int line, bbstats_fileHashEntry *val);
+void bbstats_fileHashChain_reset_from_loc(const char *file, int line, bbstats_fileHashChain *val);
+void bbstats_fileHashTable_reset_from_loc(const char *file, int line, bbstats_fileHashTable *val);
 void bbstats_process_file_data_reset(bbstats_process_file_data_t *val);
+void bbstats_data_reset(bbstats_data_t *val);
 void vfilter_token_reset(vfilter_token_t *val);
 void vfilter_tokens_reset(vfilter_tokens_t *val);
 void vfilter_error_reset(vfilter_error_t *val);
@@ -76,8 +100,32 @@ sdicts sdicts_clone(const sdicts *src);
 #if !defined(__cplusplus) || defined(DECLARE_uuid_node_clone)
 uuid_node_t uuid_node_clone(const uuid_node_t *src);
 #endif
+#if !defined(__cplusplus) || defined(DECLARE_id_name_clone)
+id_name_t id_name_clone(const id_name_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_id_names_clone)
+id_names_t id_names_clone(const id_names_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_bbstats_bucket_clone)
+bbstats_bucket_t bbstats_bucket_clone_from_loc(const char *file, int line, const bbstats_bucket_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_bbstats_buckets_clone)
+bbstats_buckets_t bbstats_buckets_clone(const bbstats_buckets_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_bbstats_fileHashEntry_clone)
+bbstats_fileHashEntry bbstats_fileHashEntry_clone_from_loc(const char *file, int line, const bbstats_fileHashEntry *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_bbstats_fileHashChain_clone)
+bbstats_fileHashChain bbstats_fileHashChain_clone_from_loc(const char *file, int line, const bbstats_fileHashChain *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_bbstats_fileHashTable_clone)
+bbstats_fileHashTable bbstats_fileHashTable_clone_from_loc(const char *file, int line, const bbstats_fileHashTable *src);
+#endif
 #if !defined(__cplusplus) || defined(DECLARE_bbstats_process_file_data_clone)
 bbstats_process_file_data_t bbstats_process_file_data_clone(const bbstats_process_file_data_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_bbstats_data_clone)
+bbstats_data_t bbstats_data_clone(const bbstats_data_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_vfilter_token_clone)
 vfilter_token_t vfilter_token_clone(const vfilter_token_t *src);
@@ -111,6 +159,18 @@ vfilter_t vfilter_clone(const vfilter_t *src);
 #if !defined(sbs_reset)
 #define sbs_reset(var) sbs_reset_from_loc(__FILE__, __LINE__, var);
 #endif
+#if !defined(bbstats_bucket_reset)
+#define bbstats_bucket_reset(var) bbstats_bucket_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(bbstats_fileHashEntry_reset)
+#define bbstats_fileHashEntry_reset(var) bbstats_fileHashEntry_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(bbstats_fileHashChain_reset)
+#define bbstats_fileHashChain_reset(var) bbstats_fileHashChain_reset_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(bbstats_fileHashTable_reset)
+#define bbstats_fileHashTable_reset(var) bbstats_fileHashTable_reset_from_loc(__FILE__, __LINE__, var);
+#endif
 
 #if !defined(sb_clone)
 #define sb_clone(var) sb_clone_from_loc(__FILE__, __LINE__, var);
@@ -118,3 +178,26 @@ vfilter_t vfilter_clone(const vfilter_t *src);
 #if !defined(sbs_clone)
 #define sbs_clone(var) sbs_clone_from_loc(__FILE__, __LINE__, var);
 #endif
+#if !defined(bbstats_bucket_clone)
+#define bbstats_bucket_clone(var) bbstats_bucket_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(bbstats_fileHashEntry_clone)
+#define bbstats_fileHashEntry_clone(var) bbstats_fileHashEntry_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(bbstats_fileHashChain_clone)
+#define bbstats_fileHashChain_clone(var) bbstats_fileHashChain_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+#if !defined(bbstats_fileHashTable_clone)
+#define bbstats_fileHashTable_clone(var) bbstats_fileHashTable_clone_from_loc(__FILE__, __LINE__, var);
+#endif
+
+u64 bbstats_fileHashEntry_hash(const bbstats_fileHashEntry *entry);
+int bbstats_fileHashEntry_compare(const bbstats_fileHashEntry *a, const bbstats_fileHashEntry *b);
+bbstats_fileHashEntry *bbstats_fileHashTable_find(bbstats_fileHashTable *table, const char *name);
+bbstats_fileHashEntry *bbstats_fileHashTable_insert(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry);
+bbstats_fileHashEntry *bbstats_fileHashTable_insertmulti(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry);
+bbstats_fileHashEntry *bbstats_fileHashTable_find_internal(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry, u64 hashValue);
+bbstats_fileHashEntry *bbstats_fileHashTable_insert_internal(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry, u64 hashValue);
+bbstats_fileHashEntry *bbstats_fileHashTable_insertmulti_internal(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry, u64 hashValue);
+void bbstats_fileHashTable_remove(bbstats_fileHashTable *table, const char *name);
+void bbstats_fileHashTable_removemulti(bbstats_fileHashTable *table, const char *name);

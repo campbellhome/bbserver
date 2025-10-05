@@ -11,6 +11,7 @@
 #include "str.h"
 #include "va.h"
 
+#include "bboxtolog_utils.h"
 #include "bbstats.h"
 #include "sb.h"
 #include "sdict.h"
@@ -20,16 +21,193 @@
 #include <string.h>
 
 
+void id_name_reset(id_name_t *val)
+{
+	if(val) {
+		sb_reset(&val->name);
+	}
+}
+id_name_t id_name_clone(const id_name_t *src)
+{
+	id_name_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.id = src->id;
+		dst.pad = src->pad;
+		dst.name = sb_clone(&src->name);
+	}
+	return dst;
+}
+
+void id_names_reset(id_names_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			id_name_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+id_names_t id_names_clone(const id_names_t *src)
+{
+	id_names_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = id_name_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void bbstats_bucket_reset_from_loc(const char *file, int line, bbstats_bucket_t *val)
+{
+	if(val) {
+		sb_reset_from_loc(file, line, &val->key);
+	}
+}
+bbstats_bucket_t bbstats_bucket_clone_from_loc(const char *file, int line, const bbstats_bucket_t *src)
+{
+	bbstats_bucket_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.key = sb_clone_from_loc(file, line, &src->key);
+		dst.elapsedMillis = src->elapsedMillis;
+		dst.totalLines = src->totalLines;
+		dst.totalBytes = src->totalBytes;
+	}
+	return dst;
+}
+
+void bbstats_buckets_reset(bbstats_buckets_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			bbstats_bucket_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+bbstats_buckets_t bbstats_buckets_clone(const bbstats_buckets_t *src)
+{
+	bbstats_buckets_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = bbstats_bucket_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void bbstats_fileHashEntry_reset_from_loc(const char *file, int line, bbstats_fileHashEntry *val)
+{
+	if(val) {
+		sb_reset_from_loc(file, line, &val->key);
+	}
+}
+bbstats_fileHashEntry bbstats_fileHashEntry_clone_from_loc(const char *file, int line, const bbstats_fileHashEntry *src)
+{
+	bbstats_fileHashEntry dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.key = sb_clone_from_loc(file, line, &src->key);
+		dst.startMillis = src->startMillis;
+		dst.endMillis = src->endMillis;
+		dst.totalLines = src->totalLines;
+		dst.totalBytes = src->totalBytes;
+	}
+	return dst;
+}
+
+void bbstats_fileHashChain_reset_from_loc(const char *file, int line, bbstats_fileHashChain *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			bbstats_fileHashEntry_reset_from_loc(file, line, val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+bbstats_fileHashChain bbstats_fileHashChain_clone_from_loc(const char *file, int line, const bbstats_fileHashChain *src)
+{
+	bbstats_fileHashChain dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = bbstats_fileHashEntry_clone_from_loc(file, line, src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void bbstats_fileHashTable_reset_from_loc(const char *file, int line, bbstats_fileHashTable *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			bbstats_fileHashChain_reset_from_loc(file, line, val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+bbstats_fileHashTable bbstats_fileHashTable_clone_from_loc(const char *file, int line, const bbstats_fileHashTable *src)
+{
+	bbstats_fileHashTable dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = bbstats_fileHashChain_clone_from_loc(file, line, src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
 void bbstats_process_file_data_reset(bbstats_process_file_data_t *val)
 {
 	if(val) {
+		sb_reset(&val->path);
+		id_names_reset(&val->categories);
+		id_names_reset(&val->filenames);
+		bbstats_fileHashTable_reset(&val->locationHashTable);
+		bbstats_fileHashTable_reset(&val->categoryHashTable);
 	}
 }
 bbstats_process_file_data_t bbstats_process_file_data_clone(const bbstats_process_file_data_t *src)
 {
 	bbstats_process_file_data_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
+		dst.path = sb_clone(&src->path);
+		dst.appInfo = src->appInfo;
 		dst.elapsedMillis = src->elapsedMillis;
+		dst.categories = id_names_clone(&src->categories);
+		dst.filenames = id_names_clone(&src->filenames);
+		dst.locationHashTable = bbstats_fileHashTable_clone(&src->locationHashTable);
+		dst.categoryHashTable = bbstats_fileHashTable_clone(&src->categoryHashTable);
+	}
+	return dst;
+}
+
+void bbstats_data_reset(bbstats_data_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			bbstats_process_file_data_reset(val->data + i);
+		}
+		bba_free(*val);
+		sbs_reset(&val->applicationNames);
+	}
+}
+bbstats_data_t bbstats_data_clone(const bbstats_data_t *src)
+{
+	bbstats_data_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = bbstats_process_file_data_clone(src->data + i);
+			}
+		}
+		dst.applicationNames = sbs_clone(&src->applicationNames);
 	}
 	return dst;
 }
@@ -176,4 +354,116 @@ vfilter_t vfilter_clone(const vfilter_t *src)
 		dst.valid = src->valid;
 	}
 	return dst;
+}
+
+u64 bbstats_fileHashEntry_hash(const bbstats_fileHashEntry *entry)
+{
+	return strsimplehash(sb_get(&entry->key));
+}
+
+int bbstats_fileHashEntry_compare(const bbstats_fileHashEntry *a, const bbstats_fileHashEntry *b)
+{
+	return strcmp(sb_get(&a->key), sb_get(&b->key));
+}
+
+bbstats_fileHashEntry *bbstats_fileHashTable_find_internal(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry, u64 hashValue)
+{
+	BB_ASSERT_MSG(table->count, "need to initialize hash table count");
+	u32 chainIndex = hashValue % table->count;
+	bbstats_fileHashChain *chain = table->data + chainIndex;
+	for(u32 i = 0; i < chain->count; ++i) {
+		bbstats_fileHashEntry *existing = chain->data + i;
+		if(!bbstats_fileHashEntry_compare(existing, entry)) {
+			return existing;
+		}
+	}
+	return NULL;
+}
+
+bbstats_fileHashEntry *bbstats_fileHashTable_insert_internal(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry, u64 hashValue)
+{
+	BB_ASSERT_MSG(table->count, "need to initialize hash table count");
+	bbstats_fileHashEntry *result = bbstats_fileHashTable_find_internal(table, entry, hashValue);
+	if(!result) {
+		u32 chainIndex = hashValue % table->count;
+		bbstats_fileHashChain *chain = table->data + chainIndex;
+		result = bba_add_noclear(*chain, 1);
+		if(result != NULL) {
+			*result = bbstats_fileHashEntry_clone(entry);
+		}
+	}
+	
+	return result;
+}
+
+bbstats_fileHashEntry *bbstats_fileHashTable_insertmulti_internal(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry, u64 hashValue)
+{
+	u32 chainIndex = hashValue % table->count;
+	bbstats_fileHashChain *chain = table->data + chainIndex;
+	bbstats_fileHashEntry *result = bba_add_noclear(*chain, 1);
+	if(result != NULL) {
+		*result = bbstats_fileHashEntry_clone(entry);
+	}
+	
+	return result;
+}
+
+bbstats_fileHashEntry *bbstats_fileHashTable_find(bbstats_fileHashTable *table, const char *name)
+{
+	if(!name) {
+		name = "";
+	}
+	bbstats_fileHashEntry entry = { BB_EMPTY_INITIALIZER };
+	entry.key = sb_from_c_string_no_alloc(name);
+	u64 hashValue = bbstats_fileHashEntry_hash(&entry);
+	return bbstats_fileHashTable_find_internal(table, &entry, hashValue);
+}
+
+bbstats_fileHashEntry *bbstats_fileHashTable_insert(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry)
+{
+	u64 hashValue = bbstats_fileHashEntry_hash(entry);
+	return bbstats_fileHashTable_insert_internal(table, entry, hashValue);
+}
+
+bbstats_fileHashEntry *bbstats_fileHashTable_insertmulti(bbstats_fileHashTable *table, const bbstats_fileHashEntry *entry)
+{
+	u64 hashValue = bbstats_fileHashEntry_hash(entry);
+	return bbstats_fileHashTable_insertmulti_internal(table, entry, hashValue);
+}
+
+void bbstats_fileHashTable_remove(bbstats_fileHashTable *table, const char *name)
+{
+	bbstats_fileHashEntry entry = { BB_EMPTY_INITIALIZER };
+	entry.key = sb_from_c_string_no_alloc(name);
+	u64 hashValue = bbstats_fileHashEntry_hash(&entry);
+
+	u32 chainIndex = hashValue % table->count;
+	bbstats_fileHashChain *chain = table->data + chainIndex;
+	for(u32 i = 0; i < chain->count; ++i) {
+		bbstats_fileHashEntry *existing = chain->data + i;
+		if(!bbstats_fileHashEntry_compare(existing, &entry)) {
+			bbstats_fileHashEntry_reset(existing);
+			bba_erase(*chain, i);
+			return;
+		}
+	}
+}
+
+void bbstats_fileHashTable_removemulti(bbstats_fileHashTable *table, const char *name)
+{
+	bbstats_fileHashEntry entry = { BB_EMPTY_INITIALIZER };
+	entry.key = sb_from_c_string_no_alloc(name);
+	u64 hashValue = bbstats_fileHashEntry_hash(&entry);
+
+	u32 chainIndex = hashValue % table->count;
+	bbstats_fileHashChain *chain = table->data + chainIndex;
+	for(u32 i = 0; i < chain->count;) {
+		bbstats_fileHashEntry *existing = chain->data + i;
+		if(bbstats_fileHashEntry_compare(existing, &entry)) {
+			++i;
+		} else {
+			bbstats_fileHashEntry_reset(existing);
+			bba_erase(*chain, i);
+		}
+	}
 }

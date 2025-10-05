@@ -20,6 +20,24 @@ void print_fp(const char* text, FILE *fp);
 void separateFilename(const char* filename, sb_t* base, sb_t* ext);
 b32 wildcardMatch(const char* pattern, const char* input);
 
+AUTOSTRUCT typedef struct id_name_s
+{
+	u32 id;
+	u32 pad;
+	sb_t name;
+} id_name_t;
+
+AUTOSTRUCT typedef struct id_names_s
+{
+	id_name_t* data;
+	u32 count;
+	u32 allocated;
+} id_names_t;
+
+id_name_t id_names_find_non_null(id_names_t* names, u32 id);
+id_name_t* id_names_find(id_names_t* names, u32 id);
+id_name_t* id_names_find_or_add(id_names_t* names, u32 id, const char* name);
+
 typedef struct process_file_data_s process_file_data_t;
 typedef void(tail_catchup_func_t)(process_file_data_t* process_file_data);
 typedef void(packet_func_t)(bb_decoded_packet_t* decoded, process_file_data_t* process_file_data);
@@ -28,7 +46,8 @@ typedef struct process_file_data_s
 {
 	const char* source;
 	tail_catchup_func_t* tail_catchup_func;
-	packet_func_t* packet_func;
+	packet_func_t* log_packet_func;
+	packet_func_t* non_log_packet_func;
 	void* userdata;
 } process_file_data_t;
 

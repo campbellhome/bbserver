@@ -556,15 +556,19 @@ static int process_bbox_file(process_file_data_t* process_file_data)
 			{
 				if (g_program == kProgram_bboxtojson)
 				{
-					if (process_file_data->packet_func)
+					if (process_file_data->log_packet_func)
 					{
-						(*process_file_data->packet_func)(&decoded, process_file_data);
+						(*process_file_data->log_packet_func)(&decoded, process_file_data);
 					}
 				}
 				else if (bbpacket_is_app_info_type(decoded.type))
 				{
 					g_initialTimestamp = decoded.packet.appInfo.initialTimestamp;
 					g_millisPerTick = decoded.packet.appInfo.millisPerTick;
+					if (process_file_data->non_log_packet_func)
+					{
+						(*process_file_data->non_log_packet_func)(&decoded, process_file_data);
+					}
 				}
 				else
 				{
@@ -579,6 +583,10 @@ static int process_bbox_file(process_file_data_t* process_file_data)
 							c->id = decoded.packet.categoryId.id;
 							bb_strncpy(c->name, decoded.packet.categoryId.name, sizeof(c->name));
 						}
+						if (process_file_data->non_log_packet_func)
+						{
+							(*process_file_data->non_log_packet_func)(&decoded, process_file_data);
+						}
 						break;
 					}
 					case kBBPacketType_LogTextPartial:
@@ -590,13 +598,17 @@ static int process_bbox_file(process_file_data_t* process_file_data)
 					case kBBPacketType_LogText_v2:
 					case kBBPacketType_LogText:
 					{
-						if (process_file_data->packet_func)
+						if (process_file_data->log_packet_func)
 						{
-							(*process_file_data->packet_func)(&decoded, process_file_data);
+							(*process_file_data->log_packet_func)(&decoded, process_file_data);
 						}
 						break;
 					}
 					default:
+						if (process_file_data->non_log_packet_func)
+						{
+							(*process_file_data->non_log_packet_func)(&decoded, process_file_data);
+						}
 						break;
 					}
 					BB_WARNING_POP;
@@ -979,9 +991,9 @@ static int process_plaintext_file(process_file_data_t* process_file_data)
 						decoded.header.line = 0;
 						decoded.packet.logText.level = kBBLogLevel_Log;
 						finalize_plaintext_log_packet(&decoded, line.start, lineLen + 1);
-						if (process_file_data->packet_func)
+						if (process_file_data->log_packet_func)
 						{
-							(*process_file_data->packet_func)(&decoded, process_file_data);
+							(*process_file_data->log_packet_func)(&decoded, process_file_data);
 						}
 
 						lineEnd = line.end + 1;
@@ -1057,7 +1069,7 @@ static void bbgrep_file(const sb_t* path, const char* filter)
 	process_file_data_t process_file_data = { BB_EMPTY_INITIALIZER };
 
 	process_file_data.source = g_pathToPrint;
-	process_file_data.packet_func = &bbgrep_log_packet;
+	process_file_data.log_packet_func = &bbgrep_log_packet;
 	process_file_data.userdata = &vfilter_data;
 
 	process_file(&process_file_data);
@@ -1517,6 +1529,14 @@ int main_loop(int argc, char** argv)
 			{
 				g_program = kProgram_bbstats;
 			}
+			else if (!strcmp(arg, "-app") || !strcmp(arg, "--app") ||
+			         !strcmp(arg, "-platform") || !strcmp(arg, "--platform") ||
+			         !strcmp(arg, "-overall") || !strcmp(arg, "--overall") ||
+			         !strcmp(arg, "-bytes") || !strcmp(arg, "--bytes") ||
+			         !strcmp(arg, "-lines") || !strcmp(arg, "--lines"))
+			{
+				// bbstats arg - do nothing
+			}
 			else if (!bb_strnicmp(arg, "-sql=", 5))
 			{
 				g_sqlCommand = arg + 5;
@@ -1686,7 +1706,7 @@ int main_loop(int argc, char** argv)
 		bboxtojson_userdata_t userdata = { BB_EMPTY_INITIALIZER };
 
 		process_file_data.source = source;
-		process_file_data.packet_func = &bboxtojson_packet;
+		process_file_data.log_packet_func = &bboxtojson_packet;
 		process_file_data.userdata = &userdata;
 		userdata.value = json_value_init_array();
 		ret = process_file(&process_file_data);
@@ -1711,7 +1731,7 @@ int main_loop(int argc, char** argv)
 
 		process_file_data.source = source;
 		process_file_data.tail_catchup_func = &bboxtolog_tail_catchup;
-		process_file_data.packet_func = &bboxtolog_log_packet;
+		process_file_data.log_packet_func = &bboxtolog_log_packet;
 		process_file_data.userdata = &userdata;
 		userdata.ofp = (target) ? fopen(target, "wt") : stdout;
 
