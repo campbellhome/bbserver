@@ -64,6 +64,7 @@ static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 static int s_visibleLogLines;
 static bool g_tileToggle = true;
+static constexpr u32 g_logTruncationLen = 16u * 1024u;
 
 using namespace ImGui;
 
@@ -460,7 +461,12 @@ enum jsonExpansion_e
 	kJsonExpansion_Off,
 	kJsonExpansion_On,
 };
-static void BuildLogLine(view_t* view, view_log_t* viewLog, bool allColumns, sb_t* sb, crlf_e crlf, columnSpacer_e spacer, jsonExpansion_e jsonExpansion)
+enum logTruncation_e
+{
+	kLogTruncation_Off,
+	kLogTruncation_On,
+};
+static void BuildLogLine(view_t* view, view_log_t* viewLog, bool allColumns, sb_t* sb, crlf_e crlf, columnSpacer_e spacer, jsonExpansion_e jsonExpansion, logTruncation_e logTruncation)
 {
 	u32 logIndex = viewLog->sessionLogIndex;
 	u32 subLine = viewLog->subLine;
@@ -497,10 +503,10 @@ static void BuildLogLine(view_t* view, view_log_t* viewLog, bool allColumns, sb_
 	}
 
 	recorded_log_line_t recordedLogLine = sessionLog->lines.data[subLine];
-	bool bTrimmed = recordedLogLine.len > 16 * 1024;
+	bool bTrimmed = recordedLogLine.len > g_logTruncationLen && logTruncation == kLogTruncation_On;
 	if (bTrimmed)
 	{
-		recordedLogLine.len = 16 * 1024;
+		recordedLogLine.len = g_logTruncationLen;
 	}
 	span_t line = { decoded->packet.logText.text + recordedLogLine.offset, decoded->packet.logText.text + recordedLogLine.offset + recordedLogLine.len };
 
@@ -532,7 +538,7 @@ static void BuildLogLine(view_t* view, view_log_t* viewLog, bool allColumns, sb_
 	}
 }
 
-static void CopySelectedLogsToClipboard(view_t* view, bool allColumns, columnSpacer_e spacer)
+static void CopySelectedLogsToClipboard(view_t* view, bool allColumns, columnSpacer_e spacer, jsonExpansion_e jsonExpansion, logTruncation_e logTruncation)
 {
 	u32 i;
 	sb_t sb;
@@ -554,7 +560,7 @@ static void CopySelectedLogsToClipboard(view_t* view, bool allColumns, columnSpa
 		view_log_t* log = view->visibleLogs.data + i;
 		if (log->selected)
 		{
-			BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer, kJsonExpansion_On);
+			BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer, jsonExpansion, logTruncation);
 		}
 	}
 	const char* clipboardText = sb_get(&sb);
@@ -578,7 +584,7 @@ static void UIRecordedView_SaveLog(view_t* view, bool allColumns, columnSpacer_e
 	for (u32 i = 0; i < view->visibleLogs.count; ++i)
 	{
 		view_log_t* log = view->visibleLogs.data + i;
-		BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer, kJsonExpansion_On);
+		BuildLogLine(view, log, allColumns, &sb, kAppendCRLF, spacer, kJsonExpansion_Off, kLogTruncation_Off);
 	}
 	if (sb.count > 1)
 	{
@@ -790,10 +796,10 @@ static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* cat
 		for (u32 lineIndex = 0; lineIndex < sessionLog->lines.count; ++lineIndex)
 		{
 			recorded_log_line_t recordedLogLine = sessionLog->lines.data[lineIndex];
-			bool bTrimmed = recordedLogLine.len > 16 * 1024;
+			bool bTrimmed = recordedLogLine.len > g_logTruncationLen;
 			if (bTrimmed)
 			{
-				recordedLogLine.len = 16 * 1024;
+				recordedLogLine.len = g_logTruncationLen;
 			}
 			span_t line = { decoded->packet.logText.text + recordedLogLine.offset, decoded->packet.logText.text + recordedLogLine.offset + recordedLogLine.len };
 
@@ -1007,17 +1013,43 @@ void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
 	recorded_session_t* session = view->session;
 	recorded_log_t* sessionLog = session->logs.data[sessionLogIndex];
 	recorded_filename_t* filename = recorded_session_find_filename(session, sessionLog->packet.header.fileId);
+
+	b32 bTruncated = false;
+	for (u32 i = 0; i < sessionLog->lines.count; ++i)
+	{
+		if (sessionLog->lines.data[i].len > g_logTruncationLen)
+		{
+			bTruncated = true;
+			break;
+		}
+	}
+
 	if (ImGui::Selectable("Copy Text"))
 	{
-		CopySelectedLogsToClipboard(view, false, kColumnSpacer_Tab);
+		CopySelectedLogsToClipboard(view, false, kColumnSpacer_Tab, kJsonExpansion_Off, kLogTruncation_On);
+	}
+	if (ImGui::Selectable("Copy Text (json expanded)"))
+	{
+		CopySelectedLogsToClipboard(view, false, kColumnSpacer_Tab, kJsonExpansion_On, kLogTruncation_On);
 	}
 	if (ImGui::Selectable("Copy All Columns"))
 	{
-		CopySelectedLogsToClipboard(view, true, kColumnSpacer_Spaces);
+		CopySelectedLogsToClipboard(view, true, kColumnSpacer_Spaces, kJsonExpansion_Off, kLogTruncation_On);
 	}
 	if (ImGui::Selectable("Copy All Columns (Tab-separated)"))
 	{
-		CopySelectedLogsToClipboard(view, true, kColumnSpacer_Tab);
+		CopySelectedLogsToClipboard(view, true, kColumnSpacer_Tab, kJsonExpansion_Off, kLogTruncation_On);
+	}
+	if (bTruncated)
+	{
+		if (ImGui::Selectable(va("Copy Text (not truncated to %u bytes)", g_logTruncationLen)))
+		{
+			CopySelectedLogsToClipboard(view, false, kColumnSpacer_Tab, kJsonExpansion_Off, kLogTruncation_Off);
+		}
+		if (ImGui::Selectable(va("Copy Text (json expanded) (not truncated to %u bytes)", g_logTruncationLen)))
+		{
+			CopySelectedLogsToClipboard(view, false, kColumnSpacer_Tab, kJsonExpansion_On, kLogTruncation_Off);
+		}
 	}
 	if (session->logs.count)
 	{
@@ -2570,7 +2602,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			view_log_t* viewLog = visibleLogs->data + visibleLogs->lastClickIndex;
 			sb_t sb;
 			sb_init(&sb);
-			BuildLogLine(view, viewLog, false, &sb, kNoCRLF, kColumnSpacer_Tab, kJsonExpansion_Off);
+			BuildLogLine(view, viewLog, false, &sb, kNoCRLF, kColumnSpacer_Tab, kJsonExpansion_Off, kLogTruncation_On);
 			if (sb.data)
 			{
 				ImGui::PushItemWidth(-1.0f);
@@ -2618,7 +2650,8 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				}
 				else if (ImGui::IsKeyPressed(ImGuiKey_C) && ImGui::GetIO().KeyCtrl)
 				{
-					CopySelectedLogsToClipboard(view, ImGui::GetIO().KeyShift, kColumnSpacer_Spaces);
+					const bool bAllColumns = ImGui::GetIO().KeyShift;
+					CopySelectedLogsToClipboard(view, bAllColumns, kColumnSpacer_Spaces, bAllColumns ? kJsonExpansion_Off : kJsonExpansion_On, kLogTruncation_On);
 				}
 				else if (ImGui::IsKeyPressed(ImGuiKey_F2, false))
 				{
