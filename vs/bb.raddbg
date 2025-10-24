@@ -60,6 +60,6 @@ target:
 target:
 {
   executable: "../mc_imgui/bin/mc_imgui_example_Debug_v143/mc_imgui_example_d.exe"
-  working_directory: "../mc_imgui/bin/mc_imgui_example_Debug_v143/"
+  working_directory: "../mc_imgui/bin/mc_imgui_example_Debug_v143"
   enabled: 1
 }
