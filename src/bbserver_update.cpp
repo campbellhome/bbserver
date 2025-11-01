@@ -687,7 +687,7 @@ extern "C" void BBServer_Update(void)
 	if (s_showImguiMetrics)
 	{
 		ImGui::ShowMetricsWindow(&s_showImguiMetrics);
-		if (ImGui::Begin("Dear ImGui Metrics", &s_showImguiMetrics))
+		if (ImGui::Begin("Dear ImGui Metrics/Debugger", &s_showImguiMetrics))
 		{
 			ImGui::Separator();
 			ImGui::Text("bba allocs: %lld", g_bba_allocatedCount);
