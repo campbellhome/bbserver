@@ -1090,67 +1090,10 @@ void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
 			{
 				if (ImGui::Selectable(sb_get(&openTarget->displayName)))
 				{
-					sb_t sb;
-					sb_init(&sb);
-					const char* src = sb_get(&openTarget->commandLine);
-					while (src && *src)
-					{
-						const char* file = bb_stristr(src, "{File}");
-						const char* line = bb_stristr(src, "{Line}");
-						const char* end = nullptr;
-						if (file && line)
-						{
-							end = (file < line) ? file : line;
-						}
-						else if (file)
-						{
-							end = file;
-						}
-						else
-						{
-							end = line;
-						}
-						if (end)
-						{
-							sb_append_range(&sb, src, end);
-							if (end == file)
-							{
-								pathFixupEntry_t* fixup = nullptr;
-								for (u32 fixupIndex = 0; fixupIndex < g_config.pathFixups.count; ++fixupIndex)
-								{
-									pathFixupEntry_t* entry = g_config.pathFixups.data + fixupIndex;
-									if (bb_strnicmp(sb_get(&entry->src), filename->path, entry->src.count) == 0)
-									{
-										fixup = entry;
-									}
-								}
-								if (fixup)
-								{
-									sb_append(&sb, sb_get(&fixup->dst));
-									sb_append(&sb, filename->path + fixup->src.count);
-								}
-								else
-								{
-									sb_append(&sb, filename->path);
-								}
-								src = file + 6;
-							}
-							else if (end == line)
-							{
-								sb_append(&sb, va("%u", sessionLog->packet.header.line));
-								src = line + 6;
-							}
-							else
-							{
-								break;
-							}
-						}
-						else
-						{
-							sb_append(&sb, src);
-							break;
-						}
-					}
+					sb_t sb = sb_clone(&openTarget->commandLine);
+					sb_replace_all_inplace(&sb, "{File}", filename->path);
+					sb_replace_all_inplace(&sb, "{Line}", va("%u", sessionLog->packet.header.line));
+					sb_replace_all_inplace(&sb, "{LineMinusOne}", va("%u", sessionLog->packet.header.line - 1));
 					STARTUPINFOA startupInfo;
 					memset(&startupInfo, 0, sizeof(startupInfo));
 					startupInfo.cb = sizeof(startupInfo);
