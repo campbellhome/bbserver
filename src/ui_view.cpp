@@ -2058,7 +2058,7 @@ static bool UIRecordedView_UpdateFilter(view_t* view)
 			{
 				ImGui::CloseCurrentPopup();
 			}
-			if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+			if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows))
 			{
 				filterWindowActive = true;
 			}
