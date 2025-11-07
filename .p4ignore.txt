@@ -10,3 +10,4 @@ vs/
 !vs/*.vcxproj
 !vs/*.vcxproj.filters
 !vs/*.props
+!vs/utf8_activeCodePage_manifest.xml
