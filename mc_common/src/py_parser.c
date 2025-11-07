@@ -222,7 +222,7 @@ b32 py_write_data(pyWriter* pw, s8* data, u32 count)
 	{
 		if (bba_add_noclear(*pw, count))
 		{
-			s8* out = &bba_last(*pw);
+			char* out = &bba_last(*pw);
 			out -= count - 1;
 			memcpy(out, data, count);
 		}
@@ -239,7 +239,7 @@ b32 py_write_u32(pyWriter* pw, u32 val)
 	b32 ret = true;
 	if (bba_add_noclear(*pw, sizeof(u32)))
 	{
-		s8* data = &bba_last(*pw);
+		char* data = &bba_last(*pw);
 		data -= sizeof(u32) - 1;
 		u32* out = (u32*)data;
 		*out = val;

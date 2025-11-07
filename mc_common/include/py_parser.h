@@ -21,7 +21,7 @@ typedef struct tag_pyParser
 {
 	u32 count;
 	u32 allocated;
-	s8* data;
+	char* data;
 	const char* cmdline;
 	u32 consumed;
 	pyParserState state;
@@ -35,7 +35,7 @@ typedef struct tag_pyWriter
 {
 	u32 count;
 	u32 allocated;
-	s8* data;
+	char* data;
 } pyWriter;
 
 b32 py_write_sdict(pyWriter* fd, sdict_t* sd);
