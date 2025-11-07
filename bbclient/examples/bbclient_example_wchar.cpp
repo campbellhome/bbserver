@@ -49,6 +49,11 @@ bb_thread_handle_t bbthread_create(bb_thread_func func, void* arg)
 	BB_ASSERT_MSG(thread != 0, "failed to spawn thread");
 	return thread;
 }
+void bbthread_join(bb_thread_handle_t threadHandle)
+{
+	WaitForSingleObject((HANDLE)threadHandle, INFINITE);
+	CloseHandle((HANDLE)threadHandle);
+}
 #else
 #include <pthread.h>
 
@@ -77,6 +82,10 @@ bb_thread_handle_t bbthread_create(bb_thread_func func, void* arg)
 	    arg      // arg
 	);
 	return thread;
+}
+void bbthread_join(bb_thread_handle_t threadHandle)
+{
+	pthread_join(threadHandle, NULL);
 }
 #endif
 
@@ -284,8 +293,8 @@ int main(int argc, const char** argv)
 
 	//bb_init_critical_sections();
 
-	bbthread_create(before_connect_thread_proc, nullptr);
-	bbthread_create(also_before_connect_thread_proc, nullptr);
+	bb_thread_handle_t before_connect_thread_handle = bbthread_create(before_connect_thread_proc, nullptr);
+	bb_thread_handle_t also_before_connect_thread_handle = bbthread_create(also_before_connect_thread_proc, nullptr);
 	bb_sleep_ms(1000);
 
 	bb_set_initial_buffer(s_initialBuffer, InitialBufferLen);
@@ -400,7 +409,7 @@ int main(int argc, const char** argv)
 	bb_disconnect();
 	bb_sleep_ms(1000);
 	bb_connect_str("127.0.0.1", 0);
-	bbthread_create(after_connect_thread_proc, nullptr);
+	bb_thread_handle_t after_connect_thread_handle = bbthread_create(after_connect_thread_proc, nullptr);
 
 	while (BB_IS_CONNECTED() && !s_bQuit && s_NumContinues < 3)
 	{
@@ -437,6 +446,10 @@ int main(int argc, const char** argv)
 		// }
 	}
 
+	s_bQuit = true;
+	bbthread_join(before_connect_thread_handle);
+	bbthread_join(also_before_connect_thread_handle);
+	bbthread_join(after_connect_thread_handle);
 	BB_SHUTDOWN();
 	return 0;
 }
