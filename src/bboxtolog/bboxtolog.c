@@ -37,9 +37,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include <sqlite/wrap_sqlite3.h>
 #endif
 
-#if BB_USING(BB_COMPILER_MSVC)
 #include <locale.h>
-#endif
 
 BB_WARNING_DISABLE(5045);
 
@@ -1803,6 +1801,8 @@ int main(int argc, char** argv)
 	bb_tracked_malloc_enable(true);
 	bba_set_logging(true, true);
 #endif
+
+	setlocale(LC_ALL, ".UTF8");
 
 #if defined(BB_NO_SQLITE)
 	int ret = main_loop(argc, argv);

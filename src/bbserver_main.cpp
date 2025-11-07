@@ -52,6 +52,9 @@
 
 #include "bb_structs_generated.h"
 #include "bb_wrap_stdio.h"
+#include "bb_wrap_windows.h"
+
+#include <locale.h>
 
 #define COPYDATA_MAGIC 0x1234567890abcdefu
 static char s_imguiPath[kBBSize_MaxPath];
@@ -107,6 +110,17 @@ static b32 BBServer_Init(const char* commandLineRecording)
 	BB_LOG("Startup", "%s starting...\nPath: %s\n", applicationName, s_bbLogPath);
 	BB_LOG("Startup", "Arguments: %s", cmdline_get_full());
 	bbthread_set_name("main");
+
+	UINT activeCodePage = GetACP();
+	const char* activeLocale = setlocale(LC_ALL, nullptr);
+	if (activeCodePage == 65001)
+	{
+		BB_LOG("Startup", "ActiveCodePage: %u (utf8) Locale: %s", activeCodePage, activeLocale ? activeLocale : "NULL");
+	}
+	else
+	{
+		BB_WARNING("Startup", "ActiveCodePage: %u (NOT utf8) Locale: %s", activeCodePage, activeLocale ? activeLocale : "NULL");
+	}
 
 	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Registering assert handler");
 	BBServer_InitAsserts(s_bbLogPath);
@@ -447,6 +461,8 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 	bb_tracked_malloc_enable(true);
 	bba_set_logging(true, true);
 #endif
+
+	setlocale(LC_ALL, ".UTF8");
 
 	cmdline_init_composite(CommandLine);
 	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");

@@ -7,6 +7,9 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(mc_common_lib_PropsDir)..\include;$(mc_common_lib_PropsDir)..\..\thirdparty;$(mc_common_lib_PropsDir)..\..\bbclient\include\bbclient;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Manifest>
+      <AdditionalManifestFiles>$(mc_common_lib_PropsDir)..\..\vs\utf8_activeCodePage_manifest.xml</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

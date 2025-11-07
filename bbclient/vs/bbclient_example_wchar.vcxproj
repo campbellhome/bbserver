@@ -120,6 +120,11 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <Manifest>
+      <AdditionalManifestFiles>..\..\vs\utf8_activeCodePage_manifest.xml</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\examples\bbclient_example_wchar.cpp" />
   </ItemGroup>

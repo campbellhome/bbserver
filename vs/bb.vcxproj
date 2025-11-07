@@ -249,4 +249,9 @@ if exist ..\publish\bb_site_config.json copy /y ..\publish\bb_site_config.json "
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ProgramDatabase</DebugInformationFormat>
     </ClCompile>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <Manifest>
+      <AdditionalManifestFiles>utf8_activeCodePage_manifest.xml</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
 </Project>

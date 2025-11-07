@@ -22,6 +22,8 @@
 #include "wrap_imgui.h"
 #include "wrap_shellscalingapi.h"
 
+#include <locale.h>
+
 #pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "xinput9_1_0.lib")
 
@@ -113,6 +115,21 @@ static const char* D3DErrorString(HRESULT Hr)
 
 extern "C" b32 Imgui_Core_Init(const char* cmdline)
 {
+	UINT activeCodePage = GetACP();
+	if (activeCodePage == 65001)
+	{
+		setlocale(LC_ALL, ".UTF8");
+	}
+	const char* activeLocale = setlocale(LC_ALL, nullptr);
+	if (activeCodePage == 65001)
+	{
+		BB_LOG("Startup", "ActiveCodePage: %u (utf8) Locale: %s", activeCodePage, activeLocale ? activeLocale : "NULL");
+	}
+	else
+	{
+		BB_WARNING("Startup", "ActiveCodePage: %u (NOT utf8) Locale: %s", activeCodePage, activeLocale ? activeLocale : "NULL");
+	}
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	Style_Init();

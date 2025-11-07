@@ -20,6 +20,8 @@ BB_WARNING_DISABLE(4710) // function not inlined
 #include <stdint.h>
 #endif
 
+#include <locale.h>
+
 // Thread code taken from bb_thread.h/.c in mc_common
 
 #if BB_USING(BB_COMPILER_MSVC)
@@ -284,6 +286,8 @@ static bb_thread_return_t after_connect_thread_proc(void*)
 
 int main(int argc, const char** argv)
 {
+	setlocale(LC_ALL, ".UTF8");
+
 	uint64_t start = bb_current_time_ms();
 	uint32_t categoryIndex = 0;
 	uint32_t pathIndex = 0;
