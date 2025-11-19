@@ -19,6 +19,8 @@
 #include "ui_loglevel_colorizer.h"
 #include "va.h"
 
+#include "bb_wrap_stdio.h"
+
 static bool s_showImguiDemo;
 static bool s_showImguiAbout;
 static bool s_showImguiMetrics;
@@ -114,6 +116,44 @@ static void MC_Imgui_Example_Read_BBClient_BBox_BBFile(void)
 	}
 }
 
+static void MC_Imgui_Example_Read_BBClient_BBox_Stdio(void)
+{
+	const char* path = R"(..\..\bbclient\vs\bbclient.bbox)";
+
+	FILE *handle = fopen(path, "rb");
+	if (handle)
+	{
+		fseek(handle, 0, SEEK_END);
+		u32 fileSize = (u32)ftell(handle);
+		fseek(handle, 0, SEEK_SET);
+		char* buffer = (char*)malloc(fileSize);
+		if (buffer)
+		{
+			u32 readSize = (u32)fread(buffer, 1, fileSize, handle);
+			free(buffer);
+
+			if (readSize == fileSize)
+			{
+				MC_Imgui_Example_BBClient_MessageBox_Success(va("Read %u bytes from %s.", readSize, path));
+			}
+			else
+			{
+				MC_Imgui_Example_BBClient_MessageBox_Fail(va("Read %u/%d bytes from %s.", readSize, fileSize, path));
+			}
+		}
+		else
+		{
+			MC_Imgui_Example_BBClient_MessageBox_Fail(va("Failed to allocate %u bytes to read %s.", fileSize, path));
+		}
+
+		fclose(handle);
+	}
+	else
+	{
+		MC_Imgui_Example_BBClient_MessageBox_Fail(va("Failed to open %s for read.", path));
+	}
+}
+
 static void MC_Imgui_Example_MainMenuBar(void)
 {
 	if (ImGui::BeginMainMenuBar())
@@ -127,6 +167,10 @@ static void MC_Imgui_Example_MainMenuBar(void)
 			if (ImGui::MenuItem("Read bbclient bbox with bbfile"))
 			{
 				MC_Imgui_Example_Read_BBClient_BBox_BBFile();
+			}
+			if (ImGui::MenuItem("Read bbclient bbox with stdio"))
+			{
+				MC_Imgui_Example_Read_BBClient_BBox_Stdio();
 			}
 			if (ImGui::MenuItem("Exit"))
 			{
