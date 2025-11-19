@@ -123,6 +123,7 @@ struct console_autocomplete_entry
 static console_autocomplete_entry s_autocompleteEntries[] = {
 	{ "continue", "continue to next section of test app", true, 0 },
 	{ "quit", "quit the application", true, 0 },
+	{ "jumbolog", "extra large log", true, 0 },
 	{ "log LogTemp", "set log category", true, 0 },
 	{ "log LogConsole", "set log category", true, 0 },
 	{ "log LogMatchmaking", "set log category", true, 0 },
@@ -180,6 +181,21 @@ static void incoming_packet_handler(const bb_decoded_packet_t* decoded, void* co
 		else if (!bb_stricmp(text, "continue"))
 		{
 			++s_NumContinues;
+		}
+		else if (!bb_stricmp(text, "jumbolog"))
+		{
+			size_t largeLen = 1024ull * 1024ull * 1024ull;
+			char* large = (char*)malloc(largeLen + 1);
+			if (large)
+			{
+				for (size_t i = 0; i < largeLen; ++i)
+				{
+					large[i] = '0' + (char)(i % 10);
+				}
+				large[largeLen] = '\0';
+				bb_trace_dynamic_preformatted(__FILE__, __LINE__, "test::LongLine::ExtraLongLine", kBBLogLevel_Log, -1, large);
+				free(large);
+			}
 		}
 	}
 	else if (decoded->type == kBBPacketType_ConsoleAutocompleteRequest)
@@ -327,19 +343,6 @@ int main(int argc, const char** argv)
 	bb_trace_dynamic_preformatted(__FILE__, (u32)__LINE__, "test::LongLine::Utf8::Preformatted", kBBLogLevel_Log, 0, "Really long log line to test exceeding normal blackbox packet length.  ^1Really long log line to test exceeding normal blackbox packet length.  ^2Really long log line to test exceeding normal blackbox packet length.  ^3Really long log line to test exceeding normal blackbox packet length.  ^4Really long log line to test exceeding normal blackbox packet length.  ^5Really long log line to test exceeding normal blackbox packet length.  ^6Really long log line to test exceeding normal blackbox packet length.  ^7Really long log line to test exceeding normal blackbox packet length.  ^8Really long log line to test exceeding normal blackbox packet length.  ^9Really long log line to test exceeding normal blackbox packet length.  ^:Really long log line to test exceeding normal blackbox packet length.  ^<Really long log line to test exceeding normal blackbox packet length.  ^0Really long log line to test exceeding normal blackbox packet length.  ^1Really long log line to test exceeding normal blackbox packet length.  ^2Really long log line to test exceeding normal blackbox packet length.  ^3Really long log line to test exceeding normal blackbox packet length.  ^4Really long log line to test exceeding normal blackbox packet length.  ^5Really long log line to test exceeding normal blackbox packet length.  ^6Really long log line to test exceeding normal blackbox packet length.  ^7Really long log line to test exceeding normal blackbox packet length.  ^8Really long log line to test exceeding normal blackbox packet length.  ^9Really long log line to test exceeding normal blackbox packet length.  ^:Really long log line to test exceeding normal blackbox packet length.  ^<Really long log line to test exceeding normal blackbox packet length.^F  ^0Really long log line to test exceeding normal blackbox packet length.  ^1Really long log line to test exceeding normal blackbox packet length.  ^2Really long log line to test exceeding normal blackbox packet length.  --------------------------------------------------> ^<(2k packet limit here)^3Really long log line to test exceeding normal blackbox packet length.  ^4Really long log line to test exceeding normal blackbox packet length.  ^5Really long log line to test exceeding normal blackbox packet length.  ^6Really long log line to test exceeding normal blackbox packet length.  ^7Really long log line to test exceeding normal blackbox packet length.  ^8Really long log line to test exceeding normal blackbox packet length.  ^9Really long log line to test exceeding normal blackbox packet length.  ^:Really long log line to test exceeding normal blackbox packet length.  ^<Really long log line to test exceeding normal blackbox packet length. ^F  ^0Really long log line to test exceeding normal blackbox packet length.  ^1Really long log line to test exceeding normal blackbox packet length.  ^2Really long log line to test exceeding normal blackbox packet length.  ^3Really long log line to test exceeding normal blackbox packet length.  ^4Really long log line to test exceeding normal blackbox packet length.  ^5Really long log line to test exceeding normal blackbox packet length.  ^6Really long log line to test exceeding normal blackbox packet length.  ^7Really long log line to test exceeding normal blackbox packet length.  ^8Really long log line to test exceeding normal blackbox packet length.  ^9Really long log line to test exceeding normal blackbox packet length.  ^:Really long log line to test exceeding normal blackbox packet length.  ^<Really long log line to test exceeding normal blackbox packet length.  End at 3596.");
 
 	bb_trace_dynamic_preformatted(nullptr, 0u, nullptr, kBBLogLevel_Log, 0, "NULL file and category");
-
-	size_t largeLen = 1024 * 1024 * 1024;
-	char *large = (char *)malloc(largeLen + 1);
-	if (large)
-	{
-		for (size_t i = 0; i < largeLen; ++i)
-		{
-			large[i] = '0' + (char)(i % 10);
-		}
-		large[largeLen] = '\0';
-		bb_trace_dynamic_preformatted(__FILE__, __LINE__, "test::LongLine::ExtraLongLine", kBBLogLevel_Log, -1, large);
-		free(large);
-	}
 
 	BB_LOG(L"test::category::deep", L"this is a __%s__ test at time %zu", L"simple", bb_current_time_ms());
 	BB_WARNING(L"test::other", L"monkey");
