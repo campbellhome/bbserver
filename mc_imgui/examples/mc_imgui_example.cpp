@@ -2,8 +2,10 @@
 // MIT license (see License.txt)
 
 #include "mc_imgui_example.h"
+#include "bb_file.h"
 #include "common.h"
 #include "crt_leak_check.h"
+#include "file_utils.h"
 #include "fonts.h"
 #include "imgui_core.h"
 #include "imgui_core_windows.h"
@@ -12,6 +14,7 @@
 #include "message_box.h"
 #include "output.h"
 #include "str.h"
+#include "system_error_utils.h"
 #include "tokenize.h"
 #include "ui_loglevel_colorizer.h"
 #include "va.h"
@@ -31,12 +34,100 @@ static const char* s_colorschemes[] = {
 	"Windows",
 };
 
+static void MC_Imgui_Example_BBClient_MessageBox_Success(const char* message)
+{
+	messageBox mb = {};
+	sdict_add_raw(&mb.data, "title", "File Read Success");
+	sdict_add_raw(&mb.data, "text", message);
+	sdict_add_raw(&mb.data, "button1", "Ok");
+	mb_queue(mb, nullptr);
+}
+
+static void MC_Imgui_Example_BBClient_MessageBox_Fail(const char* message)
+{
+	sb_t systemError = system_error_to_sb(GetLastError());
+
+	messageBox mb = {};
+	sdict_add_raw(&mb.data, "title", "File Read Error");
+	sdict_add_raw(&mb.data, "text", va("%s\n\n%s", message, sb_get(&systemError)));
+	sdict_add_raw(&mb.data, "button1", "Ok");
+	mb_queue(mb, nullptr);
+
+	sb_reset(&systemError);
+}
+
+static void MC_Imgui_Example_Read_BBClient_BBox_FileData(void)
+{
+	const char* path = R"(..\..\bbclient\vs\bbclient.bbox)";
+	fileData_t fileData = fileData_read(path);
+	if (fileData.bufferSize)
+	{
+		MC_Imgui_Example_BBClient_MessageBox_Success(va("Read %u bytes from %s.", fileData.bufferSize, path));
+		fileData_reset(&fileData);
+	}
+	else
+	{
+		MC_Imgui_Example_BBClient_MessageBox_Fail(va("Failed to read %s.", path));
+	}
+}
+
+static void MC_Imgui_Example_Read_BBClient_BBox_BBFile(void)
+{
+	const char* path = R"(..\..\bbclient\vs\bbclient.bbox)";
+
+	if (bb_file_readable(path))
+	{
+		bb_file_handle_t handle = bb_file_open_for_read(path);
+		if (handle == BB_INVALID_FILE_HANDLE)
+		{
+			MC_Imgui_Example_BBClient_MessageBox_Fail(va("Failed to open %s for read.", path));
+		}
+		else
+		{
+			u32 fileSize = bb_file_size(handle);
+			char* buffer = (char*)malloc(fileSize);
+			if (buffer)
+			{
+				u32 readSize = bb_file_read(handle, buffer, fileSize);
+				free(buffer);
+
+				if (readSize == fileSize)
+				{
+					MC_Imgui_Example_BBClient_MessageBox_Success(va("Read %u bytes from %s.", readSize, path));
+				}
+				else
+				{
+					MC_Imgui_Example_BBClient_MessageBox_Fail(va("Read %u/%d bytes from %s.", readSize, fileSize, path));
+				}
+			}
+			else
+			{
+				MC_Imgui_Example_BBClient_MessageBox_Fail(va("Failed to allocate %u bytes to read %s.", fileSize, path));
+			}
+
+			bb_file_close(handle);
+		}
+	}
+	else
+	{
+		MC_Imgui_Example_BBClient_MessageBox_Fail(va("%s is not readable.", path));
+	}
+}
+
 static void MC_Imgui_Example_MainMenuBar(void)
 {
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
 		{
+			if (ImGui::MenuItem("Read bbclient bbox with fileData"))
+			{
+				MC_Imgui_Example_Read_BBClient_BBox_FileData();
+			}
+			if (ImGui::MenuItem("Read bbclient bbox with bbfile"))
+			{
+				MC_Imgui_Example_Read_BBClient_BBox_BBFile();
+			}
 			if (ImGui::MenuItem("Exit"))
 			{
 				Imgui_Core_RequestShutDown();
@@ -283,6 +374,8 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 
 	output_init(kOutputInit_ToBuffer);
 	Imgui_Core_Init(CommandLine);
+
+	mb_get_queue()->modal = true;
 
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
