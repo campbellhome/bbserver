@@ -394,6 +394,8 @@ config_t config_clone(const config_t *src)
 		dst.listenProtocol = src->listenProtocol;
 		dst.disableLogDeletion = src->disableLogDeletion;
 		dst.showUnusedTagCategories = src->showUnusedTagCategories;
+		dst.copyLineExpandJson = src->copyLineExpandJson;
+		dst.copyLineTruncate = src->copyLineTruncate;
 		dst.pad = src->pad;
 	}
 	return dst;

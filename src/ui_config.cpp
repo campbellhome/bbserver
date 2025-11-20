@@ -481,6 +481,8 @@ void UIConfig_Update(config_t* config)
 				ImGui::SetTooltip("Requires restart.  Default font is not recommended if DPI Aware.");
 			}
 			ImGui::Checkbox("Ctrl+Scrollwheel scales UI", &s_preferencesConfig.dpiScrollwheel);
+			ImGui::Checkbox("Ctrl+C to copy log text expands json (unless copying all columns)", &s_preferencesConfig.copyLineExpandJson);
+			ImGui::Checkbox("Ctrl+C to copy log text truncates long lines", &s_preferencesConfig.copyLineTruncate);
 			ImGui::EndGroup();
 			PopItemWidth();
 			ImGui::SameLine(0.0f, 20.0f * Imgui_Core_GetDpiScale());
@@ -506,7 +508,7 @@ void UIConfig_Update(config_t* config)
 			{
 				ImGui::SetTooltip("Show tooltips only over selected log lines");
 			}
-			InputFloat("Delay seconds", &s_preferencesConfig.tooltips.delay);
+			InputFloat("Tooltip delay seconds", &s_preferencesConfig.tooltips.delay);
 			if (IsTooltipActive(&s_preferencesConfig.tooltips))
 			{
 				ImGui::SetTooltip("Delay before showing tooltips");

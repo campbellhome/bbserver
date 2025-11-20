@@ -188,12 +188,14 @@ AUTOJSON typedef struct config_s
 	configListenProtocol_t listenProtocol;
 	b32 disableLogDeletion;
 	b32 showUnusedTagCategories;
+	b32 copyLineExpandJson;
+	b32 copyLineTruncate;
 	u32 pad;
 } config_t;
 
 enum
 {
-	kConfigVersion = 8
+	kConfigVersion = 9
 };
 
 extern config_t g_config;

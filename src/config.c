@@ -132,6 +132,11 @@ b32 config_read(config_t* config)
 	{
 		config->dpiScrollwheel = true;
 	}
+	if (config->version <= 8)
+	{
+		config->copyLineExpandJson = true;
+		config->copyLineTruncate = true;
+	}
 	config->version = kConfigVersion;
 
 	if (config->listenProtocol == kConfigListenProtocol_Unknown)

@@ -2594,7 +2594,9 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				else if (ImGui::IsKeyPressed(ImGuiKey_C) && ImGui::GetIO().KeyCtrl)
 				{
 					const bool bAllColumns = ImGui::GetIO().KeyShift;
-					CopySelectedLogsToClipboard(view, bAllColumns, kColumnSpacer_Spaces, bAllColumns ? kJsonExpansion_Off : kJsonExpansion_On, kLogTruncation_On);
+					const jsonExpansion_e jsonExpansion = !bAllColumns && g_config.copyLineExpandJson ? kJsonExpansion_On : kJsonExpansion_Off;
+					const logTruncation_e logTruncation = g_config.copyLineTruncate ? kLogTruncation_On : kLogTruncation_Off;
+					CopySelectedLogsToClipboard(view, bAllColumns, kColumnSpacer_Spaces, jsonExpansion, logTruncation);
 				}
 				else if (ImGui::IsKeyPressed(ImGuiKey_F2, false))
 				{
