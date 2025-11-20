@@ -60,6 +60,7 @@ static sb_t s_strippedLine;
 static sb_t s_textSpan;
 static sb_t s_newFilterName;
 static sb_t s_wrappedLine;
+static sb_t s_selectedLine;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 static int s_visibleLogLines;
@@ -2543,14 +2544,13 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 		if (visibleLogs->lastClickIndex < visibleLogs->count)
 		{
 			view_log_t* viewLog = visibleLogs->data + visibleLogs->lastClickIndex;
-			sb_t sb;
-			sb_init(&sb);
-			BuildLogLine(view, viewLog, false, &sb, kNoCRLF, kColumnSpacer_Tab, kJsonExpansion_Off, kLogTruncation_On);
-			if (sb.data)
+			sb_clear(&s_selectedLine);
+			BuildLogLine(view, viewLog, false, &s_selectedLine, kNoCRLF, kColumnSpacer_Tab, kJsonExpansion_Off, kLogTruncation_On);
+			if (s_selectedLine.data)
 			{
 				ImGui::PushItemWidth(-1.0f);
 				ImGui::SameLine(0, 20 * Imgui_Core_GetDpiScale());
-				ImGui::InputText("###SelectedHack", sb.data, sb.allocated, ImGuiInputTextFlags_ReadOnly);
+				ImGui::InputText("###SelectedHack", s_selectedLine.data, s_selectedLine.allocated, ImGuiInputTextFlags_ReadOnly);
 				selectedHackFocused = IsItemActive() && Imgui_Core_HasFocus();
 				if (selectedHackFocused)
 				{
@@ -2558,7 +2558,6 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				}
 				ImGui::PopItemWidth();
 			}
-			sb_reset(&sb);
 		}
 
 		ImGui::Separator();
@@ -3110,4 +3109,5 @@ void UIRecordedView_Shutdown(void)
 	sb_reset(&s_textSpan);
 	sb_reset(&s_newFilterName);
 	sb_reset(&s_wrappedLine);
+	sb_reset(&s_selectedLine);
 }
