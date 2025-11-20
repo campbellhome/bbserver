@@ -513,6 +513,9 @@ void UIConfig_Update(config_t* config)
 			{
 				ImGui::SetTooltip("Delay before showing tooltips");
 			}
+			u32 step = 1;
+			u32 stepFast = 10;
+			InputScalar("Num log text tooltip lines (0 == auto)", ImGuiDataType_U32, &s_preferencesConfig.maxLogTooltipLines, &step, &stepFast, "%u", ImGuiInputTextFlags_None);
 			ImGui::EndGroup();
 			PopItemWidth();
 			PushItemWidth(400 * Imgui_Core_GetDpiScale());

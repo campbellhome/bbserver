@@ -48,7 +48,9 @@ typedef struct recorded_log_s
 	u32 sessionLogIndex;
 	u32 pad;
 	u64 frameNumber;
+	sb_t expandedJson;
 	recorded_log_lines_t lines;
+	recorded_log_lines_t jsonLines;
 	bb_decoded_packet_t packet;
 } recorded_log_t;
 typedef struct recorded_logs_s

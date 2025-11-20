@@ -2,6 +2,7 @@
 // MIT license (see License.txt)
 
 #include "recorded_session.h"
+#include "bbserver_utils.h"
 #include "fonts.h"
 #include "imgui_core.h"
 #include "message_box.h"
@@ -27,6 +28,8 @@
 #include "bb_wrap_stdio.h"
 #include <stdlib.h>
 
+static const u32 g_jsonExpansionMaxLen = 2u * 1024u * 1024u;
+
 static void recorded_session_add_category(recorded_session_t* session, bb_decoded_packet_t* decoded);
 static void recorded_session_add_partial_log(recorded_session_t* session, bb_decoded_packet_t* decoded, recorded_thread_t* t);
 static void recorded_session_add_log(recorded_session_t* session, bb_decoded_packet_t* decoded, recorded_thread_t* t);
@@ -49,7 +52,9 @@ static void recorded_logs_reset(recorded_logs_t* logs)
 	for (u32 i = 0; i < logs->count; ++i)
 	{
 		recorded_log_t *recordedLog = logs->data[i];
+		sb_reset(&recordedLog->expandedJson);
 		bba_free(recordedLog->lines);
+		bba_free(recordedLog->jsonLines);
 		bb_free(recordedLog);
 	}
 	bba_free(*logs);
@@ -626,10 +631,18 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 	}
 	sb_append(&s_reconstructedLogText, decoded->packet.logText.text);
 
+	// Find offsets for embedded lines
+	b32 bAnyLineCanBeJson = false;
 	recorded_log_lines_t recordedLogLines = { BB_EMPTY_INITIALIZER };
 	span_t linesCursor = { s_reconstructedLogText.data, s_reconstructedLogText.data + s_reconstructedLogText.count - 1 };
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
 	{
+		sb_t unexpandedLine = { (u32)span_length(line) + 1, 0, (char *)line.start};
+		if (line_can_be_json(unexpandedLine))
+		{
+			bAnyLineCanBeJson = true;
+		}
+
 		recorded_log_line_t *recordedLogLine = bba_add(recordedLogLines, 1);
 		if (recordedLogLine)
 		{
@@ -641,6 +654,47 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 	{
 		bba_free(recordedLogLines);
 		return;
+	}
+
+	sb_t expandedJson = { BB_EMPTY_INITIALIZER };
+	recorded_log_lines_t recordedJsonLogLines = { BB_EMPTY_INITIALIZER };
+
+	// Construct a buffer of embedded lines, with individual json lines expanded
+	if (sb_len(&s_reconstructedLogText) < g_jsonExpansionMaxLen)
+	{
+		if (bAnyLineCanBeJson)
+		{
+			linesCursor.start = s_reconstructedLogText.data; 
+			linesCursor.end = s_reconstructedLogText.data + s_reconstructedLogText.count - 1;
+			for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
+			{
+				sb_t unexpandedLine = { (u32)span_length(line) + 1, 0, (char *)line.start };
+				if (line_can_be_json(unexpandedLine))
+				{
+					sb_t lineExpandedJson = sb_expand_json(unexpandedLine);
+					sb_append_range(&expandedJson, lineExpandedJson.data, lineExpandedJson.data + lineExpandedJson.count - 1);
+					sb_reset(&lineExpandedJson);
+				}
+				else
+				{
+					sb_append_range(&expandedJson, line.start, line.end);
+				}
+				sb_append_char(&expandedJson, '\n');
+			}
+		}
+	}
+
+	// Find offsets for embedded lines with json expanded
+	linesCursor.start = expandedJson.data; 
+	linesCursor.end = expandedJson.data + expandedJson.count - 1;
+	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
+	{
+		recorded_log_line_t *recordedLogLine = bba_add(recordedJsonLogLines, 1);
+		if (recordedLogLine)
+		{
+			recordedLogLine->offset = (u32)(line.start - expandedJson.data);
+			recordedLogLine->len = (u32)(line.end - line.start);
+		}
 	}
 
 	u32 categoryId = decoded->packet.logText.categoryId;
@@ -679,6 +733,8 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 		log = *plog;
 		if (log)
 		{
+			log->expandedJson = expandedJson;
+			log->jsonLines = recordedJsonLogLines;
 			log->lines = recordedLogLines;
 			log->sessionLogIndex = session->logs.count - 1;
 			log->frameNumber = session->currentFrameNumber;

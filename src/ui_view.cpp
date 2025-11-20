@@ -380,73 +380,6 @@ static void UpdateLogColumnWidth(view_t* view, view_log_t* viewLog)
 	}
 }
 
-sb_t StripColorCodes(span_t span /*, bool bSingleLine*/)
-{
-	s_strippedLine.count = 0;
-	if (s_strippedLine.data)
-	{
-		s_strippedLine.data[0] = '\0';
-	}
-	const char* text = span.start;
-	if (text)
-	{
-		while (*text && text < span.end)
-		{
-			// if(bSingleLine && (*text == '\r' || *text == '\n'))
-			//	break;
-			if (*text == kColorKeyPrefix && text[1] >= kFirstColorKey && text[1] <= kLastColorKey)
-			{
-				++text;
-			}
-			else if (text[0] == '^' && text[1] == 'F')
-			{
-				++text;
-			}
-			else
-			{
-				sb_append_char(&s_strippedLine, *text);
-			}
-			++text;
-		}
-	}
-	return s_strippedLine;
-}
-
-static b32 line_can_be_json(sb_t line)
-{
-	b32 result = false;
-	if (line.data && line.count > 2)
-	{
-		if (line.data[0] == '{' && line.data[line.count - 2] == '}')
-		{
-			for (u32 index = 1; index < line.count - 2; ++index)
-			{
-				if (line.data[index] == ' ' || line.data[index] == '\t')
-					continue;
-				if (line.data[index] == '\"')
-				{
-					result = true;
-				}
-				break;
-			}
-		}
-		else if (line.data[0] == '[' && line.data[line.count - 2] == ']')
-		{
-			for (u32 index = 1; index < line.count - 2; ++index)
-			{
-				if (line.data[index] == ' ' || line.data[index] == '\t')
-					continue;
-				if (line.data[index] == '\"' || line.data[index] == '{')
-				{
-					result = true;
-				}
-				break;
-			}
-		}
-	}
-	return result;
-}
-
 enum crlf_e
 {
 	kNoCRLF,
@@ -511,11 +444,11 @@ static void BuildLogLine(view_t* view, view_log_t* viewLog, bool allColumns, sb_
 	}
 	span_t line = { decoded->packet.logText.text + recordedLogLine.offset, decoded->packet.logText.text + recordedLogLine.offset + recordedLogLine.len };
 
-	sb_t stripped = StripColorCodes(line);
+	span_strip_color_codes(line, &s_strippedLine);
 	bool bJson = false;
-	if (!allColumns && jsonExpansion == kJsonExpansion_On && line_can_be_json(stripped))
+	if (!allColumns && jsonExpansion == kJsonExpansion_On && line_can_be_json(s_strippedLine))
 	{
-		JSON_Value* val = json_parse_string(sb_get(&stripped));
+		JSON_Value* val = json_parse_string(sb_get(&s_strippedLine));
 		if (val)
 		{
 			char* json = json_serialize_to_string_pretty(val);
@@ -530,7 +463,7 @@ static void BuildLogLine(view_t* view, view_log_t* viewLog, bool allColumns, sb_
 	}
 	if (!bJson)
 	{
-		sb_append(sb, sb_get(&stripped));
+		sb_append(sb, sb_get(&s_strippedLine));
 	}
 
 	if (crlf == kAppendCRLF)
@@ -711,10 +644,10 @@ void UIRecordedView_TooltipLevelText(const char* fmt, u32 count, bb_log_level_e 
 	}
 }
 
-static int TextWrappedMaxLines(const char* text, s32 maxLines, bool bShadowed, bool bTrimmed)
+static u32 TextWrappedMaxLines(const char* text, u32 maxLines, bool bShadowed, bool bTrimmed)
 {
 	span_t span = span_from_string(text);
-	s32 numLines = 0;
+	u32 numLines = 0;
 	for (span_t line = tokenizeLine(&span); line.start; line = tokenizeLine(&span))
 	{
 		if (numLines == maxLines)
@@ -792,47 +725,41 @@ static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* cat
 		Separator();
 		PopUIFont();
 
-		int numLines = 0;
+		u32 maxLines = g_config.maxLogTooltipLines ? g_config.maxLogTooltipLines : (u32)s_visibleLogLines;
+		const char* logTextStart = sessionLog->jsonLines.count ? sessionLog->expandedJson.data : decoded->packet.logText.text;
+		recorded_log_lines_t* recordedLogLines = sessionLog->jsonLines.count ? &sessionLog->jsonLines : &sessionLog->lines;
 
-		for (u32 lineIndex = 0; lineIndex < sessionLog->lines.count; ++lineIndex)
+		u32 halfMaxLines = maxLines / 2;
+		b32 bSeparator = maxLines < recordedLogLines->count;
+		const float wrapPos = sessionLog->jsonLines.count ? 1800.0f : 1200.0f;
+		PushTextWrapPos(wrapPos);
+
+		for (u32 lineIndex = 0; lineIndex < recordedLogLines->count; ++lineIndex)
 		{
-			recorded_log_line_t recordedLogLine = sessionLog->lines.data[lineIndex];
+			if (lineIndex >= halfMaxLines && recordedLogLines->count > maxLines && lineIndex < recordedLogLines->count - halfMaxLines)
+			{
+				if (bSeparator)
+				{
+					TextWrappedMaxLines("...", 40, Imgui_Core_GetTextShadows() != 0, false);
+					bSeparator = false;
+				}
+				continue;
+			}
+
+			recorded_log_line_t recordedLogLine = recordedLogLines->data[lineIndex];
 			bool bTrimmed = recordedLogLine.len > g_logTruncationLen;
 			if (bTrimmed)
 			{
 				recordedLogLine.len = g_logTruncationLen;
 			}
-			span_t line = { decoded->packet.logText.text + recordedLogLine.offset, decoded->packet.logText.text + recordedLogLine.offset + recordedLogLine.len };
+			span_t line = { logTextStart + recordedLogLine.offset, logTextStart + recordedLogLine.offset + recordedLogLine.len };
 
-			bool bJson = false;
-			sb_t stripped = StripColorCodes(line);
-			if (line_can_be_json(stripped))
-			{
-				JSON_Value* val = json_parse_string(sb_get(&stripped));
-				if (val)
-				{
-					char* json = json_serialize_to_string_pretty(val);
-					if (json)
-					{
-						bJson = true;
-						PushTextWrapPos(1800.0f);
-						numLines += TextWrappedMaxLines(json, 40, Imgui_Core_GetTextShadows() != 0, bTrimmed);
-						PopTextWrapPos();
-						json_free_serialized_string(json);
-					}
-					json_value_free(val);
-				}
-			}
-			if (!bJson)
-			{
-				PushTextWrapPos(1200.0f);
-				numLines += TextWrappedMaxLines(sb_get(&stripped), 40, Imgui_Core_GetTextShadows() != 0, bTrimmed);
-				PopTextWrapPos();
-			}
-
-			if (numLines >= s_visibleLogLines)
-				break;
+			span_strip_color_codes(line, &s_strippedLine);
+			TextWrappedMaxLines(sb_get(&s_strippedLine), 40, Imgui_Core_GetTextShadows() != 0, bTrimmed);
 		}
+
+		PopTextWrapPos();
+
 		EndTooltip();
 	}
 }

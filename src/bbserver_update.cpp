@@ -10,6 +10,7 @@
 #include "bb_string.h"
 #include "bb_time.h"
 #include "bbserver_fileopendialog.h"
+#include "bbserver_utils.h"
 #include "devkit_autodetect.h"
 #include "dragdrop.h"
 #include "fonts.h"
@@ -135,6 +136,11 @@ static void BBServer_DebugInfiniteRecursion()
 	BB_LOG("UI::Menu::Debug", "User-initiated infinite recursion");
 	infinite_recursion(0);
 }
+
+enum
+{
+	kNumColorKeys = kLastColorKey - kFirstColorKey + 1
+};
 
 static void App_GenerateColorTestLogs()
 {

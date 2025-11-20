@@ -455,7 +455,7 @@ void recordings_validate_max_recordings(void)
 
 void recording_started(char* data)
 {
-	BB_LOG("Recordings", "%s", data);
+	BB_LOG("Recordings", "[new recording]\n%s", data);
 	recording_t *recording, *existing;
 	new_recording_t r = recording_build_new_recording(data);
 	if (sb_len(&r.path))

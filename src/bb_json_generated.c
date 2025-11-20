@@ -322,7 +322,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.showUnusedTagCategories = json_object_get_boolean_safe(obj, "showUnusedTagCategories");
 			dst.copyLineExpandJson = json_object_get_boolean_safe(obj, "copyLineExpandJson");
 			dst.copyLineTruncate = json_object_get_boolean_safe(obj, "copyLineTruncate");
-			dst.pad = (u32)json_object_get_number(obj, "pad");
+			dst.maxLogTooltipLines = (u32)json_object_get_number(obj, "maxLogTooltipLines");
 		}
 	}
 	return dst;
@@ -1127,7 +1127,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "showUnusedTagCategories", src->showUnusedTagCategories);
 		json_object_set_boolean(obj, "copyLineExpandJson", src->copyLineExpandJson);
 		json_object_set_boolean(obj, "copyLineTruncate", src->copyLineTruncate);
-		json_object_set_number(obj, "pad", src->pad);
+		json_object_set_number(obj, "maxLogTooltipLines", src->maxLogTooltipLines);
 	}
 	return val;
 }

@@ -396,7 +396,7 @@ config_t config_clone(const config_t *src)
 		dst.showUnusedTagCategories = src->showUnusedTagCategories;
 		dst.copyLineExpandJson = src->copyLineExpandJson;
 		dst.copyLineTruncate = src->copyLineTruncate;
-		dst.pad = src->pad;
+		dst.maxLogTooltipLines = src->maxLogTooltipLines;
 	}
 	return dst;
 }

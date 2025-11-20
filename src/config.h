@@ -190,7 +190,7 @@ AUTOJSON typedef struct config_s
 	b32 showUnusedTagCategories;
 	b32 copyLineExpandJson;
 	b32 copyLineTruncate;
-	u32 pad;
+	u32 maxLogTooltipLines;
 } config_t;
 
 enum
