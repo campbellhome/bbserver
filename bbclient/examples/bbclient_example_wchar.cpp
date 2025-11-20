@@ -124,6 +124,9 @@ static console_autocomplete_entry s_autocompleteEntries[] = {
 	{ "continue", "continue to next section of test app", true, 0 },
 	{ "quit", "quit the application", true, 0 },
 	{ "jumbolog", "extra large log", true, 0 },
+#if BB_USING(BB_PLATFORM_WINDOWS)
+	{ "CopyFile", "copy active bbox using CopyFileA", true, 0 },
+#endif
 	{ "log LogTemp", "set log category", true, 0 },
 	{ "log LogConsole", "set log category", true, 0 },
 	{ "log LogMatchmaking", "set log category", true, 0 },
@@ -197,6 +200,27 @@ static void incoming_packet_handler(const bb_decoded_packet_t* decoded, void* co
 				free(large);
 			}
 		}
+#if BB_USING(BB_PLATFORM_WINDOWS)
+		else if (!bb_stricmp(text, "CopyFile"))
+		{
+			if (CopyFileA("bbclient.bbox", "bbclient.bbox.bak", false))
+			{
+				BB_LOG_A("Console", "^:CopyFile success\n");
+				DeleteFileA("bbclient.bbox.bak");
+			}
+			else
+			{
+				char* errorMessage = NULL;
+				DWORD err = GetLastError();
+				FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errorMessage, 0, NULL);
+				BB_ERROR_A("Console", "^:CopyFile failed:\n%s\n", errorMessage ? errorMessage : "unable to format error message");
+				if (errorMessage)
+				{
+					LocalFree(errorMessage);
+				}
+			}
+		}
+#endif
 	}
 	else if (decoded->type == kBBPacketType_ConsoleAutocompleteRequest)
 	{
