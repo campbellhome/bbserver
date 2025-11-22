@@ -1429,7 +1429,7 @@ int main_loop(int argc, char** argv)
 	}
 	else if (!bb_stricmp(g_exe, "bbstats"))
 	{
-		g_program = kProgram_bbstats;
+		return bbstats_main(argc, argv);
 	}
 
 	const char* source = NULL;
@@ -1507,33 +1507,29 @@ int main_loop(int argc, char** argv)
 					return usage();
 				}
 			}
-			else if (!strcmp(arg, "-bbcat"))
+			else if (!strcmp(arg, "-bbcat") || !strcmp(arg, "--bbcat"))
 			{
 				g_program = kProgram_bbcat;
 			}
-			else if (!strcmp(arg, "-bbtail"))
+			else if (!strcmp(arg, "-bbtail") || !strcmp(arg, "--bbtail"))
 			{
 				g_program = kProgram_bbtail;
 			}
-			else if (!strcmp(arg, "-bbgrep"))
+			else if (!strcmp(arg, "-bbgrep") || !strcmp(arg, "--bbgrep"))
 			{
 				g_program = kProgram_bbgrep;
 			}
-			else if (!strcmp(arg, "-bboxtojson"))
+			else if (!strcmp(arg, "-bboxtojson") || !strcmp(arg, "--bboxtojson"))
 			{
 				g_program = kProgram_bboxtojson;
 			}
-			else if (!strcmp(arg, "-bbstats"))
+			else if (!strcmp(arg, "-bbstats") || !strcmp(arg, "--bbstats"))
 			{
-				g_program = kProgram_bbstats;
-			}
-			else if (!strcmp(arg, "-app") || !strcmp(arg, "--app") ||
-			         !strcmp(arg, "-platform") || !strcmp(arg, "--platform") ||
-			         !strcmp(arg, "-overall") || !strcmp(arg, "--overall") ||
-			         !strcmp(arg, "-bytes") || !strcmp(arg, "--bytes") ||
-			         !strcmp(arg, "-lines") || !strcmp(arg, "--lines"))
-			{
-				// bbstats arg - do nothing
+				if (target)
+				{
+					bb_free(target);
+				}
+				return bbstats_main(argc, argv);
 			}
 			else if (!bb_strnicmp(arg, "-sql=", 5))
 			{
@@ -1583,15 +1579,6 @@ int main_loop(int argc, char** argv)
 				return usage();
 			}
 		}
-	}
-
-	if (g_program == kProgram_bbstats)
-	{
-		if (target)
-		{
-			bb_free(target);
-		}
-		return bbstats_main(argc, argv);
 	}
 
 	if (!source)

@@ -411,6 +411,7 @@ int bbstats_main(int argc, char** argv)
 	b32 bPerApp = false;
 	b32 bPerPlatform = false;
 	b32 bOverall = false;
+	b32 bPause = false;
 
 	for (int i = 1; i < argc; ++i)
 	{
@@ -423,7 +424,7 @@ int bbstats_main(int argc, char** argv)
 
 		if (!bPastSwitches && *arg == '-')
 		{
-			if (!bb_stricmp(arg, "-bbstats"))
+			if (!bb_stricmp(arg, "-bbstats") || !bb_stricmp(arg, "--bbstats"))
 			{
 				// do nothing
 			}
@@ -451,8 +452,13 @@ int bbstats_main(int argc, char** argv)
 			{
 				s_bSortByBytes = false;
 			}
+			else if (!bb_stricmp(arg, "-pause") || !bb_stricmp(arg, "--pause"))
+			{
+				bPause = true;
+			}
 			else
 			{
+				print_stderr("Usage: bboxtolog.exe --bbstats [-r] [--app] [--platform] [--overall] [--bytes] [--lines] [--pause] <filename.bbox or dir>\n");
 				return 1; // TODO: print usage
 			}
 		}
@@ -498,6 +504,12 @@ int bbstats_main(int argc, char** argv)
 	}
 
 	bbstats_data_reset(&s_data);
+
+	if (bPause)
+	{
+		print_stderr("Press Enter to continue.");
+		getchar();
+	}
 
 	return ret;
 }

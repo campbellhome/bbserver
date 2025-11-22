@@ -17,6 +17,7 @@
 #include "imgui_utils.h"
 #include "message_queue.h"
 #include "path_utils.h"
+#include "process_utils.h"
 #include "recorded_session.h"
 #include "recordings.h"
 #include "sb.h"
@@ -547,6 +548,12 @@ static void UIRecordedView_SaveLog(view_t* view, bool allColumns, columnSpacer_e
 		sb_reset(&path);
 	}
 	sb_reset(&sb);
+}
+
+static void UIRecordedView_ShowStats(view_t* view, bool bSortByBytes)
+{
+	const char* sortFlag = bSortByBytes ? "--bytes" : "--lines";
+	process_spawn_with_visibility(".", va("bboxtolog.exe --bbstats --pause %s \"%s\"", sortFlag, view->session->path), kProcessSpawn_OneShot, kProcessLog_All, kProcessVisibility_Visible);
 }
 
 static void UIRecordedView_Logs_ClearSelection(view_t* view)
@@ -2205,17 +2212,33 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				{
 					SetClipboardText(view->session->path);
 				}
-				if (ImGui::MenuItem("Save text"))
+				if (ImGui::BeginMenu("Save..."))
 				{
-					UIRecordedView_SaveLog(view, false, kColumnSpacer_Tab);
+					if (ImGui::MenuItem("Save text"))
+					{
+						UIRecordedView_SaveLog(view, false, kColumnSpacer_Tab);
+					}
+					if (ImGui::MenuItem("Save all columns"))
+					{
+						UIRecordedView_SaveLog(view, true, kColumnSpacer_Spaces);
+					}
+					if (ImGui::MenuItem("Save all columns (tab-separated)"))
+					{
+						UIRecordedView_SaveLog(view, true, kColumnSpacer_Tab);
+					}
+					ImGui::EndMenu();
 				}
-				if (ImGui::MenuItem("Save all columns"))
+				if (ImGui::BeginMenu("Stats..."))
 				{
-					UIRecordedView_SaveLog(view, true, kColumnSpacer_Spaces);
-				}
-				if (ImGui::MenuItem("Save all columns (tab-separated)"))
-				{
-					UIRecordedView_SaveLog(view, true, kColumnSpacer_Tab);
+					if (ImGui::MenuItem("Show stats by bytes"))
+					{
+						UIRecordedView_ShowStats(view, true);
+					}
+					if (ImGui::MenuItem("Show stats by line"))
+					{
+						UIRecordedView_ShowStats(view, false);
+					}
+					ImGui::EndMenu();
 				}
 				if (ImGui::MenuItem("Open containing folder"))
 				{
