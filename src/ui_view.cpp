@@ -550,10 +550,22 @@ static void UIRecordedView_SaveLog(view_t* view, bool allColumns, columnSpacer_e
 	sb_reset(&sb);
 }
 
-static void UIRecordedView_ShowStats(view_t* view, bool bSortByBytes)
+static void UIRecordedView_ShowStats(view_t* view, bool bSortByBytes, bool bDir)
 {
 	const char* sortFlag = bSortByBytes ? "--bytes" : "--lines";
-	process_spawn_with_visibility(".", va("bboxtolog.exe --bbstats --pause %s \"%s\"", sortFlag, view->session->path), kProcessSpawn_OneShot, kProcessLog_All, kProcessVisibility_Visible);
+	if (bDir)
+	{
+		sb_t path = sb_from_c_string(view->session->path);
+		path_remove_filename(&path);
+		const char* target = sb_get(&path);
+		process_spawn_with_visibility(".", va("bboxtolog.exe --bbstats --overall -r --pause %s \"%s\"", sortFlag, target), kProcessSpawn_OneShot, kProcessLog_All, kProcessVisibility_Visible);
+		sb_reset(&path);
+	}
+	else
+	{
+		const char* target = view->session->path;
+		process_spawn_with_visibility(".", va("bboxtolog.exe --bbstats --pause %s \"%s\"", sortFlag, target), kProcessSpawn_OneShot, kProcessLog_All, kProcessVisibility_Visible);
+	}
 }
 
 static void UIRecordedView_Logs_ClearSelection(view_t* view)
@@ -2230,13 +2242,21 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				}
 				if (ImGui::BeginMenu("Stats..."))
 				{
-					if (ImGui::MenuItem("Show stats by bytes"))
+					if (ImGui::MenuItem("Show stats by bytes (this file)"))
 					{
-						UIRecordedView_ShowStats(view, true);
+						UIRecordedView_ShowStats(view, true, false);
 					}
-					if (ImGui::MenuItem("Show stats by line"))
+					if (ImGui::MenuItem("Show stats by line (this file)"))
 					{
-						UIRecordedView_ShowStats(view, false);
+						UIRecordedView_ShowStats(view, false, false);
+					}
+					if (ImGui::MenuItem("Show stats by bytes (directory)"))
+					{
+						UIRecordedView_ShowStats(view, true, true);
+					}
+					if (ImGui::MenuItem("Show stats by line (directory)"))
+					{
+						UIRecordedView_ShowStats(view, false, true);
 					}
 					ImGui::EndMenu();
 				}
