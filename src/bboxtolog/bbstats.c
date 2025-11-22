@@ -459,7 +459,7 @@ int bbstats_main(int argc, char** argv)
 			else
 			{
 				print_stderr("Usage: bboxtolog.exe --bbstats [-r] [--app] [--platform] [--overall] [--bytes] [--lines] [--pause] <filename.bbox or dir>\n");
-				return 1; // TODO: print usage
+				return 1;
 			}
 		}
 		else
