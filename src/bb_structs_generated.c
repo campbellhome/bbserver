@@ -397,6 +397,10 @@ config_t config_clone(const config_t *src)
 		dst.copyLineExpandJson = src->copyLineExpandJson;
 		dst.copyLineTruncate = src->copyLineTruncate;
 		dst.maxLogTooltipLines = src->maxLogTooltipLines;
+		dst.dirStatsRecursive = src->dirStatsRecursive;
+		dst.dirStatsPerApp = src->dirStatsPerApp;
+		dst.dirStatsPerPlatform = src->dirStatsPerPlatform;
+		dst.dirStatsOverall = src->dirStatsOverall;
 	}
 	return dst;
 }

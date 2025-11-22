@@ -191,11 +191,15 @@ AUTOJSON typedef struct config_s
 	b32 copyLineExpandJson;
 	b32 copyLineTruncate;
 	u32 maxLogTooltipLines;
+	b32 dirStatsRecursive;
+	b32 dirStatsPerApp;
+	b32 dirStatsPerPlatform;
+	b32 dirStatsOverall;
 } config_t;
 
 enum
 {
-	kConfigVersion = 9
+	kConfigVersion = 10
 };
 
 extern config_t g_config;

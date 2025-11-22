@@ -137,6 +137,10 @@ b32 config_read(config_t* config)
 		config->copyLineExpandJson = true;
 		config->copyLineTruncate = true;
 	}
+	if (config->version <= 9)
+	{
+		config->dirStatsOverall = true;
+	}
 	config->version = kConfigVersion;
 
 	if (config->listenProtocol == kConfigListenProtocol_Unknown)

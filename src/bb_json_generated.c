@@ -323,6 +323,10 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.copyLineExpandJson = json_object_get_boolean_safe(obj, "copyLineExpandJson");
 			dst.copyLineTruncate = json_object_get_boolean_safe(obj, "copyLineTruncate");
 			dst.maxLogTooltipLines = (u32)json_object_get_number(obj, "maxLogTooltipLines");
+			dst.dirStatsRecursive = json_object_get_boolean_safe(obj, "dirStatsRecursive");
+			dst.dirStatsPerApp = json_object_get_boolean_safe(obj, "dirStatsPerApp");
+			dst.dirStatsPerPlatform = json_object_get_boolean_safe(obj, "dirStatsPerPlatform");
+			dst.dirStatsOverall = json_object_get_boolean_safe(obj, "dirStatsOverall");
 		}
 	}
 	return dst;
@@ -1128,6 +1132,10 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "copyLineExpandJson", src->copyLineExpandJson);
 		json_object_set_boolean(obj, "copyLineTruncate", src->copyLineTruncate);
 		json_object_set_number(obj, "maxLogTooltipLines", src->maxLogTooltipLines);
+		json_object_set_boolean(obj, "dirStatsRecursive", src->dirStatsRecursive);
+		json_object_set_boolean(obj, "dirStatsPerApp", src->dirStatsPerApp);
+		json_object_set_boolean(obj, "dirStatsPerPlatform", src->dirStatsPerPlatform);
+		json_object_set_boolean(obj, "dirStatsOverall", src->dirStatsOverall);
 	}
 	return val;
 }
