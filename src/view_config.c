@@ -342,7 +342,7 @@ static void view_config_read_fixup(view_t* view)
 
 	view->visibleLogsDirty = true;
 
-	BB_LOG("view::config", "read fixup sort configFiles");
+	//BB_LOG("view::config", "read fixup sort configFiles");
 	qsort(view->config.configFiles.data, view->config.configFiles.count, sizeof(view->config.configFiles.data[0]), ViewConfigFileCompare);
 	for (u32 vfi = 0; vfi < view->files.count; ++vfi)
 	{
@@ -359,7 +359,7 @@ static void view_config_read_fixup(view_t* view)
 		}
 	}
 
-	BB_LOG("view::config", "read fixup sort configThreads");
+	//BB_LOG("view::config", "read fixup sort configThreads");
 	qsort(view->config.configThreads.data, view->config.configThreads.count, sizeof(view->config.configThreads.data[0]), ViewConfigThreadCompare);
 	for (u32 vci = 0; vci < view->threads.count; ++vci)
 	{
@@ -376,7 +376,7 @@ static void view_config_read_fixup(view_t* view)
 		}
 	}
 
-	BB_LOG("view::config", "read fixup sort configCategories");
+	//BB_LOG("view::config", "read fixup sort configCategories");
 	qsort(view->config.configCategories.data, view->config.configCategories.count, sizeof(view->config.configCategories.data[0]), ViewConfigCategoryCompare);
 	view_config_update_category_depth(view);
 	for (u32 vci = 0; vci < view->categories.count; ++vci)
@@ -387,14 +387,14 @@ static void view_config_read_fixup(view_t* view)
 			view_config_category_t* cc = view->config.configCategories.data + cci;
 			if (!strcmp(vc->categoryName, sb_get(&cc->name)))
 			{
-				BB_LOG("view::config", "read fixup apply configCategory %s", vc->categoryName);
+				//BB_LOG("view::config", "read fixup apply configCategory %s", vc->categoryName);
 				view_apply_config_category(cc, vc);
 				break;
 			}
 		}
 	}
 
-	BB_LOG("view::config", "read fixup columns");
+	//BB_LOG("view::config", "read fixup columns");
 	for (u32 ci = 0; ci < view->config.configColumns.count; ++ci)
 	{
 		view_config_column_t* cc = view->config.configColumns.data + ci;
@@ -439,7 +439,7 @@ b32 view_config_write(view_t* view)
 		json_value_free(val);
 	}
 	sb_reset(&path);
-	BB_LOG("view::config", "write config done");
+	//BB_LOG("view::config", "write config done");
 	return result;
 }
 
@@ -470,7 +470,7 @@ b32 view_config_read(view_t* view)
 
 	view->config.version = kViewConfigVersion;
 	view_config_read_fixup(view);
-	BB_LOG("view::config", "read config done");
+	//BB_LOG("view::config", "read config done");
 	return ret;
 }
 
@@ -482,7 +482,7 @@ void view_config_add_categories_to_session(recorded_session_t* session)
 	JSON_Value* val = json_parse_file(sb_get(&path));
 	if (val)
 	{
-		BB_LOG("view::config", "read config from %s for session categories", sb_get(&path));
+		//BB_LOG("view::config", "read config from %s for session categories", sb_get(&path));
 		if (bExternalView)
 		{
 			view_session_config_t sessionConfig = json_deserialize_view_session_config_t(val);
@@ -593,7 +593,7 @@ b32 view_session_config_write(view_t* view)
 	}
 	json_value_free(val);
 	sb_reset(&path);
-	BB_LOG("view::config", "write session config done");
+	//BB_LOG("view::config", "write session config done");
 	return result;
 }
 
@@ -614,6 +614,6 @@ b32 view_session_config_read(view_t* view)
 
 	view->sessionConfig.version = kViewSessionConfigVersion;
 	view_session_config_read_fixup(view);
-	BB_LOG("view::config", "read session config done");
+	//BB_LOG("view::config", "read session config done");
 	return ret;
 }

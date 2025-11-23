@@ -219,10 +219,11 @@ static inline const char* GetSessionFileName(recorded_session_t* session, u32 fi
 
 static inline void ClearViewTail(view_t* view, const char* reason)
 {
+	BB_UNUSED(reason);
 	if (view->tail)
 	{
 		view->tail = false;
-		BB_LOG("Debug", "Disabled tail for '%s' - %s\n", view->session->appInfo.packet.appInfo.applicationName, reason);
+		//BB_LOG("Debug", "Disabled tail for '%s' - %s\n", view->session->appInfo.packet.appInfo.applicationName, reason);
 	}
 }
 
@@ -2752,7 +2753,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 						if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
 						{
 							view->tail = true;
-							BB_LOG("Debug", "Set tail for '%s' - Mouse Wheel\n", applicationName);
+							//BB_LOG("Debug", "Set tail for '%s' - Mouse Wheel\n", applicationName);
 						}
 					}
 				}
@@ -2772,7 +2773,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 					if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
 					{
 						view->tail = true;
-						BB_LOG("Debug", "Set tail for '%s' - PageDown\n", applicationName);
+						//BB_LOG("Debug", "Set tail for '%s' - PageDown\n", applicationName);
 					}
 					break;
 				case kVerticalScroll_Up:
@@ -2784,7 +2785,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 					if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
 					{
 						view->tail = true;
-						BB_LOG("Debug", "Set tail for '%s' - Down\n", applicationName);
+						//BB_LOG("Debug", "Set tail for '%s' - Down\n", applicationName);
 					}
 					break;
 				case kVerticalScroll_Start:
@@ -2796,7 +2797,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 					if (!view->tail)
 					{
 						view->tail = true;
-						BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
+						//BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
 					}
 					break;
 				case kVerticalScroll_None:
