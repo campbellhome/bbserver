@@ -25,6 +25,10 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include <stdlib.h>
 #include <string.h>
 
+#if BB_USING(BB_PLATFORM_WINDOWS)
+#include <conio.h>
+#endif
+
 static bbstats_data_t s_data;
 static b32 s_bSortByBytes;
 
@@ -507,8 +511,13 @@ int bbstats_main(int argc, char** argv)
 
 	if (bPause)
 	{
+#if BB_USING(BB_PLATFORM_WINDOWS)
+		print_stderr("Press any key to continue . . . ");
+		_getch();
+#else
 		print_stderr("Press Enter to continue.");
 		getchar();
+#endif
 	}
 
 	return ret;

@@ -10,8 +10,10 @@
 #include "bb_wrap_stdio.h"
 #include "bbserver_main.h"
 #include "bbserver_utils.h"
+#include "cmdline.h"
 #include "fonts.h"
 #include "imgui_core.h"
+#include "imgui_text_shadows.h"
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
@@ -44,7 +46,6 @@ BB_WARNING_PUSH(4820)
 #include <math.h>
 BB_WARNING_POP
 
-#include "imgui_text_shadows.h"
 #include "parson/parson.h"
 
 extern float g_messageboxHeight;
@@ -553,6 +554,7 @@ static void UIRecordedView_SaveLog(view_t* view, bool allColumns, columnSpacer_e
 
 static void UIRecordedView_ShowStats(view_t* view, bool bSortByBytes, bool bDir)
 {
+	const char* cwd = cmdline_get_exe_dir();
 	const char* sortFlag = bSortByBytes ? "--bytes" : "--lines";
 	if (bDir)
 	{
@@ -563,13 +565,13 @@ static void UIRecordedView_ShowStats(view_t* view, bool bSortByBytes, bool bDir)
 		sb_t path = sb_from_c_string(view->session->path);
 		path_remove_filename(&path);
 		const char* target = sb_get(&path);
-		process_spawn_with_visibility(".", va("bboxtolog.exe --bbstats%s%s%s%s --pause %s \"%s\"", recursiveFlag, perAppFlag, perPlatformFlag, overallFlag, sortFlag, target), kProcessSpawn_OneShot, kProcessLog_All, kProcessVisibility_Visible);
+		process_spawn_with_visibility(cwd, va("bboxtolog.exe --bbstats%s%s%s%s --pause %s \"%s\"", recursiveFlag, perAppFlag, perPlatformFlag, overallFlag, sortFlag, target), kProcessSpawn_OneShot, kProcessLog_All, kProcessVisibility_Visible);
 		sb_reset(&path);
 	}
 	else
 	{
 		const char* target = view->session->path;
-		process_spawn_with_visibility(".", va("bboxtolog.exe --bbstats --pause %s \"%s\"", sortFlag, target), kProcessSpawn_OneShot, kProcessLog_All, kProcessVisibility_Visible);
+		process_spawn_with_visibility(cwd, va("bboxtolog.exe --bbstats --pause %s \"%s\"", sortFlag, target), kProcessSpawn_OneShot, kProcessLog_All, kProcessVisibility_Visible);
 	}
 }
 
