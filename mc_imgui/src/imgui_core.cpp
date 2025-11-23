@@ -208,7 +208,6 @@ extern "C" void Imgui_Core_Shutdown(void)
 {
 	ImGui::InputTextShutdown();
 	Fonts_Shutdown();
-	Imgui_Core_Freetype_Shutdown();
 	mb_shutdown(nullptr);
 
 	if (s_hWinEventHook)
@@ -224,6 +223,8 @@ extern "C" void Imgui_Core_Shutdown(void)
 	sb_reset(&g_colorscheme);
 
 	ImGui::DestroyContext();
+
+	Imgui_Core_Freetype_Shutdown();
 
 	if (s_pD3D)
 	{

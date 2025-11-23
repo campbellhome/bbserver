@@ -1356,7 +1356,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 			}
 			bNeedText = false;
 
-			ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, sb_get(&s_textSpan), sb_get(&s_textSpan) + sb_len(&s_textSpan));
+			ImVec2 textSize = font->CalcTextSizeA(GImGui->FontSize, FLT_MAX, 0.0f, sb_get(&s_textSpan), sb_get(&s_textSpan) + sb_len(&s_textSpan));
 			totalTextSizeX += textSize.x;
 			totalLineLen += span.len;
 		}
@@ -1376,7 +1376,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		}
 		bNeedText = false;
 
-		ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "...");
+		ImVec2 textSize = font->CalcTextSizeA(GImGui->FontSize, FLT_MAX, 0.0f, "...");
 		totalTextSizeX += textSize.x;
 	}
 
@@ -1385,7 +1385,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		TextUnformatted("");
 	}
 
-	ImVec2 blankSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "            ");
+	ImVec2 blankSize = font->CalcTextSizeA(GImGui->FontSize, FLT_MAX, 0.0f, "            ");
 	float requiredWidth = textOffset + totalTextSizeX + blankSize.x;
 	return requiredWidth;
 }
@@ -1712,7 +1712,7 @@ static ImVec2 UIRecordedView_SizeFilterItem(const char* filterName, const char* 
 	const char* filter = sb_get(&s_textSpan);
 
 	ImFont* font = GetFont();
-	ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, filter);
+	ImVec2 textSize = font->CalcTextSizeA(GImGui->FontSize, FLT_MAX, 0.0f, filter);
 	return textSize;
 }
 

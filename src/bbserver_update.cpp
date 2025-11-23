@@ -34,7 +34,7 @@
 #include "ui_view.h"
 #include "va.h"
 #include "view.h"
-#include "wrap_imgui.h"
+#include "wrap_imgui_internal.h"
 
 extern s64 g_imgui_allocatedCount;
 extern s64 g_imgui_allocatedBytes;
@@ -569,7 +569,7 @@ void BBServer_MainMenuBar(void)
 		}
 
 		ImFont* font = ImGui::GetFont();
-		ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, "Recordings");
+		ImVec2 textSize = font->CalcTextSizeA(GImGui->FontSize, FLT_MAX, 0.0f, "Recordings");
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		float checkWidth = style.FramePadding.x * 4 + style.ItemInnerSpacing.x + textSize.y;

@@ -15,6 +15,8 @@
 #include "theme_config.h"
 #include "ui_recordings.h"
 
+#include "wrap_imgui_internal.h"
+
 static config_t s_preferencesConfig;
 static sb_t s_tmpStr;
 bool s_preferencesValid;
@@ -533,7 +535,7 @@ void UIConfig_Update(config_t* config)
 			PopItemWidth();
 		}
 		ImFont* uiFont = ImGui::GetFont();
-		ImVec2 fontSizeDim = uiFont->CalcTextSizeA(uiFont->FontSize, FLT_MAX, 0.0f, "100 _+__-_ size");
+		ImVec2 fontSizeDim = uiFont->CalcTextSizeA(GImGui->FontSize, FLT_MAX, 0.0f, "100 _+__-_ size");
 		if (ImGui::CollapsingHeader("Font", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			BeginGroup();

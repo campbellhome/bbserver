@@ -18,9 +18,12 @@ BB_WARNING_PUSH(4820)
 
 BB_WARNING_POP
 
-//#pragma comment(lib, "freetype.lib")
+// #pragma comment(lib, "freetype.lib")
 
 // freetype functions in use:
+// FT_New_Size
+// FT_Done_Size
+// FT_Activate_Size
 // FT_New_Memory_Face
 // FT_Done_Face
 // FT_Request_Size
@@ -35,6 +38,9 @@ BB_WARNING_POP
 // FT_GlyphSlot_Oblique
 
 // freetype function signatures:
+// FT_Error FT_New_Size(FT_Face face, FT_Size* size);
+// FT_Error FT_Done_Size(FT_Size size);
+// FT_Error FT_Activate_Size(FT_Size size);
 // FT_Error FT_New_Memory_Face(FT_Library library, const FT_Byte *file_base, FT_Long file_size, FT_Long face_index, FT_Face *aface);
 // FT_Error FT_Done_Face(FT_Face face);
 // FT_Error FT_Request_Size(FT_Face face, FT_Size_Request req);
@@ -48,6 +54,9 @@ BB_WARNING_POP
 // void FT_GlyphSlot_Embolden(FT_GlyphSlot slot);
 // void FT_GlyphSlot_Oblique(FT_GlyphSlot slot);
 
+typedef FT_Error(FT_New_Size_Proc)(FT_Face face, FT_Size* size);
+typedef FT_Error(FT_Done_Size_Proc)(FT_Size size);
+typedef FT_Error(FT_Activate_Size_Proc)(FT_Size size);
 typedef FT_Error(FT_New_Memory_Face_Proc)(FT_Library library, const FT_Byte* file_base, FT_Long file_size, FT_Long face_index, FT_Face* aface);
 typedef FT_Error(FT_Done_Face_Proc)(FT_Face face);
 typedef FT_Error(FT_Request_Size_Proc)(FT_Face face, FT_Size_Request req);
@@ -63,6 +72,9 @@ typedef void(FT_GlyphSlot_Oblique_Proc)(FT_GlyphSlot slot);
 
 static HMODULE g_hFreetypeModule;
 static b32 g_freetypeValid;
+static FT_New_Size_Proc* g_FT_New_Size;
+static FT_Done_Size_Proc* g_FT_Done_Size;
+static FT_Activate_Size_Proc* g_FT_Activate_Size;
 static FT_New_Memory_Face_Proc* g_FT_New_Memory_Face;
 static FT_Done_Face_Proc* g_FT_Done_Face;
 static FT_Request_Size_Proc* g_FT_Request_Size;
@@ -76,6 +88,18 @@ static FT_Add_Default_Modules_Proc* g_FT_Add_Default_Modules;
 static FT_GlyphSlot_Embolden_Proc* g_FT_GlyphSlot_Embolden;
 static FT_GlyphSlot_Oblique_Proc* g_FT_GlyphSlot_Oblique;
 
+FT_Error FT_New_Size(FT_Face face, FT_Size* size)
+{
+	return (*g_FT_New_Size)(face, size);
+}
+FT_Error FT_Done_Size(FT_Size size)
+{
+	return (*g_FT_Done_Size)(size);
+}
+FT_Error FT_Activate_Size(FT_Size size)
+{
+	return (*g_FT_Activate_Size)(size);
+}
 FT_Error FT_New_Memory_Face(FT_Library library, const FT_Byte* file_base, FT_Long file_size, FT_Long face_index, FT_Face* aface)
 {
 	return (*g_FT_New_Memory_Face)(library, file_base, file_size, face_index, aface);
@@ -130,7 +154,10 @@ void Imgui_Core_Freetype_Init(void)
 	g_hFreetypeModule = LoadLibraryA("freetype.dll");
 	if (g_hFreetypeModule)
 	{
-		g_FT_New_Memory_Face = (FT_New_Memory_Face_Proc*)(void *)GetProcAddress(g_hFreetypeModule, "FT_New_Memory_Face");
+		g_FT_New_Size = (FT_New_Size_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_New_Size");
+		g_FT_Done_Size = (FT_Done_Size_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Done_Size");
+		g_FT_Activate_Size = (FT_Activate_Size_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Activate_Size");
+		g_FT_New_Memory_Face = (FT_New_Memory_Face_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_New_Memory_Face");
 		g_FT_Done_Face = (FT_Done_Face_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Done_Face");
 		g_FT_Request_Size = (FT_Request_Size_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Request_Size");
 		g_FT_Load_Glyph = (FT_Load_Glyph_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Load_Glyph");
@@ -143,7 +170,10 @@ void Imgui_Core_Freetype_Init(void)
 		g_FT_GlyphSlot_Embolden = (FT_GlyphSlot_Embolden_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_GlyphSlot_Embolden");
 		g_FT_GlyphSlot_Oblique = (FT_GlyphSlot_Oblique_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_GlyphSlot_Oblique");
 
-		g_freetypeValid = g_FT_New_Memory_Face &&
+		g_freetypeValid = g_FT_New_Size &&
+		                  g_FT_Done_Size &&
+		                  g_FT_Activate_Size &&
+		                  g_FT_New_Memory_Face &&
 		                  g_FT_Done_Face &&
 		                  g_FT_Request_Size &&
 		                  g_FT_Load_Glyph &&
