@@ -195,6 +195,8 @@ AUTOJSON typedef struct config_s
 	b32 dirStatsPerApp;
 	b32 dirStatsPerPlatform;
 	b32 dirStatsOverall;
+	b32 dateTimeUTC;
+	u32 pad;
 } config_t;
 
 enum

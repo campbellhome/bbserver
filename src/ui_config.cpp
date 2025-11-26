@@ -485,6 +485,7 @@ void UIConfig_Update(config_t* config)
 			ImGui::Checkbox("Ctrl+Scrollwheel scales UI", &s_preferencesConfig.dpiScrollwheel);
 			ImGui::Checkbox("Ctrl+C to copy log text expands json (unless copying all columns)", &s_preferencesConfig.copyLineExpandJson);
 			ImGui::Checkbox("Ctrl+C to copy log text truncates long lines", &s_preferencesConfig.copyLineTruncate);
+			ImGui::Checkbox("Show Date/Time as UTC (ISO-8601)", &s_preferencesConfig.dateTimeUTC);
 			ImGui::EndGroup();
 			PopItemWidth();
 			ImGui::SameLine(0.0f, 20.0f * Imgui_Core_GetDpiScale());

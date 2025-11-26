@@ -7,6 +7,7 @@
 #include "bb_colors.h"
 #include "bb_string.h"
 #include "bb_structs_generated.h"
+#include "bb_time.h"
 #include "bb_wrap_stdio.h"
 #include "bbserver_main.h"
 #include "bbserver_utils.h"
@@ -241,7 +242,10 @@ static FILETIME FileTimeFromDecoded(recorded_session_t* session, bb_decoded_pack
 	FILETIME ft;
 	ft.dwLowDateTime = (DWORD)win32100Nanoseconds;
 	ft.dwHighDateTime = win32100Nanoseconds >> 32;
-	FileTimeToLocalFileTime(&ft, &ft);
+	if (!g_config.dateTimeUTC)
+	{
+		FileTimeToLocalFileTime(&ft, &ft);
+	}
 
 	return ft;
 }
@@ -261,8 +265,15 @@ const char* DateFromDecoded(recorded_session_t* session, bb_decoded_packet_t* de
 	if (session->appInfo.type >= kBBPacketType_AppInfo_v3)
 	{
 		SYSTEMTIME st = SystemTimeFromDecoded(session, decoded);
-		GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buffer, sizeof(buffer));
-		return va("%s", buffer);
+		if (g_config.dateTimeUTC)
+		{
+			return va("%04d-%02d-%02d", st.wYear, st.wMonth, st.wDay);
+		}
+		else
+		{
+			GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buffer, sizeof(buffer));
+			return va("%s", buffer);
+		}
 	}
 	else
 	{
@@ -276,8 +287,15 @@ const char* TimeFromDecoded(recorded_session_t* session, bb_decoded_packet_t* de
 	if (session->appInfo.type >= kBBPacketType_AppInfo_v3)
 	{
 		SYSTEMTIME st = SystemTimeFromDecoded(session, decoded);
-		GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, buffer, sizeof(buffer));
-		return va("%s %u ms", buffer, st.wMilliseconds);
+		if (g_config.dateTimeUTC)
+		{
+			return va("%02d:%02d:%02d.%03dZ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		}
+		else
+		{
+			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, buffer, sizeof(buffer));
+			return va("%s %u ms", buffer, st.wMilliseconds);
+		}
 	}
 	else
 	{
@@ -720,7 +738,14 @@ static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* cat
 		PushUIFont();
 		if (session->appInfo.type >= kBBPacketType_AppInfo_v3)
 		{
-			TextShadowed(va("Timestamp: %s %s", DateFromDecoded(session, decoded), TimeFromDecoded(session, decoded)));
+			if (g_config.dateTimeUTC)
+			{
+				TextShadowed(va("Timestamp: %sT%s", DateFromDecoded(session, decoded), TimeFromDecoded(session, decoded)));
+			}
+			else
+			{
+				TextShadowed(va("Timestamp: %s %s", DateFromDecoded(session, decoded), TimeFromDecoded(session, decoded)));
+			}
 		}
 		else
 		{

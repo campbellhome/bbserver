@@ -401,6 +401,8 @@ config_t config_clone(const config_t *src)
 		dst.dirStatsPerApp = src->dirStatsPerApp;
 		dst.dirStatsPerPlatform = src->dirStatsPerPlatform;
 		dst.dirStatsOverall = src->dirStatsOverall;
+		dst.dateTimeUTC = src->dateTimeUTC;
+		dst.pad = src->pad;
 	}
 	return dst;
 }
