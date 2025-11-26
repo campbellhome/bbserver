@@ -656,8 +656,6 @@ extern "C" void BBServer_Update(void)
 	devkit_autodetect_tick();
 	tasks_tick();
 
-	BBServer_MainMenuBar();
-
 	if (ImGui::GetIO().MouseWheel != 0.0f)
 	{
 		if (ImGui::GetIO().KeyCtrl)
@@ -676,6 +674,8 @@ extern "C" void BBServer_Update(void)
 			}
 		}
 	}
+
+	BBServer_MainMenuBar();
 
 	BBServer_DispatchToUIMessageQueue();
 	recordings_autodelete_old_recordings();

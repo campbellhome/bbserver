@@ -19,6 +19,7 @@
 #include "ui_loglevel_colorizer.h"
 #include "va.h"
 
+#include "bb_wrap_malloc.h"
 #include "bb_wrap_stdio.h"
 
 static bool s_showImguiDemo;
@@ -120,7 +121,7 @@ static void MC_Imgui_Example_Read_BBClient_BBox_Stdio(void)
 {
 	const char* path = R"(..\..\bbclient\vs\bbclient.bbox)";
 
-	FILE *handle = fopen(path, "rb");
+	FILE* handle = fopen(path, "rb");
 	if (handle)
 	{
 		fseek(handle, 0, SEEK_END);
@@ -316,21 +317,21 @@ void MC_Imgui_Example_Update(void)
 
 		for (u32 i = 0; i < g_output.count; ++i)
 		{
-			output_line_t *line = g_output.data + i;
+			output_line_t* line = g_output.data + i;
 			bb_log_level_e logLevel = kBBLogLevel_Verbose;
 			switch (line->level)
 			{
-				case kOutput_Log:
-					logLevel = kBBLogLevel_Log;
-					break;
-				case kOutput_Warning:
-					logLevel = kBBLogLevel_Warning;
-					break;
-				case kOutput_Error:
-					logLevel = kBBLogLevel_Error;
-					break;
-				default:
-					break;
+			case kOutput_Log:
+				logLevel = kBBLogLevel_Log;
+				break;
+			case kOutput_Warning:
+				logLevel = kBBLogLevel_Warning;
+				break;
+			case kOutput_Error:
+				logLevel = kBBLogLevel_Error;
+				break;
+			default:
+				break;
 			}
 			LogLevelColorizer colorizer(logLevel);
 			ImGui::TextUnformatted(sb_get(&line->text));
@@ -397,7 +398,7 @@ void MC_Imgui_Example_Update(void)
 		while (token.start)
 		{
 			ImGui::TextUnformatted(token.start, token.end);
-			//BB_LOG("Tokens", "%.*s", token.end - token.start, token.start);
+			// BB_LOG("Tokens", "%.*s", token.end - token.start, token.start);
 
 			char* tmp = va("%.*s", token.end - token.start, token.start);
 			strunescape(tmp);
@@ -422,7 +423,7 @@ int CALLBACK WinMain(_In_ HINSTANCE /*Instance*/, _In_opt_ HINSTANCE /*PrevInsta
 	mb_get_queue()->modal = true;
 
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	// ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 	WINDOWPLACEMENT wp = { BB_EMPTY_INITIALIZER };
 	if (Imgui_Core_InitWindow("mc_imgui_example_wndclass", "mc_imgui_example", LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAINICON)), wp))

@@ -4,10 +4,9 @@
 #pragma once
 
 #include "common.h"
-#include "wrap_dx9.h"
 #include "wrap_imgui.h"
 
-struct IDirect3DDevice9;
+struct ID3D11ShaderResourceView;
 
 struct UserImageId
 {
@@ -18,14 +17,14 @@ struct UserImageId
 struct UserImageData
 {
 	const u8* pixelData;
-	LPDIRECT3DTEXTURE9 texture;
+	ID3D11ShaderResourceView* texture;
 	int width;
 	int height;
 	UserImageId userId;
 	u32 flags;
 };
 
-bool ImGui_Image_Init(IDirect3DDevice9* device);
+bool ImGui_Image_Init(ID3D11Device* device);
 void ImGui_Image_Shutdown();
 void ImGui_Image_InvalidateDeviceObjects();
 void ImGui_Image_NewFrame();

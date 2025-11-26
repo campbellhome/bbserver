@@ -46,6 +46,7 @@ const char* Imgui_Core_GetColorScheme(void);
 b32 Imgui_Core_GetAndClearDirtyWindowPlacement(void);
 
 void Imgui_Core_QueueUpdateDpiDependentResources(void);
+b32 Imgui_Core_IsUpdateDpiDependentResourcesQueued(void);
 
 #if defined(__cplusplus)
 }

@@ -151,11 +151,11 @@
     <ClInclude Include="..\include\theme_config.h" />
     <ClInclude Include="..\include\ui_loglevel_colorizer.h" />
     <ClInclude Include="..\include\ui_message_box.h" />
-    <ClInclude Include="..\include\wrap_dx9.h" />
+    <ClInclude Include="..\include\wrap_dx11.h" />
     <ClInclude Include="..\include\wrap_imgui.h" />
     <ClInclude Include="..\include\wrap_imgui_internal.h" />
     <ClInclude Include="..\include\wrap_shellscalingapi.h" />
-    <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.h" />
+    <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="..\..\thirdparty\imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="..\..\thirdparty\imgui\imconfig.h" />
     <ClInclude Include="..\..\thirdparty\imgui\imgui.h" />
@@ -181,7 +181,7 @@
     <ClCompile Include="..\src\theme_config.c" />
     <ClCompile Include="..\src\ui_loglevel_colorizer.cpp" />
     <ClCompile Include="..\src\ui_message_box.cpp" />
-    <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_dx9.cpp">
+    <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_dx11.cpp">
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\..\thirdparty\imgui\backends\imgui_impl_win32.cpp">

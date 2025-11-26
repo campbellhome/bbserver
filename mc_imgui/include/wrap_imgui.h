@@ -23,7 +23,7 @@ BB_WARNING_PUSH(4820 4255 4668 4574 4365 4459)
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 
-#include "backends/imgui_impl_dx9.h"
+#include "backends/imgui_impl_dx11.h"
 #include "backends/imgui_impl_win32.h"
 #include "forkawesome-webfont.h"
 #if BB_USING(FEATURE_FREETYPE)

@@ -19,30 +19,29 @@
 #include "time_utils.h"
 #include "ui_message_box.h"
 #include "va.h"
+#include "wrap_dx11.h"
 #include "wrap_imgui.h"
 #include "wrap_shellscalingapi.h"
 
 #include <locale.h>
 
-#pragma comment(lib, "d3d9.lib")
-#pragma comment(lib, "xinput9_1_0.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dcompiler.lib")
 
-static void Imgui_Core_InitD3D(void);
+static bool ImGui_Core_CreateDeviceD3D(HWND hWnd);
+static void ImGui_Core_CleanupDeviceD3D();
+static void ImGui_Core_CreateRenderTarget();
+static void ImGui_Core_CleanupRenderTarget();
 
-typedef struct tag_Imgui_Core_Window
-{
-	HWND hwnd;
-	LPDIRECT3DDEVICE9 pd3dDevice;
-	HRESULT last3DResetResult;
-	b32 b3dInitialized;
-	b32 b3dValid;
-	u8 pad[4];
-} Imgui_Core_Window;
+static ID3D11Device* g_pd3dDevice = nullptr;
+static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
+static IDXGISwapChain* g_pSwapChain = nullptr;
+static bool g_SwapChainOccluded = false;
+static UINT g_ResizeWidth = 0, g_ResizeHeight = 0;
+static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
 
-static LPDIRECT3D9 s_pD3D;
-static D3DPRESENT_PARAMETERS g_d3dpp;
 static WNDCLASSEX s_wc;
-static Imgui_Core_Window s_wnd;
+static HWND s_wnd;
 static bool g_hasFocus;
 static bool g_trackingMouse;
 static int g_dpi = USER_DEFAULT_SCREEN_DPI;
@@ -60,98 +59,18 @@ static HWINEVENTHOOK s_hWinEventHook;
 
 static void CALLBACK Imgui_Core_WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 
-static const char* D3DErrorString(HRESULT Hr)
-{
-#define D3D_CASE(x) \
-	case x: return #x
-	switch (Hr)
-	{
-		D3D_CASE(D3D_OK);
-
-		D3D_CASE(D3DERR_WRONGTEXTUREFORMAT);
-		D3D_CASE(D3DERR_UNSUPPORTEDCOLOROPERATION);
-		D3D_CASE(D3DERR_UNSUPPORTEDCOLORARG);
-		D3D_CASE(D3DERR_UNSUPPORTEDALPHAOPERATION);
-		D3D_CASE(D3DERR_UNSUPPORTEDALPHAARG);
-		D3D_CASE(D3DERR_TOOMANYOPERATIONS);
-		D3D_CASE(D3DERR_CONFLICTINGTEXTUREFILTER);
-		D3D_CASE(D3DERR_UNSUPPORTEDFACTORVALUE);
-		D3D_CASE(D3DERR_CONFLICTINGRENDERSTATE);
-		D3D_CASE(D3DERR_UNSUPPORTEDTEXTUREFILTER);
-		D3D_CASE(D3DERR_CONFLICTINGTEXTUREPALETTE);
-		D3D_CASE(D3DERR_DRIVERINTERNALERROR);
-
-		D3D_CASE(D3DERR_NOTFOUND);
-		D3D_CASE(D3DERR_MOREDATA);
-		D3D_CASE(D3DERR_DEVICELOST);
-		D3D_CASE(D3DERR_DEVICENOTRESET);
-		D3D_CASE(D3DERR_NOTAVAILABLE);
-		D3D_CASE(D3DERR_OUTOFVIDEOMEMORY);
-		D3D_CASE(D3DERR_INVALIDDEVICE);
-		D3D_CASE(D3DERR_INVALIDCALL);
-		D3D_CASE(D3DERR_DRIVERINVALIDCALL);
-		D3D_CASE(D3DERR_WASSTILLDRAWING);
-		D3D_CASE(D3DOK_NOAUTOGEN);
-
-#if !defined(D3D_DISABLE_9EX)
-		D3D_CASE(D3DERR_DEVICEREMOVED);
-		D3D_CASE(S_NOT_RESIDENT);
-		D3D_CASE(S_RESIDENT_IN_SHARED_MEMORY);
-		D3D_CASE(S_PRESENT_MODE_CHANGED);
-		D3D_CASE(S_PRESENT_OCCLUDED);
-		D3D_CASE(D3DERR_DEVICEHUNG);
-		D3D_CASE(D3DERR_UNSUPPORTEDOVERLAY);
-		D3D_CASE(D3DERR_UNSUPPORTEDOVERLAYFORMAT);
-		D3D_CASE(D3DERR_CANNOTPROTECTCONTENT);
-		D3D_CASE(D3DERR_UNSUPPORTEDCRYPTO);
-		D3D_CASE(D3DERR_PRESENT_STATISTICS_DISJOINT);
-#endif
-
-	default:
-		return va("Unknown (%8.8X)", Hr);
-	}
-#undef D3D_CASE
-}
-
 extern "C" b32 Imgui_Core_Init(const char* cmdline)
 {
-	UINT activeCodePage = GetACP();
-	if (activeCodePage == 65001)
-	{
-		setlocale(LC_ALL, ".UTF8");
-	}
-	const char* activeLocale = setlocale(LC_ALL, nullptr);
-	if (activeCodePage == 65001)
-	{
-		BB_LOG("Startup", "ActiveCodePage: %u (utf8) Locale: %s", activeCodePage, activeLocale ? activeLocale : "NULL");
-	}
-	else
-	{
-		BB_WARNING("Startup", "ActiveCodePage: %u (NOT utf8) Locale: %s", activeCodePage, activeLocale ? activeLocale : "NULL");
-	}
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	Style_Init();
 
-	SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+	SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); // TODO: ImGui_ImplWin32_EnableDpiAwareness for V2
 
 	s_hWinEventHook = SetWinEventHook(
 	    EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
 	    NULL, Imgui_Core_WinEventProc, 0, 0,
 	    WINEVENT_OUTOFCONTEXT);
-
-	s_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
-
-	if (s_pD3D)
-	{
-		g_d3dpp.Windowed = TRUE;
-		g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-		g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
-		g_d3dpp.EnableAutoDepthStencil = TRUE;
-		g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
-		g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE; // Present with vsync
-	}
 
 	if (!cmdline_argc())
 	{
@@ -162,52 +81,39 @@ extern "C" b32 Imgui_Core_Init(const char* cmdline)
 	Imgui_Core_Freetype_Init();
 	Fonts_Init();
 
-	return s_pD3D != nullptr;
+	return true;
 }
 
-void Imgui_Core_ResetD3D()
+extern "C" void Imgui_Core_ShutdownWindow(void)
 {
-	if (!s_wnd.pd3dDevice)
-		return;
-	ImGui_ImplDX9_InvalidateDeviceObjects();
-	ImGui_Image_InvalidateDeviceObjects();
-	HRESULT hr = s_wnd.pd3dDevice->Reset(&g_d3dpp);
-	s_wnd.b3dValid = (hr == D3D_OK);
-	if (s_wnd.last3DResetResult != hr)
+	ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
+	if (PlatformIO.Platform_DestroyWindow)
 	{
-		s_wnd.last3DResetResult = hr;
-		if (s_wnd.b3dValid)
+		ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+		if (mainViewport)
 		{
-			BB_LOG("ImguiCore", "D3D Reset HR: %s", D3DErrorString(hr));
-		}
-		else
-		{
-			BB_WARNING("ImguiCore", "D3D Reset HR: %s", D3DErrorString(hr));
-
-			ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
-			if (PlatformIO.Platform_DestroyWindow)
-			{
-				ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-				if (mainViewport)
-				{
-					PlatformIO.Platform_DestroyWindow(mainViewport);
-				}
-			}
-
-			ImGui_ImplDX9_Shutdown();
-			ImGui_ImplWin32_Shutdown();
-			s_wnd.pd3dDevice = nullptr;
-
-			Imgui_Core_InitD3D();
+			PlatformIO.Platform_DestroyWindow(mainViewport);
 		}
 	}
-	ImGui_ImplDX9_CreateDeviceObjects();
+
+	ImGui_ImplDX11_Shutdown();
+	ImGui_Image_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+
+	ImGui::InputTextShutdown();
+	Fonts_Shutdown();
+
+	ImGui_Core_CleanupDeviceD3D();
+	DestroyWindow(s_wnd);
+	UnregisterClassA(s_wc.lpszClassName, s_wc.hInstance);
+
+	ImGui::DestroyContext();
+
+	Imgui_Core_Freetype_Shutdown();
 }
 
 extern "C" void Imgui_Core_Shutdown(void)
 {
-	ImGui::InputTextShutdown();
-	Fonts_Shutdown();
 	mb_shutdown(nullptr);
 
 	if (s_hWinEventHook)
@@ -221,16 +127,6 @@ extern "C" void Imgui_Core_Shutdown(void)
 	}
 
 	sb_reset(&g_colorscheme);
-
-	ImGui::DestroyContext();
-
-	Imgui_Core_Freetype_Shutdown();
-
-	if (s_pD3D)
-	{
-		s_pD3D->Release();
-		s_pD3D = nullptr;
-	}
 }
 
 extern "C" b32 Imgui_Core_HasFocus(void)
@@ -255,47 +151,47 @@ extern "C" void Imgui_Core_SetDebugFocusChange(b32 bDebugFocusChange)
 
 extern "C" void Imgui_Core_HideUnhideWindow(void)
 {
-	if (s_wnd.hwnd)
+	if (s_wnd)
 	{
 		WINDOWPLACEMENT wp = { BB_EMPTY_INITIALIZER };
 		wp.length = sizeof(wp);
-		GetWindowPlacement(s_wnd.hwnd, &wp);
+		GetWindowPlacement(s_wnd, &wp);
 		if (wp.showCmd == SW_SHOWMINIMIZED)
 		{
-			ShowWindow(s_wnd.hwnd, SW_RESTORE);
+			ShowWindow(s_wnd, SW_RESTORE);
 			Imgui_Core_BringWindowToFront();
 		}
-		else if (!IsWindowVisible(s_wnd.hwnd))
+		else if (!IsWindowVisible(s_wnd))
 		{
-			ShowWindow(s_wnd.hwnd, SW_SHOW);
+			ShowWindow(s_wnd, SW_SHOW);
 			Imgui_Core_BringWindowToFront();
 		}
 		else
 		{
-			ShowWindow(s_wnd.hwnd, SW_HIDE);
+			ShowWindow(s_wnd, SW_HIDE);
 		}
 	}
 }
 
 extern "C" void Imgui_Core_HideWindow(void)
 {
-	if (s_wnd.hwnd)
+	if (s_wnd)
 	{
-		ShowWindow(s_wnd.hwnd, SW_HIDE);
+		ShowWindow(s_wnd, SW_HIDE);
 	}
 }
 
 extern "C" void Imgui_Core_UnhideWindow(void)
 {
-	if (s_wnd.hwnd)
+	if (s_wnd)
 	{
-		if (IsIconic(s_wnd.hwnd))
+		if (IsIconic(s_wnd))
 		{
-			ShowWindow(s_wnd.hwnd, SW_RESTORE);
+			ShowWindow(s_wnd, SW_RESTORE);
 		}
 		else
 		{
-			ShowWindow(s_wnd.hwnd, SW_SHOW);
+			ShowWindow(s_wnd, SW_SHOW);
 		}
 		Imgui_Core_RequestRender();
 	}
@@ -303,25 +199,25 @@ extern "C" void Imgui_Core_UnhideWindow(void)
 
 extern "C" void Imgui_Core_MinimizeWindow(void)
 {
-	if (s_wnd.hwnd)
+	if (s_wnd)
 	{
-		ShowWindow(s_wnd.hwnd, SW_MINIMIZE);
+		ShowWindow(s_wnd, SW_MINIMIZE);
 	}
 }
 
 extern "C" void Imgui_Core_BringWindowToFront(void)
 {
-	if (s_wnd.hwnd)
+	if (s_wnd)
 	{
-		if (!BringWindowToTop(s_wnd.hwnd) && g_bDebugFocusChange)
+		if (!BringWindowToTop(s_wnd) && g_bDebugFocusChange)
 		{
 			system_error_to_log(GetLastError(), "Window", "BringWindowToTop");
 		}
-		if (!SetForegroundWindow(s_wnd.hwnd) && g_bDebugFocusChange)
+		if (!SetForegroundWindow(s_wnd) && g_bDebugFocusChange)
 		{
 			system_error_to_log(GetLastError(), "Window", "SetForegroundWindow");
 		}
-		if (!SetFocus(s_wnd.hwnd) && g_bDebugFocusChange)
+		if (!SetFocus(s_wnd) && g_bDebugFocusChange)
 		{
 			system_error_to_log(GetLastError(), "Window", "SetFocus");
 		}
@@ -331,11 +227,11 @@ extern "C" void Imgui_Core_BringWindowToFront(void)
 
 extern "C" void Imgui_Core_FlashWindow(b32 bFlash)
 {
-	if (s_wnd.hwnd)
+	if (s_wnd)
 	{
 		FLASHWINFO info = { BB_EMPTY_INITIALIZER };
 		info.cbSize = sizeof(FLASHWINFO);
-		info.hwnd = s_wnd.hwnd;
+		info.hwnd = s_wnd;
 		info.dwFlags = bFlash ? (FLASHW_ALL | FLASHW_TIMERNOFG) : 0u;
 		FlashWindowEx(&info);
 	}
@@ -343,9 +239,9 @@ extern "C" void Imgui_Core_FlashWindow(b32 bFlash)
 
 extern "C" void Imgui_Core_SetWindowText(const char* text)
 {
-	if (s_wnd.hwnd)
+	if (s_wnd)
 	{
-		SetWindowTextA(s_wnd.hwnd, text);
+		SetWindowTextA(s_wnd, text);
 	}
 }
 
@@ -485,13 +381,17 @@ extern "C" void Update_Menu(void)
 void UpdateDpiDependentResources()
 {
 	Fonts_InitFonts();
-	Imgui_Core_ResetD3D();
 	Style_Apply(sb_get(&g_colorscheme));
 }
 
 extern "C" void Imgui_Core_QueueUpdateDpiDependentResources(void)
 {
 	g_needUpdateDpiDependentResources = true;
+}
+
+extern "C" b32 Imgui_Core_IsUpdateDpiDependentResourcesQueued(void)
+{
+	return g_needUpdateDpiDependentResources;
 }
 
 BOOL EnableNonClientDpiScalingShim(_In_ HWND hwnd)
@@ -560,11 +460,6 @@ void Imgui_Core_SetUserWndProc(Imgui_Core_UserWndProc* wndProc)
 
 LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (!s_pD3D)
-	{
-		return DefWindowProc(hWnd, msg, wParam, lParam);
-	}
-
 	switch (msg)
 	{
 	case WM_NCCREATE:
@@ -635,9 +530,11 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	if (ImGui::GetCurrentContext() && ImGui::GetIO().BackendPlatformUserData)
 	{
 		if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+		{
 			return true;
+		}
 	}
-	else if (s_wnd.hwnd && ImGui::GetIO().BackendFlags != 0)
+	else if (s_wnd && ImGui::GetIO().BackendFlags != 0)
 	{
 		BB_WARNING("ImguiCore", "skipped ImGui_ImplWin32_WndProcHandler w/o BackendPlatformUserData");
 	}
@@ -668,9 +565,9 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		Imgui_Core_DirtyWindowPlacement();
 		if (wParam != SIZE_MINIMIZED)
 		{
-			g_d3dpp.BackBufferWidth = LOWORD(lParam);
-			g_d3dpp.BackBufferHeight = HIWORD(lParam);
-			Imgui_Core_ResetD3D();
+			// Queue resize
+			g_ResizeWidth = (UINT)LOWORD(lParam);
+			g_ResizeHeight = (UINT)HIWORD(lParam);
 		}
 		return 0;
 	case WM_SYSCOMMAND:
@@ -684,55 +581,88 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-typedef struct D3DCreateInfo_s
+bool ImGui_Core_CreateDeviceD3D(HWND hWnd)
 {
-	D3DDEVTYPE deviceType;
-	DWORD vertexProcessingType;
-} D3DCreateInfo_t;
+	// Setup swap chain
+	// This is a basic setup. Optimally could use e.g. DXGI_SWAP_EFFECT_FLIP_DISCARD and handle fullscreen mode differently. See #8979 for suggestions.
+	DXGI_SWAP_CHAIN_DESC sd;
+	ZeroMemory(&sd, sizeof(sd));
+	sd.BufferCount = 2;
+	sd.BufferDesc.Width = 0;
+	sd.BufferDesc.Height = 0;
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferDesc.RefreshRate.Numerator = 60;
+	sd.BufferDesc.RefreshRate.Denominator = 1;
+	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.OutputWindow = hWnd;
+	sd.SampleDesc.Count = 1;
+	sd.SampleDesc.Quality = 0;
+	sd.Windowed = TRUE;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
-static void Imgui_Core_InitD3D(void)
-{
-	if (!s_wnd.pd3dDevice && s_wnd.hwnd && s_wnd.b3dInitialized)
-	{
-		if (s_pD3D)
-		{
-			s_pD3D->Release();
-			s_pD3D = nullptr;
-		}
-		s_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
-		if (!s_pD3D)
-			return;
-	}
-
-	D3DCreateInfo_t d3dCreateInfo[] = {
-		{ D3DDEVTYPE_HAL, D3DCREATE_MIXED_VERTEXPROCESSING },
-		{ D3DDEVTYPE_HAL, D3DCREATE_SOFTWARE_VERTEXPROCESSING },
-		{ D3DDEVTYPE_SW, D3DCREATE_MIXED_VERTEXPROCESSING },
-		{ D3DDEVTYPE_SW, D3DCREATE_SOFTWARE_VERTEXPROCESSING },
+	UINT createDeviceFlags = 0;
+	// createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+	D3D_FEATURE_LEVEL featureLevel;
+	const D3D_FEATURE_LEVEL featureLevelArray[2] = {
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_0,
 	};
-	b32 bOk = false;
-	for (u32 i = 0; !bOk && i < BB_ARRAYSIZE(d3dCreateInfo); ++i)
+	HRESULT res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
+	if (res == DXGI_ERROR_UNSUPPORTED) // Try high-performance WARP software driver if hardware is not available.
+		res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
+	if (res != S_OK)
+		return false;
+
+	// Disable DXGI's default Alt+Enter fullscreen behavior.
+	// - You are free to leave this enabled, but it will not work properly with multiple viewports.
+	// - This must be done for all windows associated to the device. Our DX11 backend does this automatically for secondary viewports that it creates.
+	IDXGIFactory* pSwapChainFactory;
+	if (SUCCEEDED(g_pSwapChain->GetParent(IID_PPV_ARGS(&pSwapChainFactory))))
 	{
-		bOk = s_pD3D->CreateDevice(D3DADAPTER_DEFAULT, d3dCreateInfo[i].deviceType, s_wnd.hwnd, d3dCreateInfo[i].vertexProcessingType, &g_d3dpp, &s_wnd.pd3dDevice) >= 0;
-		if (bOk)
-		{
-			BB_LOG("ImguiCore", "DeviceType: %d VertexProcessingType: %u", d3dCreateInfo[i].deviceType, d3dCreateInfo[i].vertexProcessingType);
-		}
-	}
-	if (bOk)
-	{
-		ImGui_ImplWin32_Init(s_wnd.hwnd);
-		ImGui_Image_Init(s_wnd.pd3dDevice);
-		ImGui_ImplDX9_Init(s_wnd.pd3dDevice);
-		Fonts_InitFonts();
-		s_wnd.b3dValid = true;
-	}
-	else
-	{
-		s_wnd.pd3dDevice = nullptr;
+		pSwapChainFactory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER);
+		pSwapChainFactory->Release();
 	}
 
-	s_wnd.b3dInitialized = true;
+	ImGui_Core_CreateRenderTarget();
+	return true;
+}
+
+void ImGui_Core_CleanupDeviceD3D()
+{
+	ImGui_Core_CleanupRenderTarget();
+	if (g_pSwapChain)
+	{
+		g_pSwapChain->Release();
+		g_pSwapChain = nullptr;
+	}
+	if (g_pd3dDeviceContext)
+	{
+		g_pd3dDeviceContext->Release();
+		g_pd3dDeviceContext = nullptr;
+	}
+	if (g_pd3dDevice)
+	{
+		g_pd3dDevice->Release();
+		g_pd3dDevice = nullptr;
+	}
+}
+
+void ImGui_Core_CreateRenderTarget()
+{
+	ID3D11Texture2D* pBackBuffer;
+	g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
+	g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &g_mainRenderTargetView);
+	pBackBuffer->Release();
+}
+
+void ImGui_Core_CleanupRenderTarget()
+{
+	if (g_mainRenderTargetView)
+	{
+		g_mainRenderTargetView->Release();
+		g_mainRenderTargetView = nullptr;
+	}
 }
 
 extern "C" HWND Imgui_Core_InitWindow(const char* classname, const char* title, HICON icon, WINDOWPLACEMENT wp_)
@@ -754,7 +684,7 @@ extern "C" HWND Imgui_Core_InitWindow(const char* classname, const char* title, 
 		w = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
 		h = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
 	}
-	s_wnd.hwnd = CreateWindow(classname, title, WS_OVERLAPPEDWINDOW, x, y, w, h, NULL, NULL, s_wc.hInstance, NULL);
+	s_wnd = CreateWindow(classname, title, WS_OVERLAPPEDWINDOW, x, y, w, h, NULL, NULL, s_wc.hInstance, NULL);
 	if (wp.rcNormalPosition.right > wp.rcNormalPosition.left)
 	{
 		if (wp.showCmd == SW_SHOWMINIMIZED)
@@ -768,56 +698,47 @@ extern "C" HWND Imgui_Core_InitWindow(const char* classname, const char* title, 
 		}
 		else if (!startHidden)
 		{
-			SetWindowPlacement(s_wnd.hwnd, &wp);
+			SetWindowPlacement(s_wnd, &wp);
 		}
 		wp.showCmd = wp_.showCmd;
 	}
-	BB_LOG("ImguiCore", "hwnd: %p", s_wnd.hwnd);
+	BB_LOG("ImguiCore", "hwnd: %p", s_wnd);
 
-	if (s_wnd.hwnd)
+	if (s_wnd)
 	{
-		Imgui_Core_InitD3D();
+		if (!ImGui_Core_CreateDeviceD3D(s_wnd))
+		{
+			ImGui_Core_CleanupDeviceD3D();
+			DestroyWindow(s_wnd);
+			UnregisterClassA(wc.lpszClassName, wc.hInstance);
+			return 0;
+		}
+
 		if (wp.showCmd == SW_HIDE && !g_bCloseHidesWindow)
 		{
-			ShowWindow(s_wnd.hwnd, SW_SHOWDEFAULT);
+			ShowWindow(s_wnd, SW_SHOWDEFAULT);
 		}
 		else
 		{
 			if (startHidden)
 			{
-				ShowWindow(s_wnd.hwnd, SW_HIDE);
+				ShowWindow(s_wnd, SW_HIDE);
 			}
 			else
 			{
-				ShowWindow(s_wnd.hwnd, (int)wp.showCmd);
+				ShowWindow(s_wnd, (int)wp.showCmd);
 			}
 		}
-		UpdateWindow(s_wnd.hwnd);
+		UpdateWindow(s_wnd);
 		Time_StartNewFrame();
+
+		ImGui_ImplWin32_Init(s_wnd);
+		ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+		ImGui_Image_Init(g_pd3dDevice);
+		Fonts_InitFonts();
 	}
 
-	return s_wnd.hwnd;
-}
-
-extern "C" void Imgui_Core_ShutdownWindow(void)
-{
-	if (s_wnd.pd3dDevice)
-	{
-		ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
-		if (PlatformIO.Platform_DestroyWindow)
-		{
-			ImGuiViewport* mainViewport = ImGui::GetMainViewport();
-			if (mainViewport)
-			{
-				PlatformIO.Platform_DestroyWindow(mainViewport);
-			}
-		}
-
-		ImGui_ImplDX9_Shutdown();
-		ImGui_Image_Shutdown();
-		ImGui_ImplWin32_Shutdown();
-		s_wnd.pd3dDevice->Release();
-	}
+	return s_wnd;
 }
 
 b32 Imgui_Core_BeginFrame(void)
@@ -834,21 +755,6 @@ b32 Imgui_Core_BeginFrame(void)
 		return false;
 	}
 
-	if (s_wnd.hwnd && !s_wnd.pd3dDevice)
-	{
-		Imgui_Core_InitD3D();
-		if (!s_wnd.b3dValid)
-		{
-			BB_TICK();
-			return false;
-		}
-	}
-
-	if (!s_wnd.b3dValid)
-	{
-		Imgui_Core_ResetD3D();
-	}
-
 	if (g_needUpdateDpiDependentResources)
 	{
 		g_needUpdateDpiDependentResources = false;
@@ -856,11 +762,11 @@ b32 Imgui_Core_BeginFrame(void)
 	}
 	if (Fonts_UpdateAtlas())
 	{
-		Imgui_Core_ResetD3D();
+		// Imgui_Core_ResetD3D();
 	}
 
 	ImGui_Image_NewFrame();
-	ImGui_ImplDX9_NewFrame();
+	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
@@ -869,7 +775,7 @@ b32 Imgui_Core_BeginFrame(void)
 	return true;
 }
 
-void Imgui_Core_EndFrame(ImVec4 clear_col)
+void Imgui_Core_EndFrame(ImVec4 clear_color)
 {
 	messageBoxes* boxes = mb_get_queue();
 	if (!boxes->manualUpdate)
@@ -905,36 +811,22 @@ void Imgui_Core_EndFrame(ImVec4 clear_col)
 	}
 
 	// ImGui Rendering
-	if (requestRender && s_wnd.pd3dDevice && s_wnd.b3dValid)
+	if (requestRender)
 	{
-		s_wnd.pd3dDevice->SetRenderState(D3DRS_ZENABLE, false);
-		s_wnd.pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, false);
-		s_wnd.pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, false);
-		D3DCOLOR clear_col_dx = D3DCOLOR_RGBA((int)(clear_col.x * 255.0f), (int)(clear_col.y * 255.0f), (int)(clear_col.z * 255.0f), (int)(clear_col.w * 255.0f));
-		s_wnd.pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clear_col_dx, 1.0f, 0);
-		if (s_wnd.pd3dDevice->BeginScene() >= 0)
-		{
-			ImGui::Render();
-			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-			s_wnd.pd3dDevice->EndScene();
-		}
-		else
-		{
-			ImGui::EndFrame();
-			Imgui_Core_RequestRender();
-		}
+		ImGui::Render();
+		const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
+		g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
+		g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
 		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
 		}
-		HRESULT hr = s_wnd.pd3dDevice->Present(NULL, NULL, NULL, NULL);
-		if (FAILED(hr))
-		{
-			bb_sleep_ms(100);
-			Imgui_Core_ResetD3D();
-			Imgui_Core_RequestRender();
-		}
+		HRESULT hr = g_pSwapChain->Present(1, 0); // Present with vsync
+		// HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync
+		g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
 	}
 	else
 	{
@@ -947,3 +839,6 @@ void Imgui_Core_EndFrame(ImVec4 clear_col)
 	}
 	Time_StartNewFrame();
 }
+
+#if 0 // TODO
+#endif

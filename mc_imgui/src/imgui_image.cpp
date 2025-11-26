@@ -8,7 +8,7 @@
 BB_WARNING_PUSH(4365 4820 4296 4619 5219)
 #include "stb/stb_image.h"
 BB_WARNING_POP
-#include <d3d9.h>
+#include "wrap_dx11.h"
 
 enum ImGui_Image_Flag : u32
 {
@@ -24,7 +24,7 @@ struct UserImages
 	UserImageData* data;
 };
 
-static LPDIRECT3DDEVICE9 g_pImageDevice;
+static ID3D11Device* g_pImageDevice;
 static UserImages s_userImages;
 static u32 s_lastUserId;
 
@@ -82,16 +82,6 @@ UserImageId ImGui_Image_CreateFromFile(const char* path)
 	int channelsInFile = 0;
 	u8* pixelData = stbi_load(path, &width, &height, &channelsInFile, 4);
 	bb_log_external_alloc(pixelData);
-	if (pixelData)
-	{
-		for (s64 i = 0; i < width * height; ++i)
-		{
-			u8* pixel = pixelData + 4 * i;
-			u8 tmp = pixel[0];
-			pixel[0] = pixel[2];
-			pixel[2] = tmp;
-		}
-	}
 	BB_LOG("Image", "Image %u %s %dx%d", s_lastUserId + 1, path, width, height);
 	return ImGui_Image_Create(pixelData, width, height, kImGui_Image_PixelDataOwnership);
 }
@@ -171,19 +161,36 @@ void ImGui_Image_CreateDeviceObject(UserImageData* data)
 		ImGui_Image_InvalidateDeviceObject(data);
 	}
 
-	if (g_pImageDevice->CreateTexture((UINT)data->width, (UINT)data->height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &data->texture, nullptr) >= 0)
+	D3D11_TEXTURE2D_DESC desc;
+	ZeroMemory(&desc, sizeof(desc));
+	desc.Width = (UINT)data->width;
+	desc.Height = (UINT)data->height;
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
+
+	ID3D11Texture2D* pTexture = NULL;
+	D3D11_SUBRESOURCE_DATA subResource;
+	subResource.pSysMem = data->pixelData;
+	subResource.SysMemPitch = desc.Width * 4;
+	subResource.SysMemSlicePitch = 0;
+	g_pImageDevice->CreateTexture2D(&desc, &subResource, &pTexture);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(srvDesc));
+	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = desc.MipLevels;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	if (g_pImageDevice->CreateShaderResourceView(pTexture, &srvDesc, &data->texture) >= 0)
 	{
-		D3DLOCKED_RECT lockedRect;
-		if (data->texture->LockRect(0, &lockedRect, NULL, 0) == D3D_OK)
-		{
-			for (s64 y = 0; y < data->height; ++y)
-			{
-				memcpy((unsigned char*)lockedRect.pBits + lockedRect.Pitch * y, data->pixelData + (data->width * 4) * y, (size_t)(data->width * 4));
-			}
-			data->texture->UnlockRect(0);
-			data->flags &= ~kImGui_Image_Dirty;
-		}
+		data->flags &= ~kImGui_Image_Dirty;
 	}
+	pTexture->Release();
 }
 
 void ImGui_Image_CreateDeviceObjects()
@@ -216,7 +223,7 @@ void ImGui_Image_NewFrame()
 	ImGui_Image_CreateDeviceObjects();
 }
 
-bool ImGui_Image_Init(IDirect3DDevice9* device)
+bool ImGui_Image_Init(ID3D11Device* device)
 {
 	ImGui_Image_InvalidateDeviceObjects();
 	g_pImageDevice = device;

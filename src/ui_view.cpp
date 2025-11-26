@@ -225,7 +225,7 @@ static inline void ClearViewTail(view_t* view, const char* reason)
 	if (view->tail)
 	{
 		view->tail = false;
-		//BB_LOG("Debug", "Disabled tail for '%s' - %s\n", view->session->appInfo.packet.appInfo.applicationName, reason);
+		// BB_LOG("Debug", "Disabled tail for '%s' - %s\n", view->session->appInfo.packet.appInfo.applicationName, reason);
 	}
 }
 
@@ -2059,6 +2059,11 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 		}
 	}
 
+	if (Imgui_Core_IsUpdateDpiDependentResourcesQueued())
+	{
+		view->scrollWidth = 0;
+	}
+
 	recorded_session_t* session = view->session;
 	const char* applicationName = session->appInfo.packet.appInfo.applicationName;
 	char* viewId = UIRecordedView_GetViewId(view, autoTileViews);
@@ -2780,7 +2785,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 						if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
 						{
 							view->tail = true;
-							//BB_LOG("Debug", "Set tail for '%s' - Mouse Wheel\n", applicationName);
+							// BB_LOG("Debug", "Set tail for '%s' - Mouse Wheel\n", applicationName);
 						}
 					}
 				}
@@ -2800,7 +2805,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 					if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
 					{
 						view->tail = true;
-						//BB_LOG("Debug", "Set tail for '%s' - PageDown\n", applicationName);
+						// BB_LOG("Debug", "Set tail for '%s' - PageDown\n", applicationName);
 					}
 					break;
 				case kVerticalScroll_Up:
@@ -2812,7 +2817,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 					if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
 					{
 						view->tail = true;
-						//BB_LOG("Debug", "Set tail for '%s' - Down\n", applicationName);
+						// BB_LOG("Debug", "Set tail for '%s' - Down\n", applicationName);
 					}
 					break;
 				case kVerticalScroll_Start:
@@ -2824,7 +2829,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 					if (!view->tail)
 					{
 						view->tail = true;
-						//BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
+						// BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
 					}
 					break;
 				case kVerticalScroll_None:
@@ -2855,15 +2860,18 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 		}
 		EndChild(); // logentries
 
+		ImVec2 ContentRegionMax = ImGui::GetWindowContentRegionMax();
+		ImVec2 ContentRegionAvail = ImGui::GetContentRegionAvail();
+		float ScrollbarSize = ImGui::GetStyle().ScrollbarSize;
+		float FrameHeight = ImGui::GetFrameHeight();
 		if (view->scrollWidth > 0.0f)
 		{
-			ImVec2 region = ImGui::GetWindowContentRegionMax();
-			if (region.x < view->scrollWidth)
+			if (ContentRegionMax.x < view->scrollWidth)
 			{
 				SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
 			}
 		}
-		if (BeginChild("horizscrollbar", ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ScrollbarSize, ImGui::GetFrameHeight()),
+		if (BeginChild("horizscrollbar", ImVec2(ContentRegionAvail.x - ScrollbarSize, FrameHeight - 1),
 		               false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar))
 		{
 			view->prevScrollX = GetScrollX();
