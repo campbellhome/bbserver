@@ -2,13 +2,13 @@
 // MIT license (see License.txt)
 
 #include "imgui_core.h"
+#include "Imgui_Core_windows.h"
 #include "app_update.h"
 #include "bb_string.h"
 #include "bb_time.h"
 #include "cmdline.h"
 #include "common.h"
 #include "fonts.h"
-#include "imgui_core_windows.h"
 #include "imgui_image.h"
 #include "imgui_input_text.h"
 #include "imgui_themes.h"
@@ -28,15 +28,16 @@
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
-static bool ImGui_Core_CreateDeviceD3D(HWND hWnd);
-static void ImGui_Core_CleanupDeviceD3D();
-static void ImGui_Core_CreateRenderTarget();
-static void ImGui_Core_CleanupRenderTarget();
+static bool Imgui_Core_CreateDeviceD3D(HWND hWnd);
+static void Imgui_Core_CleanupDeviceD3D();
+static void Imgui_Core_CreateRenderTarget();
+static void Imgui_Core_CleanupRenderTarget();
 
 static ID3D11Device* g_pd3dDevice = nullptr;
 static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
 static IDXGISwapChain* g_pSwapChain = nullptr;
 static bool g_SwapChainOccluded = false;
+static bool g_MinimizedOrScreenLocked = false;
 static UINT g_ResizeWidth = 0, g_ResizeHeight = 0;
 static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
 
@@ -65,7 +66,8 @@ extern "C" b32 Imgui_Core_Init(const char* cmdline)
 	ImGui::CreateContext();
 	Style_Init();
 
-	SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE); // TODO: ImGui_ImplWin32_EnableDpiAwareness for V2
+	// SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+	ImGui_ImplWin32_EnableDpiAwareness();
 
 	s_hWinEventHook = SetWinEventHook(
 	    EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND,
@@ -103,7 +105,7 @@ extern "C" void Imgui_Core_ShutdownWindow(void)
 	ImGui::InputTextShutdown();
 	Fonts_Shutdown();
 
-	ImGui_Core_CleanupDeviceD3D();
+	Imgui_Core_CleanupDeviceD3D();
 	DestroyWindow(s_wnd);
 	UnregisterClassA(s_wc.lpszClassName, s_wc.hInstance);
 
@@ -250,6 +252,7 @@ extern "C" void Imgui_Core_SetDpiScale(float dpiScale)
 	if (g_dpiScale != dpiScale)
 	{
 		g_dpiScale = dpiScale;
+		BB_LOG("ImGuiCore", "Imgui_Core_SetDpiScale: scale:%.1f", g_dpiScale);
 		Imgui_Core_QueueUpdateDpiDependentResources();
 	}
 }
@@ -466,12 +469,14 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		EnableNonClientDpiScalingShim(hWnd);
 		g_dpi = (int)GetDpiForWindowShim(hWnd);
 		g_dpiScale = (float)g_dpi / (float)USER_DEFAULT_SCREEN_DPI;
+		BB_LOG("ImGuiCore", "WM_NCCREATE: dpi:%u scale:%.1f", g_dpi, g_dpiScale);
 		Style_Apply(sb_get(&g_colorscheme));
 		break;
 	case WM_DPICHANGED:
 	{
 		g_dpi = HIWORD(wParam);
 		g_dpiScale = (float)g_dpi / (float)USER_DEFAULT_SCREEN_DPI;
+		BB_LOG("ImGuiCore", "WM_DPICHANGED: dpi:%u scale:%.1f", g_dpi, g_dpiScale);
 		UpdateDpiDependentResources();
 
 		RECT* const prcNewWindow = (RECT*)lParam;
@@ -559,15 +564,18 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	case WM_MOVE:
 		Imgui_Core_RequestRender();
 		Imgui_Core_DirtyWindowPlacement();
+		// BB_TRACE(kBBLogLevel_Verbose, "ImGuiCore", "WM_MOVE: Imgui_Core_DirtyWindowPlacement");
 		break;
 	case WM_SIZE:
 		Imgui_Core_RequestRender();
 		Imgui_Core_DirtyWindowPlacement();
+		// BB_TRACE(kBBLogLevel_Verbose, "ImGuiCore", "WM_SIZE: Imgui_Core_DirtyWindowPlacement");
 		if (wParam != SIZE_MINIMIZED)
 		{
 			// Queue resize
 			g_ResizeWidth = (UINT)LOWORD(lParam);
 			g_ResizeHeight = (UINT)HIWORD(lParam);
+			// BB_LOG("ImGuiCore", "WM_SIZE: %ux%u", g_ResizeWidth, g_ResizeHeight);
 		}
 		return 0;
 	case WM_SYSCOMMAND:
@@ -581,7 +589,7 @@ LRESULT WINAPI Imgui_Core_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-bool ImGui_Core_CreateDeviceD3D(HWND hWnd)
+bool Imgui_Core_CreateDeviceD3D(HWND hWnd)
 {
 	// Setup swap chain
 	// This is a basic setup. Optimally could use e.g. DXGI_SWAP_EFFECT_FLIP_DISCARD and handle fullscreen mode differently. See #8979 for suggestions.
@@ -624,13 +632,13 @@ bool ImGui_Core_CreateDeviceD3D(HWND hWnd)
 		pSwapChainFactory->Release();
 	}
 
-	ImGui_Core_CreateRenderTarget();
+	Imgui_Core_CreateRenderTarget();
 	return true;
 }
 
-void ImGui_Core_CleanupDeviceD3D()
+void Imgui_Core_CleanupDeviceD3D()
 {
-	ImGui_Core_CleanupRenderTarget();
+	Imgui_Core_CleanupRenderTarget();
 	if (g_pSwapChain)
 	{
 		g_pSwapChain->Release();
@@ -648,7 +656,7 @@ void ImGui_Core_CleanupDeviceD3D()
 	}
 }
 
-void ImGui_Core_CreateRenderTarget()
+void Imgui_Core_CreateRenderTarget()
 {
 	ID3D11Texture2D* pBackBuffer;
 	g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
@@ -656,7 +664,7 @@ void ImGui_Core_CreateRenderTarget()
 	pBackBuffer->Release();
 }
 
-void ImGui_Core_CleanupRenderTarget()
+void Imgui_Core_CleanupRenderTarget()
 {
 	if (g_mainRenderTargetView)
 	{
@@ -706,9 +714,9 @@ extern "C" HWND Imgui_Core_InitWindow(const char* classname, const char* title, 
 
 	if (s_wnd)
 	{
-		if (!ImGui_Core_CreateDeviceD3D(s_wnd))
+		if (!Imgui_Core_CreateDeviceD3D(s_wnd))
 		{
-			ImGui_Core_CleanupDeviceD3D();
+			Imgui_Core_CleanupDeviceD3D();
 			DestroyWindow(s_wnd);
 			UnregisterClassA(wc.lpszClassName, wc.hInstance);
 			return 0;
@@ -753,6 +761,34 @@ b32 Imgui_Core_BeginFrame(void)
 			Imgui_Core_RequestShutDown();
 		}
 		return false;
+	}
+
+	// Handle window being minimized or screen locked
+	bool bMinimizedOrScreenLocked = g_SwapChainOccluded && g_pSwapChain->Present(0, DXGI_PRESENT_TEST) == DXGI_STATUS_OCCLUDED;
+	if (g_MinimizedOrScreenLocked != bMinimizedOrScreenLocked)
+	{
+		BB_LOG("ImGuiCore", "g_MinimizedOrScreenLocked: %d", bMinimizedOrScreenLocked);
+		g_MinimizedOrScreenLocked = bMinimizedOrScreenLocked;
+	}
+	if (bMinimizedOrScreenLocked)
+	{
+		::Sleep(10);
+		return false;
+	}
+	if (g_SwapChainOccluded)
+	{
+		BB_LOG("ImGuiCore", "g_SwapChainOccluded: 0");
+		g_SwapChainOccluded = false;
+	}
+
+	// Handle window resize (we don't resize directly in the WM_SIZE handler)
+	if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
+	{
+		BB_LOG("ImGuiCore", "Resize swap chain: %ux%u", g_ResizeWidth, g_ResizeHeight);
+		Imgui_Core_CleanupRenderTarget();
+		g_pSwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
+		g_ResizeWidth = g_ResizeHeight = 0;
+		Imgui_Core_CreateRenderTarget();
 	}
 
 	if (g_needUpdateDpiDependentResources)
@@ -826,7 +862,12 @@ void Imgui_Core_EndFrame(ImVec4 clear_color)
 		}
 		HRESULT hr = g_pSwapChain->Present(1, 0); // Present with vsync
 		// HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync
-		g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
+		bool bSwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
+		if (g_SwapChainOccluded != bSwapChainOccluded)
+		{
+			BB_LOG("ImGuiCore", "g_SwapChainOccluded: %d (Present)", bSwapChainOccluded);
+			g_SwapChainOccluded = bSwapChainOccluded;
+		}
 	}
 	else
 	{
