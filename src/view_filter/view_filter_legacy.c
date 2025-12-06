@@ -57,11 +57,11 @@ static inline b32 view_filter_compare_double(view_filter_comparison_t comp, doub
 	}
 }
 
-static b32 view_filter_abs_millis(view_t* view, recorded_log_t* log, view_filter_comparison_t comp, const char* token)
+static b32 view_filter_abs_millis(const view_t* view, const recorded_log_t* log, view_filter_comparison_t comp, const char* token)
 {
-	recorded_session_t* session = view->session;
-	recorded_log_t* lastLog = view->lastSessionLogIndex < session->logs.count ? session->logs.data[view->lastSessionLogIndex] : NULL;
-	bb_decoded_packet_t* decoded = &log->packet;
+	const recorded_session_t* session = view->session;
+	const recorded_log_t* lastLog = view->lastSessionLogIndex < session->logs.count ? session->logs.data[view->lastSessionLogIndex] : NULL;
+	const bb_decoded_packet_t* decoded = &log->packet;
 
 	double thresholdMillis = atof(token);
 	s64 prevElapsedTicks = (lastLog) ? (s64)lastLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : 0;
@@ -70,11 +70,11 @@ static b32 view_filter_abs_millis(view_t* view, recorded_log_t* log, view_filter
 	return view_filter_compare_double(comp, deltaMillis, thresholdMillis);
 }
 
-static b32 view_filter_rel_millis(view_t* view, recorded_log_t* log, view_filter_comparison_t comp, const char* token)
+static b32 view_filter_rel_millis(const view_t* view, const recorded_log_t* log, view_filter_comparison_t comp, const char* token)
 {
-	recorded_session_t* session = view->session;
-	recorded_log_t* lastLog = view->lastVisibleSessionLogIndex < session->logs.count ? session->logs.data[view->lastVisibleSessionLogIndex] : NULL;
-	bb_decoded_packet_t* decoded = &log->packet;
+	const recorded_session_t* session = view->session;
+	const recorded_log_t* lastLog = view->lastVisibleSessionLogIndex < session->logs.count ? session->logs.data[view->lastVisibleSessionLogIndex] : NULL;
+	const bb_decoded_packet_t* decoded = &log->packet;
 
 	double thresholdMillis = atof(token);
 	s64 prevElapsedTicks = (lastLog) ? (s64)lastLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : 0;
@@ -83,9 +83,9 @@ static b32 view_filter_rel_millis(view_t* view, recorded_log_t* log, view_filter
 	return view_filter_compare_double(comp, deltaMillis, thresholdMillis);
 }
 
-static b32 view_filter_legacy_find_token(view_t* view, recorded_log_t* log, const char* token)
+static b32 view_filter_legacy_find_token(const view_t *view, const recorded_log_t* log, const char* token)
 {
-	bb_decoded_packet_t* decoded = &log->packet;
+	const bb_decoded_packet_t* decoded = &log->packet;
 	const char* text = decoded->packet.logText.text;
 	if (!bb_strnicmp(token, "absms", 5))
 	{
@@ -108,7 +108,7 @@ static b32 view_filter_legacy_find_token(view_t* view, recorded_log_t* log, cons
 	else if (!bb_strnicmp(token, "category:", 9))
 	{
 		token = token + 9;
-		view_category_t* category = view_find_category(view, decoded->packet.logText.categoryId);
+		const view_category_t* category = view_find_category_const(view, decoded->packet.logText.categoryId);
 		text = (category) ? category->categoryName : "";
 	}
 	else if (!bb_strnicmp(token, "text:", 5))
@@ -118,14 +118,14 @@ static b32 view_filter_legacy_find_token(view_t* view, recorded_log_t* log, cons
 	return bb_stristr(text, token) != NULL;
 }
 
-b32 view_filter_visible_legacy(view_t* view, recorded_log_t* log)
+b32 view_filter_visible_legacy(vfilter_t* vfilter, const view_t *view, const recorded_log_t* log)
 {
 	b32 ok = false;
 	u32 numAllowed = 0;
 	u32 i;
-	for (i = 0; i < view->vfilter.tokens.count; ++i)
+	for (i = 0; i < vfilter->tokens.count; ++i)
 	{
-		const vfilter_token_t* token = view->vfilter.tokens.data + i;
+		const vfilter_token_t* token = vfilter->tokens.data + i;
 		const char* s = token->span.start;
 		b32 required = *s == '+';
 		b32 prohibited = *s == '-';

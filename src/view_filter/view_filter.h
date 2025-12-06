@@ -109,7 +109,8 @@ void vfilter_reset(vfilter_t* val);
 
 vfilter_t view_filter_parse(const char* name, const char* input);
 const char* view_filter_get_error_string(vfilter_t* filter);
-b32 view_filter_visible(view_t* view, recorded_log_t* log);
+b32 view_filter_visible(view_t* view, const recorded_log_t* log);
+b32 view_filter_passes(vfilter_t* vfilter, const view_t* view, const recorded_log_t* log);
 
 #if defined(__cplusplus)
 }

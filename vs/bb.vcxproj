@@ -141,6 +141,7 @@
     <ClInclude Include="..\src\dragdrop.h" />
     <ClInclude Include="..\src\imgui_tooltips.h" />
     <ClInclude Include="..\src\line_parser.h" />
+    <ClInclude Include="..\src\log_color_config.h" />
     <ClInclude Include="..\src\message_queue.h" />
     <ClInclude Include="..\src\recorded_session.h" />
     <ClInclude Include="..\src\recorded_session_thread.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="..\src\dragdrop.c" />
     <ClCompile Include="..\src\imgui_tooltips.cpp" />
     <ClCompile Include="..\src\line_parser.c" />
+    <ClCompile Include="..\src\log_color_config.c" />
     <ClCompile Include="..\src\message_queue.c" />
     <ClCompile Include="..\src\recorded_session.c" />
     <ClCompile Include="..\src\recorded_session_thread.c" />

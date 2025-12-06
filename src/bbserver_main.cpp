@@ -28,6 +28,7 @@
 #include "imgui_core_windows.h"
 #include "imgui_themes.h"
 #include "imgui_utils.h"
+#include "log_color_config.h"
 #include "message_box.h"
 #include "message_queue.h"
 #include "path_utils.h"
@@ -131,6 +132,9 @@ static b32 BBServer_Init(const char* commandLineRecording)
 	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Reading tags");
 	tags_init();
 
+	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Reading log color config");
+	log_color_config_read();
+
 	s_updateData.appName = "bb";
 	s_updateData.exeName = "bb.exe";
 	s_updateData.windowClassname = "BlackboxHost";
@@ -216,6 +220,7 @@ static void BBServer_Shutdown(void)
 	}
 	config_reset(&g_config);
 	tags_shutdown();
+	log_color_config_shutdown();
 	site_config_shutdown();
 	bbnet_shutdown();
 	message_queue_message_t message;

@@ -251,6 +251,21 @@ view_category_t* view_find_category(view_t* view, u32 categoryId)
 	return NULL;
 }
 
+const view_category_t* view_find_category_const(const view_t* view, u32 categoryId)
+{
+	BB_UNUSED(view);
+	for (u32 i = 0; i < g_categories.count; ++i)
+	{
+		category_t* category = g_categories.data + i;
+		if (category->id == categoryId)
+		{
+			bb_strncpy(s_viewCategory.categoryName, category->name, sizeof(s_viewCategory.categoryName));
+			return &s_viewCategory;
+		}
+	}
+	return NULL;
+}
+
 static void print_lines(logPacket_t packet, FILE* ofp)
 {
 	const char* category = get_category(packet.categoryId);

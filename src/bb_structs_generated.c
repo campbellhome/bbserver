@@ -14,6 +14,7 @@
 #include "config.h"
 #include "device_codes.h"
 #include "fonts.h"
+#include "log_color_config.h"
 #include "message_queue.h"
 #include "recordings.h"
 #include "sb.h"
@@ -435,6 +436,61 @@ deviceCodes_t deviceCodes_clone(const deviceCodes_t *src)
 	deviceCodes_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.deviceCodes = sbs_clone(&src->deviceCodes);
+	}
+	return dst;
+}
+
+void log_color_config_entry_reset(log_color_config_entry_t *val)
+{
+	if(val) {
+		sb_reset(&val->name);
+		sb_reset(&val->filter);
+	}
+}
+log_color_config_entry_t log_color_config_entry_clone(const log_color_config_entry_t *src)
+{
+	log_color_config_entry_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.name = sb_clone(&src->name);
+		dst.filter = sb_clone(&src->filter);
+		dst.bgStyle = src->bgStyle;
+		dst.fgStyle = src->fgStyle;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->bgColor); ++i) {
+			dst.bgColor[i] = src->bgColor[i];
+		}
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->fgColor); ++i) {
+			dst.fgColor[i] = src->fgColor[i];
+		}
+		dst.enabled = src->enabled;
+		dst.allowBgColors = src->allowBgColors;
+		dst.allowFgColors = src->allowFgColors;
+		dst.testSelected = src->testSelected;
+		dst.selected = src->selected;
+		dst.testBookmarked = src->testBookmarked;
+		dst.bookmarked = src->bookmarked;
+		dst.pad = src->pad;
+	}
+	return dst;
+}
+
+void log_color_config_reset(log_color_config_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			log_color_config_entry_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+log_color_config_t log_color_config_clone(const log_color_config_t *src)
+{
+	log_color_config_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = log_color_config_entry_clone(src->data + i);
+			}
+		}
 	}
 	return dst;
 }

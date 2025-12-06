@@ -560,7 +560,7 @@ static void UITags_CountCategoryVisibility(view_t* view, tag_t* tag, u32* visibl
 	{
 		sb_t* category = tag->categories.data + categoryIndex;
 		const char* categoryName = sb_get(category);
-		view_category_t* viewCategory = view_find_category_by_name(view, categoryName);
+		const view_category_t* viewCategory = view_find_category_by_name(view, categoryName);
 		if (viewCategory && !view_category_treat_as_empty(viewCategory))
 		{
 			if (viewCategory->visible)

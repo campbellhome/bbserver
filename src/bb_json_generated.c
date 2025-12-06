@@ -14,6 +14,7 @@
 #include "config.h"
 #include "device_codes.h"
 #include "fonts.h"
+#include "log_color_config.h"
 #include "message_queue.h"
 #include "recordings.h"
 #include "sb.h"
@@ -357,6 +358,51 @@ deviceCodes_t json_deserialize_deviceCodes_t(JSON_Value *src)
 		JSON_Object *obj = json_value_get_object(src);
 		if(obj) {
 			dst.deviceCodes = json_deserialize_sbs_t(json_object_get_value(obj, "deviceCodes"));
+		}
+	}
+	return dst;
+}
+
+log_color_config_entry_t json_deserialize_log_color_config_entry_t(JSON_Value *src)
+{
+	log_color_config_entry_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.name = json_deserialize_sb_t(json_object_get_value(obj, "name"));
+			dst.filter = json_deserialize_sb_t(json_object_get_value(obj, "filter"));
+			dst.bgStyle = json_deserialize_styleColor_e(json_object_get_value(obj, "bgStyle"));
+			dst.fgStyle = json_deserialize_styleColor_e(json_object_get_value(obj, "fgStyle"));
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.bgColor); ++i) {
+				dst.bgColor[i] = (float)json_object_get_number(obj, va("bgColor.%u", i));
+			}
+			for(u32 i = 0; i < BB_ARRAYSIZE(dst.fgColor); ++i) {
+				dst.fgColor[i] = (float)json_object_get_number(obj, va("fgColor.%u", i));
+			}
+			dst.enabled = json_object_get_boolean_safe(obj, "enabled");
+			dst.allowBgColors = json_object_get_boolean_safe(obj, "allowBgColors");
+			dst.allowFgColors = json_object_get_boolean_safe(obj, "allowFgColors");
+			dst.testSelected = json_object_get_boolean_safe(obj, "testSelected");
+			dst.selected = json_object_get_boolean_safe(obj, "selected");
+			dst.testBookmarked = json_object_get_boolean_safe(obj, "testBookmarked");
+			dst.bookmarked = json_object_get_boolean_safe(obj, "bookmarked");
+			dst.pad = (u32)json_object_get_number(obj, "pad");
+		}
+	}
+	return dst;
+}
+
+log_color_config_t json_deserialize_log_color_config_t(JSON_Value *src)
+{
+	log_color_config_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Array *arr = json_value_get_array(src);
+		if(arr) {
+			for(u32 i = 0; i < json_array_get_count(arr); ++i) {
+				bba_push(dst, json_deserialize_log_color_config_entry_t(json_array_get_value(arr, i)));
+			}
 		}
 	}
 	return dst;
@@ -1177,6 +1223,48 @@ JSON_Value *json_serialize_deviceCodes_t(const deviceCodes_t *src)
 	JSON_Object *obj = json_value_get_object(val);
 	if(obj) {
 		json_object_set_value(obj, "deviceCodes", json_serialize_sbs_t(&src->deviceCodes));
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_log_color_config_entry_t(const log_color_config_entry_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_value(obj, "name", json_serialize_sb_t(&src->name));
+		json_object_set_value(obj, "filter", json_serialize_sb_t(&src->filter));
+		json_object_set_value(obj, "bgStyle", json_serialize_styleColor_e(src->bgStyle));
+		json_object_set_value(obj, "fgStyle", json_serialize_styleColor_e(src->fgStyle));
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->bgColor); ++i) {
+			json_object_set_number(obj, va("bgColor.%u", i), src->bgColor[i]);
+		}
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->fgColor); ++i) {
+			json_object_set_number(obj, va("fgColor.%u", i), src->fgColor[i]);
+		}
+		json_object_set_boolean(obj, "enabled", src->enabled);
+		json_object_set_boolean(obj, "allowBgColors", src->allowBgColors);
+		json_object_set_boolean(obj, "allowFgColors", src->allowFgColors);
+		json_object_set_boolean(obj, "testSelected", src->testSelected);
+		json_object_set_boolean(obj, "selected", src->selected);
+		json_object_set_boolean(obj, "testBookmarked", src->testBookmarked);
+		json_object_set_boolean(obj, "bookmarked", src->bookmarked);
+		json_object_set_number(obj, "pad", src->pad);
+	}
+	return val;
+}
+
+JSON_Value *json_serialize_log_color_config_t(const log_color_config_t *src)
+{
+	JSON_Value *val = json_value_init_array();
+	JSON_Array *arr = json_value_get_array(val);
+	if(arr) {
+		for(u32 i = 0; i < src->count; ++i) {
+			JSON_Value *child = json_serialize_log_color_config_entry_t(src->data + i);
+			if(child) {
+				json_array_append_value(arr, child);
+			}
+		}
 	}
 	return val;
 }

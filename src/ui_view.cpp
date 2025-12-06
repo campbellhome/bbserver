@@ -18,6 +18,7 @@
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
+#include "log_color_config.h"
 #include "message_queue.h"
 #include "path_utils.h"
 #include "process_utils.h"
@@ -1139,6 +1140,15 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
 	b32 categoryNoColors = viewCategory->noColor;
 
+	log_color_config_entry_t* log_color_entry = log_color_config_resolve(view, viewLog, sessionLog);
+	if (log_color_entry)
+	{
+		if (!log_color_entry->allowBgColors)
+		{
+			categoryNoColors = true;
+		}
+	}
+
 	const configColorUsage colorUsage = g_config.logColorUsage;
 	ImColor targetBgColor;
 	if (viewLog->bookmarked)
@@ -1167,13 +1177,27 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 			targetBgColor = MakeBackgroundTintColor(kStyleColor_LogBackground_Normal, ImColor(0.0f, 0.0f, 0.0f, 0.0f));
 		}
 	}
-	ImVec4 bgColor = (decoded->packet.logText.colors.bg == kBBColor_Default ||
-	                  colorUsage == kConfigColors_BgAsFg ||
-	                  colorUsage == kConfigColors_None ||
-	                  colorUsage == kConfigColors_NoBg ||
-	                  categoryNoColors)
-	                     ? ImVec4(ImColor(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)))
-	                     : MakeColor((styleColor_e)(decoded->packet.logText.colors.bg));
+	ImVec4 bgColor = ImVec4(ImColor(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)));
+	if (log_color_entry)
+	{
+		if (log_color_entry->bgStyle != kStyleColor_Count)
+		{
+			bgColor = MakeColor(log_color_entry->bgStyle);
+		}
+		else if (log_color_entry->bgColor[3] > 0.0f)
+		{
+			bgColor = ImColor(log_color_entry->bgColor[0], log_color_entry->bgColor[1], log_color_entry->bgColor[2], log_color_entry->bgColor[3]);
+		}
+	}
+
+	if (decoded->packet.logText.colors.bg != kBBColor_Default && colorUsage == kConfigColors_Full && !categoryNoColors)
+	{
+		if (!log_color_entry || log_color_entry->allowBgColors)
+		{
+			bgColor = MakeColor((styleColor_e)(decoded->packet.logText.colors.bg));
+		}
+	}
+
 	bgColor.x = bgColor.x * (1 - targetBgColor.Value.w) + targetBgColor.Value.x * targetBgColor.Value.w;
 	bgColor.y = bgColor.y * (1 - targetBgColor.Value.w) + targetBgColor.Value.y * targetBgColor.Value.w;
 	bgColor.z = bgColor.z * (1 - targetBgColor.Value.w) + targetBgColor.Value.z * targetBgColor.Value.w;
@@ -1234,6 +1258,15 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		}
 		UIRecordedView_LogPopup(view, viewLog);
 		ImGui::EndPopup();
+	}
+
+	if (log_color_entry  && !log_color_entry->allowFgColors)
+	{
+		categoryNoColors = true;
+	}
+	else
+	{
+		categoryNoColors = viewCategory->noColor;
 	}
 
 	float scrollX = ImGui::GetScrollX();
@@ -1297,7 +1330,22 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		span.styleColor = GetStyleColorForLogLevel((bb_log_level_e)decoded->packet.logText.level);
 	}
 	span.color = MakeColor(span.styleColor);
-	const ImColor fgColor = span.color;
+	ImColor fgColor = span.color;
+
+	if (log_color_entry &&
+	    decoded->packet.logText.level != kBBLogLevel_Warning &&
+	    decoded->packet.logText.level != kBBLogLevel_Error &&
+	    decoded->packet.logText.level != kBBLogLevel_Fatal)
+	{
+		if (log_color_entry->fgStyle != kStyleColor_Count)
+		{
+			span.color = fgColor = MakeColor(log_color_entry->fgStyle);
+		}
+		else if (log_color_entry->fgColor[3] > 0.0f)
+		{
+			span.color = fgColor = ImColor(log_color_entry->fgColor[0], log_color_entry->fgColor[1], log_color_entry->fgColor[2], log_color_entry->fgColor[3]);
+		}
+	}
 
 	if (viewLog->subLine && subLineSpan.start)
 	{

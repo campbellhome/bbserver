@@ -18,6 +18,7 @@
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
+#include "log_color_config.h"
 #include "mc_callstack/callstack_utils.h"
 #include "message_box.h"
 #include "message_queue.h"
@@ -403,6 +404,10 @@ void BBServer_MainMenuBar(void)
 			{
 				BB_LOG("UI::Menu::Config", "UIConfig_Open");
 				UIConfig_Open(&g_config);
+			}
+			if (ImGui::MenuItem("Reload log color config"))
+			{
+				log_color_config_read();
 			}
 			if (ImGui::BeginMenu("Logging"))
 			{

@@ -958,11 +958,11 @@ const char* view_filter_get_error_string(vfilter_t* filter)
 	return va(format, sb_get(&filter->error.text), filter->input.data, " ");
 }
 
-static u32 view_filter_get_millis(view_t* view, recorded_log_t* log, b32 relative)
+static u32 view_filter_get_millis(const view_t* view, const recorded_log_t* log, b32 relative)
 {
-	recorded_session_t* session = view->session;
-	recorded_log_t* lastLog = (relative) ? (view->lastVisibleSessionLogIndex < session->logs.count ? session->logs.data[view->lastVisibleSessionLogIndex] : NULL) : (view->lastSessionLogIndex < session->logs.count ? session->logs.data[view->lastSessionLogIndex] : NULL);
-	bb_decoded_packet_t* decoded = &log->packet;
+	const recorded_session_t* session = view->session;
+	const recorded_log_t* lastLog = (relative) ? (view->lastVisibleSessionLogIndex < session->logs.count ? session->logs.data[view->lastVisibleSessionLogIndex] : NULL) : (view->lastSessionLogIndex < session->logs.count ? session->logs.data[view->lastSessionLogIndex] : NULL);
+	const bb_decoded_packet_t* decoded = &log->packet;
 
 	s64 prevElapsedTicks = (lastLog) ? (s64)lastLog->packet.header.timestamp - (s64)session->appInfo.header.timestamp : 0;
 	s64 elapsedTicks = (s64)decoded->header.timestamp - (s64)session->appInfo.header.timestamp;
@@ -970,7 +970,7 @@ static u32 view_filter_get_millis(view_t* view, recorded_log_t* log, b32 relativ
 	return (u32)deltaMillis;
 }
 
-static void view_filter_evaluate_number(view_t* view, recorded_log_t* log, u32 operatorIndex)
+static void view_filter_evaluate_number(vfilter_t* vfilter, const view_t* view, const recorded_log_t* log, u32 operatorIndex)
 {
 	if (operatorIndex < 2)
 	{
@@ -978,9 +978,9 @@ static void view_filter_evaluate_number(view_t* view, recorded_log_t* log, u32 o
 		return;
 	}
 
-	vfilter_token_t* left = view->vfilter.rpn_tokens.data + operatorIndex - 2;
-	vfilter_token_t* right = view->vfilter.rpn_tokens.data + operatorIndex - 1;
-	vfilter_token_t* comparison = view->vfilter.rpn_tokens.data + operatorIndex;
+	vfilter_token_t* left = vfilter->rpn_tokens.data + operatorIndex - 2;
+	vfilter_token_t* right = vfilter->rpn_tokens.data + operatorIndex - 1;
+	vfilter_token_t* comparison = vfilter->rpn_tokens.data + operatorIndex;
 
 	u32 lhs = 0;
 	BB_WARNING_PUSH(4062);
@@ -1077,14 +1077,14 @@ static void view_filter_evaluate_number(view_t* view, recorded_log_t* log, u32 o
 	}
 	BB_WARNING_POP;
 
-	bba_push(view->vfilter.results, result);
+	bba_push(vfilter->results, result);
 }
 
-static void view_filter_evaluate_string(view_t* view, recorded_log_t* log, u32 operatorIndex)
+static void view_filter_evaluate_string(vfilter_t* vfilter, const view_t* view, const recorded_log_t* log, u32 operatorIndex)
 {
-	vfilter_token_t* left = view->vfilter.rpn_tokens.data + operatorIndex - 2;
-	vfilter_token_t* right = view->vfilter.rpn_tokens.data + operatorIndex - 1;
-	vfilter_token_t* comparison = view->vfilter.rpn_tokens.data + operatorIndex;
+	vfilter_token_t* left = vfilter->rpn_tokens.data + operatorIndex - 2;
+	vfilter_token_t* right = vfilter->rpn_tokens.data + operatorIndex - 1;
+	vfilter_token_t* comparison = vfilter->rpn_tokens.data + operatorIndex;
 	vfilter_result_t result = { false };
 
 	const char* lhs = "";
@@ -1194,23 +1194,23 @@ static void view_filter_evaluate_string(view_t* view, recorded_log_t* log, u32 o
 	}
 	BB_WARNING_POP;
 
-	bba_push(view->vfilter.results, result);
+	bba_push(vfilter->results, result);
 }
 
-static void view_filter_evaluate_and_or(view_t* view, u32 operatorIndex)
+static void view_filter_evaluate_and_or(vfilter_t* vfilter, u32 operatorIndex)
 {
-	if (view->vfilter.results.count < 2)
+	if (vfilter->results.count < 2)
 	{
 		BB_ASSERT(false);
 		return;
 	}
 
-	b32 lhs = view->vfilter.results.data[view->vfilter.results.count - 2].value;
-	b32 rhs = view->vfilter.results.data[view->vfilter.results.count - 1].value;
-	view->vfilter.results.count -= 2;
+	b32 lhs = vfilter->results.data[vfilter->results.count - 2].value;
+	b32 rhs = vfilter->results.data[vfilter->results.count - 1].value;
+	vfilter->results.count -= 2;
 
 	vfilter_result_t result = { false };
-	vfilter_token_t* comparison = view->vfilter.rpn_tokens.data + operatorIndex;
+	vfilter_token_t* comparison = vfilter->rpn_tokens.data + operatorIndex;
 	if (comparison->type == kVFT_And)
 	{
 		result.value = lhs && rhs;
@@ -1220,35 +1220,33 @@ static void view_filter_evaluate_and_or(view_t* view, u32 operatorIndex)
 		result.value = lhs || rhs;
 	}
 
-	bba_push(view->vfilter.results, result);
+	bba_push(vfilter->results, result);
 }
 
-static void view_filter_evaluate_not(view_t* view)
+static void view_filter_evaluate_not(vfilter_t* vfilter)
 {
-	if (view->vfilter.results.count < 1)
+	if (vfilter->results.count < 1)
 	{
 		BB_ASSERT(false);
 		return;
 	}
 
-	view->vfilter.results.data[view->vfilter.results.count - 1].value = !view->vfilter.results.data[view->vfilter.results.count - 1].value;
+	vfilter->results.data[vfilter->results.count - 1].value = !vfilter->results.data[vfilter->results.count - 1].value;
 }
 
-static void view_filter_evaluate_named_filter(view_t* view, recorded_log_t* log, u32 operatorIndex)
+static void view_filter_evaluate_named_filter(vfilter_t* vfilter)
 {
-	BB_UNUSED(log);
-	BB_UNUSED(operatorIndex);
 	vfilter_result_t result = { false };
-	bba_push(view->vfilter.results, result);
+	bba_push(vfilter->results, result);
 }
 
-static b32 view_filter_visible_standard(view_t* view, recorded_log_t* log)
+static b32 view_filter_visible_standard(vfilter_t* vfilter, const view_t* view, const recorded_log_t* log)
 {
-	view->vfilter.results.count = 0;
+	vfilter->results.count = 0;
 
-	for (u32 i = 0; i < view->vfilter.rpn_tokens.count; ++i)
+	for (u32 i = 0; i < vfilter->rpn_tokens.count; ++i)
 	{
-		vfilter_token_t* token = view->vfilter.rpn_tokens.data + i;
+		vfilter_token_t* token = vfilter->rpn_tokens.data + i;
 		switch (token->type)
 		{
 		case kVFT_LessThan:
@@ -1257,27 +1255,27 @@ static b32 view_filter_visible_standard(view_t* view, recorded_log_t* log)
 		case kVFT_NotEquals:
 		case kVFT_GreaterThan:
 		case kVFT_GreaterThanEquals:
-			view_filter_evaluate_number(view, log, i);
+			view_filter_evaluate_number(vfilter, view, log, i);
 			break;
 
 		case kVFT_Matches:
 		case kVFT_Contains:
 		case kVFT_StartsWith:
 		case kVFT_EndsWith:
-			view_filter_evaluate_string(view, log, i);
+			view_filter_evaluate_string(vfilter, view, log, i);
 			break;
 
 		case kVFT_And:
 		case kVFT_Or:
-			view_filter_evaluate_and_or(view, i);
+			view_filter_evaluate_and_or(vfilter, i);
 			break;
 
 		case kVFT_Not:
-			view_filter_evaluate_not(view);
+			view_filter_evaluate_not(vfilter);
 			break;
 
 		case kVFT_NamedFilter:
-			view_filter_evaluate_named_filter(view, log, i);
+			view_filter_evaluate_named_filter(vfilter);
 			break;
 
 		case kVFT_String:
@@ -1299,9 +1297,9 @@ static b32 view_filter_visible_standard(view_t* view, recorded_log_t* log)
 		}
 	}
 
-	if (view->vfilter.results.count == 1)
+	if (vfilter->results.count == 1)
 	{
-		return view->vfilter.results.data[0].value;
+		return vfilter->results.data[0].value;
 	}
 	else
 	{
@@ -1310,18 +1308,26 @@ static b32 view_filter_visible_standard(view_t* view, recorded_log_t* log)
 	}
 }
 
-b32 view_filter_visible(view_t* view, recorded_log_t* log)
+b32 view_filter_visible(view_t* view, const recorded_log_t* log)
 {
-	if (!view->config.filterActive || !view->vfilter.valid || !view->vfilter.tokens.count)
+	if (!view->config.filterActive)
 		return true;
-	switch (view->vfilter.type)
+
+	return view_filter_passes(&view->vfilter, view, log);
+}
+
+b32 view_filter_passes(vfilter_t* vfilter, const view_t* view, const recorded_log_t* log)
+{
+	if (!vfilter->valid || !vfilter->tokens.count)
+		return true;
+	switch (vfilter->type)
 	{
 	case kVF_Standard:
-		return view_filter_visible_standard(view, log);
+		return view_filter_visible_standard(vfilter, view, log);
 	case kVF_SQL:
 		return true;
 	case kVF_Legacy:
-		return view_filter_visible_legacy(view, log);
+		return view_filter_visible_legacy(vfilter, view, log);
 	case kVF_Count:
 	default:
 		return true;

@@ -491,7 +491,7 @@ void view_collect_categories_by_tag(view_t* view, view_category_collection_t* ma
 	}
 }
 
-b32 view_category_treat_as_empty(view_category_t* viewCategory)
+b32 view_category_treat_as_empty(const view_category_t* viewCategory)
 {
 	if (viewCategory->removed && viewCategory->id == 0)
 	{
@@ -671,10 +671,22 @@ view_pieInstance_t* view_find_pieInstance(view_t* view, s32 pieInstance)
 
 view_category_t* view_find_category(view_t* view, u32 categoryId)
 {
-	u32 categoryIndex;
-	for (categoryIndex = 0; categoryIndex < view->categories.count; ++categoryIndex)
+	for (u32 categoryIndex = 0; categoryIndex < view->categories.count; ++categoryIndex)
 	{
 		view_category_t* category = view->categories.data + categoryIndex;
+		if (category->id == categoryId)
+		{
+			return category;
+		}
+	}
+	return NULL;
+}
+
+const view_category_t* view_find_category_const(const view_t* view, u32 categoryId)
+{
+	for (u32 categoryIndex = 0; categoryIndex < view->categories.count; ++categoryIndex)
+	{
+		const view_category_t* category = view->categories.data + categoryIndex;
 		if (category->id == categoryId)
 		{
 			return category;

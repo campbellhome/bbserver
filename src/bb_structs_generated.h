@@ -43,6 +43,8 @@ struct config_max_recordings_t;
 struct config_min_log_level_t;
 struct config_s;
 struct deviceCodes_s;
+struct log_color_config_entry_t;
+struct log_color_config_t;
 struct message_queue_message_s;
 struct message_queue_messages_s;
 struct _FILETIME;
@@ -125,6 +127,8 @@ typedef struct config_max_recordings_t config_max_recordings_t;
 typedef struct config_min_log_level_t config_min_log_level_t;
 typedef struct config_s config_t;
 typedef struct deviceCodes_s deviceCodes_t;
+typedef struct log_color_config_entry_t log_color_config_entry_t;
+typedef struct log_color_config_t log_color_config_t;
 typedef struct message_queue_message_s message_queue_message_t;
 typedef struct message_queue_messages_s message_queue_messages_t;
 typedef struct _FILETIME FILETIME;
@@ -207,6 +211,8 @@ void config_max_recordings_reset(config_max_recordings_t *val);
 void config_min_log_level_reset(config_min_log_level_t *val);
 void config_reset(config_t *val);
 void deviceCodes_reset(deviceCodes_t *val);
+void log_color_config_entry_reset(log_color_config_entry_t *val);
+void log_color_config_reset(log_color_config_t *val);
 void message_queue_message_reset(message_queue_message_t *val);
 void message_queue_messages_reset(message_queue_messages_t *val);
 void FILETIME_reset(FILETIME *val);
@@ -348,6 +354,12 @@ config_t config_clone(const config_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_deviceCodes_clone)
 deviceCodes_t deviceCodes_clone(const deviceCodes_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_log_color_config_entry_clone)
+log_color_config_entry_t log_color_config_entry_clone(const log_color_config_entry_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_log_color_config_clone)
+log_color_config_t log_color_config_clone(const log_color_config_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_message_queue_message_clone)
 message_queue_message_t message_queue_message_clone(const message_queue_message_t *src);
