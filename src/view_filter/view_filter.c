@@ -17,7 +17,7 @@
 #if defined(BB_STANDALONE)
 #define FILTER_COND false
 #else
-#define FILTER_COND g_config.minLogLevel.filter >= kBBLogLevel_Log
+#define FILTER_COND g_config.minLogLevel.filter <= kBBLogLevel_Log
 #endif
 
 static span_t view_filter_tokenize_string(span_t* out, vfilter_t* filter, const char* line)
