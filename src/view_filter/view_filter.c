@@ -14,6 +14,12 @@
 #include "view.h"
 #include "view_filter_legacy.h"
 
+#if defined(BB_STANDALONE)
+#define FILTER_COND false
+#else
+#define FILTER_COND g_config.minLogLevel.filter >= kBBLogLevel_Log
+#endif
+
 static span_t view_filter_tokenize_string(span_t* out, vfilter_t* filter, const char* line)
 {
 	span_t ret = { BB_EMPTY_INITIALIZER };
@@ -607,7 +613,7 @@ static void view_filter_convert_tokens_to_rpn(vfilter_t* filter)
 
 static vfilter_t view_filter_parse_single(const char* name, const char* input)
 {
-	BB_LOG("filter", "parse: [%s] %s", name, input);
+	BB_CLOG(FILTER_COND, "filter", "parse: [%s] %s", name, input);
 
 	vfilter_t filter = { BB_EMPTY_INITIALIZER };
 	filter.name = sb_from_c_string(name);
@@ -627,7 +633,7 @@ static vfilter_t view_filter_parse_single(const char* name, const char* input)
 		}
 		else
 		{
-			BB_LOG("filter", "token type:%d contents:%.*s", token.type, span_length(token.span), token.span.start);
+			BB_CLOG(FILTER_COND, "filter", "token type:%d contents:%.*s", token.type, span_length(token.span), token.span.start);
 			bba_push(filter.tokens, token);
 			if (token.type != kVFT_String)
 			{
@@ -672,13 +678,13 @@ static vfilter_t view_filter_parse_single(const char* name, const char* input)
 	{
 		filter.type = kVF_Legacy;
 		filter.valid = true;
-		BB_LOG("filter", "Legacy: %s", filter.tokenstream.data);
+		BB_CLOG(FILTER_COND, "filter", "Legacy: %s", filter.tokenstream.data);
 	}
 	else if (filter.tokens.count > 1 && (!span_stricmp(filter.tokens.data[0].span, span_from_string("WHERE"))))
 	{
 		filter.type = kVF_SQL;
 		filter.valid = true;
-		BB_LOG("filter", "SQL: %s", sb_get(&filter.input));
+		BB_CLOG(FILTER_COND, "filter", "SQL: %s", sb_get(&filter.input));
 	}
 	else
 	{
@@ -725,7 +731,7 @@ static vfilter_t view_filter_parse_single(const char* name, const char* input)
 				sb_va(&out, "%s", string_from_vfilter_token_type_e(token->type));
 			}
 		}
-		BB_LOG("filter", "Standard: %s", sb_get(&out));
+		BB_CLOG(FILTER_COND, "filter", "Standard: %s", sb_get(&out));
 		sb_reset(&out);
 
 		for (u32 i = 0; i < filter.rpn_tokens.count; ++i)
@@ -752,7 +758,7 @@ static vfilter_t view_filter_parse_single(const char* name, const char* input)
 				sb_va(&out, "%s", string_from_vfilter_token_type_e(token->type));
 			}
 		}
-		BB_LOG("filter", "RPN: %s", sb_get(&out));
+		BB_CLOG(FILTER_COND, "filter", "RPN: %s", sb_get(&out));
 		sb_reset(&out);
 	}
 

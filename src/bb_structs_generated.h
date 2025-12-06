@@ -40,6 +40,7 @@ struct config_named_filter_t;
 struct config_named_filters_t;
 struct config_max_recordings_entry_t;
 struct config_max_recordings_t;
+struct config_min_log_level_t;
 struct config_s;
 struct deviceCodes_s;
 struct message_queue_message_s;
@@ -121,6 +122,7 @@ typedef struct config_named_filter_t config_named_filter_t;
 typedef struct config_named_filters_t config_named_filters_t;
 typedef struct config_max_recordings_entry_t config_max_recordings_entry_t;
 typedef struct config_max_recordings_t config_max_recordings_t;
+typedef struct config_min_log_level_t config_min_log_level_t;
 typedef struct config_s config_t;
 typedef struct deviceCodes_s deviceCodes_t;
 typedef struct message_queue_message_s message_queue_message_t;
@@ -202,6 +204,7 @@ void config_named_filter_reset(config_named_filter_t *val);
 void config_named_filters_reset(config_named_filters_t *val);
 void config_max_recordings_entry_reset(config_max_recordings_entry_t *val);
 void config_max_recordings_reset(config_max_recordings_t *val);
+void config_min_log_level_reset(config_min_log_level_t *val);
 void config_reset(config_t *val);
 void deviceCodes_reset(deviceCodes_t *val);
 void message_queue_message_reset(message_queue_message_t *val);
@@ -336,6 +339,9 @@ config_max_recordings_entry_t config_max_recordings_entry_clone(const config_max
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_config_max_recordings_clone)
 config_max_recordings_t config_max_recordings_clone(const config_max_recordings_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_config_min_log_level_clone)
+config_min_log_level_t config_min_log_level_clone(const config_min_log_level_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_config_clone)
 config_t config_clone(const config_t *src);

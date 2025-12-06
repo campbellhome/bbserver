@@ -341,6 +341,21 @@ config_max_recordings_t config_max_recordings_clone(const config_max_recordings_
 	return dst;
 }
 
+void config_min_log_level_reset(config_min_log_level_t *val)
+{
+	if(val) {
+	}
+}
+config_min_log_level_t config_min_log_level_clone(const config_min_log_level_t *src)
+{
+	config_min_log_level_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.filter = src->filter;
+		dst.discoveryResponse = src->discoveryResponse;
+	}
+	return dst;
+}
+
 void config_reset(config_t *val)
 {
 	if(val) {
@@ -352,6 +367,7 @@ void config_reset(config_t *val)
 		configFont_reset(&val->logFontConfig);
 		configFont_reset(&val->uiFontConfig);
 		sb_reset(&val->colorscheme);
+		config_min_log_level_reset(&val->minLogLevel);
 		configWindowplacement_reset(&val->wp);
 		tooltipConfig_reset(&val->tooltips);
 		sizeConfig_reset(&val->sizes);
@@ -369,6 +385,7 @@ config_t config_clone(const config_t *src)
 		dst.logFontConfig = configFont_clone(&src->logFontConfig);
 		dst.uiFontConfig = configFont_clone(&src->uiFontConfig);
 		dst.colorscheme = sb_clone(&src->colorscheme);
+		dst.minLogLevel = config_min_log_level_clone(&src->minLogLevel);
 		dst.wp = configWindowplacement_clone(&src->wp);
 		dst.version = src->version;
 		dst.viewTileMode = src->viewTileMode;

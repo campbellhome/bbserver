@@ -280,6 +280,20 @@ config_max_recordings_t json_deserialize_config_max_recordings_t(JSON_Value *src
 	return dst;
 }
 
+config_min_log_level_t json_deserialize_config_min_log_level_t(JSON_Value *src)
+{
+	config_min_log_level_t dst;
+	memset(&dst, 0, sizeof(dst));
+	if(src) {
+		JSON_Object *obj = json_value_get_object(src);
+		if(obj) {
+			dst.filter = (bb_log_level_e)json_object_get_number(obj, "filter");
+			dst.discoveryResponse = (bb_log_level_e)json_object_get_number(obj, "discoveryResponse");
+		}
+	}
+	return dst;
+}
+
 config_t json_deserialize_config_t(JSON_Value *src)
 {
 	config_t dst;
@@ -295,6 +309,7 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.logFontConfig = json_deserialize_configFont_t(json_object_get_value(obj, "logFontConfig"));
 			dst.uiFontConfig = json_deserialize_configFont_t(json_object_get_value(obj, "uiFontConfig"));
 			dst.colorscheme = json_deserialize_sb_t(json_object_get_value(obj, "colorscheme"));
+			dst.minLogLevel = json_deserialize_config_min_log_level_t(json_object_get_value(obj, "minLogLevel"));
 			dst.wp = json_deserialize_configWindowplacement_t(json_object_get_value(obj, "wp"));
 			dst.version = (u32)json_object_get_number(obj, "version");
 			dst.viewTileMode = json_deserialize_viewTileMode_t(json_object_get_value(obj, "viewTileMode"));
@@ -1093,6 +1108,17 @@ JSON_Value *json_serialize_config_max_recordings_t(const config_max_recordings_t
 	return val;
 }
 
+JSON_Value *json_serialize_config_min_log_level_t(const config_min_log_level_t *src)
+{
+	JSON_Value *val = json_value_init_object();
+	JSON_Object *obj = json_value_get_object(val);
+	if(obj) {
+		json_object_set_number(obj, "filter", src->filter);
+		json_object_set_number(obj, "discoveryResponse", src->discoveryResponse);
+	}
+	return val;
+}
+
 JSON_Value *json_serialize_config_t(const config_t *src)
 {
 	JSON_Value *val = json_value_init_object();
@@ -1106,6 +1132,7 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_value(obj, "logFontConfig", json_serialize_configFont_t(&src->logFontConfig));
 		json_object_set_value(obj, "uiFontConfig", json_serialize_configFont_t(&src->uiFontConfig));
 		json_object_set_value(obj, "colorscheme", json_serialize_sb_t(&src->colorscheme));
+		json_object_set_value(obj, "minLogLevel", json_serialize_config_min_log_level_t(&src->minLogLevel));
 		json_object_set_value(obj, "wp", json_serialize_configWindowplacement_t(&src->wp));
 		json_object_set_number(obj, "version", src->version);
 		json_object_set_value(obj, "viewTileMode", json_serialize_viewTileMode_t(src->viewTileMode));

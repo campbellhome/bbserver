@@ -153,6 +153,12 @@ AUTOJSON typedef struct config_max_recordings_t
 	config_max_recordings_entry_t* data;
 } config_max_recordings_t;
 
+AUTOJSON typedef struct config_min_log_level_t
+{
+	bb_log_level_e filter;
+	bb_log_level_e discoveryResponse;
+} config_min_log_level_t;
+
 AUTOJSON typedef struct config_s
 {
 	configWhitelist_t whitelist;
@@ -163,6 +169,7 @@ AUTOJSON typedef struct config_s
 	configFont_t logFontConfig;
 	configFont_t uiFontConfig;
 	sb_t colorscheme;
+	config_min_log_level_t minLogLevel;
 	configWindowplacement_t wp;
 	u32 version;
 	viewTileMode_t viewTileMode;
@@ -201,7 +208,7 @@ AUTOJSON typedef struct config_s
 
 enum
 {
-	kConfigVersion = 10
+	kConfigVersion = 11
 };
 
 extern config_t g_config;

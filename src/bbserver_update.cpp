@@ -288,6 +288,53 @@ static void App_GenerateSpamTestLogs()
 	}
 }
 
+static bool BBServer_MinLogLogLevelMenu(const char* name, bb_log_level_e& minLogLevel)
+{
+	const bb_log_level_e oldMinLogLevel = minLogLevel;
+	if (ImGui::BeginMenu(va("%s log level", name)))
+	{
+		bool selected = minLogLevel == kBBLogLevel_VeryVerbose;
+		if (ImGui::MenuItem("VeryVerbose", nullptr, &selected))
+		{
+			minLogLevel = kBBLogLevel_VeryVerbose;
+		}
+		selected = minLogLevel == kBBLogLevel_Verbose;
+		if (ImGui::MenuItem("Verbose", nullptr, &selected))
+		{
+			minLogLevel = kBBLogLevel_Verbose;
+		}
+		selected = minLogLevel == kBBLogLevel_Log;
+		if (ImGui::MenuItem("Log", nullptr, &selected))
+		{
+			minLogLevel = kBBLogLevel_Log;
+		}
+		selected = minLogLevel == kBBLogLevel_Display;
+		if (ImGui::MenuItem("Display", nullptr, &selected))
+		{
+			minLogLevel = kBBLogLevel_Display;
+			config_write(&g_config);
+		}
+		selected = minLogLevel == kBBLogLevel_Warning;
+		if (ImGui::MenuItem("Warning", nullptr, &selected))
+		{
+			minLogLevel = kBBLogLevel_Warning;
+		}
+		selected = minLogLevel == kBBLogLevel_Error;
+		if (ImGui::MenuItem("Error", nullptr, &selected))
+		{
+			minLogLevel = kBBLogLevel_Error;
+		}
+		selected = minLogLevel == kBBLogLevel_Fatal;
+		if (ImGui::MenuItem("Fatal", nullptr, &selected))
+		{
+			minLogLevel = kBBLogLevel_Fatal;
+		}
+		ImGui::EndMenu();
+	}
+
+	return minLogLevel != oldMinLogLevel;
+}
+
 void BBServer_MainMenuBar(void)
 {
 	if (ImGui::BeginMainMenuBar())
@@ -348,7 +395,7 @@ void BBServer_MainMenuBar(void)
 		}
 		if (ImGui::BeginMenu("Edit"))
 		{
-			if (ImGui::MenuItem("Recordings", NULL, &recordings_get_config()->recordingsOpen))
+			if (ImGui::MenuItem("Show recordings panel", NULL, &recordings_get_config()->recordingsOpen))
 			{
 				BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
 			}
@@ -356,6 +403,22 @@ void BBServer_MainMenuBar(void)
 			{
 				BB_LOG("UI::Menu::Config", "UIConfig_Open");
 				UIConfig_Open(&g_config);
+			}
+			if (ImGui::BeginMenu("Logging"))
+			{
+				if (ImGui::MenuItem("Open main Log"))
+				{
+					BBServer_OpenMainLog(false);
+				}
+				if (BBServer_MinLogLogLevelMenu("Filter", g_config.minLogLevel.filter))
+				{
+					config_write(&g_config);
+				}
+				if (BBServer_MinLogLogLevelMenu("Discovery response", g_config.minLogLevel.discoveryResponse))
+				{
+					config_write(&g_config);
+				}
+				ImGui::EndMenu();
 			}
 			ImGui::EndMenu();
 		}

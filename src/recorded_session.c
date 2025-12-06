@@ -51,7 +51,7 @@ static void recorded_logs_reset(recorded_logs_t* logs)
 {
 	for (u32 i = 0; i < logs->count; ++i)
 	{
-		recorded_log_t *recordedLog = logs->data[i];
+		recorded_log_t* recordedLog = logs->data[i];
 		sb_reset(&recordedLog->expandedJson);
 		bba_free(recordedLog->lines);
 		bba_free(recordedLog->jsonLines);
@@ -381,6 +381,7 @@ void recorded_session_update(recorded_session_t* session)
 		case kBBPacketType_AppInfo_v3:
 		case kBBPacketType_AppInfo_v4:
 		case kBBPacketType_AppInfo_v5:
+		case kBBPacketType_AppInfo_v6:
 			recorded_session_init_appinfo(session, &decoded);
 			break;
 		case kBBPacketType_CategoryId:
@@ -618,8 +619,50 @@ static void recorded_session_add_partial_log(recorded_session_t* session, bb_dec
 	bba_push(session->partialLogs, *decoded);
 }
 
+typedef enum
+{
+	// Basic log levels
+	kOldLogLevel_Log,
+	kOldLogLevel_Warning,
+	kOldLogLevel_Error,
+	// Extra log levels for UE4
+	kOldLogLevel_Display,
+	kOldLogLevel_SetColor,
+	kOldLogLevel_VeryVerbose,
+	kOldLogLevel_Verbose,
+	kOldLogLevel_Fatal,
+	kOldLogLevel_Count
+} old_log_level_e;
+
+static u32 recorded_session_fixup_old_log_level(u32 oldLogLevel)
+{
+	switch (oldLogLevel)
+	{
+	case kOldLogLevel_Log: return kBBLogLevel_Log;
+	case kOldLogLevel_Warning: return kBBLogLevel_Warning;
+	case kOldLogLevel_Error: return kBBLogLevel_Error;
+	case kOldLogLevel_Display: return kBBLogLevel_Display;
+	case kOldLogLevel_SetColor: return kBBLogLevel_SetColor;
+	case kOldLogLevel_VeryVerbose: return kBBLogLevel_VeryVerbose;
+	case kOldLogLevel_Verbose: return kBBLogLevel_Verbose;
+	case kOldLogLevel_Fatal: return kBBLogLevel_Fatal;
+	case kOldLogLevel_Count: return kBBLogLevel_Count;
+	default:
+		return kOldLogLevel_Log;
+	}
+}
+
 static void recorded_session_add_log(recorded_session_t* session, bb_decoded_packet_t* decoded, recorded_thread_t* t)
 {
+	if (session->appInfo.type == kBBPacketType_AppInfo_v1 ||
+	    session->appInfo.type == kBBPacketType_AppInfo_v2 ||
+	    session->appInfo.type == kBBPacketType_AppInfo_v3 ||
+	    session->appInfo.type == kBBPacketType_AppInfo_v4 ||
+	    session->appInfo.type == kBBPacketType_AppInfo_v5)
+	{
+		decoded->packet.logText.level = recorded_session_fixup_old_log_level(decoded->packet.logText.level);
+	}
+
 	sb_clear(&s_reconstructedLogText);
 	for (u32 i = 0; i < session->partialLogs.count; ++i)
 	{
@@ -637,13 +680,13 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 	span_t linesCursor = { s_reconstructedLogText.data, s_reconstructedLogText.data + s_reconstructedLogText.count - 1 };
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
 	{
-		sb_t unexpandedLine = { (u32)span_length(line) + 1, 0, (char *)line.start};
+		sb_t unexpandedLine = { (u32)span_length(line) + 1, 0, (char*)line.start };
 		if (line_can_be_json(unexpandedLine))
 		{
 			bAnyLineCanBeJson = true;
 		}
 
-		recorded_log_line_t *recordedLogLine = bba_add(recordedLogLines, 1);
+		recorded_log_line_t* recordedLogLine = bba_add(recordedLogLines, 1);
 		if (recordedLogLine)
 		{
 			recordedLogLine->offset = (u32)(line.start - s_reconstructedLogText.data);
@@ -664,11 +707,11 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 	{
 		if (bAnyLineCanBeJson)
 		{
-			linesCursor.start = s_reconstructedLogText.data; 
+			linesCursor.start = s_reconstructedLogText.data;
 			linesCursor.end = s_reconstructedLogText.data + s_reconstructedLogText.count - 1;
 			for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
 			{
-				sb_t unexpandedLine = { (u32)span_length(line) + 1, 0, (char *)line.start };
+				sb_t unexpandedLine = { (u32)span_length(line) + 1, 0, (char*)line.start };
 				if (line_can_be_json(unexpandedLine))
 				{
 					sb_t lineExpandedJson = sb_expand_json(unexpandedLine);
@@ -685,11 +728,11 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 	}
 
 	// Find offsets for embedded lines with json expanded
-	linesCursor.start = expandedJson.data; 
+	linesCursor.start = expandedJson.data;
 	linesCursor.end = expandedJson.data + expandedJson.count - 1;
 	for (span_t line = tokenizeLine(&linesCursor); line.start; line = tokenizeLine(&linesCursor))
 	{
-		recorded_log_line_t *recordedLogLine = bba_add(recordedJsonLogLines, 1);
+		recorded_log_line_t* recordedLogLine = bba_add(recordedJsonLogLines, 1);
 		if (recordedLogLine)
 		{
 			recordedLogLine->offset = (u32)(line.start - expandedJson.data);

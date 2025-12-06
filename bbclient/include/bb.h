@@ -98,16 +98,14 @@ enum
 
 typedef enum
 {
-	// Basic log levels
-	kBBLogLevel_Log,
-	kBBLogLevel_Warning,
-	kBBLogLevel_Error,
-	// Extra log levels for UE4
-	kBBLogLevel_Display,
-	kBBLogLevel_SetColor,
 	kBBLogLevel_VeryVerbose,
 	kBBLogLevel_Verbose,
+	kBBLogLevel_Log,
+	kBBLogLevel_Display,
+	kBBLogLevel_Warning,
+	kBBLogLevel_Error,
 	kBBLogLevel_Fatal,
+	kBBLogLevel_SetColor,
 	kBBLogLevel_Count
 } bb_log_level_e;
 const char* bb_get_log_level_name(bb_log_level_e logLevel, const char* defaultValue);
@@ -310,6 +308,11 @@ BB_LINKAGE void bb_start_frame_number(uint32_t pathId, uint32_t line, uint64_t f
 #define BB_LOG(category, ...) BB_INTERNAL_LOG(kBBLogLevel_Log, category, __VA_ARGS__)
 #define BB_WARNING(category, ...) BB_INTERNAL_LOG(kBBLogLevel_Warning, category, __VA_ARGS__)
 #define BB_ERROR(category, ...) BB_INTERNAL_LOG(kBBLogLevel_Error, category, __VA_ARGS__)
+
+#define BB_CTRACE(condition, logLevel, category, ...) if (condition) { BB_INTERNAL_LOG(logLevel, category, __VA_ARGS__); }
+#define BB_CLOG(condition, category, ...) if (condition) { BB_INTERNAL_LOG(kBBLogLevel_Log, category, __VA_ARGS__); }
+#define BB_CWARNING(condition, category, ...) if (condition) { BB_INTERNAL_LOG(kBBLogLevel_Warning, category, __VA_ARGS__); }
+#define BB_CERROR(condition, category, ...) if (condition) { BB_INTERNAL_LOG(kBBLogLevel_Error, category, __VA_ARGS__); }
 
 #define BB_TRACE_A(logLevel, category, ...) BB_INTERNAL_LOG_A(logLevel, category, __VA_ARGS__)
 #define BB_LOG_A(category, ...) BB_INTERNAL_LOG_A(kBBLogLevel_Log, category, __VA_ARGS__)

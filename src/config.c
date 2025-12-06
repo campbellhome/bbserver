@@ -141,6 +141,11 @@ b32 config_read(config_t* config)
 	{
 		config->dirStatsOverall = true;
 	}
+	if (config->version <= 10)
+	{
+		config->minLogLevel.filter = kBBLogLevel_Warning;
+		config->minLogLevel.discoveryResponse = kBBLogLevel_Warning;
+	}
 	config->version = kConfigVersion;
 
 	if (config->listenProtocol == kConfigListenProtocol_Unknown)

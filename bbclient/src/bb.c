@@ -295,14 +295,14 @@ static BB_INLINE void bb_send(bb_decoded_packet_t* decoded)
 }
 
 static const char* s_bbLogLevelNames[] = {
-	"Log",
-	"Warning",
-	"Error",
-	"Display",
-	"SetColor",
 	"VeryVerbose",
 	"Verbose",
+	"Log",
+	"Display",
+	"Warning",
+	"Error",
 	"Fatal",
+	"SetColor",
 };
 BB_CTASSERT(BB_ARRAYSIZE(s_bbLogLevelNames) == kBBLogLevel_Count);
 const char* bb_get_log_level_name(bb_log_level_e logLevel, const char* defaultValue)
@@ -444,7 +444,7 @@ static void bb_send_thread_ids(bb_ids_t* ids, b32 bCallbacks, b32 bSocket, b32 b
 static bb_decoded_packet_t bb_build_appinfo(void)
 {
 	bb_decoded_packet_t decoded;
-	decoded.type = (s_applicationGroup[0] == '\0') ? kBBPacketType_AppInfo_v4 : kBBPacketType_AppInfo;
+	decoded.type = kBBPacketType_AppInfo;
 	decoded.header.timestamp = bb_current_ticks();
 	decoded.header.threadId = bb_get_current_thread_id();
 	decoded.header.fileId = 0;

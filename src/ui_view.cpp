@@ -133,18 +133,6 @@ const char* textColorNames[] = {
 };
 BB_CTASSERT(BB_ARRAYSIZE(textColorNames) == kBBColor_Count);
 
-static const char* logLevelNames[] = {
-	"Log",         // kBBLogLevel_Log,
-	"Warning",     // kBBLogLevel_Warning,
-	"Error",       // kBBLogLevel_Error,
-	"Display",     // kBBLogLevel_Display,
-	"SetColor",    // kBBLogLevel_SetColor,
-	"VeryVerbose", // kBBLogLevel_VeryVerbose,
-	"Verbose",     // kBBLogLevel_Verbose,
-	"Fatal",       // kBBLogLevel_Fatal,
-};
-BB_CTASSERT(BB_ARRAYSIZE(logLevelNames) == kBBLogLevel_Count);
-
 static void PushLogFont()
 {
 	ImFontAtlas* fonts = ImGui::GetIO().Fonts;

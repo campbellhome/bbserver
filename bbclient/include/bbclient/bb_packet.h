@@ -56,7 +56,9 @@ typedef enum
 
 	kBBPacketType_FrameNumber, // Client --> Server
 
-	kBBPacketType_AppInfo = kBBPacketType_AppInfo_v5
+	kBBPacketType_AppInfo_v6, // Client --> Server, same as kBBPacketType_AppInfo_v5 but indicates sorted verbosity enum
+
+	kBBPacketType_AppInfo = kBBPacketType_AppInfo_v6
 
 } bb_packet_type_e;
 

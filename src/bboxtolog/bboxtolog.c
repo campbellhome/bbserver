@@ -6,7 +6,6 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #endif
 
 #include "bb.h"
-#include "bbstats.h"
 #include "bbclient/bb_array.h"
 #include "bbclient/bb_file.h"
 #include "bbclient/bb_malloc.h"
@@ -14,6 +13,7 @@ __pragma(warning(disable : 4710)); // warning C4710 : 'int printf(const char *co
 #include "bbclient/bb_string.h"
 #include "bbclient/bb_time.h"
 #include "bboxtolog_utils.h"
+#include "bbstats.h"
 #include "crt_leak_check.h"
 #include "path_utils.h"
 #include "sb.h"
@@ -109,9 +109,25 @@ typedef enum plaintext_prefix_e
 } plaintext_prefix_t;
 static plaintext_prefix_t s_plaintext_prefix;
 
+typedef enum
+{
+	// Basic log levels
+	kOldLogLevel_Log,
+	kOldLogLevel_Warning,
+	kOldLogLevel_Error,
+	// Extra log levels for UE4
+	kOldLogLevel_Display,
+	kOldLogLevel_SetColor,
+	kOldLogLevel_VeryVerbose,
+	kOldLogLevel_Verbose,
+	kOldLogLevel_Fatal,
+	kOldLogLevel_Count
+} old_log_level_e;
+
 categories_t g_categories = { 0, 0, 0 };
 double g_millisPerTick = 1.0;
 u64 g_initialTimestamp = 0;
+b32 g_fixupOldLogLevel = 0;
 static logPackets_t g_queuedPackets;
 static const char* g_pathToPrint;
 
@@ -136,7 +152,7 @@ void print_stdout(const char* text)
 #endif
 }
 
-void print_fp(const char* text, FILE *fp)
+void print_fp(const char* text, FILE* fp)
 {
 	fputs(text, fp);
 #if BB_USING(BB_PLATFORM_WINDOWS)
@@ -454,7 +470,7 @@ process_packet_data_t build_packet_data(const bb_decoded_packet_t* decoded)
 	return data;
 }
 
-void reset_packet_data(process_packet_data_t *data)
+void reset_packet_data(process_packet_data_t* data)
 {
 	if (data->numPartialLogsUsed)
 	{
@@ -479,7 +495,7 @@ static void queue_packet(const bb_decoded_packet_t* decoded, FILE* ofp, vfilter_
 	if (test_verbosity(decoded) && test_sql(decoded, sb_get(&packetData.lines)) && test_vfilter(vfilter_data))
 	{
 		queue_lines(packetData.lines, decoded->packet.logText.categoryId, decoded->packet.logText.level, packetData.milliseconds, ofp);
-		
+
 		// ownership of packetData.lines transferred, so clear out packetData.lines to avoid reset
 		sb_t empty = { BB_EMPTY_INITIALIZER };
 		packetData.lines = empty;
@@ -563,6 +579,11 @@ static int process_bbox_file(process_file_data_t* process_file_data)
 				{
 					g_initialTimestamp = decoded.packet.appInfo.initialTimestamp;
 					g_millisPerTick = decoded.packet.appInfo.millisPerTick;
+					g_fixupOldLogLevel = decoded.type == kBBPacketType_AppInfo_v1 ||
+					                     decoded.type == kBBPacketType_AppInfo_v2 ||
+					                     decoded.type == kBBPacketType_AppInfo_v3 ||
+					                     decoded.type == kBBPacketType_AppInfo_v4 ||
+					                     decoded.type == kBBPacketType_AppInfo_v5;
 					if (process_file_data->non_log_packet_func)
 					{
 						(*process_file_data->non_log_packet_func)(&decoded, process_file_data);
@@ -598,6 +619,21 @@ static int process_bbox_file(process_file_data_t* process_file_data)
 					{
 						if (process_file_data->log_packet_func)
 						{
+							if (g_fixupOldLogLevel)
+							{
+								switch (decoded.packet.logText.level)
+								{
+								case kOldLogLevel_Log: decoded.packet.logText.level = kBBLogLevel_Log;
+								case kOldLogLevel_Warning: decoded.packet.logText.level = kBBLogLevel_Warning;
+								case kOldLogLevel_Error: decoded.packet.logText.level = kBBLogLevel_Error;
+								case kOldLogLevel_Display: decoded.packet.logText.level = kBBLogLevel_Display;
+								case kOldLogLevel_SetColor: decoded.packet.logText.level = kBBLogLevel_SetColor;
+								case kOldLogLevel_VeryVerbose: decoded.packet.logText.level = kBBLogLevel_VeryVerbose;
+								case kOldLogLevel_Verbose: decoded.packet.logText.level = kBBLogLevel_Verbose;
+								case kOldLogLevel_Fatal: decoded.packet.logText.level = kBBLogLevel_Fatal;
+								case kOldLogLevel_Count: decoded.packet.logText.level = kBBLogLevel_Count;
+								}
+							}
 							(*process_file_data->log_packet_func)(&decoded, process_file_data);
 						}
 						break;
@@ -1208,6 +1244,7 @@ static const char* get_packet_type_string(bb_packet_type_e type)
 	case kBBPacketType_ConsoleAutocompleteResponseHeader: return "kBBPacketType_ConsoleAutocompleteResponseHeader";
 	case kBBPacketType_ConsoleAutocompleteResponseEntry: return "kBBPacketType_ConsoleAutocompleteResponseEntry";
 	case kBBPacketType_AppInfo_v5: return "kBBPacketType_AppInfo_v5";
+	case kBBPacketType_AppInfo_v6: return "kBBPacketType_AppInfo_v6";
 	case kBBPacketType_FrameNumber: return "kBBPacketType_FrameNumber";
 	default: return "unknown";
 	}
@@ -1384,6 +1421,7 @@ static void bboxtojson_packet(bb_decoded_packet_t* decoded, process_file_data_t*
 	case kBBPacketType_ConsoleAutocompleteResponseHeader: json_object_set_console_autocomplete_response_header(obj, &decoded->packet.consoleAutocompleteResponseHeader); break;
 	case kBBPacketType_ConsoleAutocompleteResponseEntry: json_object_set_console_autocomplete_response_entry(obj, &decoded->packet.consoleAutocompleteResponseEntry); break;
 	case kBBPacketType_AppInfo_v5: json_object_set_app_info(obj, &decoded->packet.appInfo); break;
+	case kBBPacketType_AppInfo_v6: json_object_set_app_info(obj, &decoded->packet.appInfo); break;
 	case kBBPacketType_FrameNumber: json_object_set_frame_number(obj, &decoded->packet.frameNumber); break;
 	default: break;
 	}

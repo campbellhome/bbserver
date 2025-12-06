@@ -190,10 +190,10 @@ static bb_discovery_packet_type_e get_discovery_response(discovery_data_t* host,
 			deviceCodes_unlock();
 		}
 
-		BB_LOG("Discovery::Response",
-		       "Request %s from %s @ %s: response %s\n",
-		       bb_discovery_packet_name(decoded->type), applicationName, ip,
-		       bb_discovery_packet_name(result));
+		BB_CLOG(g_config.minLogLevel.discoveryResponse >= kBBLogLevel_Log, "Discovery::Response",
+		        "Request %s from %s @ %s: response %s\n",
+		        bb_discovery_packet_name(decoded->type), applicationName, ip,
+		        bb_discovery_packet_name(result));
 	}
 
 	bb_critical_section_unlock(&s_discovery_data.whitelist_cs);
