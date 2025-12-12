@@ -711,6 +711,14 @@ extern "C" void BBServer_UpdateMinimal(void)
 	tasks_tick();
 	BBServer_DispatchToUIMessageQueue();
 	recordings_autodelete_old_recordings();
+	for (u32 sessionIndex = 0; sessionIndex < recorded_session_count(); ++sessionIndex)
+	{
+		recorded_session_t* session = recorded_session_get(sessionIndex);
+		if (session)
+		{
+			recorded_session_update(session);
+		}
+	}
 }
 
 extern "C" void BBServer_Update(void)
