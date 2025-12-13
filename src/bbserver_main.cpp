@@ -28,9 +28,9 @@
 #include "imgui_core_windows.h"
 #include "imgui_themes.h"
 #include "imgui_utils.h"
-#include "log_color_config.h"
 #include "message_box.h"
 #include "message_queue.h"
+#include "named_filter.h"
 #include "path_utils.h"
 #include "process_utils.h"
 #include "recorded_session.h"
@@ -90,6 +90,9 @@ static void BBServer_SetLogPath(void)
 	uuid_create(&uuid);
 	format_uuid(&uuid, uuidBuffer, sizeof(uuidBuffer));
 	sb_t path = appdata_get("bb");
+	sb_append(&path, "/bb");
+	path_resolve_inplace(&path);
+	path_mkdir(sb_get(&path));
 	sb_va(&path, "/{%s}bb.bbox", uuidBuffer);
 	path_resolve_inplace(&path);
 	bb_strncpy(s_bbLogPath, sb_get(&path), sizeof(s_bbLogPath));
@@ -133,7 +136,7 @@ static b32 BBServer_Init(const char* commandLineRecording)
 	tags_init();
 
 	BB_INTERNAL_LOG(kBBLogLevel_Verbose, "Startup", "Reading log color config");
-	log_color_config_read();
+	named_filters_read();
 
 	s_updateData.appName = "bb";
 	s_updateData.exeName = "bb.exe";
@@ -220,7 +223,7 @@ static void BBServer_Shutdown(void)
 	}
 	config_reset(&g_config);
 	tags_shutdown();
-	log_color_config_shutdown();
+	named_filters_shutdown();
 	site_config_shutdown();
 	bbnet_shutdown();
 	message_queue_message_t message;

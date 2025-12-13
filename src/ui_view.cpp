@@ -18,8 +18,8 @@
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
-#include "log_color_config.h"
 #include "message_queue.h"
+#include "named_filter.h"
 #include "path_utils.h"
 #include "process_utils.h"
 #include "recorded_session.h"
@@ -1140,7 +1140,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
 	b32 categoryNoColors = viewCategory->noColor;
 
-	log_color_config_entry_t* log_color_entry = log_color_config_resolve(view, viewLog, sessionLog);
+	named_filter_t* log_color_entry = named_filters_resolve(view, viewLog, sessionLog);
 	if (log_color_entry)
 	{
 		if (!log_color_entry->allowBgColors)
@@ -1260,7 +1260,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		ImGui::EndPopup();
 	}
 
-	if (log_color_entry  && !log_color_entry->allowFgColors)
+	if (log_color_entry && !log_color_entry->allowFgColors)
 	{
 		categoryNoColors = true;
 	}

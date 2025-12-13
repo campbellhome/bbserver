@@ -43,10 +43,10 @@ struct config_max_recordings_t;
 struct config_min_log_level_t;
 struct config_s;
 struct deviceCodes_s;
-struct log_color_config_entry_t;
-struct log_color_config_t;
 struct message_queue_message_s;
 struct message_queue_messages_s;
+struct named_filter_t;
+struct named_filters_t;
 struct _FILETIME;
 struct new_recording_s;
 struct recordings_tab_config_s;
@@ -127,10 +127,10 @@ typedef struct config_max_recordings_t config_max_recordings_t;
 typedef struct config_min_log_level_t config_min_log_level_t;
 typedef struct config_s config_t;
 typedef struct deviceCodes_s deviceCodes_t;
-typedef struct log_color_config_entry_t log_color_config_entry_t;
-typedef struct log_color_config_t log_color_config_t;
 typedef struct message_queue_message_s message_queue_message_t;
 typedef struct message_queue_messages_s message_queue_messages_t;
+typedef struct named_filter_t named_filter_t;
+typedef struct named_filters_t named_filters_t;
 typedef struct _FILETIME FILETIME;
 typedef struct new_recording_s new_recording_t;
 typedef struct recordings_tab_config_s recordings_tab_config_t;
@@ -211,10 +211,10 @@ void config_max_recordings_reset(config_max_recordings_t *val);
 void config_min_log_level_reset(config_min_log_level_t *val);
 void config_reset(config_t *val);
 void deviceCodes_reset(deviceCodes_t *val);
-void log_color_config_entry_reset(log_color_config_entry_t *val);
-void log_color_config_reset(log_color_config_t *val);
 void message_queue_message_reset(message_queue_message_t *val);
 void message_queue_messages_reset(message_queue_messages_t *val);
+void named_filter_reset(named_filter_t *val);
+void named_filters_reset(named_filters_t *val);
 void FILETIME_reset(FILETIME *val);
 void new_recording_reset(new_recording_t *val);
 void recordings_tab_config_reset(recordings_tab_config_t *val);
@@ -355,17 +355,17 @@ config_t config_clone(const config_t *src);
 #if !defined(__cplusplus) || defined(DECLARE_deviceCodes_clone)
 deviceCodes_t deviceCodes_clone(const deviceCodes_t *src);
 #endif
-#if !defined(__cplusplus) || defined(DECLARE_log_color_config_entry_clone)
-log_color_config_entry_t log_color_config_entry_clone(const log_color_config_entry_t *src);
-#endif
-#if !defined(__cplusplus) || defined(DECLARE_log_color_config_clone)
-log_color_config_t log_color_config_clone(const log_color_config_t *src);
-#endif
 #if !defined(__cplusplus) || defined(DECLARE_message_queue_message_clone)
 message_queue_message_t message_queue_message_clone(const message_queue_message_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_message_queue_messages_clone)
 message_queue_messages_t message_queue_messages_clone(const message_queue_messages_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_named_filter_clone)
+named_filter_t named_filter_clone(const named_filter_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_named_filters_clone)
+named_filters_t named_filters_clone(const named_filters_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_FILETIME_clone)
 FILETIME FILETIME_clone(const FILETIME *src);

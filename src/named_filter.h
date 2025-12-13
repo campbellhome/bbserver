@@ -16,7 +16,7 @@ typedef struct recorded_log_s recorded_log_t;
 typedef struct view_log_s view_log_t;
 typedef struct view_s view_t;
 
-AUTOJSON typedef struct log_color_config_entry_t
+AUTOJSON typedef struct named_filter_t
 {
 	sb_t name;
 	sb_t filter;
@@ -32,22 +32,22 @@ AUTOJSON typedef struct log_color_config_entry_t
 	b32 testBookmarked;
 	b32 bookmarked;
 	u32 pad;
-} log_color_config_entry_t;
+} named_filter_t;
 
-AUTOJSON typedef struct log_color_config_t
+AUTOJSON typedef struct named_filters_t
 {
 	u32 count;
 	u32 allocated;
-	log_color_config_entry_t* data;
-} log_color_config_t;
+	named_filter_t* data;
+} named_filters_t;
 
-extern log_color_config_t g_log_color_config;
+extern named_filters_t g_log_color_config;
 
-b32 log_color_config_read(void);
-b32 log_color_config_write(void);
-void log_color_config_shutdown(void);
+b32 named_filters_read(void);
+b32 named_filters_write(void);
+void named_filters_shutdown(void);
 
-log_color_config_entry_t* log_color_config_resolve(view_t* view, view_log_t* viewLog, recorded_log_t* log);
+named_filter_t* named_filters_resolve(view_t* view, view_log_t* viewLog, recorded_log_t* log);
 
 #if defined(__cplusplus)
 }

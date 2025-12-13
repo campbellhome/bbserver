@@ -18,10 +18,10 @@
 #include "imgui_themes.h"
 #include "imgui_tooltips.h"
 #include "imgui_utils.h"
-#include "log_color_config.h"
 #include "mc_callstack/callstack_utils.h"
 #include "message_box.h"
 #include "message_queue.h"
+#include "named_filter.h"
 #include "recorded_session.h"
 #include "recordings.h"
 #include "site_config.h"
@@ -407,7 +407,7 @@ void BBServer_MainMenuBar(void)
 			}
 			if (ImGui::MenuItem("Reload log color config"))
 			{
-				log_color_config_read();
+				named_filters_read();
 			}
 			if (ImGui::BeginMenu("Logging"))
 			{

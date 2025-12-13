@@ -14,8 +14,8 @@
 #include "config.h"
 #include "device_codes.h"
 #include "fonts.h"
-#include "log_color_config.h"
 #include "message_queue.h"
+#include "named_filter.h"
 #include "recordings.h"
 #include "sb.h"
 #include "sdict.h"
@@ -440,61 +440,6 @@ deviceCodes_t deviceCodes_clone(const deviceCodes_t *src)
 	return dst;
 }
 
-void log_color_config_entry_reset(log_color_config_entry_t *val)
-{
-	if(val) {
-		sb_reset(&val->name);
-		sb_reset(&val->filter);
-	}
-}
-log_color_config_entry_t log_color_config_entry_clone(const log_color_config_entry_t *src)
-{
-	log_color_config_entry_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		dst.name = sb_clone(&src->name);
-		dst.filter = sb_clone(&src->filter);
-		dst.bgStyle = src->bgStyle;
-		dst.fgStyle = src->fgStyle;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->bgColor); ++i) {
-			dst.bgColor[i] = src->bgColor[i];
-		}
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->fgColor); ++i) {
-			dst.fgColor[i] = src->fgColor[i];
-		}
-		dst.enabled = src->enabled;
-		dst.allowBgColors = src->allowBgColors;
-		dst.allowFgColors = src->allowFgColors;
-		dst.testSelected = src->testSelected;
-		dst.selected = src->selected;
-		dst.testBookmarked = src->testBookmarked;
-		dst.bookmarked = src->bookmarked;
-		dst.pad = src->pad;
-	}
-	return dst;
-}
-
-void log_color_config_reset(log_color_config_t *val)
-{
-	if(val) {
-		for(u32 i = 0; i < val->count; ++i) {
-			log_color_config_entry_reset(val->data + i);
-		}
-		bba_free(*val);
-	}
-}
-log_color_config_t log_color_config_clone(const log_color_config_t *src)
-{
-	log_color_config_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		for(u32 i = 0; i < src->count; ++i) {
-			if(bba_add_noclear(dst, 1)) {
-				bba_last(dst) = log_color_config_entry_clone(src->data + i);
-			}
-		}
-	}
-	return dst;
-}
-
 void message_queue_message_reset(message_queue_message_t *val)
 {
 	if(val) {
@@ -529,6 +474,61 @@ message_queue_messages_t message_queue_messages_clone(const message_queue_messag
 		for(u32 i = 0; i < src->count; ++i) {
 			if(bba_add_noclear(dst, 1)) {
 				bba_last(dst) = message_queue_message_clone(src->data + i);
+			}
+		}
+	}
+	return dst;
+}
+
+void named_filter_reset(named_filter_t *val)
+{
+	if(val) {
+		sb_reset(&val->name);
+		sb_reset(&val->filter);
+	}
+}
+named_filter_t named_filter_clone(const named_filter_t *src)
+{
+	named_filter_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		dst.name = sb_clone(&src->name);
+		dst.filter = sb_clone(&src->filter);
+		dst.bgStyle = src->bgStyle;
+		dst.fgStyle = src->fgStyle;
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->bgColor); ++i) {
+			dst.bgColor[i] = src->bgColor[i];
+		}
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->fgColor); ++i) {
+			dst.fgColor[i] = src->fgColor[i];
+		}
+		dst.enabled = src->enabled;
+		dst.allowBgColors = src->allowBgColors;
+		dst.allowFgColors = src->allowFgColors;
+		dst.testSelected = src->testSelected;
+		dst.selected = src->selected;
+		dst.testBookmarked = src->testBookmarked;
+		dst.bookmarked = src->bookmarked;
+		dst.pad = src->pad;
+	}
+	return dst;
+}
+
+void named_filters_reset(named_filters_t *val)
+{
+	if(val) {
+		for(u32 i = 0; i < val->count; ++i) {
+			named_filter_reset(val->data + i);
+		}
+		bba_free(*val);
+	}
+}
+named_filters_t named_filters_clone(const named_filters_t *src)
+{
+	named_filters_t dst = { BB_EMPTY_INITIALIZER };
+	if(src) {
+		for(u32 i = 0; i < src->count; ++i) {
+			if(bba_add_noclear(dst, 1)) {
+				bba_last(dst) = named_filter_clone(src->data + i);
 			}
 		}
 	}

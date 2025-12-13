@@ -1,7 +1,7 @@
 // Copyright (c) Matt Campbell
 // MIT license (see License.txt)
 
-#include "log_color_config.h"
+#include "named_filter.h"
 #include "appdata.h"
 #include "bb_array.h"
 #include "bb_json_generated.h"
@@ -12,13 +12,13 @@
 #include "va.h"
 #include "view.h"
 
-log_color_config_t g_log_color_config;
-static named_vfilters_t g_log_color_filters;
+static named_filters_t g_user_named_filters;
+static named_vfilters_t g_user_named_vfilters;
 
 static sb_t log_color_config_get_path(const char* appName)
 {
 	sb_t s = appdata_get(appName);
-	sb_append(&s, "\\bb_log_color_config.json");
+	sb_append(&s, "\\bb_named_filters_config.json");
 	return s;
 }
 
@@ -44,27 +44,27 @@ static void log_color_scale_color(float color[4])
 	}
 }
 
-b32 log_color_config_read(void)
+b32 named_filters_read(void)
 {
 	b32 ret = false;
 	sb_t path = log_color_config_get_path("bb");
 	JSON_Value* val = json_parse_file(sb_get(&path));
 	if (val)
 	{
-		log_color_config_reset(&g_log_color_config);
-		named_vfilters_reset(&g_log_color_filters);
-		g_log_color_config = json_deserialize_log_color_config_t(val);
+		named_filters_reset(&g_user_named_filters);
+		named_vfilters_reset(&g_user_named_vfilters);
+		g_user_named_filters = json_deserialize_named_filters_t(val);
 		json_value_free(val);
 		ret = true;
 
-		bba_add(g_log_color_filters, g_log_color_config.count);
-		for (u32 i = 0; i < g_log_color_config.count; ++i)
+		bba_add(g_user_named_vfilters, g_user_named_filters.count);
+		for (u32 i = 0; i < g_user_named_filters.count; ++i)
 		{
-			log_color_config_entry_t* entry = g_log_color_config.data + i;
+			named_filter_t* entry = g_user_named_filters.data + i;
 			log_color_scale_color(entry->bgColor);
 			log_color_scale_color(entry->fgColor);
 
-			vfilter_t* vfilter = g_log_color_filters.data + i;
+			vfilter_t* vfilter = g_user_named_vfilters.data + i;
 			*vfilter = view_filter_parse(sb_get(&entry->name), sb_get(&entry->filter));
 		}
 	}
@@ -72,10 +72,10 @@ b32 log_color_config_read(void)
 	return ret;
 }
 
-b32 log_color_config_write(void)
+b32 named_filters_write(void)
 {
 	b32 result = false;
-	JSON_Value* val = json_serialize_log_color_config_t(&g_log_color_config);
+	JSON_Value* val = json_serialize_named_filters_t(&g_user_named_filters);
 	if (val)
 	{
 		sb_t path = log_color_config_get_path("bb");
@@ -94,17 +94,17 @@ b32 log_color_config_write(void)
 	return result;
 }
 
-void log_color_config_shutdown(void)
+void named_filters_shutdown(void)
 {
-	log_color_config_reset(&g_log_color_config);
-	named_vfilters_reset(&g_log_color_filters);
+	named_filters_reset(&g_user_named_filters);
+	named_vfilters_reset(&g_user_named_vfilters);
 }
 
-log_color_config_entry_t* log_color_config_resolve(view_t* view, view_log_t* viewLog, recorded_log_t* log)
+named_filter_t* named_filters_resolve(view_t* view, view_log_t* viewLog, recorded_log_t* log)
 {
-	for (u32 i = 0; i < g_log_color_config.count; ++i)
+	for (u32 i = 0; i < g_user_named_filters.count; ++i)
 	{
-		log_color_config_entry_t* entry = g_log_color_config.data + i;
+		named_filter_t* entry = g_user_named_filters.data + i;
 		if (!entry->enabled)
 		{
 			continue;
@@ -126,7 +126,7 @@ log_color_config_entry_t* log_color_config_resolve(view_t* view, view_log_t* vie
 			}
 		}
 
-		vfilter_t* vfilter = g_log_color_filters.data + i;
+		vfilter_t* vfilter = g_user_named_vfilters.data + i;
 		if (view_filter_passes(vfilter, view, log))
 		{
 			return entry;
