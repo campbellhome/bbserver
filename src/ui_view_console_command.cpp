@@ -24,7 +24,6 @@
 #include "view.h"
 #include "wrap_imgui_internal.h"
 
-extern "C" void view_console_history_entry_reset(view_console_history_entry_t* val);
 static void UIRecordedView_ConsoleAutocomplete(view_t* view);
 
 static int UIRecordedView_ConsoleInputCallback(ImGuiInputTextCallbackData* CallbackData)

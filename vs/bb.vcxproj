@@ -157,6 +157,7 @@
     <ClInclude Include="..\src\ui_view.h" />
     <ClInclude Include="..\src\ui_view_console_command.h" />
     <ClInclude Include="..\src\ui_view_files.h" />
+    <ClInclude Include="..\src\ui_view_filter.h" />
     <ClInclude Include="..\src\ui_view_pie_instances.h" />
     <ClInclude Include="..\src\ui_view_threads.h" />
     <ClInclude Include="..\src\uuid_config.h" />
@@ -200,6 +201,7 @@
     <ClCompile Include="..\src\ui_view.cpp" />
     <ClCompile Include="..\src\ui_view_console_command.cpp" />
     <ClCompile Include="..\src\ui_view_files.cpp" />
+    <ClCompile Include="..\src\ui_view_filter.cpp" />
     <ClCompile Include="..\src\ui_view_pie_instances.cpp" />
     <ClCompile Include="..\src\ui_view_threads.cpp" />
     <ClCompile Include="..\src\uuid_config.c" />

@@ -227,6 +227,8 @@ void path_fixup_move_entry(pathFixupList_t* pathFixups, u32 indexA, u32 indexB);
 void config_max_recordings_move_entry(config_max_recordings_t* arr, u32 indexA, u32 indexB);
 u32 config_getwindowplacement(HWND hwnd);
 float config_get_resizeBarSize(config_t* config);
+void config_named_filter_reset(config_named_filter_t *val);
+void config_named_filters_reset(config_named_filters_t *val);
 
 #if defined(__cplusplus)
 }

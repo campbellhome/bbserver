@@ -440,6 +440,7 @@ void view_set_all_pieinstance_visibility(view_t* view, b8 visible);
 void view_remove_all_bookmarks(view_t* view);
 void view_toggle_bookmarks_for_selection(view_t* view);
 void view_advance_to_next_bookmark(view_t* view, b32 forward);
+void view_console_history_entry_reset(view_console_history_entry_t* val);
 
 #if defined(__cplusplus)
 }

@@ -6,6 +6,19 @@
 #include "common.h"
 #include "wrap_imgui.h"
 
+enum class EViewFilterCategory : u32
+{
+	Input,
+	History,
+	Config,
+	SiteConfig,
+	Count
+};
+
+void PushLogFont(void);
+void PopLogFont(void);
+void PushUIFont(void);
+void PopUIFont(void);
 void UIRecordedView_UpdateAll();
 void UIRecordedView_Shutdown(void);
 void UIRecordedView_TooltipLevelText(const char* fmt, u32 count, bb_log_level_e logLevel);
