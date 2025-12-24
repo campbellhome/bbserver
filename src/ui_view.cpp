@@ -68,7 +68,6 @@ static sb_t s_selectedLine;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 static int s_visibleLogLines;
-static bool g_tileToggle = true;
 static constexpr u32 g_logTruncationLen = 16u * 1024u;
 
 using namespace ImGui;
@@ -2541,14 +2540,17 @@ void UIRecordedView_RemoveClosedViews()
 
 bool UIRecordedView_EnableTiledViews(void)
 {
-	return g_config.viewTileMode != kViewTileMode_None && g_tileToggle;
+	return g_config.viewTileMode != kViewTileMode_None && g_config.tileViews;
 }
 
 void UIRecordedView_TiledViewCheckbox(void)
 {
 	if (g_config.viewTileMode != kViewTileMode_None)
 	{
-		ImGui::Checkbox("Tile Views", &g_tileToggle);
+		if (ImGui::Checkbox("Tile Views", &g_config.tileViews))
+		{
+			config_write(&g_config);
+		}
 	}
 }
 

@@ -146,6 +146,10 @@ b32 config_read(config_t* config)
 		config->minLogLevel.filter = kBBLogLevel_Warning;
 		config->minLogLevel.discoveryResponse = kBBLogLevel_Warning;
 	}
+	if (config->version <= 11)
+	{
+		config->tileViews = true;
+	}
 	config->version = kConfigVersion;
 
 	if (config->listenProtocol == kConfigListenProtocol_Unknown)
