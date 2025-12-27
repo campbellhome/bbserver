@@ -262,45 +262,6 @@ sizeConfig sizeConfig_clone(const sizeConfig *src)
 	return dst;
 }
 
-void config_named_filter_reset(config_named_filter_t *val)
-{
-	if(val) {
-		sb_reset(&val->name);
-		sb_reset(&val->text);
-	}
-}
-config_named_filter_t config_named_filter_clone(const config_named_filter_t *src)
-{
-	config_named_filter_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		dst.name = sb_clone(&src->name);
-		dst.text = sb_clone(&src->text);
-	}
-	return dst;
-}
-
-void config_named_filters_reset(config_named_filters_t *val)
-{
-	if(val) {
-		for(u32 i = 0; i < val->count; ++i) {
-			config_named_filter_reset(val->data + i);
-		}
-		bba_free(*val);
-	}
-}
-config_named_filters_t config_named_filters_clone(const config_named_filters_t *src)
-{
-	config_named_filters_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		for(u32 i = 0; i < src->count; ++i) {
-			if(bba_add_noclear(dst, 1)) {
-				bba_last(dst) = config_named_filter_clone(src->data + i);
-			}
-		}
-	}
-	return dst;
-}
-
 void config_max_recordings_entry_reset(config_max_recordings_entry_t *val)
 {
 	if(val) {
@@ -363,7 +324,6 @@ void config_reset(config_t *val)
 		configWhitelist_reset(&val->whitelist);
 		openTargetList_reset(&val->openTargets);
 		pathFixupList_reset(&val->pathFixups);
-		config_named_filters_reset(&val->namedFilters);
 		config_max_recordings_reset(&val->maxRecordings);
 		configFont_reset(&val->logFontConfig);
 		configFont_reset(&val->uiFontConfig);
@@ -381,7 +341,6 @@ config_t config_clone(const config_t *src)
 		dst.whitelist = configWhitelist_clone(&src->whitelist);
 		dst.openTargets = openTargetList_clone(&src->openTargets);
 		dst.pathFixups = pathFixupList_clone(&src->pathFixups);
-		dst.namedFilters = config_named_filters_clone(&src->namedFilters);
 		dst.maxRecordings = config_max_recordings_clone(&src->maxRecordings);
 		dst.logFontConfig = configFont_clone(&src->logFontConfig);
 		dst.uiFontConfig = configFont_clone(&src->uiFontConfig);
@@ -420,7 +379,7 @@ config_t config_clone(const config_t *src)
 		dst.dirStatsPerPlatform = src->dirStatsPerPlatform;
 		dst.dirStatsOverall = src->dirStatsOverall;
 		dst.dateTimeUTC = src->dateTimeUTC;
-		dst.pad = src->pad;
+		dst.tileViews = src->tileViews;
 	}
 	return dst;
 }
@@ -484,7 +443,7 @@ void named_filter_reset(named_filter_t *val)
 {
 	if(val) {
 		sb_reset(&val->name);
-		sb_reset(&val->filter);
+		sb_reset(&val->text);
 	}
 }
 named_filter_t named_filter_clone(const named_filter_t *src)
@@ -492,22 +451,30 @@ named_filter_t named_filter_clone(const named_filter_t *src)
 	named_filter_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.name = sb_clone(&src->name);
-		dst.filter = sb_clone(&src->filter);
+		dst.text = sb_clone(&src->text);
 		dst.bgStyle = src->bgStyle;
 		dst.fgStyle = src->fgStyle;
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->bgColor); ++i) {
 			dst.bgColor[i] = src->bgColor[i];
 		}
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->bgColorActive); ++i) {
+			dst.bgColorActive[i] = src->bgColorActive[i];
+		}
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->bgColorHovered); ++i) {
+			dst.bgColorHovered[i] = src->bgColorHovered[i];
+		}
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->fgColor); ++i) {
 			dst.fgColor[i] = src->fgColor[i];
 		}
-		dst.enabled = src->enabled;
+		dst.filterEnabled = src->filterEnabled;
+		dst.filterSelectable = src->filterSelectable;
 		dst.allowBgColors = src->allowBgColors;
 		dst.allowFgColors = src->allowFgColors;
 		dst.testSelected = src->testSelected;
 		dst.selected = src->selected;
 		dst.testBookmarked = src->testBookmarked;
 		dst.bookmarked = src->bookmarked;
+		dst.customColorsEnabled = src->customColorsEnabled;
 		dst.pad = src->pad;
 	}
 	return dst;
@@ -735,45 +702,6 @@ recordings_tab_data_t recordings_tab_data_clone(const recordings_tab_data_t *src
 	return dst;
 }
 
-void site_config_named_filter_reset(site_config_named_filter_t *val)
-{
-	if(val) {
-		sb_reset(&val->name);
-		sb_reset(&val->text);
-	}
-}
-site_config_named_filter_t site_config_named_filter_clone(const site_config_named_filter_t *src)
-{
-	site_config_named_filter_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		dst.name = sb_clone(&src->name);
-		dst.text = sb_clone(&src->text);
-	}
-	return dst;
-}
-
-void site_config_named_filters_reset(site_config_named_filters_t *val)
-{
-	if(val) {
-		for(u32 i = 0; i < val->count; ++i) {
-			site_config_named_filter_reset(val->data + i);
-		}
-		bba_free(*val);
-	}
-}
-site_config_named_filters_t site_config_named_filters_clone(const site_config_named_filters_t *src)
-{
-	site_config_named_filters_t dst = { BB_EMPTY_INITIALIZER };
-	if(src) {
-		for(u32 i = 0; i < src->count; ++i) {
-			if(bba_add_noclear(dst, 1)) {
-				bba_last(dst) = site_config_named_filter_clone(src->data + i);
-			}
-		}
-	}
-	return dst;
-}
-
 void updateConfig_reset(updateConfig_t *val)
 {
 	if(val) {
@@ -805,7 +733,7 @@ void site_config_reset(site_config_t *val)
 {
 	if(val) {
 		updateConfig_reset(&val->updates);
-		site_config_named_filters_reset(&val->namedFilters);
+		named_filters_reset(&val->namedFilters);
 		sb_reset(&val->bugAssignee);
 		sb_reset(&val->bugProject);
 	}
@@ -815,7 +743,7 @@ site_config_t site_config_clone(const site_config_t *src)
 	site_config_t dst = { BB_EMPTY_INITIALIZER };
 	if(src) {
 		dst.updates = updateConfig_clone(&src->updates);
-		dst.namedFilters = site_config_named_filters_clone(&src->namedFilters);
+		dst.namedFilters = named_filters_clone(&src->namedFilters);
 		dst.bugAssignee = sb_clone(&src->bugAssignee);
 		dst.bugProject = sb_clone(&src->bugProject);
 		dst.autodetectDevkits = src->autodetectDevkits;

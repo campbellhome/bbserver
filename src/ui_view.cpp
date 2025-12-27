@@ -1123,7 +1123,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
 	b32 categoryNoColors = viewCategory->noColor;
 
-	named_filter_t* log_color_entry = named_filters_resolve(view, viewLog, sessionLog);
+	named_filter_t* log_color_entry = named_filters_resolve(view, viewLog, sessionLog, true);
 	if (log_color_entry)
 	{
 		if (!log_color_entry->allowBgColors)
@@ -1160,16 +1160,23 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 			targetBgColor = MakeBackgroundTintColor(kStyleColor_LogBackground_Normal, ImColor(0.0f, 0.0f, 0.0f, 0.0f));
 		}
 	}
-	ImVec4 bgColor = ImVec4(ImColor(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)));
+	ImVec4 bgColorNormal = ImVec4(ImColor(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg)));
+	ImVec4 bgColorActive;
+	ImVec4 bgColorHovered;
+	bool userBgColor = false;
 	if (log_color_entry)
 	{
 		if (log_color_entry->bgStyle != kStyleColor_Count)
 		{
-			bgColor = MakeColor(log_color_entry->bgStyle);
+			bgColorNormal = MakeColor(log_color_entry->bgStyle);
+			userBgColor = true;
 		}
 		else if (log_color_entry->bgColor[3] > 0.0f)
 		{
-			bgColor = ImColor(log_color_entry->bgColor[0], log_color_entry->bgColor[1], log_color_entry->bgColor[2], log_color_entry->bgColor[3]);
+			bgColorNormal = ImColor(log_color_entry->bgColor[0], log_color_entry->bgColor[1], log_color_entry->bgColor[2], log_color_entry->bgColor[3]);
+			bgColorActive = ImColor(log_color_entry->bgColorActive[0], log_color_entry->bgColorActive[1], log_color_entry->bgColorActive[2], log_color_entry->bgColorActive[3]);
+			bgColorHovered = ImColor(log_color_entry->bgColorHovered[0], log_color_entry->bgColorHovered[1], log_color_entry->bgColorHovered[2], log_color_entry->bgColorHovered[3]);
+			userBgColor = true;
 		}
 	}
 
@@ -1177,17 +1184,43 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	{
 		if (!log_color_entry || log_color_entry->allowBgColors)
 		{
-			bgColor = MakeColor((styleColor_e)(decoded->packet.logText.colors.bg));
+			bgColorNormal = MakeColor((styleColor_e)(decoded->packet.logText.colors.bg));
 		}
 	}
 
-	bgColor.x = bgColor.x * (1 - targetBgColor.Value.w) + targetBgColor.Value.x * targetBgColor.Value.w;
-	bgColor.y = bgColor.y * (1 - targetBgColor.Value.w) + targetBgColor.Value.y * targetBgColor.Value.w;
-	bgColor.z = bgColor.z * (1 - targetBgColor.Value.w) + targetBgColor.Value.z * targetBgColor.Value.w;
-
 	int styleCount = 0;
-	// ImGui::PushStyleColor(ImGuiCol_HeaderInactive, bgColor);
-	if (viewLog->bookmarked)
+	// ImGui::PushStyleColor(ImGuiCol_HeaderInactive, bgColorNormal);
+	if (userBgColor && log_color_entry)
+	{
+		if (log_color_entry->testSelected && log_color_entry->selected == viewLog->selected &&
+		    log_color_entry->testBookmarked && log_color_entry->bookmarked == viewLog->bookmarked)
+		{
+			styleCount += 3;
+			ImGui::PushStyleColor(ImGuiCol_Header, bgColorNormal);
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive);
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered);
+			targetBgColor.Value.w = 0.0f;
+		}
+		else if (log_color_entry->testSelected && log_color_entry->selected == viewLog->selected &&
+		         !log_color_entry->testBookmarked && !viewLog->bookmarked)
+		{
+			styleCount += 3;
+			ImGui::PushStyleColor(ImGuiCol_Header, bgColorNormal);
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive);
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered);
+			targetBgColor.Value.w = 0.0f;
+		}
+		else if (log_color_entry->testBookmarked && log_color_entry->bookmarked == viewLog->bookmarked &&
+		         !log_color_entry->testSelected && !viewLog->selected)
+		{
+			styleCount += 3;
+			ImGui::PushStyleColor(ImGuiCol_Header, bgColorNormal);
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive);
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered);
+			targetBgColor.Value.w = 0.0f;
+		}
+	}
+	if (!styleCount && viewLog->bookmarked)
 	{
 		styleCount += 3;
 		ImColor headerColor = ImGui::GetColorU32(ImGuiCol_Header);
@@ -1202,7 +1235,12 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		headerHoveredColor.Value.y += 0.1f;
 		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, headerHoveredColor);
 	}
-	SelectableWithBackground(va("###%u_%u", viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, bgColor);
+
+	bgColorNormal.x = bgColorNormal.x * (1 - targetBgColor.Value.w) + targetBgColor.Value.x * targetBgColor.Value.w;
+	bgColorNormal.y = bgColorNormal.y * (1 - targetBgColor.Value.w) + targetBgColor.Value.y * targetBgColor.Value.w;
+	bgColorNormal.z = bgColorNormal.z * (1 - targetBgColor.Value.w) + targetBgColor.Value.z * targetBgColor.Value.w;
+
+	SelectableWithBackground(va("###%u_%u", viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, bgColorNormal);
 	ImGui::PopStyleColor(styleCount);
 	if (ImGui::IsItemHovered())
 	{

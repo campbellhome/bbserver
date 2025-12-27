@@ -121,7 +121,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\src;..\src\view_filter</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src;..\src\bboxtolog;..\src\view_filter</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup>
@@ -151,6 +151,7 @@ copy /y $(OutDir)$(TargetName).exe $(OutDir)bboxtojson.exe</Command>
     <None Include="..\src\bboxtolog\bboxtolog_json_generated.h" />
     <None Include="..\src\bboxtolog\bbstats.h" />
     <None Include="..\src\bboxtolog\bboxtolog_utils.h" />
+    <None Include="..\src\bboxtolog\standalone_theme_config.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

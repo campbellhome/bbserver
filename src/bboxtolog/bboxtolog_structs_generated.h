@@ -28,6 +28,9 @@ struct bbstats_fileHashChain;
 struct bbstats_fileHashTable;
 struct bbstats_process_file_data_s;
 struct bbstats_data_s;
+struct color_config_s;
+struct colors_config_s;
+struct theme_config_s;
 struct vfilter_token_s;
 struct vfilter_tokens_s;
 struct vfilter_error_s;
@@ -51,6 +54,9 @@ typedef struct bbstats_fileHashChain bbstats_fileHashChain;
 typedef struct bbstats_fileHashTable bbstats_fileHashTable;
 typedef struct bbstats_process_file_data_s bbstats_process_file_data_t;
 typedef struct bbstats_data_s bbstats_data_t;
+typedef struct color_config_s color_config_t;
+typedef struct colors_config_s colors_config_t;
+typedef struct theme_config_s theme_config_t;
 typedef struct vfilter_token_s vfilter_token_t;
 typedef struct vfilter_tokens_s vfilter_tokens_t;
 typedef struct vfilter_error_s vfilter_error_t;
@@ -74,6 +80,9 @@ void bbstats_fileHashChain_reset_from_loc(const char *file, int line, bbstats_fi
 void bbstats_fileHashTable_reset_from_loc(const char *file, int line, bbstats_fileHashTable *val);
 void bbstats_process_file_data_reset(bbstats_process_file_data_t *val);
 void bbstats_data_reset(bbstats_data_t *val);
+void color_config_reset(color_config_t *val);
+void colors_config_reset(colors_config_t *val);
+void theme_config_reset(theme_config_t *val);
 void vfilter_token_reset(vfilter_token_t *val);
 void vfilter_tokens_reset(vfilter_tokens_t *val);
 void vfilter_error_reset(vfilter_error_t *val);
@@ -126,6 +135,15 @@ bbstats_process_file_data_t bbstats_process_file_data_clone(const bbstats_proces
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_bbstats_data_clone)
 bbstats_data_t bbstats_data_clone(const bbstats_data_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_color_config_clone)
+color_config_t color_config_clone(const color_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_colors_config_clone)
+colors_config_t colors_config_clone(const colors_config_t *src);
+#endif
+#if !defined(__cplusplus) || defined(DECLARE_theme_config_clone)
+theme_config_t theme_config_clone(const theme_config_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_vfilter_token_clone)
 vfilter_token_t vfilter_token_clone(const vfilter_token_t *src);

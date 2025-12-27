@@ -154,12 +154,12 @@ static ImVec2 UIRecordedView_SizeFilterItem(const char* filterName, const char* 
 
 static const char* view_filter_find_config_by_text(const char* searchText)
 {
-	for (u32 i = 0; i < g_config.namedFilters.count; ++i)
+	for (u32 i = 0; i < g_user_named_filters.count; ++i)
 	{
-		const char* filterText = sb_get(&g_config.namedFilters.data[i].text);
+		const char* filterText = sb_get(&g_user_named_filters.data[i].text);
 		if (!bb_stricmp(searchText, filterText))
 		{
-			const char* filterName = sb_get(&g_config.namedFilters.data[i].name);
+			const char* filterName = sb_get(&g_user_named_filters.data[i].name);
 			return filterName;
 		}
 	}
@@ -182,11 +182,13 @@ static const char* view_filter_find_site_config_by_text(const char* searchText)
 
 static void UIRecordedView_AddNamedFilterToConfig(const char* name, const char* text)
 {
-	config_named_filter_t filter = {};
+	named_filter_t filter = {};
 	filter.name = sb_from_c_string(name);
 	filter.text = sb_from_c_string(text);
-	bba_push(g_config.namedFilters, filter);
-	config_write(&g_config);
+	filter.filterEnabled = true;
+	filter.filterSelectable = true;
+	bba_push(g_user_named_filters, filter);
+	named_filters_rebuild();
 }
 
 static void UIRecordedView_FilterItem(view_t* view, const char* filterName, const char* filterText, u32 categoryIndex, EViewFilterCategory category, bool filterContextPopupWasOpen)
@@ -205,7 +207,7 @@ static void UIRecordedView_FilterItem(view_t* view, const char* filterName, cons
 	const char* CategoryPopupName = va("Filter%s%uContextMenu", categoryName, categoryIndex);
 	bool bCategoryPopupOpen = ImGui::IsPopupOpen(CategoryPopupName);
 
-	bool bMatchesInput = (!strcmp(sb_get(&view->config.filterInput), filterText));
+	bool bMatchesInput = *filterText && (!strcmp(sb_get(&view->config.filterInput), filterText));
 	bool selected = (filterContextPopupWasOpen) ? bCategoryPopupOpen : bMatchesInput;
 
 	if (ImGui::Selectable(sb_get(&s_textSpan), &selected))
@@ -258,9 +260,10 @@ static void UIRecordedView_FilterItem(view_t* view, const char* filterName, cons
 			view->filterContextPopupOpen = true;
 			if (ImGui::Selectable(va("Remove named filter %s", filterName), false))
 			{
-				config_named_filter_t* filter = g_config.namedFilters.data + categoryIndex;
-				config_named_filter_reset(filter);
-				bba_erase(g_config.namedFilters, categoryIndex);
+				named_filter_t* filter = g_user_named_filters.data + categoryIndex;
+				named_filter_reset(filter);
+				bba_erase(g_user_named_filters, categoryIndex);
+				named_filters_rebuild();
 			}
 			ImGui::EndPopup();
 		}
@@ -343,7 +346,7 @@ bool UIRecordedView_UpdateFilter(view_t* view)
 		ImGui::OpenPopup("###FilterPopup", ImGuiPopupFlags_None);
 	}
 	view->filterContextPopupOpen = false;
-	if (view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0 || g_config.namedFilters.count > 0))
+	if (view->filterPopupOpen && (view->config.filterHistory.entries.count > 0 || g_site_config.namedFilters.count > 0 || g_user_named_filters.count > 0))
 	{
 		ImVec2 totalSize;
 		const float spacingHeight = ImGui::GetFrameHeightWithSpacing() - ImGui::GetFrameHeight();
@@ -365,12 +368,12 @@ bool UIRecordedView_UpdateFilter(view_t* view)
 				totalSize.y += ImGui::GetFrameHeight();
 			}
 		}
-		if (g_config.namedFilters.count > 0)
+		if (g_user_named_filters.count > 0)
 		{
-			for (u32 i = 0; i < g_config.namedFilters.count; ++i)
+			for (u32 i = 0; i < g_user_named_filters.count; ++i)
 			{
-				const char* name = sb_get(&g_config.namedFilters.data[i].name);
-				const char* text = sb_get(&g_config.namedFilters.data[i].text);
+				const char* name = sb_get(&g_user_named_filters.data[i].name);
+				const char* text = sb_get(&g_user_named_filters.data[i].text);
 				ImVec2 size = UIRecordedView_SizeFilterItem(name, text, "Site");
 				totalSize.x = totalSize.x >= size.x ? totalSize.x : size.x;
 				totalSize.y += ImGui::GetFrameHeight();
@@ -401,14 +404,17 @@ bool UIRecordedView_UpdateFilter(view_t* view)
 				const char* text = sb_get(&view->config.filterHistory.entries.data[reverseIndex].command);
 				UIRecordedView_FilterItem(view, "", text, i, EViewFilterCategory::History, filterContextPopupWasOpen);
 			}
-			if (g_config.namedFilters.count > 0)
+			if (g_user_named_filters.count > 0)
 			{
 				ImGui::Separator();
-				for (u32 i = 0; i < g_config.namedFilters.count; ++i)
+				for (u32 i = 0; i < g_user_named_filters.count; ++i)
 				{
-					const char* name = sb_get(&g_config.namedFilters.data[i].name);
-					const char* text = sb_get(&g_config.namedFilters.data[i].text);
-					UIRecordedView_FilterItem(view, name, text, i, EViewFilterCategory::Config, filterContextPopupWasOpen);
+					if (g_user_named_filters.data[i].filterEnabled && g_user_named_filters.data[i].filterSelectable)
+					{
+						const char* name = sb_get(&g_user_named_filters.data[i].name);
+						const char* text = sb_get(&g_user_named_filters.data[i].text);
+						UIRecordedView_FilterItem(view, name, text, i, EViewFilterCategory::Config, filterContextPopupWasOpen);
+					}
 				}
 			}
 			if (g_site_config.namedFilters.count > 0)
@@ -416,9 +422,12 @@ bool UIRecordedView_UpdateFilter(view_t* view)
 				ImGui::Separator();
 				for (u32 i = 0; i < g_site_config.namedFilters.count; ++i)
 				{
-					const char* name = sb_get(&g_site_config.namedFilters.data[i].name);
-					const char* text = sb_get(&g_site_config.namedFilters.data[i].text);
-					UIRecordedView_FilterItem(view, name, text, i, EViewFilterCategory::SiteConfig, filterContextPopupWasOpen);
+					if (g_site_config.namedFilters.data[i].filterEnabled && g_site_config.namedFilters.data[i].filterSelectable)
+					{
+						const char* name = sb_get(&g_site_config.namedFilters.data[i].name);
+						const char* text = sb_get(&g_site_config.namedFilters.data[i].text);
+						UIRecordedView_FilterItem(view, name, text, i, EViewFilterCategory::SiteConfig, filterContextPopupWasOpen);
+					}
 				}
 			}
 			ImGui::EndPopup();

@@ -55,7 +55,7 @@ void config_free(config_t* config)
 	bb_free(config);
 }
 
-static sb_t config_get_path(const char* appName)
+sb_t config_get_path(const char* appName)
 {
 	sb_t s = appdata_get(appName);
 	sb_append(&s, "\\bb_config.json");

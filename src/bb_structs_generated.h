@@ -36,8 +36,6 @@ struct pathFixupEntry_s;
 struct pathFixupList_s;
 struct tag_tooltipConfig;
 struct tag_sizeConfig;
-struct config_named_filter_t;
-struct config_named_filters_t;
 struct config_max_recordings_entry_t;
 struct config_max_recordings_t;
 struct config_min_log_level_t;
@@ -56,8 +54,6 @@ struct recordings_s;
 struct grouped_recording_entry_s;
 struct grouped_recordings_s;
 struct recordings_tab_data_s;
-struct site_config_named_filter_t;
-struct site_config_named_filters_t;
 struct updateConfig_s;
 struct site_config_s;
 struct sbsHashEntry;
@@ -120,8 +116,6 @@ typedef struct pathFixupEntry_s pathFixupEntry_t;
 typedef struct pathFixupList_s pathFixupList_t;
 typedef struct tag_tooltipConfig tooltipConfig;
 typedef struct tag_sizeConfig sizeConfig;
-typedef struct config_named_filter_t config_named_filter_t;
-typedef struct config_named_filters_t config_named_filters_t;
 typedef struct config_max_recordings_entry_t config_max_recordings_entry_t;
 typedef struct config_max_recordings_t config_max_recordings_t;
 typedef struct config_min_log_level_t config_min_log_level_t;
@@ -140,8 +134,6 @@ typedef struct recordings_s recordings_t;
 typedef struct grouped_recording_entry_s grouped_recording_entry_t;
 typedef struct grouped_recordings_s grouped_recordings_t;
 typedef struct recordings_tab_data_s recordings_tab_data_t;
-typedef struct site_config_named_filter_t site_config_named_filter_t;
-typedef struct site_config_named_filters_t site_config_named_filters_t;
 typedef struct updateConfig_s updateConfig_t;
 typedef struct site_config_s site_config_t;
 typedef struct sbsHashEntry sbsHashEntry;
@@ -204,8 +196,6 @@ void pathFixupEntry_reset(pathFixupEntry_t *val);
 void pathFixupList_reset(pathFixupList_t *val);
 void tooltipConfig_reset(tooltipConfig *val);
 void sizeConfig_reset(sizeConfig *val);
-void config_named_filter_reset(config_named_filter_t *val);
-void config_named_filters_reset(config_named_filters_t *val);
 void config_max_recordings_entry_reset(config_max_recordings_entry_t *val);
 void config_max_recordings_reset(config_max_recordings_t *val);
 void config_min_log_level_reset(config_min_log_level_t *val);
@@ -224,8 +214,6 @@ void recordings_reset(recordings_t *val);
 void grouped_recording_entry_reset(grouped_recording_entry_t *val);
 void grouped_recordings_reset(grouped_recordings_t *val);
 void recordings_tab_data_reset(recordings_tab_data_t *val);
-void site_config_named_filter_reset(site_config_named_filter_t *val);
-void site_config_named_filters_reset(site_config_named_filters_t *val);
 void updateConfig_reset(updateConfig_t *val);
 void site_config_reset(site_config_t *val);
 void sbsHashEntry_reset_from_loc(const char *file, int line, sbsHashEntry *val);
@@ -334,12 +322,6 @@ tooltipConfig tooltipConfig_clone(const tooltipConfig *src);
 #if !defined(__cplusplus) || defined(DECLARE_sizeConfig_clone)
 sizeConfig sizeConfig_clone(const sizeConfig *src);
 #endif
-#if !defined(__cplusplus) || defined(DECLARE_config_named_filter_clone)
-config_named_filter_t config_named_filter_clone(const config_named_filter_t *src);
-#endif
-#if !defined(__cplusplus) || defined(DECLARE_config_named_filters_clone)
-config_named_filters_t config_named_filters_clone(const config_named_filters_t *src);
-#endif
 #if !defined(__cplusplus) || defined(DECLARE_config_max_recordings_entry_clone)
 config_max_recordings_entry_t config_max_recordings_entry_clone(const config_max_recordings_entry_t *src);
 #endif
@@ -393,12 +375,6 @@ grouped_recordings_t grouped_recordings_clone(const grouped_recordings_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_recordings_tab_data_clone)
 recordings_tab_data_t recordings_tab_data_clone(const recordings_tab_data_t *src);
-#endif
-#if !defined(__cplusplus) || defined(DECLARE_site_config_named_filter_clone)
-site_config_named_filter_t site_config_named_filter_clone(const site_config_named_filter_t *src);
-#endif
-#if !defined(__cplusplus) || defined(DECLARE_site_config_named_filters_clone)
-site_config_named_filters_t site_config_named_filters_clone(const site_config_named_filters_t *src);
 #endif
 #if !defined(__cplusplus) || defined(DECLARE_updateConfig_clone)
 updateConfig_t updateConfig_clone(const updateConfig_t *src);

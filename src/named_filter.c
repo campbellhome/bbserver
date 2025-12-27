@@ -12,7 +12,7 @@
 #include "va.h"
 #include "view.h"
 
-static named_filters_t g_user_named_filters;
+named_filters_t g_user_named_filters;
 static named_vfilters_t g_user_named_vfilters;
 
 static sb_t log_color_config_get_path(const char* appName)
@@ -47,6 +47,7 @@ static void log_color_scale_color(float color[4])
 b32 named_filters_read(void)
 {
 	b32 ret = false;
+	b32 configUpdate = false;
 	sb_t path = log_color_config_get_path("bb");
 	JSON_Value* val = json_parse_file(sb_get(&path));
 	if (val)
@@ -57,18 +58,52 @@ b32 named_filters_read(void)
 		json_value_free(val);
 		ret = true;
 
+		// read old bb_config.json named filters
+		sb_t configPath = config_get_path("bb");
+		JSON_Value* configVal = json_parse_file(sb_get(&configPath));
+		if (configVal)
+		{
+			JSON_Object* configObj = json_value_get_object(configVal);
+			if (configObj)
+			{
+				JSON_Array* configNamedFiltersArr = json_object_get_array(configObj, "namedFilters");
+				if (configNamedFiltersArr)
+				{
+					if (configNamedFiltersArr)
+					{
+						for (u32 i = 0; i < json_array_get_count(configNamedFiltersArr); ++i)
+						{
+							configUpdate = true;
+							bba_push(g_user_named_filters, json_deserialize_named_filter_t(json_array_get_value(configNamedFiltersArr, i)));
+						}
+					}
+				}
+			}
+			json_value_free(configVal);
+		}
+		sb_reset(&configPath);
+
 		bba_add(g_user_named_vfilters, g_user_named_filters.count);
 		for (u32 i = 0; i < g_user_named_filters.count; ++i)
 		{
 			named_filter_t* entry = g_user_named_filters.data + i;
 			log_color_scale_color(entry->bgColor);
+			log_color_scale_color(entry->bgColorActive);
+			log_color_scale_color(entry->bgColorHovered);
 			log_color_scale_color(entry->fgColor);
 
 			vfilter_t* vfilter = g_user_named_vfilters.data + i;
-			*vfilter = view_filter_parse(sb_get(&entry->name), sb_get(&entry->filter));
+			*vfilter = view_filter_parse(sb_get(&entry->name), sb_get(&entry->text));
 		}
 	}
 	sb_reset(&path);
+
+	if (configUpdate)
+	{
+		config_write(&g_config);
+		named_filters_write();
+	}
+
 	return ret;
 }
 
@@ -94,18 +129,30 @@ b32 named_filters_write(void)
 	return result;
 }
 
+void named_filters_rebuild(void)
+{
+	named_filters_write();
+	named_filters_shutdown();
+	named_filters_read();
+}
+
 void named_filters_shutdown(void)
 {
 	named_filters_reset(&g_user_named_filters);
 	named_vfilters_reset(&g_user_named_vfilters);
 }
 
-named_filter_t* named_filters_resolve(view_t* view, view_log_t* viewLog, recorded_log_t* log)
+named_filter_t* named_filters_resolve(view_t* view, view_log_t* viewLog, recorded_log_t* log, b32 customColors)
 {
 	for (u32 i = 0; i < g_user_named_filters.count; ++i)
 	{
 		named_filter_t* entry = g_user_named_filters.data + i;
-		if (!entry->enabled)
+		if (!entry->filterEnabled)
+		{
+			continue;
+		}
+
+		if (customColors && !entry->customColorsEnabled)
 		{
 			continue;
 		}

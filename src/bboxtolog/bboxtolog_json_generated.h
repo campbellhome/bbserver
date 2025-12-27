@@ -29,6 +29,9 @@ struct bbstats_fileHashChain;
 struct bbstats_fileHashTable;
 struct bbstats_process_file_data_s;
 struct bbstats_data_s;
+struct color_config_s;
+struct colors_config_s;
+struct theme_config_s;
 struct vfilter_token_s;
 struct vfilter_tokens_s;
 struct vfilter_error_s;
@@ -52,6 +55,9 @@ typedef struct bbstats_fileHashChain bbstats_fileHashChain;
 typedef struct bbstats_fileHashTable bbstats_fileHashTable;
 typedef struct bbstats_process_file_data_s bbstats_process_file_data_t;
 typedef struct bbstats_data_s bbstats_data_t;
+typedef struct color_config_s color_config_t;
+typedef struct colors_config_s colors_config_t;
+typedef struct theme_config_s theme_config_t;
 typedef struct vfilter_token_s vfilter_token_t;
 typedef struct vfilter_tokens_s vfilter_tokens_t;
 typedef struct vfilter_error_s vfilter_error_t;
@@ -60,6 +66,7 @@ typedef struct vfilter_results_s vfilter_results_t;
 typedef struct named_vfilters_s named_vfilters_t;
 typedef struct vfilter_s vfilter_t;
 
+typedef enum tag_styleColor_e styleColor_e;
 typedef enum vfilter_type_e vfilter_type_e;
 typedef enum vfilter_token_type_e vfilter_token_type_e;
 
@@ -69,6 +76,9 @@ sdictEntry_t json_deserialize_sdictEntry_t(JSON_Value *src);
 sdict_t json_deserialize_sdict_t(JSON_Value *src);
 sdicts json_deserialize_sdicts(JSON_Value *src);
 uuid_node_t json_deserialize_uuid_node_t(JSON_Value *src);
+color_config_t json_deserialize_color_config_t(JSON_Value *src);
+colors_config_t json_deserialize_colors_config_t(JSON_Value *src);
+theme_config_t json_deserialize_theme_config_t(JSON_Value *src);
 
 JSON_Value *json_serialize_sb_t(const sb_t *src);
 JSON_Value *json_serialize_sbs_t(const sbs_t *src);
@@ -76,18 +86,25 @@ JSON_Value *json_serialize_sdictEntry_t(const sdictEntry_t *src);
 JSON_Value *json_serialize_sdict_t(const sdict_t *src);
 JSON_Value *json_serialize_sdicts(const sdicts *src);
 JSON_Value *json_serialize_uuid_node_t(const uuid_node_t *src);
+JSON_Value *json_serialize_color_config_t(const color_config_t *src);
+JSON_Value *json_serialize_colors_config_t(const colors_config_t *src);
+JSON_Value *json_serialize_theme_config_t(const theme_config_t *src);
 
 
+styleColor_e json_deserialize_styleColor_e(JSON_Value *src);
 vfilter_type_e json_deserialize_vfilter_type_e(JSON_Value *src);
 vfilter_token_type_e json_deserialize_vfilter_token_type_e(JSON_Value *src);
 
+JSON_Value *json_serialize_styleColor_e(const styleColor_e src);
 JSON_Value *json_serialize_vfilter_type_e(const vfilter_type_e src);
 JSON_Value *json_serialize_vfilter_token_type_e(const vfilter_token_type_e src);
 
 
+styleColor_e styleColor_e_from_string(const char *src);
 vfilter_type_e vfilter_type_e_from_string(const char *src);
 vfilter_token_type_e vfilter_token_type_e_from_string(const char *src);
 
+const char *string_from_styleColor_e(const styleColor_e src);
 const char *string_from_vfilter_type_e(const vfilter_type_e src);
 const char *string_from_vfilter_token_type_e(const vfilter_token_type_e src);
 

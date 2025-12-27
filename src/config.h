@@ -126,19 +126,6 @@ AUTOJSON AUTODEFAULT(kViewTileMode_Auto) typedef enum viewTileMode_t {
 	kViewTileMode_Count,
 } viewTileMode_t;
 
-AUTOJSON typedef struct config_named_filter_t
-{
-	sb_t name;
-	sb_t text;
-} config_named_filter_t;
-
-AUTOJSON typedef struct config_named_filters_t
-{
-	u32 count;
-	u32 allocated;
-	config_named_filter_t* data;
-} config_named_filters_t;
-
 AUTOJSON typedef struct config_max_recordings_entry_t
 {
 	sb_t filter;
@@ -164,7 +151,6 @@ AUTOJSON typedef struct config_s
 	configWhitelist_t whitelist;
 	openTargetList_t openTargets;
 	pathFixupList_t pathFixups;
-	config_named_filters_t namedFilters;
 	config_max_recordings_t maxRecordings;
 	configFont_t logFontConfig;
 	configFont_t uiFontConfig;
@@ -215,6 +201,7 @@ extern config_t g_config;
 
 b32 config_read(config_t* config);
 b32 config_write(config_t* config);
+sb_t config_get_path(const char* appName);
 config_t config_clone(const config_t* config);
 void config_reset(config_t* config);
 void config_free(config_t* config);
@@ -227,8 +214,6 @@ void path_fixup_move_entry(pathFixupList_t* pathFixups, u32 indexA, u32 indexB);
 void config_max_recordings_move_entry(config_max_recordings_t* arr, u32 indexA, u32 indexB);
 u32 config_getwindowplacement(HWND hwnd);
 float config_get_resizeBarSize(config_t* config);
-void config_named_filter_reset(config_named_filter_t *val);
-void config_named_filters_reset(config_named_filters_t *val);
 
 #if defined(__cplusplus)
 }

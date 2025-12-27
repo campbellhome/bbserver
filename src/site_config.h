@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 #include "bb.h"
+#include "named_filter.h"
 #include "sb.h"
 
 AUTOJSON AUTODEFAULT(kConfigListenProtocol_Unknown) typedef enum configListenProtocol_t {
@@ -17,19 +18,6 @@ AUTOJSON AUTODEFAULT(kConfigListenProtocol_Unknown) typedef enum configListenPro
 	kConfigListenProtocol_IPv4And6 = 3,
 	kConfigListenProtocol_Count
 } configListenProtocol_t;
-
-AUTOJSON typedef struct site_config_named_filter_t
-{
-	sb_t name;
-	sb_t text;
-} site_config_named_filter_t;
-
-AUTOJSON typedef struct site_config_named_filters_t
-{
-	u32 count;
-	u32 allocated;
-	site_config_named_filter_t* data;
-} site_config_named_filters_t;
 
 AUTOJSON typedef struct updateConfig_s
 {
@@ -45,7 +33,7 @@ AUTOJSON typedef struct updateConfig_s
 AUTOJSON typedef struct site_config_s
 {
 	updateConfig_t updates;
-	site_config_named_filters_t namedFilters;
+	named_filters_t namedFilters;
 	sb_t bugAssignee;
 	sb_t bugProject;
 	b32 autodetectDevkits;

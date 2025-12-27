@@ -792,12 +792,12 @@ static const char* view_filter_get_named_filter(span_t searchName)
 	{
 		searchName.start++; // ignore the initial '@'
 	}
-	for (u32 i = 0; i < g_config.namedFilters.count; ++i)
+	for (u32 i = 0; i < g_user_named_filters.count; ++i)
 	{
-		const char* filterName = sb_get(&g_config.namedFilters.data[i].name);
+		const char* filterName = sb_get(&g_user_named_filters.data[i].name);
 		if (!span_stricmp(searchName, span_from_string(filterName)))
 		{
-			const char* filterText = sb_get(&g_config.namedFilters.data[i].text);
+			const char* filterText = sb_get(&g_user_named_filters.data[i].text);
 			return filterText;
 		}
 	}
