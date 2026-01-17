@@ -193,6 +193,7 @@ static void UIRecordedView_AddNamedFilterToConfig(const char* name, const char* 
 
 static void UIRecordedView_FilterItem(view_t* view, const char* filterName, const char* filterText, u32 categoryIndex, EViewFilterCategory category, bool filterContextPopupWasOpen)
 {
+	ImGui::PushID(va("%u_%d", categoryIndex, category));
 	const char* categoryName = g_viewFilterCategoryNames[(size_t)category];
 	sb_clear((&s_textSpan));
 	if (*filterName)
@@ -233,7 +234,7 @@ static void UIRecordedView_FilterItem(view_t* view, const char* filterName, cons
 			view->filterContextPopupOpen = true;
 			if (configName)
 			{
-				ImGui::Selectable(va("In config as %s", configName), false);
+				ImGui::Selectable(va("In user config as %s", configName), false);
 			}
 			else if (siteConfigName)
 			{
@@ -241,7 +242,7 @@ static void UIRecordedView_FilterItem(view_t* view, const char* filterName, cons
 			}
 			else
 			{
-				ImGui::TextUnformatted("New: ");
+				ImGui::TextUnformatted("Name filter: ");
 				ImGui::SameLine();
 				if (ImGui::InputText("##NewFilter", &s_newFilterName, 64, ImGuiInputTextFlags_EnterReturnsTrue))
 				{
@@ -265,9 +266,17 @@ static void UIRecordedView_FilterItem(view_t* view, const char* filterName, cons
 				bba_erase(g_user_named_filters, categoryIndex);
 				named_filters_rebuild();
 			}
+			else if (filterText && *filterText && ImGui::Selectable(va("Replace filter text for %s", filterName), false))
+			{
+				named_filter_t* filter = g_user_named_filters.data + categoryIndex;
+				sb_clear(&filter->text);
+				sb_append(&filter->text, filterText);
+				named_filters_rebuild();
+			}
 			ImGui::EndPopup();
 		}
 	}
+	ImGui::PopID();
 }
 
 static int UIRecordedView_FilterInputCallback(ImGuiInputTextCallbackData* CallbackData)
@@ -332,7 +341,7 @@ bool UIRecordedView_UpdateFilter(view_t* view)
 {
 	const ImVec2 cursorPos = ImGui::GetCursorPos();
 	const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
-	if (ImGui::InputText("###Filter", &view->config.filterInput, 256, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_CallbackResize, &UIRecordedView_FilterInputCallback, view))
+	if (ImGui::InputText("###Filter", &view->config.filterInput, 2048, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory | ImGuiInputTextFlags_CallbackCharFilter | ImGuiInputTextFlags_CallbackResize, &UIRecordedView_FilterInputCallback, view))
 	{
 		UIRecordedView_ApplyFilter(view, EViewFilterCategory::Input);
 	}
