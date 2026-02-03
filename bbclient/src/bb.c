@@ -201,7 +201,7 @@ static BB_INLINE void bb_init_locale(void)
 #if BB_USING(BB_COMPILER_MSVC)
 	if (!s_utf8_locale)
 	{
-		s_utf8_locale = _create_locale(LC_ALL, ".utf8");
+		s_utf8_locale = _create_locale(LC_ALL, "en_US.utf8");
 	}
 #endif
 }

@@ -848,7 +848,7 @@ static void finalize_plaintext_log_packet(bb_decoded_packet_t* decoded, const ch
 static int process_plaintext_file(process_file_data_t* process_file_data)
 {
 #if BB_USING(BB_COMPILER_MSVC)
-	_locale_t utf8_locale = _create_locale(LC_ALL, ".utf8");
+	_locale_t utf8_locale = _create_locale(LC_ALL, "en_US.utf8");
 #endif
 	static u8 recvBuffer[32768 + 1];
 	static char mbsBuffer[32768 + 1];
@@ -1842,7 +1842,7 @@ int main(int argc, char** argv)
 	bba_set_logging(true, true);
 #endif
 
-	setlocale(LC_ALL, ".UTF8");
+	setlocale(LC_ALL, "en_US.UTF8");
 
 #if defined(BB_NO_SQLITE)
 	int ret = main_loop(argc, argv);

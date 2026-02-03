@@ -100,7 +100,7 @@ static void recorded_session_queue_log_appinfo(recorded_session_t* session, cons
 
 static void recorded_session_read_log(recorded_session_t* session, const char* filename)
 {
-	_locale_t utf8_locale = _create_locale(LC_ALL, ".utf8");
+	_locale_t utf8_locale = _create_locale(LC_ALL, "en_US.utf8");
 	u8 sessionRecvBuffer[256 * 1024 + 1];
 	u8 recvBuffer[256 * 1024 + 1];
 	char mbsBuffer[256 * 1024 + 1];

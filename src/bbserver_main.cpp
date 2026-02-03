@@ -470,7 +470,7 @@ int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*
 	bba_set_logging(true, true);
 #endif
 
-	setlocale(LC_ALL, ".UTF8");
+	setlocale(LC_ALL, "en_US.UTF8");
 
 	cmdline_init_composite(CommandLine);
 	s_bringToFrontMessage = RegisterWindowMessageA("blackbox_bring_to_front");

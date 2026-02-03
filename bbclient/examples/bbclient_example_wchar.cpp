@@ -326,7 +326,7 @@ static bb_thread_return_t after_connect_thread_proc(void*)
 
 int main(int argc, const char** argv)
 {
-	setlocale(LC_ALL, ".UTF8");
+	setlocale(LC_ALL, "en_US.UTF8");
 
 	uint64_t start = bb_current_time_ms();
 	uint32_t categoryIndex = 0;

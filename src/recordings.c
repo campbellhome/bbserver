@@ -326,7 +326,7 @@ typedef struct recordings_ptrs_s
 	recording_t** data;
 } recordings_ptrs_t;
 
-static recordings_ptrs_t recordings_filter_latest_recordings(recordings_ptrs_t *matches, const char* applicationName)
+static recordings_ptrs_t recordings_filter_latest_recordings(recordings_ptrs_t* matches, const char* applicationName)
 {
 	recordings_ptrs_t filteredMatches = { BB_EMPTY_INITIALIZER };
 	for (u32 i = 0; i < matches->count; ++i)
@@ -346,7 +346,7 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 	recordings_ptrs_t matches = { BB_EMPTY_INITIALIZER };
 	for (u32 i = 0; i < recordings->count; ++i)
 	{
-		recording_t *recording = recordings->data + i;
+		recording_t* recording = recordings->data + i;
 
 		sdictEntry_t sdEntries[2] = { BB_EMPTY_INITIALIZER };
 		sdict_t sd = recordings_build_max_recordings_filter_inplace(recording->applicationName, recording->applicationFilename, sdEntries);
