@@ -200,6 +200,34 @@ void Fonts_Init(void)
 //	0
 // };
 
+static void Fonts_AddSingleFont(fontConfig_t* fontConfig, const ImVector<ImWchar>& glyphRanges)
+{
+	ImFontConfig scaledFontConfig;
+	scaledFontConfig.PixelSnapH = true; // Precisely match ProggyClean, but prevents sub-integer scaling factors at lower-level layers.
+
+	if (fontConfig)
+	{
+		scaledFontConfig.SizePixels = (float)fontConfig->size;
+	}
+	else
+	{
+		scaledFontConfig.SizePixels = 13.0f;
+	}
+
+	float dpiScale = Imgui_Core_GetDpiScale();
+	scaledFontConfig.SizePixels = ceilf(scaledFontConfig.SizePixels * dpiScale);
+
+	ImGuiIO& io = ImGui::GetIO();
+	const char* path = fontConfig ? sb_get(&fontConfig->path) : nullptr;
+	if (!path || !bb_file_readable(path) || !io.Fonts->AddFontFromFileTTF(path, 0.0f, &scaledFontConfig, glyphRanges.Data))
+	{
+		io.Fonts->AddFontDefault(&scaledFontConfig);
+	}
+	// io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\L_10646.ttf", fontSize, &config, fallbackRanges);
+	// io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\SEGUIEMJ.ttf", fontSize, &mergeConfig, fallbackRanges);
+	Fonts_MergeIconFont(scaledFontConfig.SizePixels);
+}
+
 void Fonts_InitFonts(void)
 {
 	static ImVector<ImWchar> glyphRanges;
@@ -211,32 +239,21 @@ void Fonts_InitFonts(void)
 
 	if (s_fontConfigs.count < 1)
 	{
-		io.Fonts->AddFontDefault();
-		Fonts_MergeIconFont(12.0f);
+		Fonts_AddSingleFont(nullptr, glyphRanges);
 	}
 	else
 	{
-		float dpiScale = Imgui_Core_GetDpiScale();
 		for (u32 i = 0; i < s_fontConfigs.count; ++i)
 		{
 			fontConfig_t* fontConfig = s_fontConfigs.data + i;
 			const char* path = sb_get(&fontConfig->path);
 			if (fontConfig->enabled && fontConfig->size > 0 && *path)
 			{
-				float fontSize = (float)fontConfig->size * dpiScale;
-				if (!bb_file_readable(path) || !io.Fonts->AddFontFromFileTTF(path, fontSize, nullptr, glyphRanges.Data))
-				{
-					io.Fonts->AddFontDefault();
-				}
-				Fonts_MergeIconFont(fontSize);
-
-				// io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\L_10646.ttf", fontSize, &config, fallbackRanges);
-				// io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\SEGUIEMJ.ttf", fontSize, &mergeConfig, fallbackRanges);
+				Fonts_AddSingleFont(fontConfig, glyphRanges);
 			}
 			else
 			{
-				io.Fonts->AddFontDefault();
-				Fonts_MergeIconFont(12.0f);
+				Fonts_AddSingleFont(nullptr, glyphRanges);
 			}
 		}
 	}
