@@ -14,6 +14,7 @@
 
 named_filters_t g_user_named_filters;
 static named_vfilters_t g_user_named_vfilters;
+static u32 s_nextFilterId = 1;
 
 static sb_t log_color_config_get_path(const char* appName)
 {
@@ -83,18 +84,7 @@ b32 named_filters_read(void)
 		}
 		sb_reset(&configPath);
 
-		bba_add(g_user_named_vfilters, g_user_named_filters.count);
-		for (u32 i = 0; i < g_user_named_filters.count; ++i)
-		{
-			named_filter_t* entry = g_user_named_filters.data + i;
-			log_color_scale_color(entry->bgColor);
-			log_color_scale_color(entry->bgColorActive);
-			log_color_scale_color(entry->bgColorHovered);
-			log_color_scale_color(entry->fgColor);
-
-			vfilter_t* vfilter = g_user_named_vfilters.data + i;
-			*vfilter = view_filter_parse(sb_get(&entry->name), sb_get(&entry->text));
-		}
+		named_filters_rebuild_nowrite();
 	}
 	sb_reset(&path);
 
@@ -134,6 +124,28 @@ void named_filters_rebuild(void)
 	named_filters_write();
 	named_filters_shutdown();
 	named_filters_read();
+}
+
+void named_filters_rebuild_nowrite(void)
+{
+	named_vfilters_reset(&g_user_named_vfilters);
+
+	bba_add(g_user_named_vfilters, g_user_named_filters.count);
+	for (u32 i = 0; i < g_user_named_filters.count; ++i)
+	{
+		named_filter_t* entry = g_user_named_filters.data + i;
+		if (!entry->id)
+		{
+			entry->id = s_nextFilterId++;
+		}
+		log_color_scale_color(entry->bgColor);
+		log_color_scale_color(entry->bgColorActive);
+		log_color_scale_color(entry->bgColorHovered);
+		log_color_scale_color(entry->fgColor);
+
+		vfilter_t* vfilter = g_user_named_vfilters.data + i;
+		*vfilter = view_filter_parse(sb_get(&entry->name), sb_get(&entry->text));
+	}
 }
 
 void named_filters_shutdown(void)

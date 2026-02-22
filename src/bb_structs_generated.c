@@ -475,7 +475,7 @@ named_filter_t named_filter_clone(const named_filter_t *src)
 		dst.testBookmarked = src->testBookmarked;
 		dst.bookmarked = src->bookmarked;
 		dst.customColorsEnabled = src->customColorsEnabled;
-		dst.pad = src->pad;
+		dst.id = src->id;
 	}
 	return dst;
 }

@@ -365,7 +365,7 @@ named_filter_t json_deserialize_named_filter_t(JSON_Value *src)
 			dst.testBookmarked = json_object_get_boolean_safe(obj, "testBookmarked");
 			dst.bookmarked = json_object_get_boolean_safe(obj, "bookmarked");
 			dst.customColorsEnabled = json_object_get_boolean_safe(obj, "customColorsEnabled");
-			dst.pad = (u32)json_object_get_number(obj, "pad");
+			dst.id = (u32)json_object_get_number(obj, "id");
 		}
 	}
 	return dst;
@@ -1179,7 +1179,7 @@ JSON_Value *json_serialize_named_filter_t(const named_filter_t *src)
 		json_object_set_boolean(obj, "testBookmarked", src->testBookmarked);
 		json_object_set_boolean(obj, "bookmarked", src->bookmarked);
 		json_object_set_boolean(obj, "customColorsEnabled", src->customColorsEnabled);
-		json_object_set_number(obj, "pad", src->pad);
+		json_object_set_number(obj, "id", src->id);
 	}
 	return val;
 }

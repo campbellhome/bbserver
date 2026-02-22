@@ -33,6 +33,7 @@
 #include "ui_recordings.h"
 #include "ui_tags_import.h"
 #include "ui_view.h"
+#include "ui_view_filter_editor.h"
 #include "va.h"
 #include "view.h"
 #include "wrap_imgui_internal.h"
@@ -400,13 +401,19 @@ void BBServer_MainMenuBar(void)
 			{
 				BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
 			}
-			if (ImGui::MenuItem("Config"))
+			if (ImGui::MenuItem("Edit config"))
 			{
 				BB_LOG("UI::Menu::Config", "UIConfig_Open");
 				UIConfig_Open(&g_config);
 			}
-			if (ImGui::MenuItem("Reload log color config"))
+			if (ImGui::MenuItem("Edit filter config"))
 			{
+				BB_LOG("UI::Menu::Config", "UIFilterConfig_Open");
+				UIFilterConfig_Open();
+			}
+			if (ImGui::MenuItem("Reload filter config"))
+			{
+				BB_LOG("UI::Menu::Config", "named_filters_read");
 				named_filters_read();
 			}
 			if (ImGui::BeginMenu("Logging"))
@@ -790,6 +797,7 @@ extern "C" void BBServer_Update(void)
 
 	Update_Tick();
 	UIConfig_Update(&g_config);
+	UIFilterConfig_Update();
 	UIRecordings_Update();
 	messageBox* mb = mb_get_active(nullptr);
 	if (mb)

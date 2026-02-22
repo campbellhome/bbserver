@@ -168,6 +168,7 @@
     <ClInclude Include="..\src\view_filter\view_filter_sql.h" />
     <ClInclude Include="..\src\win32_resource.h" />
     <ClInclude Include="..\src\ui_tags_import.h" />
+    <ClInclude Include="..\src\ui_view_filter_editor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\bbserver_asserts.c" />
@@ -211,6 +212,7 @@
     <ClCompile Include="..\src\view_filter\view_filter_legacy.c" />
     <ClCompile Include="..\src\view_filter\view_filter_sql.c" />
     <ClCompile Include="..\src\ui_tags_import.cpp" />
+    <ClCompile Include="..\src\ui_view_filter_editor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\src\win32_resource.rc" />

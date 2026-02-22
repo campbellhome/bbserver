@@ -45,6 +45,7 @@
 #include "ui_tags.h"
 #include "ui_tags_import.h"
 #include "ui_view.h"
+#include "ui_view_filter_editor.h"
 #include "uuid_config.h"
 #include "uuid_rfc4122/uuid.h"
 #include "va.h"
@@ -213,6 +214,7 @@ static void BBServer_Shutdown(void)
 	UITags_Shutdown();
 	UITagsImport_Shutdown();
 	UIConfig_Reset();
+	UIFilterConfig_Reset();
 	UIRecordedView_Shutdown();
 	recordings_shutdown();
 	discovery_thread_shutdown();

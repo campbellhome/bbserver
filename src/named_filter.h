@@ -40,7 +40,7 @@ AUTOJSON typedef struct named_filter_t
 	b32 testBookmarked;
 	b32 bookmarked;
 	b32 customColorsEnabled;
-	u32 pad;
+	u32 id;
 } named_filter_t;
 
 AUTOJSON typedef struct named_filters_t
@@ -55,6 +55,7 @@ void named_filter_reset(named_filter_t *value);
 b32 named_filters_read(void);
 b32 named_filters_write(void);
 void named_filters_rebuild(void);
+void named_filters_rebuild_nowrite(void);
 void named_filters_shutdown(void);
 
 named_filter_t* named_filters_resolve(view_t* view, view_log_t* viewLog, recorded_log_t* log, b32 customColors);
