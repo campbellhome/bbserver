@@ -16,7 +16,7 @@
 #include "view.h"
 #include "wrap_imgui_internal.h"
 
-bool s_filterConfigOpen = true;
+bool s_filterConfigOpen = false;
 bool s_filterModified = false;
 bool s_filterEverShown = false;
 
