@@ -1075,14 +1075,18 @@ void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
 		view->visibleLogsDirty = true;
 		view_apply_tag(view);
 	}
-	if (ImGui::Selectable("Hide all but this category"))
+	if (ImGui::BeginMenu("Hide all but this category..."))
 	{
-		view_set_all_category_visibility(view, false);
-		bb_decoded_packet_t* decoded = &sessionLog->packet;
-		recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
-		view_category_t* viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
-		viewCategory->visible = true;
-		view_apply_tag(view);
+		if (ImGui::MenuItem("Hide all but this category"))
+		{
+			view_set_all_category_visibility(view, false);
+			bb_decoded_packet_t* decoded = &sessionLog->packet;
+			recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+			view_category_t* viewCategory = view_find_category_by_name(view, recordedCategory->categoryName);
+			viewCategory->visible = true;
+			view_apply_tag(view);
+		}
+		ImGui::EndMenu();
 	}
 	if (ImGui::Selectable("Align views to this time"))
 	{
