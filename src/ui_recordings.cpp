@@ -360,14 +360,14 @@ void UIRecordings_UpdateTab(recording_tab_t tab)
 {
 	recordings_config_t* config = recordings_get_config();
 
-	bool scrollToBottom = false;
+	bool scrollToEnd = false;
 	bool windowSelected = ImGui::IsCurrentWindowNavWindowRoot();
 	grouped_recordings_t* groupedRecordings = grouped_recordings_get_all(tab);
 	//if(BeginMenuBar()) {
 	//	if(ImGui::BeginMenu("View")) {
 	if (UIRecordings_ConfigMenu(config->tabs + tab))
 	{
-		scrollToBottom = true;
+		scrollToEnd = true;
 		recordings_sort(tab);
 		recordings_clear_dirty(tab);
 	}
@@ -397,9 +397,14 @@ void UIRecordings_UpdateTab(recording_tab_t tab)
 
 	if (recordings_are_dirty(tab))
 	{
-		scrollToBottom = true;
 		recordings_sort(tab);
 		recordings_clear_dirty(tab);
+	}
+
+	if (recordings_get_scrollToEnd(tab))
+	{
+		scrollToEnd = true;
+		recordings_clear_scrollToEnd(tab);
 	}
 
 	if (ImGui::BeginChild(va("Recordings%d", tab)))
@@ -495,7 +500,7 @@ void UIRecordings_UpdateTab(recording_tab_t tab)
 			bba_free(pendingDeletions);
 		}
 
-		if (scrollToBottom)
+		if (scrollToEnd)
 		{
 			ImGui::SetScrollHereY();
 		}

@@ -124,13 +124,15 @@ AUTOSTRUCT typedef struct recordings_tab_data_s
 	recordings_t invalidRecordings;
 	grouped_recordings_t groupedRecordings;
 	b32 dirty;
-	u8 pad[4];
+	b32 scrollToEnd;
 } recordings_tab_data_t;
 
 void recordings_init(void);
 void recordings_shutdown(void);
 b32 recordings_are_dirty(recording_tab_t tab);
 void recordings_clear_dirty(recording_tab_t tab);
+b32 recordings_get_scrollToEnd(recording_tab_t tab);
+void recordings_clear_scrollToEnd(recording_tab_t tab);
 void recordings_sort(recording_tab_t tab);
 void recordings_autodelete_old_recordings(void);
 recordings_t* recordings_get_all(recording_tab_t tab);

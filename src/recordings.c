@@ -281,6 +281,7 @@ void recording_add_existing(char* data, b32 valid)
 				recording->platform = r.platform;
 				recording->recordingType = r.recordingType;
 				s_tabData[tab].dirty = true;
+				s_tabData[tab].scrollToEnd = true;
 			}
 		}
 	}
@@ -385,6 +386,7 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 					BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", filteredRecording->applicationFilename, entry->allowed, sb_get(&entry->filter));
 					filteredRecording->pendingDelete = true;
 					s_tabData[tab].dirty = true;
+					s_tabData[tab].scrollToEnd = true;
 				}
 			}
 
@@ -392,7 +394,8 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 		}
 
 		recordings_delete_pending_deleted(tab, recordings);
-		s_tabData[tab].dirty = true; // should be redundant
+		s_tabData[tab].dirty = true;       // should be redundant
+		s_tabData[tab].scrollToEnd = true; // should be redundant
 
 		sbs_reset(&seenNames);
 	}
@@ -499,6 +502,7 @@ void recording_started(char* data)
 			recording->filetimeHigh = r.filetime.dwHighDateTime;
 			recording->filetimeLow = r.filetime.dwLowDateTime;
 			s_tabData[tab].dirty = true;
+			s_tabData[tab].scrollToEnd = true;
 			if (r.openView)
 			{
 				recorded_session_open(sb_get(&r.path), sb_get(&r.applicationFilename), recording->applicationName, recording->recordingType != kRecordingType_ExternalFile, true, recording->outgoingMqId);
@@ -606,6 +610,7 @@ static b32 recordings_delete_by_id_internal(u32 id, recording_tab_t tab, recordi
 			recordings_delete_recording(path);
 			bba_erase(*recordings, i);
 			s_tabData[tab].dirty = true;
+			s_tabData[tab].scrollToEnd = true;
 			return true;
 		}
 	}
@@ -684,6 +689,7 @@ static u32 recordings_delete_pending_deleted(recording_tab_t tab, recordings_t* 
 	bba_free(tmp);
 
 	s_tabData[tab].dirty = true;
+	s_tabData[tab].scrollToEnd = true;
 	bba_clear(s_tabData[tab].groupedRecordings);
 
 	return numDeleted;
@@ -708,6 +714,7 @@ static void recordings_autodelete_scan(recording_tab_t tab, recordings_t* record
 	{
 		recordings_delete_pending_deleted(tab, recordings);
 		s_tabData[tab].dirty = true;
+		s_tabData[tab].scrollToEnd = true;
 	}
 }
 
@@ -872,6 +879,16 @@ b32 recordings_are_dirty(recording_tab_t tab)
 void recordings_clear_dirty(recording_tab_t tab)
 {
 	s_tabData[tab].dirty = false;
+}
+
+b32 recordings_get_scrollToEnd(recording_tab_t tab)
+{
+	return s_tabData[tab].scrollToEnd;
+}
+
+void recordings_clear_scrollToEnd(recording_tab_t tab)
+{
+	s_tabData[tab].scrollToEnd = false;
 }
 
 recordings_t* recordings_get_all(recording_tab_t tab)

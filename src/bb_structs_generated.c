@@ -695,9 +695,7 @@ recordings_tab_data_t recordings_tab_data_clone(const recordings_tab_data_t *src
 		dst.invalidRecordings = recordings_clone(&src->invalidRecordings);
 		dst.groupedRecordings = grouped_recordings_clone(&src->groupedRecordings);
 		dst.dirty = src->dirty;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
+		dst.scrollToEnd = src->scrollToEnd;
 	}
 	return dst;
 }
