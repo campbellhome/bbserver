@@ -715,7 +715,14 @@ static void recorded_session_add_log(recorded_session_t* session, bb_decoded_pac
 				if (line_can_be_json(unexpandedLine))
 				{
 					sb_t lineExpandedJson = sb_expand_json(unexpandedLine);
-					sb_append_range(&expandedJson, lineExpandedJson.data, lineExpandedJson.data + lineExpandedJson.count - 1);
+					if (sb_len(&lineExpandedJson) > 0)
+					{
+						sb_append_range(&expandedJson, lineExpandedJson.data, lineExpandedJson.data + lineExpandedJson.count - 1);
+					}
+					else
+					{
+						sb_append_range(&expandedJson, line.start, line.end);
+					}
 					sb_reset(&lineExpandedJson);
 				}
 				else
