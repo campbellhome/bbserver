@@ -14,6 +14,7 @@
 #include <sqlite/wrap_sqlite3.h>
 #include <stdlib.h>
 
+static u32 s_nextViewId;
 static void view_add_log_internal(view_t* view, recorded_log_t* log, u32 persistentLogIndex);
 
 extern const char* g_view_column_long_display_names[] = {
@@ -102,7 +103,7 @@ void view_init(view_t* view, recorded_session_t* session, b8 autoClose)
 	view->tiled = true;
 	view->session = session;
 	view->open = true;
-	view->viewId = session->nextViewId++;
+	view->viewId = s_nextViewId++;
 	view->tail = true;
 	view->visibleLogsDirty = true;
 	view->autoClose = autoClose || g_config.autoCloseManual;

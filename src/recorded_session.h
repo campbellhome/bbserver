@@ -160,8 +160,8 @@ typedef struct recorded_session_s
 	recorded_console_autocomplete_t consoleAutocomplete;
 	bb_thread_handle_t threadHandle;
 	u64 currentFrameNumber;
-	u32 nextViewId;
 	u32 outgoingMqId;
+	u8 pad2[4];
 	session_message_queue_t* incoming;
 } recorded_session_t;
 
