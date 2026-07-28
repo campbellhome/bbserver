@@ -9,42 +9,58 @@ or view this file with any Markdown viewer.
 
 ## Index
 
-| **Q&A: Basics** |
-:---------------------------------------------------------- |
-| [Where is the documentation?](#q-where-is-the-documentation) |
-| [What is this library called?](#q-what-is-this-library-called) |
-| [What is the difference between Dear ImGui and traditional UI toolkits?](#q-what-is-the-difference-between-dear-imgui-and-traditional-ui-toolkits) |
-| [Which version should I get?](#q-which-version-should-i-get) |
-| **Q&A: Integration** |
-| **[How to get started?](#q-how-to-get-started)** |
-| **[How can I tell whether to dispatch mouse/keyboard to Dear ImGui or my application?](#q-how-can-i-tell-whether-to-dispatch-mousekeyboard-to-dear-imgui-or-my-application)** |
-| [How can I enable keyboard or gamepad controls?](#q-how-can-i-enable-keyboard-or-gamepad-controls) |
-| [How can I use this on a machine without mouse, keyboard or screen? (input share, remote display)](#q-how-can-i-use-this-on-a-machine-without-mouse-keyboard-or-screen-input-share-remote-display) |
-| [How can I create my own backend?](#q-how-can-i-create-my-own-backend)
-| [I integrated Dear ImGui in my engine and little squares are showing instead of text...](#q-i-integrated-dear-imgui-in-my-engine-and-little-squares-are-showing-instead-of-text) |
-| [I integrated Dear ImGui in my engine and some elements are clipping or disappearing when I move windows around...](#q-i-integrated-dear-imgui-in-my-engine-and-some-elements-are-clipping-or-disappearing-when-i-move-windows-around) |
-| [I integrated Dear ImGui in my engine and some elements are displaying outside their expected windows boundaries...](#q-i-integrated-dear-imgui-in-my-engine-and-some-elements-are-displaying-outside-their-expected-windows-boundaries) |
-| **Q&A: Usage** |
-| **[About the ID Stack system..<br>Why is my widget not reacting when I click on it?<br>Why is the wrong widget reacting when I click on one?<br>How can I have widgets with an empty label?<br>How can I have multiple widgets with the same label?<br>How can I have multiple windows with the same label?](#q-about-the-id-stack-system)** |
-| [How can I display an image?](#q-how-can-i-display-an-image)<br>[What are ImTextureID/ImTextureRef?](#q-what-are-imtextureidimtextureref)|
-| [How can I use maths operators with ImVec2?](#q-how-can-i-use-maths-operators-with-imvec2) |
-| [How can I use my own maths types instead of ImVec2/ImVec4?](#q-how-can-i-use-my-own-maths-types-instead-of-imvec2imvec4) |
-| [How can I interact with standard C++ types (such as std::string and std::vector)?](#q-how-can-i-interact-with-standard-c-types-such-as-stdstring-and-stdvector) |
-| [How can I display custom shapes? (using low-level ImDrawList API)](#q-how-can-i-display-custom-shapes-using-low-level-imdrawlist-api) |
-| **Q&A: Fonts, Text** |
-| [How should I handle DPI in my application?](#q-how-should-i-handle-dpi-in-my-application) |
-| [How can I load a different font than the default?](#q-how-can-i-load-a-different-font-than-the-default) |
-| [How can I easily use icons in my application?](#q-how-can-i-easily-use-icons-in-my-application) |
-| [How can I load multiple fonts?](#q-how-can-i-load-multiple-fonts) |
-| [How can I display and input non-Latin characters such as Chinese, Japanese, Korean, Cyrillic?](#q-how-can-i-display-and-input-non-latin-characters-such-as-chinese-japanese-korean-cyrillic) |
-| **Q&A: Concerns** |
-| [Who uses Dear ImGui?](#q-who-uses-dear-imgui) |
-| [Can you create elaborate/serious tools with Dear ImGui?](#q-can-you-create-elaborateserious-tools-with-dear-imgui)  |
-| [Can you reskin the look of Dear ImGui?](#q-can-you-reskin-the-look-of-dear-imgui) |
-| [Why using C++ (as opposed to C)?](#q-why-using-c-as-opposed-to-c) |
-| **Q&A: Community** |
-| [How can I help?](#q-how-can-i-help) |
+### Basics
 
+- [Where is the documentation?](#q-where-is-the-documentation)
+- [What is this library called?](#q-what-is-this-library-called)
+- [What is the difference between Dear ImGui and traditional UI toolkits?](#q-what-is-the-difference-between-dear-imgui-and-traditional-ui-toolkits)
+- [Which version should I get?](#q-which-version-should-i-get)
+
+### Integration
+
+- **[How to get started?](#q-how-to-get-started)**
+- **[How can I tell whether to dispatch mouse/keyboard to Dear ImGui or my application?](#q-how-can-i-tell-whether-to-dispatch-mousekeyboard-to-dear-imgui-or-my-application)**
+- [How can I enable keyboard or gamepad controls?](#q-how-can-i-enable-keyboard-or-gamepad-controls)
+- [How can I use this on a machine without mouse, keyboard or screen? (input share, remote display)](#q-how-can-i-use-this-on-a-machine-without-mouse-keyboard-or-screen-input-share-remote-display)
+- [How can I create my own backend?](#q-how-can-i-create-my-own-backend)
+- [I integrated Dear ImGui in my engine and little squares are showing instead of text...](#q-i-integrated-dear-imgui-in-my-engine-and-little-squares-are-showing-instead-of-text)
+- [I integrated Dear ImGui in my engine and some elements are clipping or disappearing when I move windows around...](#q-i-integrated-dear-imgui-in-my-engine-and-some-elements-are-clipping-or-disappearing-when-i-move-windows-around)
+- [I integrated Dear ImGui in my engine and some elements are displaying outside their expected windows boundaries...](#q-i-integrated-dear-imgui-in-my-engine-and-some-elements-are-displaying-outside-their-expected-windows-boundaries)
+
+### Usage
+
+- **[About the ID Stack system...](#q-about-the-id-stack-system)**
+  - **[How can I have multiple widgets with the same label?](#q-how-can-i-have-multiple-widgets-with-the-same-label) (using `##` or `PushID()`)**
+  - **[How can I have widgets with an empty label?](#q-how-can-i-have-widgets-with-an-empty-label) (using `##`)**
+  - **[How can I make a label dynamic?](#q-how-can-i-make-a-label-dynamic) (using `###`)**
+  - **[General description of the label and ID Stack system.](#general-description-of-the-label-and-id-stack-system)**
+- [How can I display an image?](#q-how-can-i-display-an-image), [What are ImTextureID/ImTextureRef?](#q-what-are-imtextureidimtextureref)
+- [How can I use maths operators with ImVec2?](#q-how-can-i-use-maths-operators-with-imvec2)
+- [How can I use my own maths types instead of ImVec2/ImVec4?](#q-how-can-i-use-my-own-maths-types-instead-of-imvec2imvec4)
+- [How can I interact with standard C++ types (such as std::string and std::vector)?](#q-how-can-i-interact-with-standard-c-types-such-as-stdstring-and-stdvector)
+- [How can I display custom shapes? (using low-level ImDrawList API)](#q-how-can-i-display-custom-shapes-using-low-level-imdrawlist-api)
+- [About Multi-Threading](#about-multi-threading)
+
+### Fonts, Text
+
+- [How should I handle DPI in my application?](#q-how-should-i-handle-dpi-in-my-application)
+- [How can I load a different font than the default?](#q-how-can-i-load-a-different-font-than-the-default)
+- [How can I easily use icons in my application?](#q-how-can-i-easily-use-icons-in-my-application)
+- [How can I load multiple fonts?](#q-how-can-i-load-multiple-fonts)
+- [How can I display and input non-Latin characters such as Chinese, Japanese, Korean, Cyrillic?](#q-how-can-i-display-and-input-non-latin-characters-such-as-chinese-japanese-korean-cyrillic)
+
+### Concerns
+
+- [Who uses Dear ImGui?](#q-who-uses-dear-imgui)
+- [Can you create elaborate/serious tools with Dear ImGui?](#q-can-you-create-elaborateserious-tools-with-dear-imgui)
+- [Can you reskin the look of Dear ImGui?](#q-can-you-reskin-the-look-of-dear-imgui)
+- [Why using C++ (as opposed to C)?](#q-why-using-c-as-opposed-to-c)
+
+### Community
+
+- [How can I help?](#q-how-can-i-help)
+
+--------
 
 # Q&A: Basics
 
@@ -55,6 +71,7 @@ or view this file with any Markdown viewer.
 - Handy [Getting Started](https://github.com/ocornut/imgui/wiki/Getting-Started) guide to integrate Dear ImGui in an existing application.
 - 20+ standalone example applications using e.g. OpenGL/DirectX are provided in the [examples/](https://github.com/ocornut/imgui/blob/master/examples/) folder to explain how to integrate Dear ImGui with your own engine/application. You can run those applications and explore them.
 - See demo code in [imgui_demo.cpp](https://github.com/ocornut/imgui/blob/master/imgui_demo.cpp) and particularly the `ImGui::ShowDemoWindow()` function. The demo covers most features of Dear ImGui, so you can read the code and see its output.
+- See pthom's online [imgui_explorer](https://pthom.github.io/imgui_explorer) which is a web version of the demo with a source code browser.
 - See documentation: [Backends](https://github.com/ocornut/imgui/blob/master/docs/BACKENDS.md), [Examples](https://github.com/ocornut/imgui/blob/master/docs/EXAMPLES.md), [Fonts](https://github.com/ocornut/imgui/blob/master/docs/FONTS.md).
 - See documentation and comments at the top of [imgui.cpp](https://github.com/ocornut/imgui/blob/master/imgui.cpp) + general API comments in [imgui.h](https://github.com/ocornut/imgui/blob/master/imgui.h).
 - The [Glossary](https://github.com/ocornut/imgui/wiki/Glossary) page may be useful.
@@ -84,16 +101,17 @@ Here's a very simplified comparison between the approach taken by Dear ImGui vs 
 |--------------------------|--------------------------|
 | UI fully issued on every update. | UI issued once then later modified. |
 | UI layout is fully dynamic and can change at any time.<BR>UI is generally emitted programmatically, which empowers reflecting a dynamic set of data. | UI layout is mostly static.<BR>UI may be emitted programmatically or from data created by offline tools. UI need extra code to evolve, which is often tedious and error-prone if it needs to be reflecting dynamic data and systems. |
-| Application can submit UI based on arbitrary logic and then forget about it. | Application needs more bookkeeping of UI elements. |
+| UI system is optimized for the worst case and designed to be optimal even under frequent changes. | UI system is optimized for the case where nothing changes. Performances tends to degrade when anything changes. |
+| Application can submit UI based on arbitrary logic without bookkeeping all aspects of that logic. | Application needs more bookkeeping of UI elements. |
 | UI library stores minimal amounts of data. At one point in time, it typically doesn't know or remember which other widgets are displayed and which widgets are coming next. As a result, certain layout features (alignment, resizing) are not as easy to implement or require ad-hoc code. | UI library stores entire widgets tree and state. UI library can use this retained data to easily layout things. |
 | UI code may be added anywhere.<BR>You can even create UI to edit a local variable! | UI code needs to be added in dedicated spots. |
 | UI layout/logic/action/data bindings are all nearby in the code. | UI layout/logic/action/data bindings in distinct functions, files or formats. |
 | Data is naturally always synchronized. | Use callback/signal/slot for synchronizing data (error-prone). |
-| API is simple and easy to learn. In particular, doing basic things is very easy. | API is more complex and specialized. |
-| API is low-level (raw language types). | API are higher-level (more abstractions, advanced language features). |
-| Less fancy look and feel. | Standard look and feel. |
+| API is simple and easy to learn. In particular, doing basic things is very easy.<BR>Attractive to more programmers. | API is more complex and specialized.<BR>Tends to require specialized programmers. |
+| API is low-level. Few abstractions, uses raw language types and your existing data. | API are higher-level. More abstractions, advanced language features. |
+| Less fancy look and feel. But keeps improving :) | Standard look and feel. |
 | Compile yourself. Easy to debug, hack, modify, study. | Mostly use precompiled libraries. Compiling, modifying or studying is daunting if not impossible. |
-| Run on every platform. | Run on limited desktop platforms. |
+| Run on every platform (incl. web, consoles, mobiles, legacy systems). | Run on major desktop platforms. |
 
 Idiomatic Dear ImGui code:
 ```cpp
@@ -262,15 +280,19 @@ ctx->RSSetScissorRects(1, &r);
 
 # Q&A: Usage
 
-### Q: About the ID Stack system...
-### Q: Why is my widget not reacting when I click on it?
-### Q: Why is the wrong widget reacting when I click on one?
-### Q: How can I have widgets with an empty label?
-### Q: How can I have multiple widgets with the same label?
-### Q: How can I have multiple windows with the same label?
+## Q: About the ID Stack system...
 
 **USING THE SAME LABEL+ID IS THE MOST COMMON USER MISTAKE!**
 <br>**USING AN EMPTY LABEL IS THE SAME AS USING THE SAME LABEL AS YOUR PARENT WIDGET!**
+<br>Read the questions in this section for a more general understand of how labels and ID works in Dear ImGui.
+
+TL;DR;
+- Widgets labels are also used to compute Widgets unique identifiers.
+- Unique identifiers are hashes of the label + of the parent scope (e.g. parent window or parent tree node labels).
+- You can use `PushID()` to append to the identifier without making it visible.
+- You can use `"##something"` in a label to append to the identifier without making it visible.
+- You can use `"###something"` in a label to make the identifier ignore the visible part.
+
 <table>
 <tr>
 <td><img src="https://github.com/user-attachments/assets/776a8315-1164-4178-9a8c-df52e0ff28aa"></td>
@@ -301,16 +323,99 @@ ImGui::End();
 </tr>
 </table>
 
-A primer on labels and the ID Stack...
+### Q: How can I have multiple widgets with the same label?
+
+A. When widgets are in a same scope and finite, you can use a `"##something"` suffix which will be part of the identifier but not visible as a label.
+
+```cpp
+Button("Play");        // Label = "Play",   ID = hash of ("MyWindow", "Play")
+Button("Play##foo1");  // Label = "Play",   ID = hash of ("MyWindow", "Play##foo1")  // Different from other buttons
+Button("Play##foo2");  // Label = "Play",   ID = hash of ("MyWindow", "Play##foo2")  // Different from other buttons
+```
+
+B. More generally, e.g. in loops, you can use `PushID()/PopID()` to push a prefix which will be part of the identifier.
+
+```cpp
+// Using PushID() with a string
+for (int i = 0; i < 100; i++)
+{
+  MyObject* obj = Objects[i];
+  PushID(obj->Name);
+  Button("Click");     // Label = "Click",  ID = hash of ("Window", obj->Name, "Click")
+  PopID();
+}
+```
+
+```cpp
+// Using PushID() with an index
+for (int i = 0; i < 100; i++)
+{
+  PushID(i);
+  Button("Click");     // Label = "Click",  ID = hash of ("Window", i, "Click")
+  PopID();
+}
+```
+
+### Q: How can I have widgets with an empty label?
+
+If you want to completely hide the label, but still need an ID:
+
+```cpp
+Checkbox("##On", &b);  // Label = "",       ID = hash of (..., "##On")   // No visible label, just a checkbox!
+```
+##### [Return to Index](#index)
+
+### Q: How can I make a label dynamic?
+
+Dear ImGui is very dynamic so you can submit different widgets every frame.
+However, in order to preserve widget state (eg. which tree node is open; which button is focused) the library internaly refers to their unique ID.
+
+Occasionally you might want to change a label while preserving a constant ID. This allows you to change/animate labels while persisting associated state.
+For example, you may want to include varying information in a window title bar or button label.
+
+Using "###" exclude the preceeding part from ID computation:
+```cpp
+Button("Hello###ID");   // Label = "Enable",   ID = hash of (..., "ID")
+Button("World###ID");   // Label = "Disable",  ID = hash of (..., "ID")  // Same ID, different label
+```
+Using a same ID ensure that associated related e.g. weither the widget is focused, won't be lost when the label changes.
+
+<table>
+<tr>
+<td><img src="https://github.com/user-attachments/assets/2bf18756-e122-498d-bbd4-5c44bb1018d5"></td>
+<td>
+<pre lang="cpp">
+// Window label has animating FPS counter
+// Window ID stays the same = hash of "MyGame"
+char buf[128];
+sprintf(buf, "My game (%.1f FPS)###MyGame", io.Framerate);
+ImGui::Begin(buf);
+&nbsp;
+// Label changes between "Enable" and "Disable"
+// ID stays the same = hash of ("MyGame", "MyButton")
+if (ImGui::Button(enabled ? "Disable###MyButton" : "Enable###MyButton", { -FLT_MIN, 0.0f }))
+    enabled = !enabled;
+&nbsp;
+ImGui::End();
+</pre>
+</td>
+</tr>
+</table>
+
+(Hint: I'd suggest wrapping sprintf in something more compact to use, e.g. [ocornut/Str](https://github.com/ocornut/Str) for what I personally use).
+
+##### [Return to Index](#index)
+
+### General description of the label and ID Stack system
 
 Dear ImGui internally needs to uniquely identify UI elements.
-Elements that are typically not clickable (such as calls to the Text functions) don't need an ID.
-Interactive widgets (such as calls to Button buttons) need a unique ID.
+Elements that are typically not clickable (such as calls to Text() functions) don't need an ID.
+Interactive widgets (such as calls to Button() functions) need a unique ID.
 
 **Unique IDs are used internally to track active widgets and occasionally associate state to widgets.<BR>
 Unique IDs are implicitly built from the hash of multiple elements that identify the "path" to the UI element.**
 
-Since Dear ImGui 1.85, you can use `Demo>Tools>ID Stack Tool` or call `ImGui::ShowIDStackToolWindow()`. The tool display intermediate values leading to the creation of a unique ID, making things easier to debug and understand.
+You can use `Demo>Tools>ID Stack Tool` or call `ImGui::ShowIDStackToolWindow()`. The tool display intermediate values leading to the creation of a unique ID, making things easier to debug and understand.
 
 ![Stack tool](https://user-images.githubusercontent.com/8225057/136235657-a0ea5665-dcd1-423f-9be6-dc3f8ced8f12.png)
 
@@ -364,20 +469,7 @@ Button("Play##foo2");  // Label = "Play",   ID = hash of ("MyWindow", "Play##foo
 Button("##foo");       // Label = "",       ID = hash of ("MyWindow", "##foo")       // Different from window
 End();
 ```
-- If you want to completely hide the label, but still need an ID:
-```cpp
-Checkbox("##On", &b);  // Label = "",       ID = hash of (..., "##On")   // No visible label, just a checkbox!
-```
-- Occasionally/rarely you might want to change a label while preserving a constant ID. This allows
-you to animate labels. For example, you may want to include varying information in a window title bar,
-but windows are uniquely identified by their ID. Use "###" to pass a label that isn't part of ID:
-```cpp
-Button("Hello###ID");  // Label = "Hello",  ID = hash of (..., "###ID")
-Button("World###ID");  // Label = "World",  ID = hash of (..., "###ID")  // Same ID, different label
 
-sprintf(buf, "My game (%f FPS)###MyGame", fps);
-Begin(buf);            // Variable title,   ID = hash of "MyGame"
-```
 - Solving ID conflict in a more general manner:
 Use `PushID()` / `PopID()` to create scopes and manipulate the ID stack, as to avoid ID conflicts
 within the same window. This is the most convenient way of distinguishing ID when iterating and
@@ -591,6 +683,7 @@ This way you will be able to use your own types everywhere, e.g. passing `MyVect
 ---
 
 ### Q: How can I interact with standard C++ types (such as std::string and std::vector)?
+
 - Being highly portable (backends/bindings for several languages, frameworks, programming styles, obscure or older platforms/compilers), and aiming for compatibility & performance suitable for every modern real-time game engine, Dear ImGui does not use any of std C++ types. We use raw types (e.g. char* instead of std::string) because they adapt to more use cases.
 - To use ImGui::InputText() with a std::string or any resizable string class, see [misc/cpp/imgui_stdlib.h](https://github.com/ocornut/imgui/blob/master/misc/cpp/imgui_stdlib.h).
 - To use combo boxes and list boxes with `std::vector` or any other data structure: the `BeginCombo()/EndCombo()` API
@@ -609,6 +702,10 @@ is that you will need to build lots of strings on the fly, and their maximum len
 One possible implementation of a helper to facilitate printf-style building of strings: https://github.com/ocornut/Str
 This is a small helper where you can instance strings with configurable local buffers length. Many game engines will
 provide similar or better string helpers.
+
+Using string views:
+
+- String view types such as `std::string_view` may be used with the [feature/string_view](https://github.com/ocornut/imgui/tree/features/string_view) branch. This branch is actively maintained and supported. Please provide feedback if you use it. We are waiting for a good moment to merge it.
 
 ##### [Return to Index](#index)
 
@@ -647,6 +744,20 @@ ImGui::End();
 - Looking for fun? The [ImDrawList coding party 2020](https://github.com/ocornut/imgui/issues/3606) thread is full of "don't do this at home" extreme uses of the ImDrawList API.
 
 ##### [Return to Index](#index)
+
+---
+
+### About Multi-Threading
+
+A same Dear ImGui context may be not used from multiple threads in parallel.
+
+If you want to use a same context within parallel tasks for occasional debug purpose, consider using a lock.
+
+If you want to submit contents from a main/update thread but render Dear ImGui output in a dedicated render thread, you'll need to stage `ImDrawData` and texture requests. See the `ImDrawDataSnapshot` and `ImTextureQueue` helpers in [imgui_threaded_rendering](https://github.com/ocornut/imgui_club#imgui_threaded_rendering). Also see topics with [label: multi-threading](https://github.com/ocornut/imgui/issues?q=label%3Amulti-threading).
+
+If you use multiple Dear ImGui contexts and want to use them from multiple threads, you need to `#define GImGui` to become a TLS variable (see details near the definition of `GImGui`. If you need to display multiple contexts simultaneously, consider using [imgui_multicontext_compositor](https://github.com/ocornut/imgui_club#imgui_multicontext_compositor). Also see topics with [label: multi-contexts](https://github.com/ocornut/imgui/issues?q=label%3Amulti-contexts).
+
+There is a script/patch to make the API take an explicit context pointer: [#5856](https://github.com/ocornut/imgui/pull/5856). It is presently unmaintained and likely to easy to update. It has been decided that the change is not currently worth applying to main-line but maybe will be in a future version.
 
 ---
 

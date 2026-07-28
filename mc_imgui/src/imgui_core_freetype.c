@@ -36,6 +36,7 @@ BB_WARNING_POP
 // FT_Add_Default_Modules
 // FT_GlyphSlot_Embolden
 // FT_GlyphSlot_Oblique
+// FT_Library_Version
 
 // freetype function signatures:
 // FT_Error FT_New_Size(FT_Face face, FT_Size* size);
@@ -53,6 +54,7 @@ BB_WARNING_POP
 // void FT_Add_Default_Modules(FT_Library library);
 // void FT_GlyphSlot_Embolden(FT_GlyphSlot slot);
 // void FT_GlyphSlot_Oblique(FT_GlyphSlot slot);
+// void FT_Library_Version(FT_Library library, FT_Int *amajor, FT_Int *aminor, FT_Int *apatch);
 
 typedef FT_Error(FT_New_Size_Proc)(FT_Face face, FT_Size* size);
 typedef FT_Error(FT_Done_Size_Proc)(FT_Size size);
@@ -69,6 +71,7 @@ typedef FT_Error(FT_Done_Library_Proc)(FT_Library library);
 typedef void(FT_Add_Default_Modules_Proc)(FT_Library library);
 typedef void(FT_GlyphSlot_Embolden_Proc)(FT_GlyphSlot slot);
 typedef void(FT_GlyphSlot_Oblique_Proc)(FT_GlyphSlot slot);
+typedef void(FT_Library_Version_Proc)(FT_Library library, FT_Int *amajor, FT_Int *aminor, FT_Int *apatch);
 
 static HMODULE g_hFreetypeModule;
 static b32 g_freetypeValid;
@@ -87,6 +90,7 @@ static FT_Done_Library_Proc* g_FT_Done_Library;
 static FT_Add_Default_Modules_Proc* g_FT_Add_Default_Modules;
 static FT_GlyphSlot_Embolden_Proc* g_FT_GlyphSlot_Embolden;
 static FT_GlyphSlot_Oblique_Proc* g_FT_GlyphSlot_Oblique;
+static FT_Library_Version_Proc* g_FT_Library_Version;
 
 FT_Error FT_New_Size(FT_Face face, FT_Size* size)
 {
@@ -148,6 +152,10 @@ void FT_GlyphSlot_Oblique(FT_GlyphSlot slot)
 {
 	(*g_FT_GlyphSlot_Oblique)(slot);
 }
+void FT_Library_Version(FT_Library library, FT_Int *amajor, FT_Int *aminor, FT_Int *apatch)
+{
+	(*g_FT_Library_Version)(library, amajor, aminor, apatch);
+}
 
 void Imgui_Core_Freetype_Init(void)
 {
@@ -169,6 +177,7 @@ void Imgui_Core_Freetype_Init(void)
 		g_FT_Add_Default_Modules = (FT_Add_Default_Modules_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Add_Default_Modules");
 		g_FT_GlyphSlot_Embolden = (FT_GlyphSlot_Embolden_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_GlyphSlot_Embolden");
 		g_FT_GlyphSlot_Oblique = (FT_GlyphSlot_Oblique_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_GlyphSlot_Oblique");
+		g_FT_Library_Version = (FT_Library_Version_Proc*)(void*)GetProcAddress(g_hFreetypeModule, "FT_Library_Version");
 
 		g_freetypeValid = g_FT_New_Size &&
 		                  g_FT_Done_Size &&
@@ -184,7 +193,8 @@ void Imgui_Core_Freetype_Init(void)
 		                  g_FT_Done_Library &&
 		                  g_FT_Add_Default_Modules &&
 		                  g_FT_GlyphSlot_Embolden &&
-		                  g_FT_GlyphSlot_Oblique;
+		                  g_FT_GlyphSlot_Oblique &&
+		                  g_FT_Library_Version;
 	}
 }
 
