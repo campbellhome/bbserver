@@ -34,6 +34,7 @@
 #include "ui_tags.h"
 #include "ui_view_files.h"
 #include "ui_view_filter.h"
+#include "ui_view_log_table.h"
 #include "ui_view_pie_instances.h"
 #include "ui_view_threads.h"
 #include "va.h"
@@ -69,6 +70,7 @@ static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
 static int s_visibleLogLines;
 static constexpr u32 g_logTruncationLen = 16u * 1024u;
+static b32 g_tableTest = true;
 
 using namespace ImGui;
 
@@ -275,7 +277,7 @@ const char* TimeFromDecoded(recorded_session_t* session, bb_decoded_packet_t* de
 	}
 }
 
-static const char* BuildLogColumnText(view_t* view, view_log_t* viewLog, view_column_e column)
+const char* BuildLogColumnText(view_t* view, view_log_t* viewLog, view_column_e column)
 {
 	u32 viewLogIndex = (u32)(viewLog - view->visibleLogs.data);
 	u32 prevViewLogIndex;
@@ -600,7 +602,7 @@ static void UIRecordedView_Logs_ToggleSelection(view_t* view, view_log_t* log)
 	UITags_Category_SetSelected(view, view_get_log_category_index(view, log), log->selected);
 }
 
-static void UIRecordedView_Logs_HandleClick(view_t* view, view_log_t* log)
+void UIRecordedView_Logs_HandleClick(view_t* view, view_log_t* log)
 {
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.KeyAlt || (io.KeyCtrl && io.KeyShift))
@@ -2327,11 +2329,13 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			}
 		}
 
+		bool bShown = g_tableTest && LogTable_Update(view);
+
 		float FramePaddingY = ImGui::GetStyle().FramePadding.y;
 		ImGui::GetStyle().FramePadding.y = 0.0f;
 
 		float textOffset = 0.0f;
-		if (view->scrollWidth > 0.0f)
+		if (view->scrollWidth > 0.0f && !bShown)
 		{
 			ImVec2 region = ImGui::GetWindowContentRegionMax();
 			if (region.x < view->scrollWidth)
@@ -2342,9 +2346,12 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 		int horizScrollingFlags = 0;
 		if (BeginChild("logheader", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 4), false, horizScrollingFlags))
 		{
-			SetScrollX(view->prevScrollX);
-			textOffset = UIRecordedView_LogHeader(view);
-			ImGui::Separator();
+			if (!bShown)
+			{
+				SetScrollX(view->prevScrollX);
+				textOffset = UIRecordedView_LogHeader(view);
+				ImGui::Separator();
+			}
 		}
 		EndChild();
 
@@ -2353,7 +2360,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 		view->lastVisibleSelectedSessionIndexStart = ~0U;
 		view->lastVisibleSelectedSessionIndexEnd = 0U;
 
-		if (view->scrollWidth > 0.0f)
+		if (view->scrollWidth > 0.0f && !bShown)
 		{
 			ImVec2 region = ImGui::GetWindowContentRegionMax();
 			if (region.x < view->scrollWidth)
@@ -2362,7 +2369,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			}
 		}
 		verticalScrollDir_e scrollDir = kVerticalScroll_None;
-		if (BeginChild("logentries", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_AlwaysVerticalScrollbar))
+		if (!bShown && BeginChild("logentries", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_AlwaysVerticalScrollbar))
 		{
 			SetScrollX(view->prevScrollX);
 			PushLogFont();
@@ -2508,25 +2515,28 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			}
 			PopLogFont();
 		}
-		EndChild(); // logentries
+		if (!bShown)
+		{
+			EndChild(); // logentries
 
-		ImVec2 ContentRegionMax = ImGui::GetWindowContentRegionMax();
-		ImVec2 ContentRegionAvail = ImGui::GetContentRegionAvail();
-		float ScrollbarSize = ImGui::GetStyle().ScrollbarSize;
-		float FrameHeight = ImGui::GetFrameHeight();
-		if (view->scrollWidth > 0.0f)
-		{
-			if (ContentRegionMax.x < view->scrollWidth)
+			ImVec2 ContentRegionMax = ImGui::GetWindowContentRegionMax();
+			ImVec2 ContentRegionAvail = ImGui::GetContentRegionAvail();
+			float ScrollbarSize = ImGui::GetStyle().ScrollbarSize;
+			float FrameHeight = ImGui::GetFrameHeight();
+			if (view->scrollWidth > 0.0f)
 			{
-				SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
+				if (ContentRegionMax.x < view->scrollWidth)
+				{
+					SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
+				}
 			}
+			if (BeginChild("horizscrollbar", ImVec2(ContentRegionAvail.x - ScrollbarSize, FrameHeight - 1),
+						false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar))
+			{
+				view->prevScrollX = GetScrollX();
+			}
+			EndChild();
 		}
-		if (BeginChild("horizscrollbar", ImVec2(ContentRegionAvail.x - ScrollbarSize, FrameHeight - 1),
-		               false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar))
-		{
-			view->prevScrollX = GetScrollX();
-		}
-		EndChild();
 
 		ImGui::GetStyle().FramePadding.y = FramePaddingY;
 
@@ -2593,6 +2603,11 @@ void UIRecordedView_TiledViewCheckbox(void)
 		{
 			config_write(&g_config);
 		}
+	}
+
+	if (g_config.showDebugMenu)
+	{
+		ImGui::Checkbox("Tables API Test", &g_tableTest);
 	}
 }
 
@@ -2784,6 +2799,7 @@ void UIRecordedView_UpdateAll()
 
 void UIRecordedView_Shutdown(void)
 {
+	LogTable_Shutdown();
 	UIRecordedView_ShutdownFilter();
 	bba_free(s_gathered_views);
 	sb_reset(&s_strippedLine);
