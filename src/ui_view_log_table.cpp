@@ -223,7 +223,7 @@ static colored_text_t UIRecordedView_GetColoredText(colored_text_t prev)
 	return ret;
 }
 
-static void LogTable_EmitLogText(view_t* view, view_log_t* viewLog)
+static void LogTable_EmitLogText(view_t* view, view_log_t* viewLog, named_filter_t* log_color_entry)
 {
 	u32 logIndex = viewLog->sessionLogIndex;
 	recorded_session_t* session = view->session;
@@ -235,8 +235,6 @@ static void LogTable_EmitLogText(view_t* view, view_log_t* viewLog)
 	const configColorUsage colorUsage = g_config.logColorUsage;
 
 	b32 categoryNoColors = viewCategory->noColor;
-
-	named_filter_t* log_color_entry = named_filters_resolve(view, viewLog, sessionLog, true);
 	if (log_color_entry)
 	{
 		if (!log_color_entry->allowBgColors)
@@ -417,7 +415,9 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 			recorded_log_t* sessionLog = session->logs.data[logIndex];
 			bb_decoded_packet_t* decoded = &sessionLog->packet;
 			recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
-			// view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
+			view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
+			named_filter_t* log_color_entry = named_filters_resolve(view, viewLog, sessionLog, true);
+			view_log_colors_t viewLogColors = UIRecordedView_InitLogColors(decoded, viewLog, viewCategory, log_color_entry);
 
 			b32 oldShadows = false;
 			b32 firstColumn = true;
@@ -437,7 +437,10 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 					{
 						firstColumn = false;
 						ImGuiSelectableFlags selectable_flags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
-						ImGui::Selectable(columnText, viewLog->selected != 0, selectable_flags, ImVec2(0, row_min_height));
+						UIRecordedView_PushLogStyleColors(viewLogColors);
+						ImGui::SelectableWithBackground(va("%s###%u_%u", columnText, viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, viewLogColors.bgColor, selectable_flags, ImVec2(0, row_min_height));
+						UIRecordedView_PopLogStyleColors(viewLogColors);
+
 						if (ImGui::IsItemHovered())
 						{
 							if (ImGui::IsItemClicked())
@@ -494,7 +497,7 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 			if (ImGui::TableSetColumnIndex(kColumn_Count))
 			{
 				view->textStartX = ImGui::GetCursorPosX();
-				LogTable_EmitLogText(view, viewLog);
+				LogTable_EmitLogText(view, viewLog, log_color_entry);
 			}
 
 			float endY = ImGui::GetCursorScreenPos().y;

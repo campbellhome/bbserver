@@ -1115,28 +1115,38 @@ void UIRecordedView_LogPopup(view_t* view, view_log_t* viewLog)
 	PopUIFont();
 }
 
-float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset, verticalScrollDir_e& scrollDir)
+void UIRecordedView_PushLogStyleColors(const view_log_colors_t& viewLogColors)
 {
-	int i;
-	u32 logIndex = viewLog->sessionLogIndex;
-	recorded_session_t* session = view->session;
-	recorded_log_t* sessionLog = session->logs.data[logIndex];
-	bb_decoded_packet_t* decoded = &sessionLog->packet;
-	recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
-	view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
-	LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
-	b32 categoryNoColors = viewCategory->noColor;
+	if (viewLogColors.useStyleColors)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Header, viewLogColors.styleColorNormal);
+		ImGui::PushStyleColor(ImGuiCol_HeaderActive, viewLogColors.styleColorActive);
+		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, viewLogColors.styleColorHovered);
+	}
+}
 
-	named_filter_t* log_color_entry = named_filters_resolve(view, viewLog, sessionLog, true);
+void UIRecordedView_PopLogStyleColors(const view_log_colors_t& viewLogColors)
+{
+	if (viewLogColors.useStyleColors)
+	{
+		ImGui::PopStyleColor(3);
+	}
+}
+
+view_log_colors_t UIRecordedView_InitLogColors(bb_decoded_packet_t* decoded, view_log_t* viewLog, view_category_t* viewCategory, named_filter_t* log_color_entry)
+{
+	view_log_colors_t viewLogColors = {};
+
+	viewLogColors.categoryNoColors = viewCategory->noColor;
 	if (log_color_entry)
 	{
 		if (!log_color_entry->allowBgColors)
 		{
-			categoryNoColors = true;
+			viewLogColors.categoryNoColors = true;
 		}
 	}
 
-	const configColorUsage colorUsage = g_config.logColorUsage;
+	viewLogColors.colorUsage = g_config.logColorUsage;
 	ImColor targetBgColor;
 	if (viewLog->bookmarked)
 	{
@@ -1184,7 +1194,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		}
 	}
 
-	if (decoded->packet.logText.colors.bg != kBBColor_Default && colorUsage == kConfigColors_Full && !categoryNoColors)
+	if (decoded->packet.logText.colors.bg != kBBColor_Default && viewLogColors.colorUsage == kConfigColors_Full && !viewLogColors.categoryNoColors)
 	{
 		if (!log_color_entry || log_color_entry->allowBgColors)
 		{
@@ -1192,60 +1202,75 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		}
 	}
 
-	int styleCount = 0;
-	// ImGui::PushStyleColor(ImGuiCol_HeaderInactive, bgColorNormal);
 	if (userBgColor && log_color_entry)
 	{
 		if (log_color_entry->testSelected && log_color_entry->selected == viewLog->selected &&
 		    log_color_entry->testBookmarked && log_color_entry->bookmarked == viewLog->bookmarked)
 		{
-			styleCount += 3;
-			ImGui::PushStyleColor(ImGuiCol_Header, bgColorNormal);
-			ImGui::PushStyleColor(ImGuiCol_HeaderActive, bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive);
-			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered);
+			viewLogColors.useStyleColors = true;
+			viewLogColors.styleColorNormal = bgColorNormal;
+			viewLogColors.styleColorActive = bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive;
+			viewLogColors.styleColorHovered = bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered;
 			targetBgColor.Value.w = 0.0f;
 		}
 		else if (log_color_entry->testSelected && log_color_entry->selected == viewLog->selected &&
 		         !log_color_entry->testBookmarked && !viewLog->bookmarked)
 		{
-			styleCount += 3;
-			ImGui::PushStyleColor(ImGuiCol_Header, bgColorNormal);
-			ImGui::PushStyleColor(ImGuiCol_HeaderActive, bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive);
-			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered);
+			viewLogColors.useStyleColors = true;
+			viewLogColors.styleColorNormal = bgColorNormal;
+			viewLogColors.styleColorActive = bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive;
+			viewLogColors.styleColorHovered = bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered;
 			targetBgColor.Value.w = 0.0f;
 		}
 		else if (log_color_entry->testBookmarked && log_color_entry->bookmarked == viewLog->bookmarked &&
 		         !log_color_entry->testSelected && !viewLog->selected)
 		{
-			styleCount += 3;
-			ImGui::PushStyleColor(ImGuiCol_Header, bgColorNormal);
-			ImGui::PushStyleColor(ImGuiCol_HeaderActive, bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive);
-			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered);
+			viewLogColors.useStyleColors = true;
+			viewLogColors.styleColorNormal = bgColorNormal;
+			viewLogColors.styleColorActive = bgColorActive.w == 0.0f ? bgColorNormal : bgColorActive;
+			viewLogColors.styleColorHovered = bgColorHovered.w == 0.0f ? bgColorNormal : bgColorHovered;
 			targetBgColor.Value.w = 0.0f;
 		}
 	}
-	if (!styleCount && viewLog->bookmarked)
+	if (!viewLogColors.useStyleColors && viewLog->bookmarked)
 	{
-		styleCount += 3;
-		ImColor headerColor = ImGui::GetColorU32(ImGuiCol_Header);
-		headerColor.Value.y += 0.1f;
-		ImGui::PushStyleColor(ImGuiCol_Header, headerColor);
+		viewLogColors.useStyleColors = true;
+		viewLogColors.styleColorNormal = ImGui::GetColorU32(ImGuiCol_Header);
+		viewLogColors.styleColorNormal.Value.y += 0.1f;
 
-		ImColor headerActiveColor = GetColorU32(ImGuiCol_HeaderActive);
-		headerActiveColor.Value.y += 0.1f;
-		ImGui::PushStyleColor(ImGuiCol_HeaderActive, headerActiveColor);
+		viewLogColors.styleColorActive = GetColorU32(ImGuiCol_HeaderActive);
+		viewLogColors.styleColorActive.Value.y += 0.1f;
 
-		ImColor headerHoveredColor = GetColorU32(ImGuiCol_HeaderHovered);
-		headerHoveredColor.Value.y += 0.1f;
-		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, headerHoveredColor);
+		viewLogColors.styleColorHovered = GetColorU32(ImGuiCol_HeaderHovered);
+		viewLogColors.styleColorHovered.Value.y += 0.1f;
 	}
 
 	bgColorNormal.x = bgColorNormal.x * (1 - targetBgColor.Value.w) + targetBgColor.Value.x * targetBgColor.Value.w;
 	bgColorNormal.y = bgColorNormal.y * (1 - targetBgColor.Value.w) + targetBgColor.Value.y * targetBgColor.Value.w;
 	bgColorNormal.z = bgColorNormal.z * (1 - targetBgColor.Value.w) + targetBgColor.Value.z * targetBgColor.Value.w;
 
-	SelectableWithBackground(va("###%u_%u", viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, bgColorNormal);
-	ImGui::PopStyleColor(styleCount);
+	viewLogColors.bgColor = bgColorNormal;
+
+	return viewLogColors;
+}
+
+float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset, verticalScrollDir_e& scrollDir)
+{
+	int i;
+	u32 logIndex = viewLog->sessionLogIndex;
+	recorded_session_t* session = view->session;
+	recorded_log_t* sessionLog = session->logs.data[logIndex];
+	bb_decoded_packet_t* decoded = &sessionLog->packet;
+	recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+	view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
+	LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
+
+	named_filter_t* log_color_entry = named_filters_resolve(view, viewLog, sessionLog, true);
+	view_log_colors_t viewLogColors = UIRecordedView_InitLogColors(decoded, viewLog, viewCategory, log_color_entry);
+
+	UIRecordedView_PushLogStyleColors(viewLogColors);
+	SelectableWithBackground(va("###%u_%u", viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, viewLogColors.bgColor);
+	UIRecordedView_PopLogStyleColors(viewLogColors);
 	if (ImGui::IsItemHovered())
 	{
 		if (IsItemClicked())
@@ -1287,11 +1312,11 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 
 	if (log_color_entry && !log_color_entry->allowFgColors)
 	{
-		categoryNoColors = true;
+		viewLogColors.categoryNoColors = true;
 	}
 	else
 	{
-		categoryNoColors = viewCategory->noColor;
+		viewLogColors.categoryNoColors = viewCategory->noColor;
 	}
 
 	float scrollX = ImGui::GetScrollX();
@@ -1336,10 +1361,10 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 
 	colored_text_t span = { BB_EMPTY_INITIALIZER };
 	span.styleColor = GetStyleColorForLogLevel((bb_log_level_e)decoded->packet.logText.level);
-	if (colorUsage != kConfigColors_None && !categoryNoColors)
+	if (viewLogColors.colorUsage != kConfigColors_None && !viewLogColors.categoryNoColors)
 	{
 		span.styleColor = (styleColor_e)(decoded->packet.logText.colors.fg);
-		if (colorUsage == kConfigColors_BgAsFg)
+		if (viewLogColors.colorUsage == kConfigColors_BgAsFg)
 		{
 			if (decoded->packet.logText.colors.bg != kBBColor_Default)
 			{
@@ -1378,7 +1403,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 		other.color = fgColor;
 		other.next = decoded->packet.logText.text;
 		other.end = subLineSpan.start;
-		other.categoryNoColors = categoryNoColors;
+		other.categoryNoColors = viewLogColors.categoryNoColors;
 		do
 		{
 			other = UIRecordedView_GetColoredText(other);
@@ -1396,7 +1421,7 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 
 	span.next = subLineSpan.start;
 	span.end = subLineSpan.end;
-	span.categoryNoColors = categoryNoColors;
+	span.categoryNoColors = viewLogColors.categoryNoColors;
 	do
 	{
 		span = UIRecordedView_GetColoredText(span);
@@ -2425,7 +2450,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				}
 			}
 			if (BeginChild("horizscrollbar", ImVec2(ContentRegionAvail.x - ScrollbarSize, FrameHeight - 1),
-						false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar))
+			               false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar))
 			{
 				view->prevScrollX = GetScrollX();
 			}
@@ -2451,7 +2476,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 	}
 }
 
-void UIRecordedView_UpdateScrolling(view_t *view, b32 logsHovered, b32 otherControlFocused, float lineHeight, ImGui::verticalScrollDir_e verticalScrollDir)
+void UIRecordedView_UpdateScrolling(view_t* view, b32 logsHovered, b32 otherControlFocused, float lineHeight, ImGui::verticalScrollDir_e verticalScrollDir)
 {
 	if (otherControlFocused)
 	{
@@ -2498,45 +2523,45 @@ void UIRecordedView_UpdateScrolling(view_t *view, b32 logsHovered, b32 otherCont
 		const int pageLines = 20;
 		switch (verticalScrollDir)
 		{
-			case kVerticalScroll_PageUp:
-				SetScrollY(curScrollY - pageLines * GetTextLineHeightWithSpacing());
-				ClearViewTail(view, "PageUp");
-				break;
-			case kVerticalScroll_PageDown:
-				SetScrollY(curScrollY + pageLines * GetTextLineHeightWithSpacing());
-				if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
-				{
-					view->tail = true;
-					// BB_LOG("Debug", "Set tail for '%s' - PageDown\n", applicationName);
-				}
-				break;
-			case kVerticalScroll_Up:
-				SetScrollY(curScrollY - GetTextLineHeightWithSpacing());
-				ClearViewTail(view, "Up");
-				break;
-			case kVerticalScroll_Down:
-				SetScrollY(curScrollY + GetTextLineHeightWithSpacing());
-				if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
-				{
-					view->tail = true;
-					// BB_LOG("Debug", "Set tail for '%s' - Down\n", applicationName);
-				}
-				break;
-			case kVerticalScroll_Start:
-				SetScrollY(0.0f);
-				ClearViewTail(view, "Home");
-				break;
-			case kVerticalScroll_End:
-				ImGui::SetScrollHereY(0.0f);
-				if (!view->tail)
-				{
-					view->tail = true;
-					// BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
-				}
-				break;
-			case kVerticalScroll_None:
-				BB_ASSERT(false);
-				break;
+		case kVerticalScroll_PageUp:
+			SetScrollY(curScrollY - pageLines * GetTextLineHeightWithSpacing());
+			ClearViewTail(view, "PageUp");
+			break;
+		case kVerticalScroll_PageDown:
+			SetScrollY(curScrollY + pageLines * GetTextLineHeightWithSpacing());
+			if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
+			{
+				view->tail = true;
+				// BB_LOG("Debug", "Set tail for '%s' - PageDown\n", applicationName);
+			}
+			break;
+		case kVerticalScroll_Up:
+			SetScrollY(curScrollY - GetTextLineHeightWithSpacing());
+			ClearViewTail(view, "Up");
+			break;
+		case kVerticalScroll_Down:
+			SetScrollY(curScrollY + GetTextLineHeightWithSpacing());
+			if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
+			{
+				view->tail = true;
+				// BB_LOG("Debug", "Set tail for '%s' - Down\n", applicationName);
+			}
+			break;
+		case kVerticalScroll_Start:
+			SetScrollY(0.0f);
+			ClearViewTail(view, "Home");
+			break;
+		case kVerticalScroll_End:
+			ImGui::SetScrollHereY(0.0f);
+			if (!view->tail)
+			{
+				view->tail = true;
+				// BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
+			}
+			break;
+		case kVerticalScroll_None:
+			BB_ASSERT(false);
+			break;
 		}
 	}
 	else if (view->tail)
