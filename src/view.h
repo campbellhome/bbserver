@@ -367,6 +367,7 @@ typedef struct view_s
 	u32 lastVisibleSelectedSessionIndexStart;
 	u32 lastVisibleSelectedSessionIndexEnd;
 	u32 lastCategoryClickIndex;
+	u32 numVisibleLines;
 	float categoriesWidth;
 	float combinedColumnsWidth;
 	float scrollWidth;
@@ -400,7 +401,7 @@ typedef struct view_s
 	s8 redockCount;
 	b8 filterPopupOpen;
 	b8 filterContextPopupOpen;
-	u8 pad;
+	u8 pad[5];
 } view_t;
 
 void view_init(view_t* view, recorded_session_t* session, b8 autoClose);

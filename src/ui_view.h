@@ -15,6 +15,13 @@ enum class EViewFilterCategory : u32
 	Count
 };
 
+namespace ImGui
+{
+	enum verticalScrollDir_e : int;
+}
+
+typedef struct view_s view_t;
+
 void PushLogFont(void);
 void PopLogFont(void);
 void PushUIFont(void);
@@ -24,6 +31,7 @@ void UIRecordedView_Shutdown(void);
 void UIRecordedView_TooltipLevelText(const char* fmt, u32 count, bb_log_level_e logLevel);
 bool UIRecordedView_EnableTiledViews(void);
 void UIRecordedView_TiledViewCheckbox(void);
+void UIRecordedView_UpdateScrolling(view_t *view, b32 logsHovered, b32 otherControlFocused, float lineHeight, ImGui::verticalScrollDir_e verticalScrollDir);
 
 extern const char* textColorNames[];
 extern const char* normalColorStr;

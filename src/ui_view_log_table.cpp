@@ -229,7 +229,7 @@ static void LogTable_EmitLogText(view_t* view, view_log_t* viewLog)
 	recorded_session_t* session = view->session;
 	recorded_log_t* sessionLog = session->logs.data[logIndex];
 	bb_decoded_packet_t* decoded = &sessionLog->packet;
-	//recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+	// recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
 	view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
 
 	const configColorUsage colorUsage = g_config.logColorUsage;
@@ -392,26 +392,32 @@ static void LogTable_EmitLogText(view_t* view, view_log_t* viewLog)
 	}
 }
 
-static void LogTable_EmitRows(view_t* view, float row_min_height)
+static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherControlFocused)
 {
+	ImGui::verticalScrollDir_e verticalScrollDir = ImGui::kVerticalScroll_None;
+	bool logsHovered = ImGui::IsWindowHovered();
 	PushLogFont();
 	ImGuiListClipper clipper;
 	clipper.Begin((int)view->visibleLogs.count);
+	u32 numVisibleLines = 0;
+	float lineHeight = 1.0f;
 	while (clipper.Step())
 	{
 		for (int row_n = clipper.DisplayStart; row_n < clipper.DisplayEnd; row_n++)
 		{
+			++numVisibleLines;
 			view_log_t* viewLog = view->visibleLogs.data + row_n;
 			ImGui::PushID(va("%u.%u", viewLog->persistentLogIndex, viewLog->subLine));
 
+			float startY = ImGui::GetCursorScreenPos().y;
 			ImGui::TableNextRow(ImGuiTableRowFlags_None, row_min_height);
 
-			//u32 logIndex = viewLog->sessionLogIndex;
-			//recorded_session_t* session = view->session;
-			//recorded_log_t* sessionLog = session->logs.data[logIndex];
-			//bb_decoded_packet_t* decoded = &sessionLog->packet;
-			//recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
-			//view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
+			// u32 logIndex = viewLog->sessionLogIndex;
+			// recorded_session_t* session = view->session;
+			// recorded_log_t* sessionLog = session->logs.data[logIndex];
+			// bb_decoded_packet_t* decoded = &sessionLog->packet;
+			// recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+			// view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
 
 			b32 oldShadows = false;
 			b32 firstColumn = true;
@@ -438,6 +444,7 @@ static void LogTable_EmitRows(view_t* view, float row_min_height)
 							{
 								UIRecordedView_Logs_HandleClick(view, viewLog);
 							}
+							verticalScrollDir = ImGui::GetVerticalScrollDir();
 						}
 					}
 					else
@@ -458,13 +465,20 @@ static void LogTable_EmitRows(view_t* view, float row_min_height)
 				LogTable_EmitLogText(view, viewLog);
 			}
 
+			float endY = ImGui::GetCursorScreenPos().y;
+			lineHeight = endY - startY;
+
 			ImGui::PopID();
 		}
 	}
 	PopLogFont();
+
+	view->numVisibleLines = numVisibleLines;
+
+	UIRecordedView_UpdateScrolling(view, logsHovered, otherControlFocused, lineHeight, verticalScrollDir);
 }
 
-bool LogTable_Update(view_t* view)
+bool LogTable_Update(view_t* view, b32 otherControlFocused)
 {
 	if (!view)
 		return false;
@@ -475,8 +489,7 @@ bool LogTable_Update(view_t* view)
 	const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
 	PopLogFont();
 
-	static ImGuiTableFlags flags =
-	    ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_SortMulti | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit;
+	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_SortMulti | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit;
 	static ImGuiTableColumnFlags columns_base_flags = ImGuiTableColumnFlags_None;
 
 	enum ContentsType
@@ -651,7 +664,7 @@ bool LogTable_Update(view_t* view)
 			ImGui::TableHeadersRow();
 
 		// rows
-		LogTable_EmitRows(view, row_min_height);
+		LogTable_EmitRows(view, row_min_height, otherControlFocused);
 
 		// Store some info to display debug details below
 		table_scroll_cur = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());

@@ -68,7 +68,6 @@ static sb_t s_wrappedLine;
 static sb_t s_selectedLine;
 static float s_lastDpiScale = 1.0f;
 static float s_textColumnCursorPosX;
-static int s_visibleLogLines;
 static constexpr u32 g_logTruncationLen = 16u * 1024u;
 static b32 g_tableTest = true;
 
@@ -750,7 +749,7 @@ static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* cat
 		Separator();
 		PopUIFont();
 
-		u32 maxLines = g_config.maxLogTooltipLines ? g_config.maxLogTooltipLines : (u32)s_visibleLogLines;
+		u32 maxLines = g_config.maxLogTooltipLines ? g_config.maxLogTooltipLines : view->numVisibleLines;
 		const char* logTextStart = sessionLog->jsonLines.count ? sessionLog->expandedJson.data : decoded->packet.logText.text;
 		recorded_log_lines_t* recordedLogLines = sessionLog->jsonLines.count ? &sessionLog->jsonLines : &sessionLog->lines;
 
@@ -2329,7 +2328,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			}
 		}
 
-		bool bShown = g_tableTest && LogTable_Update(view);
+		bool bShown = g_tableTest && LogTable_Update(view, otherControlFocused);
 
 		float FramePaddingY = ImGui::GetStyle().FramePadding.y;
 		ImGui::GetStyle().FramePadding.y = 0.0f;
@@ -2368,9 +2367,9 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
 			}
 		}
-		verticalScrollDir_e scrollDir = kVerticalScroll_None;
 		if (!bShown && BeginChild("logentries", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_AlwaysVerticalScrollbar))
 		{
+			verticalScrollDir_e scrollDir = kVerticalScroll_None;
 			SetScrollX(view->prevScrollX);
 			PushLogFont();
 			float contentWidth = 0.0f;
@@ -2379,7 +2378,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			clipper.Begin((int)view->visibleLogs.count, ImGui::GetTextLineHeightWithSpacing());
 			while (clipper.Step())
 			{
-				s_visibleLogLines = clipper.DisplayEnd - clipper.DisplayStart;
+				view->numVisibleLines = (u32)(clipper.DisplayEnd - clipper.DisplayStart);
 				for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
 				{
 					view_log_t* viewLog = view->visibleLogs.data + i;
@@ -2408,111 +2407,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				view->scrollWidth = contentWidth;
 			}
 
-			if (otherControlFocused)
-			{
-				scrollDir = kVerticalScroll_None;
-			}
-			float curScrollY = GetScrollY();
-			const float kScreenPercent = 0.5f;
-			// view->bookmarkThreshold = (int)(clipper.DisplayStart + visibleLines * 0.5f);
-			if (view->gotoTarget >= 0)
-			{
-				int adjustedTarget = view->gotoTarget - (int)((float)s_visibleLogLines * kScreenPercent);
-				if (adjustedTarget < 0)
-				{
-					adjustedTarget = 0;
-				}
-				SetScrollY((float)adjustedTarget * GetTextLineHeightWithSpacing());
-				if (view->prevDpiScale == Imgui_Core_GetDpiScale())
-				{
-					view->gotoTarget = -1;
-				}
-			}
-			else if (hovered && ImGui::GetIO().MouseWheel != 0.0f)
-			{
-				if (!ImGui::GetIO().KeyCtrl)
-				{
-					view->prevDpiScale = Imgui_Core_GetDpiScale();
-					if (ImGui::GetIO().MouseWheel > 0)
-					{
-						ClearViewTail(view, "Mouse Wheel");
-					}
-					else
-					{
-						if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
-						{
-							view->tail = true;
-							// BB_LOG("Debug", "Set tail for '%s' - Mouse Wheel\n", applicationName);
-						}
-					}
-				}
-			}
-			else if (scrollDir != kVerticalScroll_None)
-			{
-				view->prevDpiScale = Imgui_Core_GetDpiScale();
-				const int pageLines = 20;
-				switch (scrollDir)
-				{
-				case kVerticalScroll_PageUp:
-					SetScrollY(curScrollY - pageLines * GetTextLineHeightWithSpacing());
-					ClearViewTail(view, "PageUp");
-					break;
-				case kVerticalScroll_PageDown:
-					SetScrollY(curScrollY + pageLines * GetTextLineHeightWithSpacing());
-					if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
-					{
-						view->tail = true;
-						// BB_LOG("Debug", "Set tail for '%s' - PageDown\n", applicationName);
-					}
-					break;
-				case kVerticalScroll_Up:
-					SetScrollY(curScrollY - GetTextLineHeightWithSpacing());
-					ClearViewTail(view, "Up");
-					break;
-				case kVerticalScroll_Down:
-					SetScrollY(curScrollY + GetTextLineHeightWithSpacing());
-					if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
-					{
-						view->tail = true;
-						// BB_LOG("Debug", "Set tail for '%s' - Down\n", applicationName);
-					}
-					break;
-				case kVerticalScroll_Start:
-					SetScrollY(0.0f);
-					ClearViewTail(view, "Home");
-					break;
-				case kVerticalScroll_End:
-					ImGui::SetScrollHereY(0.0f);
-					if (!view->tail)
-					{
-						view->tail = true;
-						// BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
-					}
-					break;
-				case kVerticalScroll_None:
-					BB_ASSERT(false);
-					break;
-				}
-			}
-			else if (view->tail)
-			{
-				if (curScrollY < view->prevScrollY && view->prevScrollY <= ImGui::GetScrollMaxY())
-				{
-					// ClearViewTail(view, "not at bottom");
-				}
-				if (view->visibleLogsAdded)
-				{
-					ImGui::SetScrollHereY();
-					view->visibleLogsAdded = false;
-					view->prevDpiScale = Imgui_Core_GetDpiScale();
-				}
-			}
-			view->prevScrollY = curScrollY;
-			float dpiScale = Imgui_Core_GetDpiScale();
-			if (view->prevDpiScale != dpiScale)
-			{
-				view->prevDpiScale = dpiScale;
-			}
+			UIRecordedView_UpdateScrolling(view, hovered, otherControlFocused, GetTextLineHeightWithSpacing(), scrollDir);
 			PopLogFont();
 		}
 		if (!bShown)
@@ -2554,6 +2449,115 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 	if (view->open)
 	{
 		view->initialized = true;
+	}
+}
+
+void UIRecordedView_UpdateScrolling(view_t *view, b32 logsHovered, b32 otherControlFocused, float lineHeight, ImGui::verticalScrollDir_e verticalScrollDir)
+{
+	if (otherControlFocused)
+	{
+		verticalScrollDir = kVerticalScroll_None;
+	}
+	float curScrollY = GetScrollY();
+	const float kScreenPercent = 0.5f;
+	// view->bookmarkThreshold = (int)(clipper.DisplayStart + visibleLines * 0.5f);
+	if (view->gotoTarget >= 0)
+	{
+		int adjustedTarget = view->gotoTarget - (int)((float)view->numVisibleLines * kScreenPercent);
+		if (adjustedTarget < 0)
+		{
+			adjustedTarget = 0;
+		}
+		SetScrollY((float)adjustedTarget * lineHeight);
+		if (view->prevDpiScale == Imgui_Core_GetDpiScale())
+		{
+			view->gotoTarget = -1;
+		}
+	}
+	else if (logsHovered && ImGui::GetIO().MouseWheel != 0.0f)
+	{
+		if (!ImGui::GetIO().KeyCtrl)
+		{
+			view->prevDpiScale = Imgui_Core_GetDpiScale();
+			if (ImGui::GetIO().MouseWheel > 0)
+			{
+				ClearViewTail(view, "Mouse Wheel");
+			}
+			else
+			{
+				if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
+				{
+					view->tail = true;
+					// BB_LOG("Debug", "Set tail for '%s' - Mouse Wheel\n", applicationName);
+				}
+			}
+		}
+	}
+	else if (verticalScrollDir != kVerticalScroll_None)
+	{
+		view->prevDpiScale = Imgui_Core_GetDpiScale();
+		const int pageLines = 20;
+		switch (verticalScrollDir)
+		{
+			case kVerticalScroll_PageUp:
+				SetScrollY(curScrollY - pageLines * GetTextLineHeightWithSpacing());
+				ClearViewTail(view, "PageUp");
+				break;
+			case kVerticalScroll_PageDown:
+				SetScrollY(curScrollY + pageLines * GetTextLineHeightWithSpacing());
+				if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
+				{
+					view->tail = true;
+					// BB_LOG("Debug", "Set tail for '%s' - PageDown\n", applicationName);
+				}
+				break;
+			case kVerticalScroll_Up:
+				SetScrollY(curScrollY - GetTextLineHeightWithSpacing());
+				ClearViewTail(view, "Up");
+				break;
+			case kVerticalScroll_Down:
+				SetScrollY(curScrollY + GetTextLineHeightWithSpacing());
+				if (!view->tail && curScrollY >= view->prevScrollY && view->prevScrollY >= ImGui::GetScrollMaxY())
+				{
+					view->tail = true;
+					// BB_LOG("Debug", "Set tail for '%s' - Down\n", applicationName);
+				}
+				break;
+			case kVerticalScroll_Start:
+				SetScrollY(0.0f);
+				ClearViewTail(view, "Home");
+				break;
+			case kVerticalScroll_End:
+				ImGui::SetScrollHereY(0.0f);
+				if (!view->tail)
+				{
+					view->tail = true;
+					// BB_LOG("Debug", "Set tail for '%s' - End\n", applicationName);
+				}
+				break;
+			case kVerticalScroll_None:
+				BB_ASSERT(false);
+				break;
+		}
+	}
+	else if (view->tail)
+	{
+		if (curScrollY < view->prevScrollY && view->prevScrollY <= ImGui::GetScrollMaxY())
+		{
+			// ClearViewTail(view, "not at bottom");
+		}
+		if (view->visibleLogsAdded)
+		{
+			ImGui::SetScrollHereY();
+			view->visibleLogsAdded = false;
+			view->prevDpiScale = Imgui_Core_GetDpiScale();
+		}
+	}
+	view->prevScrollY = curScrollY;
+	float dpiScale = Imgui_Core_GetDpiScale();
+	if (view->prevDpiScale != dpiScale)
+	{
+		view->prevDpiScale = dpiScale;
 	}
 }
 

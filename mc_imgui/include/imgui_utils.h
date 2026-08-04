@@ -34,7 +34,7 @@ namespace ImGui
 	bool InputText(const char* label, sb_t* buf, u32 buf_size, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
 	bool InputTextMultiline(const char* label, sb_t* buf, u32 buf_size, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
 
-	enum verticalScrollDir_e
+	enum verticalScrollDir_e : int
 	{
 		kVerticalScroll_None,
 		kVerticalScroll_PageUp,
