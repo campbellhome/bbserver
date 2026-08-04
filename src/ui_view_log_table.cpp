@@ -412,11 +412,11 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 			float startY = ImGui::GetCursorScreenPos().y;
 			ImGui::TableNextRow(ImGuiTableRowFlags_None, row_min_height);
 
-			// u32 logIndex = viewLog->sessionLogIndex;
-			// recorded_session_t* session = view->session;
-			// recorded_log_t* sessionLog = session->logs.data[logIndex];
-			// bb_decoded_packet_t* decoded = &sessionLog->packet;
-			// recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
+			u32 logIndex = viewLog->sessionLogIndex;
+			recorded_session_t* session = view->session;
+			recorded_log_t* sessionLog = session->logs.data[logIndex];
+			bb_decoded_packet_t* decoded = &sessionLog->packet;
+			recorded_category_t* recordedCategory = recorded_session_find_category(session, decoded->packet.logText.categoryId);
 			// view_category_t* viewCategory = view_find_category(view, decoded->packet.logText.categoryId);
 
 			b32 oldShadows = false;
@@ -446,6 +446,37 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 							}
 							verticalScrollDir = ImGui::GetVerticalScrollDir();
 						}
+
+						if (!g_config.tooltips.onlyOverSelected || viewLog->selected)
+						{
+							ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_kBBColor_Default));
+							if (ImGui::GetMousePos().x >= ImGui::GetWindowPos().x + view->textStartX - ImGui::GetScrollX())
+							{
+								if (g_config.tooltips.overText)
+								{
+									UIRecordedView_SetLogTooltip(decoded, recordedCategory, session, view, sessionLog);
+								}
+							}
+							else
+							{
+								if (g_config.tooltips.overMisc)
+								{
+									UIRecordedView_SetLogTooltip(decoded, recordedCategory, session, view, sessionLog);
+								}
+							}
+							ImGui::PopStyleColor(1);
+						}
+
+						if (ImGui::BeginPopupContextItem(va("RecordedEntry_%u_%u_ContextMenu", logIndex, viewLog->subLine)))
+						{
+							if (!viewLog->selected)
+							{
+								UIRecordedView_Logs_ClearSelection(view);
+								UIRecordedView_Logs_AddSelection(view, viewLog);
+							}
+							UIRecordedView_LogPopup(view, viewLog);
+							ImGui::EndPopup();
+						}
 					}
 					else
 					{
@@ -462,6 +493,7 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 
 			if (ImGui::TableSetColumnIndex(kColumn_Count))
 			{
+				view->textStartX = ImGui::GetCursorPosX();
 				LogTable_EmitLogText(view, viewLog);
 			}
 

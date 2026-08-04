@@ -67,7 +67,6 @@ static sb_t s_textSpan;
 static sb_t s_wrappedLine;
 static sb_t s_selectedLine;
 static float s_lastDpiScale = 1.0f;
-static float s_textColumnCursorPosX;
 static constexpr u32 g_logTruncationLen = 16u * 1024u;
 static b32 g_tableTest = true;
 
@@ -566,7 +565,7 @@ static void UIRecordedView_ShowStats(view_t* view, bool bSortByBytes, bool bDir)
 	}
 }
 
-static void UIRecordedView_Logs_ClearSelection(view_t* view)
+void UIRecordedView_Logs_ClearSelection(view_t* view)
 {
 	view_logs_t* logs = &view->visibleLogs;
 	UITags_Category_ClearSelection(view);
@@ -587,7 +586,7 @@ static void UIRecordedView_Logs_SelectAll(view_t* view)
 	}
 }
 
-static void UIRecordedView_Logs_AddSelection(view_t* view, view_log_t* log)
+void UIRecordedView_Logs_AddSelection(view_t* view, view_log_t* log)
 {
 	log->selected = true;
 	view->visibleLogs.lastClickIndex = (u32)(log - view->visibleLogs.data);
@@ -703,7 +702,7 @@ static u32 TextWrappedMaxLines(const char* text, u32 maxLines, bool bShadowed, b
 	return numLines;
 }
 
-static void SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* category, recorded_session_t* session, view_t* view, recorded_log_t* sessionLog)
+void UIRecordedView_SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* category, recorded_session_t* session, view_t* view, recorded_log_t* sessionLog)
 {
 	if (IsTooltipActive())
 	{
@@ -1258,18 +1257,18 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	if (!g_config.tooltips.onlyOverSelected || viewLog->selected)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Text, MakeColor(kStyleColor_kBBColor_Default));
-		if (ImGui::GetMousePos().x >= ImGui::GetWindowPos().x + s_textColumnCursorPosX - ImGui::GetScrollX())
+		if (ImGui::GetMousePos().x >= ImGui::GetWindowPos().x + view->textStartX - ImGui::GetScrollX())
 		{
 			if (g_config.tooltips.overText)
 			{
-				SetLogTooltip(decoded, recordedCategory, session, view, sessionLog);
+				UIRecordedView_SetLogTooltip(decoded, recordedCategory, session, view, sessionLog);
 			}
 		}
 		else
 		{
 			if (g_config.tooltips.overMisc)
 			{
-				SetLogTooltip(decoded, recordedCategory, session, view, sessionLog);
+				UIRecordedView_SetLogTooltip(decoded, recordedCategory, session, view, sessionLog);
 			}
 		}
 		ImGui::PopStyleColor(1);
@@ -1544,7 +1543,7 @@ static float UIRecordedView_LogHeader(view_t* view)
 	float textOffset = ImGui::GetCursorPosX() + ImGui::GetStyle().ItemSpacing.x;
 
 	float startOffset = GetCursorPosX();
-	s_textColumnCursorPosX = startOffset;
+	view->textStartX = startOffset;
 	ImGui::Button("###Text", kButton_ColumnHeaderNoSort, ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
 	const float itemPad = GetStyle().ItemSpacing.x;
 	DrawColumnHeaderText(startOffset + GetStyle().ItemInnerSpacing.x, ImGui::GetContentRegionAvail().x - itemPad, "Text", nullptr, "CategoriesContextMenu");
