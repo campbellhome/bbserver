@@ -22,6 +22,9 @@ static sb_t s_textSpan;
 const char* BuildLogColumnText(view_t* view, view_log_t* viewLog, view_column_e column);
 void UIRecordedView_Logs_HandleClick(view_t* view, view_log_t* log);
 
+#define EDITABLE_TABLE_OPTIONS 0
+
+#if EDITABLE_TABLE_OPTIONS
 // Helper to display a little (?) mark which shows a tooltip when hovered.
 // In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.md)
 static void HelpMarker(const char* desc)
@@ -96,6 +99,20 @@ static void EditTableSizingFlags(ImGuiTableFlags* p_flags)
 		ImGui::EndTooltip();
 	}
 }
+#endif // EDITABLE_TABLE_OPTIONS
+
+namespace ImGui
+{
+	float TableGetColumnWidth(int column)
+	{
+		ImGuiTable* table = ImGui::GetCurrentTable();
+		if (table && column >= 0 && column < table->ColumnsCount)
+		{
+			return table->Columns[column].WidthGiven;
+		}
+		return 0.0f;
+	}
+}
 
 void LogTable_SetupColumns(view_t* view, ImGuiTableColumnFlags columns_base_flags, int freeze_cols, int freeze_rows)
 {
@@ -108,9 +125,21 @@ void LogTable_SetupColumns(view_t* view, ImGuiTableColumnFlags columns_base_flag
 		{
 			flags |= ImGuiTableColumnFlags_DefaultHide;
 		}
-		ImGui::TableSetupColumn(g_view_column_long_display_names[i], flags);
+		ImGui::TableSetupColumn(g_view_column_long_display_names[i], flags, view->columns[i].width);
+
+		if (view->columns[i].visible)
+		{
+			float columnWidth = ImGui::TableGetColumnWidth((int)i);
+			if (columnWidth > 0.0f && columnWidth != view->columns[i].width)
+			{
+				view->columns[i].width = columnWidth;
+			}
+		}
 	}
-	ImGui::TableSetupColumn("Text", columns_base_flags | ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder);
+	ImGuiTableColumnFlags textFlags = columns_base_flags & (~ImGuiTableColumnFlags_WidthMask_);
+	textFlags |= ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize;
+	textFlags |= ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder;
+	ImGui::TableSetupColumn("Text", textFlags, view->textWidth);
 
 	// We use the "user_id" parameter of TableSetupColumn() to specify a user id that will be stored in the sort specifications.
 	// This is so our sort function can identify a column given our own identifier. We could also identify them based on their index!
@@ -223,7 +252,7 @@ static colored_text_t UIRecordedView_GetColoredText(colored_text_t prev)
 	return ret;
 }
 
-static void LogTable_EmitLogText(view_t* view, view_log_t* viewLog, named_filter_t* log_color_entry)
+static float LogTable_EmitLogText(view_t* view, view_log_t* viewLog, named_filter_t* log_color_entry)
 {
 	u32 logIndex = viewLog->sessionLogIndex;
 	recorded_session_t* session = view->session;
@@ -388,6 +417,10 @@ static void LogTable_EmitLogText(view_t* view, view_log_t* viewLog, named_filter
 	{
 		ImGui::TextUnformatted("");
 	}
+
+	ImVec2 blankSize = font->CalcTextSizeA(GImGui->FontSize, FLT_MAX, 0.0f, "            ");
+	float requiredWidth = totalTextSizeX + blankSize.x;
+	return requiredWidth;
 }
 
 static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherControlFocused)
@@ -429,7 +462,8 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 
 			for (int i = 0; i < kColumn_Count; ++i)
 			{
-				if (ImGui::TableSetColumnIndex(i))
+				view->columns[i].visible = ImGui::TableSetColumnIndex(i);
+				if (view->columns[i].visible)
 				{
 					view_column_e column = (view_column_e)i;
 					const char* columnText = BuildLogColumnText(view, viewLog, column);
@@ -497,7 +531,11 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 			if (ImGui::TableSetColumnIndex(kColumn_Count))
 			{
 				view->textStartX = ImGui::GetCursorPosX();
-				LogTable_EmitLogText(view, viewLog, log_color_entry);
+				float textWidth = LogTable_EmitLogText(view, viewLog, log_color_entry);
+				if (textWidth > view->textWidth)
+				{
+					view->textWidth = textWidth;
+				}
 			}
 
 			float endY = ImGui::GetCursorScreenPos().y;
@@ -520,11 +558,11 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 
 	// Using those as a base value to create width/height that are factor of the size of our font
 	PushLogFont();
-	const float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
+	//const float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
 	const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
 	PopLogFont();
 
-	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_SortMulti | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit;
+	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings;
 	static ImGuiTableColumnFlags columns_base_flags = ImGuiTableColumnFlags_None;
 
 	enum ContentsType
@@ -548,6 +586,7 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 	static bool show_wrapped_text = false;
 	// static ImGuiTextFilter filter;
 	// ImGui::SetNextItemOpen(true, ImGuiCond_Once); // FIXME-TABLE: Enabling this results in initial clipped first pass on table which tend to affect column sizing
+#if EDITABLE_TABLE_OPTIONS
 	if (ImGui::TreeNode("Options"))
 	{
 		// Make the UI compact because there are so many fields
@@ -680,6 +719,7 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 		ImGui::Spacing();
 		ImGui::TreePop();
 	}
+#endif
 
 	const ImDrawList* parent_draw_list = ImGui::GetWindowDrawList();
 	const int parent_draw_list_draw_cmd_count = parent_draw_list->CmdBuffer.Size;
