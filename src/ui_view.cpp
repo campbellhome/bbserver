@@ -2366,17 +2366,17 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 				SetNextWindowContentSize(ImVec2(view->scrollWidth, 0.0f));
 			}
 		}
-		int horizScrollingFlags = 0;
-		if (BeginChild("logheader", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 4), false, horizScrollingFlags))
+		if (!bShown)
 		{
-			if (!bShown)
+			int horizScrollingFlags = 0;
+			if (BeginChild("logheader", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 4), false, horizScrollingFlags))
 			{
 				SetScrollX(view->prevScrollX);
 				textOffset = UIRecordedView_LogHeader(view);
 				ImGui::Separator();
 			}
+			EndChild();
 		}
-		EndChild();
 
 		view->lastVisibleSessionIndexStart = ~0U;
 		view->lastVisibleSessionIndexEnd = 0U;

@@ -557,10 +557,10 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 		return false;
 
 	// Using those as a base value to create width/height that are factor of the size of our font
-	PushLogFont();
+	//PushLogFont();
 	//const float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
-	const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
-	PopLogFont();
+	//const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
+	//PopLogFont();
 
 	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings;
 	static ImGuiTableColumnFlags columns_base_flags = ImGuiTableColumnFlags_None;
@@ -578,7 +578,7 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 	const char* contents_type_names[] = { "Text", "Button", "SmallButton", "FillButton", "Selectable", "Selectable (span row)" };
 	static int freeze_cols = 1;
 	static int freeze_rows = 1;
-	static ImVec2 outer_size_value = ImVec2(0.0f, -TEXT_BASE_HEIGHT * 3);
+	static ImVec2 outer_size_value = ImVec2(0.0f, 0.0f);
 	static float row_min_height = 0.0f;          // Auto
 	static float inner_width_with_scroll = 0.0f; // Auto-extend
 	static bool outer_size_enabled = true;
@@ -719,12 +719,12 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 		ImGui::Spacing();
 		ImGui::TreePop();
 	}
-#endif
 
 	const ImDrawList* parent_draw_list = ImGui::GetWindowDrawList();
 	const int parent_draw_list_draw_cmd_count = parent_draw_list->CmdBuffer.Size;
 	ImVec2 table_scroll_cur, table_scroll_max; // For debug display
 	const ImDrawList* table_draw_list = NULL;  // "
+#endif // EDITABLE_TABLE_OPTIONS
 
 	// Submit table
 	const float inner_width_to_use = (flags & ImGuiTableFlags_ScrollX) ? inner_width_with_scroll : 0.0f;
@@ -741,13 +741,17 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 		// rows
 		LogTable_EmitRows(view, row_min_height, otherControlFocused);
 
+#if EDITABLE_TABLE_OPTIONS
 		// Store some info to display debug details below
 		table_scroll_cur = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
 		table_scroll_max = ImVec2(ImGui::GetScrollMaxX(), ImGui::GetScrollMaxY());
 		table_draw_list = ImGui::GetWindowDrawList();
+#endif // EDITABLE_TABLE_OPTIONS
+
 		ImGui::EndTable();
 	}
 
+#if EDITABLE_TABLE_OPTIONS
 	static bool show_debug_details = false;
 	ImGui::Checkbox("Debug details", &show_debug_details);
 	if (show_debug_details && table_draw_list)
@@ -761,6 +765,7 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 			ImGui::Text(": DrawCmd: +%d (in child window), Scroll: (%.f/%.f) (%.f/%.f)",
 			            table_draw_list_draw_cmd_count - 1, table_scroll_cur.x, table_scroll_max.x, table_scroll_cur.y, table_scroll_max.y);
 	}
+#endif // EDITABLE_TABLE_OPTIONS
 
 	return true;
 }
