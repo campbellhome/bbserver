@@ -557,10 +557,14 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 		return false;
 
 	// Using those as a base value to create width/height that are factor of the size of our font
-	//PushLogFont();
-	//const float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
-	//const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
-	//PopLogFont();
+#if EDITABLE_TABLE_OPTIONS
+	PushLogFont();
+	const float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
+	const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
+	PopLogFont();
+#else
+	const float TEXT_BASE_HEIGHT = 0.0f;
+#endif // EDITABLE_TABLE_OPTIONS
 
 	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings;
 	static ImGuiTableColumnFlags columns_base_flags = ImGuiTableColumnFlags_None;
@@ -578,7 +582,7 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 	const char* contents_type_names[] = { "Text", "Button", "SmallButton", "FillButton", "Selectable", "Selectable (span row)" };
 	static int freeze_cols = 1;
 	static int freeze_rows = 1;
-	static ImVec2 outer_size_value = ImVec2(0.0f, 0.0f);
+	static ImVec2 outer_size_value = ImVec2(0.0f, -2.0f * TEXT_BASE_HEIGHT);
 	static float row_min_height = 0.0f;          // Auto
 	static float inner_width_with_scroll = 0.0f; // Auto-extend
 	static bool outer_size_enabled = true;
