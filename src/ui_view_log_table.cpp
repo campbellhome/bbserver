@@ -452,6 +452,8 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 			named_filter_t* log_color_entry = named_filters_resolve(view, viewLog, sessionLog, true);
 			view_log_colors_t viewLogColors = UIRecordedView_InitLogColors(decoded, viewLog, viewCategory, log_color_entry);
 
+			LogLevelColorizer colorizer((bb_log_level_e)decoded->packet.logText.level);
+
 			b32 oldShadows = false;
 			b32 firstColumn = true;
 			if (viewLog->subLine != 0)
