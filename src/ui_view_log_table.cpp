@@ -425,6 +425,12 @@ static float LogTable_EmitLogText(view_t* view, view_log_t* viewLog, named_filte
 
 static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherControlFocused)
 {
+	// reset visible region
+	view->lastVisibleSessionIndexStart = ~0U;
+	view->lastVisibleSessionIndexEnd = 0U;
+	view->lastVisibleSelectedSessionIndexStart = ~0U;
+	view->lastVisibleSelectedSessionIndexEnd = 0U;
+
 	ImGui::verticalScrollDir_e verticalScrollDir = ImGui::kVerticalScroll_None;
 	bool logsHovered = ImGui::IsWindowHovered();
 	PushLogFont();
@@ -542,6 +548,15 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 
 			float endY = ImGui::GetCursorScreenPos().y;
 			lineHeight = endY - startY;
+
+			// track our visible view region so we can recenter when toggling categories on/off etc
+			view->lastVisibleSessionIndexStart = BB_MIN(view->lastVisibleSessionIndexStart, viewLog->sessionLogIndex);
+			view->lastVisibleSessionIndexEnd = BB_MAX(view->lastVisibleSessionIndexEnd, viewLog->sessionLogIndex);
+			if (viewLog->selected)
+			{
+				view->lastVisibleSelectedSessionIndexStart = BB_MIN(view->lastVisibleSelectedSessionIndexStart, viewLog->sessionLogIndex);
+				view->lastVisibleSelectedSessionIndexEnd = BB_MAX(view->lastVisibleSelectedSessionIndexEnd, viewLog->sessionLogIndex);
+			}
 
 			ImGui::PopID();
 		}

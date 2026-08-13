@@ -2378,11 +2378,6 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			EndChild();
 		}
 
-		view->lastVisibleSessionIndexStart = ~0U;
-		view->lastVisibleSessionIndexEnd = 0U;
-		view->lastVisibleSelectedSessionIndexStart = ~0U;
-		view->lastVisibleSelectedSessionIndexEnd = 0U;
-
 		if (view->scrollWidth > 0.0f && !bShown)
 		{
 			ImVec2 region = ImGui::GetWindowContentRegionMax();
@@ -2393,6 +2388,11 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 		}
 		if (!bShown && BeginChild("logentries", ImVec2(0, ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_AlwaysVerticalScrollbar))
 		{
+			view->lastVisibleSessionIndexStart = ~0U;
+			view->lastVisibleSessionIndexEnd = 0U;
+			view->lastVisibleSelectedSessionIndexStart = ~0U;
+			view->lastVisibleSelectedSessionIndexEnd = 0U;
+
 			verticalScrollDir_e scrollDir = kVerticalScroll_None;
 			SetScrollX(view->prevScrollX);
 			PushLogFont();
