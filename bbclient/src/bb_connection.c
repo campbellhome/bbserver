@@ -432,7 +432,7 @@ b32 bbcon_is_listening(const bb_connection_t* con)
 
 b32 bbcon_is_connected(const bb_connection_t* con)
 {
-	return con->socket != BB_INVALID_SOCKET && con->state != kBBConnection_Listening && con->state != kBBConnection_Connecting;
+	return con->socket != BB_INVALID_SOCKET && con->state == kBBConnection_Connected;
 }
 
 // Retry sends until we've sent everything or disconnected
