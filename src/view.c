@@ -1011,9 +1011,16 @@ void view_update_visible_logs(view_t* view)
 	u32 persistentLogIndex = 0;
 	recorded_session_t* session = view->session;
 	view_logs_t oldLogs = view->visibleLogs;
-	u32 lastClickIndex = view->visibleLogs.lastClickIndex;
+	u32 lastClickSessionLogIndex = ~0u;
+	{
+		const view_log_t* oldVisibleLog = bba_get(view->visibleLogs, view->visibleLogs.lastClickIndex);
+		if (oldVisibleLog)
+		{
+			lastClickSessionLogIndex = oldVisibleLog->sessionLogIndex;
+		}
+	}
 	memset(&view->visibleLogs, 0, sizeof(view->visibleLogs));
-	view->visibleLogs.lastClickIndex = lastClickIndex;
+	view->visibleLogs.lastClickIndex = ~0u;
 	view->lastSessionLogIndex = ~0U;
 	view->lastVisibleSessionLogIndex = ~0U;
 	view->scrollWidth = 0.0f;
@@ -1038,6 +1045,13 @@ void view_update_visible_logs(view_t* view)
 			}
 			view_add_log_internal(view, log, persistentLogIndex);
 			view->lastVisibleSessionLogIndex = i;
+			if (log->sessionLogIndex == lastClickSessionLogIndex)
+			{
+				if (view->visibleLogs.count > 0)
+				{
+					view->visibleLogs.lastClickIndex = view->visibleLogs.count - 1;
+				}
+			}
 		}
 		view->lastSessionLogIndex = i;
 	}

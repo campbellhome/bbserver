@@ -83,6 +83,7 @@ static BB_INLINE U* bba__template_add(T& a, U*, u32 n, b32 clear, b32 reserve_on
 		}                                                       \
 	}
 #define bba_last(a) ((a).data[(a).count - 1])
+#define bba_get(a, index) (((u32)(index) < (a).count) ? (a).data + (index) : NULL)
 
 #define bba_erase_num(a, index, num)                                                                      \
 	{                                                                                                     \
