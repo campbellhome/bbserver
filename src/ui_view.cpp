@@ -1750,6 +1750,170 @@ static void UIRecordedView_HandleStopRecordingMessageBox(messageBox* mb, const c
 	}
 }
 
+static void UIRecordedView_ViewPopupContents(view_t *view, recording_t *recording)
+{
+	recorded_session_t *session = view->session;
+
+	if (ImGui::Selectable("Close this view"))
+	{
+		view_close_and_write_config(view);
+	}
+	if (ImGui::Selectable("Close all views"))
+	{
+		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		{
+			view_t* otherView = *(s_gathered_views.data + viewIndex);
+			view_close_and_write_config(otherView);
+		}
+	}
+	if (ImGui::Selectable("Close all but this view"))
+	{
+		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		{
+			view_t* otherView = *(s_gathered_views.data + viewIndex);
+			if (otherView != view)
+			{
+				view_close_and_write_config(otherView);
+			}
+		}
+	}
+	if (ImGui::Selectable("Close all inactive views"))
+	{
+		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		{
+			view_t* otherView = *(s_gathered_views.data + viewIndex);
+			const recording_t* otherRecording = recordings_find_by_path(otherView->session->path);
+			if (!otherRecording || !otherRecording->active)
+			{
+				view_close_and_write_config(otherView);
+			}
+		}
+	}
+	if (ImGui::Selectable("Close all inactive auto-close views"))
+	{
+		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		{
+			view_t* otherView = *(s_gathered_views.data + viewIndex);
+			if (otherView->autoClose)
+			{
+				const recording_t* otherRecording = recordings_find_by_path(otherView->session->path);
+				if (!otherRecording || !otherRecording->active)
+				{
+					view_close_and_write_config(otherView);
+				}
+			}
+		}
+	}
+	if (ImGui::Selectable("Re-dock this view"))
+	{
+		view->redockCount = 1;
+	}
+	if (ImGui::Selectable("Re-dock all views"))
+	{
+		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		{
+			view_t* otherView = *(s_gathered_views.data + viewIndex);
+			otherView->redockCount = 1;
+		}
+	}
+
+	ImGui::Separator();
+
+	if (ImGui::MenuItem("Copy filename to clipboard"))
+	{
+		SetClipboardText(path_get_filename(view->session->path));
+	}
+	if (ImGui::MenuItem("Copy full path to clipboard"))
+	{
+		SetClipboardText(view->session->path);
+	}
+	if (ImGui::BeginMenu("Save..."))
+	{
+		if (ImGui::MenuItem("Save text"))
+		{
+			UIRecordedView_SaveLog(view, false, kColumnSpacer_Tab);
+		}
+		if (ImGui::MenuItem("Save all columns"))
+		{
+			UIRecordedView_SaveLog(view, true, kColumnSpacer_Spaces);
+		}
+		if (ImGui::MenuItem("Save all columns (tab-separated)"))
+		{
+			UIRecordedView_SaveLog(view, true, kColumnSpacer_Tab);
+		}
+		ImGui::EndMenu();
+	}
+	if (ImGui::BeginMenu("Stats..."))
+	{
+		if (ImGui::BeginMenu("This File..."))
+		{
+			if (ImGui::MenuItem("Show stats by bytes"))
+			{
+				UIRecordedView_ShowStats(view, true, false);
+			}
+			if (ImGui::MenuItem("Show stats by line"))
+			{
+				UIRecordedView_ShowStats(view, false, false);
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Directory..."))
+		{
+			bool bConfigChanged = false;
+			bConfigChanged = ImGui::Checkbox("Recursive", &g_config.dirStatsRecursive) || bConfigChanged;
+			bConfigChanged = ImGui::Checkbox("Show per-application stats", &g_config.dirStatsPerApp) || bConfigChanged;
+			bConfigChanged = ImGui::Checkbox("Show per-platform stats", &g_config.dirStatsPerPlatform) || bConfigChanged;
+			bConfigChanged = ImGui::Checkbox("Show overall stats", &g_config.dirStatsOverall) || bConfigChanged;
+			if (bConfigChanged)
+			{
+				config_write(&g_config);
+			}
+			if (ImGui::MenuItem("Show stats by bytes"))
+			{
+				UIRecordedView_ShowStats(view, true, true);
+			}
+			if (ImGui::MenuItem("Show stats by line"))
+			{
+				UIRecordedView_ShowStats(view, false, true);
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenu();
+	}
+	if (ImGui::MenuItem("Open containing folder"))
+	{
+		UIRecordedView_OpenContainingFolder(view);
+	}
+	if (recording->active)
+	{
+		if (recording->outgoingMqId != mq_invalid_id())
+		{
+			if (ImGui::Selectable("Stop recording"))
+			{
+				messageBox mb = {};
+				sdict_add_raw(&mb.data, "title", u8"\uf06a Stop recording?");
+				sdict_add_raw(&mb.data, "text", va("Stop recording %s?", session->path));
+				sdict_add_raw(&mb.data, "button1", "Stop Recording");
+				sdict_add_raw(&mb.data, "button2", "Cancel");
+				mb.callback = &UIRecordedView_HandleStopRecordingMessageBox;
+				mb.userData = view;
+				mb_queue(mb, &view->messageboxes);
+			}
+		}
+	}
+	if (g_config.showDebugMenu)
+	{
+		if (ImGui::MenuItem("Test message box"))
+		{
+			messageBox mb = {};
+			sdict_add_raw(&mb.data, "title", u8"\uf06a Data Corruption");
+			sdict_add_raw(&mb.data, "text", va("Failed to deserialize %s", session->path));
+			sdict_add_raw(&mb.data, "button1", "Ok");
+			mb_queue(mb, &view->messageboxes);
+		}
+	}
+}
+
 static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 {
 	if (!view->initialized)
@@ -1801,74 +1965,14 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			}
 		}
 
+		recording_t* recording = recordings_find_by_path(session->path);
+
 		if (ImGui::BeginPopupContextItem("ViewContext"))
 		{
-			if (ImGui::Selectable("Close this view"))
-			{
-				view_close_and_write_config(view);
-			}
-			if (ImGui::Selectable("Close all views"))
-			{
-				for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
-				{
-					view_t* otherView = *(s_gathered_views.data + viewIndex);
-					view_close_and_write_config(otherView);
-				}
-			}
-			if (ImGui::Selectable("Close all but this view"))
-			{
-				for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
-				{
-					view_t* otherView = *(s_gathered_views.data + viewIndex);
-					if (otherView != view)
-					{
-						view_close_and_write_config(otherView);
-					}
-				}
-			}
-			if (ImGui::Selectable("Close all inactive views"))
-			{
-				for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
-				{
-					view_t* otherView = *(s_gathered_views.data + viewIndex);
-					const recording_t* recording = recordings_find_by_path(otherView->session->path);
-					if (!recording || !recording->active)
-					{
-						view_close_and_write_config(otherView);
-					}
-				}
-			}
-			if (ImGui::Selectable("Close all inactive auto-close views"))
-			{
-				for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
-				{
-					view_t* otherView = *(s_gathered_views.data + viewIndex);
-					if (otherView->autoClose)
-					{
-						const recording_t* recording = recordings_find_by_path(otherView->session->path);
-						if (!recording || !recording->active)
-						{
-							view_close_and_write_config(otherView);
-						}
-					}
-				}
-			}
-			if (ImGui::Selectable("Re-dock this view"))
-			{
-				view->redockCount = 1;
-			}
-			if (ImGui::Selectable("Re-dock all views"))
-			{
-				for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
-				{
-					view_t* otherView = *(s_gathered_views.data + viewIndex);
-					otherView->redockCount = 1;
-				}
-			}
+			UIRecordedView_ViewPopupContents(view, recording);
 			ImGui::EndPopup();
 		}
 
-		const recording_t* recording = recordings_find_by_path(session->path);
 		bool hasFocus = ImGui::IsWindowFocused() ||
 		                ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootWindow);
 
@@ -1954,99 +2058,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			bool bPopup = !bMenuOpen && ImGui::BeginPopupContextItem(menuText);
 			if (bPopup || bMenuOpen)
 			{
-				if (ImGui::MenuItem("Copy filename to clipboard"))
-				{
-					SetClipboardText(path_get_filename(view->session->path));
-				}
-				if (ImGui::MenuItem("Copy full path to clipboard"))
-				{
-					SetClipboardText(view->session->path);
-				}
-				if (ImGui::BeginMenu("Save..."))
-				{
-					if (ImGui::MenuItem("Save text"))
-					{
-						UIRecordedView_SaveLog(view, false, kColumnSpacer_Tab);
-					}
-					if (ImGui::MenuItem("Save all columns"))
-					{
-						UIRecordedView_SaveLog(view, true, kColumnSpacer_Spaces);
-					}
-					if (ImGui::MenuItem("Save all columns (tab-separated)"))
-					{
-						UIRecordedView_SaveLog(view, true, kColumnSpacer_Tab);
-					}
-					ImGui::EndMenu();
-				}
-				if (ImGui::BeginMenu("Stats..."))
-				{
-					if (ImGui::BeginMenu("This File..."))
-					{
-						if (ImGui::MenuItem("Show stats by bytes"))
-						{
-							UIRecordedView_ShowStats(view, true, false);
-						}
-						if (ImGui::MenuItem("Show stats by line"))
-						{
-							UIRecordedView_ShowStats(view, false, false);
-						}
-						ImGui::EndMenu();
-					}
-					if (ImGui::BeginMenu("Directory..."))
-					{
-						bool bConfigChanged = false;
-						bConfigChanged = ImGui::Checkbox("Recursive", &g_config.dirStatsRecursive) || bConfigChanged;
-						bConfigChanged = ImGui::Checkbox("Show per-application stats", &g_config.dirStatsPerApp) || bConfigChanged;
-						bConfigChanged = ImGui::Checkbox("Show per-platform stats", &g_config.dirStatsPerPlatform) || bConfigChanged;
-						bConfigChanged = ImGui::Checkbox("Show overall stats", &g_config.dirStatsOverall) || bConfigChanged;
-						if (bConfigChanged)
-						{
-							config_write(&g_config);
-						}
-						if (ImGui::MenuItem("Show stats by bytes"))
-						{
-							UIRecordedView_ShowStats(view, true, true);
-						}
-						if (ImGui::MenuItem("Show stats by line"))
-						{
-							UIRecordedView_ShowStats(view, false, true);
-						}
-						ImGui::EndMenu();
-					}
-					ImGui::EndMenu();
-				}
-				if (ImGui::MenuItem("Open containing folder"))
-				{
-					UIRecordedView_OpenContainingFolder(view);
-				}
-				if (recording->active)
-				{
-					if (recording->outgoingMqId != mq_invalid_id())
-					{
-						if (ImGui::Selectable("Stop recording"))
-						{
-							messageBox mb = {};
-							sdict_add_raw(&mb.data, "title", u8"\uf06a Stop recording?");
-							sdict_add_raw(&mb.data, "text", va("Stop recording %s?", session->path));
-							sdict_add_raw(&mb.data, "button1", "Stop Recording");
-							sdict_add_raw(&mb.data, "button2", "Cancel");
-							mb.callback = &UIRecordedView_HandleStopRecordingMessageBox;
-							mb.userData = view;
-							mb_queue(mb, &view->messageboxes);
-						}
-					}
-				}
-				if (g_config.showDebugMenu)
-				{
-					if (ImGui::MenuItem("Test message box"))
-					{
-						messageBox mb = {};
-						sdict_add_raw(&mb.data, "title", u8"\uf06a Data Corruption");
-						sdict_add_raw(&mb.data, "text", va("Failed to deserialize %s", session->path));
-						sdict_add_raw(&mb.data, "button1", "Ok");
-						mb_queue(mb, &view->messageboxes);
-					}
-				}
+				UIRecordedView_ViewPopupContents(view, recording);
 				if (bPopup)
 				{
 					ImGui::EndPopup();
