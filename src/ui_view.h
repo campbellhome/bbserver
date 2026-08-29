@@ -49,6 +49,7 @@ void UIRecordedView_Shutdown(void);
 void UIRecordedView_TooltipLevelText(const char* fmt, u32 count, bb_log_level_e logLevel);
 bool UIRecordedView_EnableTiledViews(void);
 void UIRecordedView_TiledViewCheckbox(void);
+void UIRecordedView_ColumnContextMenu(view_t* view, const char* menuName);
 void UIRecordedView_UpdateScrolling(view_t* view, b32 logsHovered, b32 otherControlFocused, float lineHeight, ImGui::verticalScrollDir_e verticalScrollDir);
 void UIRecordedView_SetLogTooltip(bb_decoded_packet_t* decoded, recorded_category_t* category, recorded_session_t* session, view_t* view, recorded_log_t* sessionLog);
 void UIRecordedView_Logs_ClearSelection(view_t* view);

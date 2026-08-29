@@ -414,6 +414,7 @@ void view_reset(view_t* view);
 void view_restart(view_t* view);
 void view_reset_column_offsets(view_t* view);
 void view_reset_column_widths(view_t* view);
+void view_reset_column_visibility(view_t *view);
 void view_add_category(view_t* view, recorded_category_t* category, const view_config_category_t* configCategory);
 void view_add_thread(view_t* view, recorded_thread_t* rt);
 void view_add_file(view_t* view, recorded_filename_t* rf);

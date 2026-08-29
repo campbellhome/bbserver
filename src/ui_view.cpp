@@ -1501,16 +1501,42 @@ float UIRecordedView_LogLine(view_t* view, view_log_t* viewLog, float textOffset
 	return requiredWidth;
 }
 
-static void UIRecordedView_ColumnContextMenu(view_t* view, const char* menuName)
+void UIRecordedView_ColumnContextMenu(view_t* view, const char* menuName)
 {
 	if (view->filterPopupOpen || view->filterContextPopupOpen)
 		return;
+	ImGuiContext& g = *GImGui;
+	ImGuiTable* table = g.CurrentTable;
 	if (ImGui::BeginPopup(menuName))
 	{
-		for (u32 i = 0; i < kColumn_Count; ++i)
+		if (table)
+		{
+			if (ImGui::MenuItem("Reset column order", nullptr, (bool *)nullptr, true))
+			{
+				table->IsResetDisplayOrderRequest = true;
+			}
+			if (ImGui::MenuItem("Reset column visibility", nullptr, (bool *)nullptr, true))
+			{
+				//table->IsResetVisibilityRequest = true;
+				view_reset_column_visibility(view);
+				for (s32 i = 0; i < kColumn_Count; ++i)
+				{
+					ImGuiTableColumn* column = &table->Columns[i];
+					column->IsUserEnabledNextFrame = view->columns[i].visible != 0;
+				}
+			}
+			ImGui::Separator();
+		}
+		for (s32 i = 0; i < kColumn_Count; ++i)
 		{
 			if (Checkbox(g_view_column_long_display_names[i], &view->columns[i].visible))
 			{
+				if (table)
+				{
+					ImGuiTableColumn* column = &table->Columns[i];
+					column->IsUserEnabledNextFrame = view->columns[i].visible != 0;
+				}
+
 				recorded_session_t* session = view->session;
 				const char* applicationName = session->appInfo.packet.appInfo.applicationName;
 				BB_LOG("Debug", "Toggled %s for '%s'\n", g_view_column_config_names[i], applicationName);
@@ -1657,7 +1683,7 @@ static void DrawViewToggles(view_t* view, const char* applicationName)
 	}
 	SameLine();
 
-	if (Button("Columns..."))
+	if (!g_tableTest && Button("Columns..."))
 	{
 		OpenPopup("Columns");
 	}

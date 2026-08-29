@@ -291,6 +291,17 @@ void view_reset_column_widths(view_t* view)
 	// BB_LOG("View::Columns", "%s reset column widths", view->session->appInfo.packet.appInfo.applicationName);
 }
 
+void view_reset_column_visibility(view_t* view)
+{
+	int i;
+	for (i = 0; i < kColumn_Count; ++i)
+	{
+		view_column_t* column = view->columns + i;
+		column->visible = s_column_defaults[i].visible;
+	}
+	// BB_LOG("View::Columns", "%s reset column visibility", view->session->appInfo.packet.appInfo.applicationName);
+}
+
 void view_add_category(view_t* view, recorded_category_t* category, const view_config_category_t* configCategory)
 {
 	view_category_t* c = bba_add(view->categories, 1);

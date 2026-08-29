@@ -112,7 +112,7 @@ namespace ImGui
 		}
 		return 0.0f;
 	}
-}
+} // namespace ImGui
 
 void LogTable_SetupColumns(view_t* view, ImGuiTableColumnFlags columns_base_flags, int freeze_cols, int freeze_rows)
 {
@@ -568,6 +568,53 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 	UIRecordedView_UpdateScrolling(view, logsHovered, otherControlFocused, lineHeight, verticalScrollDir);
 }
 
+// Custom ImGui::TableHeadersRow() to open a CategoriesContextMenu popup
+static void LogTable_HeadersRow()
+{
+	ImGuiContext& g = *GImGui;
+	ImGuiTable* table = g.CurrentTable;
+	IM_ASSERT_USER_ERROR_RET(table != NULL, "Call should only be done while in BeginTable() scope!");
+
+	// Call layout if not already done. This is automatically done by TableNextRow: we do it here _only_ to make
+	// it easier to debug-step in TableUpdateLayout(). Your own version of this function doesn't need this.
+	if (!table->IsLayoutLocked)
+		ImGui::TableUpdateLayout(table);
+
+	// Open row
+	const float row_height = ImGui::TableGetHeaderRowHeight();
+	ImGui::TableNextRow(ImGuiTableRowFlags_Headers, row_height);
+	const float row_y1 = ImGui::GetCursorScreenPos().y;
+	if (table->HostSkipItems) // Merely an optimization, you may skip in your own code.
+		return;
+
+	const int columns_count = ImGui::TableGetColumnCount();
+	for (int column_n = 0; column_n < columns_count; column_n++)
+	{
+		if (!ImGui::TableSetColumnIndex(column_n) && table->LastHeldHeaderColumn != column_n)
+			continue;
+
+		// Push an id to allow empty/unnamed headers. This is also idiomatic as it ensure there is a consistent ID path to access columns (for e.g. automation)
+		const char* name = (ImGui::TableGetColumnFlags(column_n) & ImGuiTableColumnFlags_NoHeaderLabel) ? "" : ImGui::TableGetColumnName(column_n);
+		ImGui::PushID(column_n);
+		ImGui::TableHeader(name);
+		ImGui::PopID();
+		if (ImGui::IsMouseReleased(1) && ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
+		{
+			ImGui::OpenPopup("CategoriesContextMenu");
+		}
+	}
+
+	// Allow opening popup from the right-most section after the last column.
+	ImVec2 mouse_pos = ImGui::GetMousePos();
+	if (ImGui::IsMouseReleased(1) && ImGui::TableGetHoveredColumn() == columns_count)
+	{
+		if (mouse_pos.y >= row_y1 && mouse_pos.y < row_y1 + row_height)
+		{
+			ImGui::OpenPopup("CategoriesContextMenu");
+		}
+	}
+}
+
 bool LogTable_Update(view_t* view, b32 otherControlFocused)
 {
 	if (!view)
@@ -603,7 +650,6 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 	static float row_min_height = 0.0f;          // Auto
 	static float inner_width_with_scroll = 0.0f; // Auto-extend
 	static bool outer_size_enabled = true;
-	static bool show_headers = true;
 	static bool show_wrapped_text = false;
 	// static ImGuiTextFilter filter;
 	// ImGui::SetNextItemOpen(true, ImGuiCond_Once); // FIXME-TABLE: Enabling this results in initial clipped first pass on table which tend to affect column sizing
@@ -700,7 +746,6 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 
 		if (ImGui::TreeNodeEx("Headers:", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::Checkbox("show_headers", &show_headers);
 			ImGui::CheckboxFlags("ImGuiTableFlags_HighlightHoveredColumn", &flags, ImGuiTableFlags_HighlightHoveredColumn);
 			ImGui::CheckboxFlags("ImGuiTableColumnFlags_AngledHeader", &columns_base_flags, ImGuiTableColumnFlags_AngledHeader);
 			ImGui::SameLine();
@@ -745,7 +790,7 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 	const int parent_draw_list_draw_cmd_count = parent_draw_list->CmdBuffer.Size;
 	ImVec2 table_scroll_cur, table_scroll_max; // For debug display
 	const ImDrawList* table_draw_list = NULL;  // "
-#endif // EDITABLE_TABLE_OPTIONS
+#endif                                         // EDITABLE_TABLE_OPTIONS
 
 	// Submit table
 	const float inner_width_to_use = (flags & ImGuiTableFlags_ScrollX) ? inner_width_with_scroll : 0.0f;
@@ -754,10 +799,8 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 		LogTable_SetupColumns(view, columns_base_flags, freeze_cols, freeze_rows);
 
 		// Show headers
-		if (show_headers && (columns_base_flags & ImGuiTableColumnFlags_AngledHeader) != 0)
-			ImGui::TableAngledHeadersRow();
-		if (show_headers)
-			ImGui::TableHeadersRow();
+		LogTable_HeadersRow();
+		UIRecordedView_ColumnContextMenu(view, "CategoriesContextMenu");
 
 		// rows
 		LogTable_EmitRows(view, row_min_height, otherControlFocused);
