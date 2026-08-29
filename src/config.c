@@ -150,6 +150,10 @@ b32 config_read(config_t* config)
 	{
 		config->tileViews = true;
 	}
+	if (config->version <= 12)
+	{
+		config->tablesApi = true;
+	}
 	config->version = kConfigVersion;
 
 	if (config->listenProtocol == kConfigListenProtocol_Unknown)

@@ -315,6 +315,8 @@ config_t json_deserialize_config_t(JSON_Value *src)
 			dst.dirStatsOverall = json_object_get_boolean_safe(obj, "dirStatsOverall");
 			dst.dateTimeUTC = json_object_get_boolean_safe(obj, "dateTimeUTC");
 			dst.tileViews = json_object_get_boolean_safe(obj, "tileViews");
+			dst.tablesApi = json_object_get_boolean_safe(obj, "tablesApi");
+			dst.pad = (u32)json_object_get_number(obj, "pad");
 		}
 	}
 	return dst;
@@ -1135,6 +1137,8 @@ JSON_Value *json_serialize_config_t(const config_t *src)
 		json_object_set_boolean(obj, "dirStatsOverall", src->dirStatsOverall);
 		json_object_set_boolean(obj, "dateTimeUTC", src->dateTimeUTC);
 		json_object_set_boolean(obj, "tileViews", src->tileViews);
+		json_object_set_boolean(obj, "tablesApi", src->tablesApi);
+		json_object_set_number(obj, "pad", src->pad);
 	}
 	return val;
 }

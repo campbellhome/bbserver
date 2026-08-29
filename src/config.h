@@ -190,11 +190,13 @@ AUTOJSON typedef struct config_s
 	b32 dirStatsOverall;
 	b32 dateTimeUTC;
 	b32 tileViews;
+	b32 tablesApi;
+	u32 pad;
 } config_t;
 
 enum
 {
-	kConfigVersion = 12
+	kConfigVersion = 13
 };
 
 extern config_t g_config;

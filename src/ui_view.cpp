@@ -68,7 +68,6 @@ static sb_t s_wrappedLine;
 static sb_t s_selectedLine;
 static float s_lastDpiScale = 1.0f;
 static constexpr u32 g_logTruncationLen = 16u * 1024u;
-static b32 g_tableTest = true;
 
 using namespace ImGui;
 
@@ -1683,7 +1682,7 @@ static void DrawViewToggles(view_t* view, const char* applicationName)
 	}
 	SameLine();
 
-	if (!g_tableTest && Button("Columns..."))
+	if (!g_config.tablesApi && Button("Columns..."))
 	{
 		OpenPopup("Columns");
 	}
@@ -2390,7 +2389,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 			}
 		}
 
-		bool bShown = g_tableTest && LogTable_Update(view, otherControlFocused);
+		bool bShown = g_config.tablesApi && LogTable_Update(view, otherControlFocused);
 
 		float FramePaddingY = ImGui::GetStyle().FramePadding.y;
 		ImGui::GetStyle().FramePadding.y = 0.0f;
@@ -2669,11 +2668,6 @@ void UIRecordedView_TiledViewCheckbox(void)
 		{
 			config_write(&g_config);
 		}
-	}
-
-	if (g_config.showDebugMenu)
-	{
-		ImGui::Checkbox("Tables API Test", &g_tableTest);
 	}
 }
 

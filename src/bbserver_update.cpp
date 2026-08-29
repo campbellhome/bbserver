@@ -401,6 +401,14 @@ void BBServer_MainMenuBar(void)
 			{
 				BB_LOG("UI::Menu::Recordings", "UIRecordings_ToggleOpen");
 			}
+			if (ImGui::MenuItem("Show UTC timestamps", NULL, &g_config.dateTimeUTC))
+			{
+				config_write(&g_config);
+			}
+			if (ImGui::MenuItem("Use ImGui Tables API", NULL, &g_config.tablesApi))
+			{
+				config_write(&g_config);
+			}
 			if (ImGui::MenuItem("Edit config"))
 			{
 				BB_LOG("UI::Menu::Config", "UIConfig_Open");

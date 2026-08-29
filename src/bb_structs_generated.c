@@ -380,6 +380,8 @@ config_t config_clone(const config_t *src)
 		dst.dirStatsOverall = src->dirStatsOverall;
 		dst.dateTimeUTC = src->dateTimeUTC;
 		dst.tileViews = src->tileViews;
+		dst.tablesApi = src->tablesApi;
+		dst.pad = src->pad;
 	}
 	return dst;
 }
