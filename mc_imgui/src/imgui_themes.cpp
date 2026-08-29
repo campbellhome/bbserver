@@ -66,6 +66,7 @@ void Style_Apply(const char* colorscheme)
 	else /*if(!strcmp(colorscheme, "Dark"))*/
 	{
 		ImGui::StyleColorsDark();
+		ImGui::GetStyle().Colors[ImGuiCol_TableHeaderBg] = ImGui::GetStyle().Colors[ImGuiCol_Header];
 		// modal background for default Dark theme looks like a non-responding Window
 		ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 	}
