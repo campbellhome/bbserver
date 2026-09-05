@@ -539,14 +539,16 @@ void recording_stopped(char* data)
 	}
 }
 
-static void recordings_delete_recording(const char* path)
+static b32 recordings_delete_recording(const char* path)
 {
 	char* ext;
 	sb_t logPath;
+	b32 bDeleted = false;
 	BOOL ret = (g_config.disableLogDeletion) ? false : DeleteFileA(path);
 	if (ret)
 	{
 		BB_LOG("Recordings", "Deleted '%s'", path);
+		bDeleted = true;
 	}
 	else
 	{
@@ -566,6 +568,7 @@ static void recordings_delete_recording(const char* path)
 		if (ret)
 		{
 			BB_LOG("Recordings", "Deleted '%s'", logPath.data);
+			bDeleted = true;
 		}
 		else
 		{
@@ -577,6 +580,11 @@ static void recordings_delete_recording(const char* path)
 		}
 	}
 	sb_reset(&logPath);
+
+	if (!bDeleted)
+	{
+		return false;
+	}
 
 	sb_t configPath = view_session_config_get_path(path);
 	if (configPath.data)
@@ -596,6 +604,8 @@ static void recordings_delete_recording(const char* path)
 		}
 		sb_reset(&configPath);
 	}
+
+	return true;
 }
 
 static b32 recordings_delete_by_id_internal(u32 id, recording_tab_t tab, recordings_t* recordings)
@@ -607,11 +617,13 @@ static b32 recordings_delete_by_id_internal(u32 id, recording_tab_t tab, recordi
 		if (r->id == id)
 		{
 			const char* path = recordings->data[i].path;
-			recordings_delete_recording(path);
-			bba_erase(*recordings, i);
-			s_tabData[tab].dirty = true;
-			s_tabData[tab].scrollToEnd = true;
-			return true;
+			if (recordings_delete_recording(path))
+			{
+				bba_erase(*recordings, i);
+				s_tabData[tab].dirty = true;
+				s_tabData[tab].scrollToEnd = true;
+				return true;
+			}
 		}
 	}
 	return false;
@@ -675,8 +687,14 @@ static u32 recordings_delete_pending_deleted(recording_tab_t tab, recordings_t* 
 		if (recording->pendingDelete)
 		{
 			const char* path = recording->path;
-			recordings_delete_recording(path);
-			++numDeleted;
+			if (recordings_delete_recording(path))
+			{
+				++numDeleted;
+			}
+			else
+			{
+				bba_push(remaining, *recording);
+			}
 		}
 		else
 		{
