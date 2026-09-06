@@ -438,11 +438,15 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 	clipper.Begin((int)view->visibleLogs.count);
 	u32 numVisibleLines = 0;
 	float lineHeight = 1.0f;
+	bool bFirst = true;
 	while (clipper.Step())
 	{
 		for (int row_n = clipper.DisplayStart; row_n < clipper.DisplayEnd; row_n++)
 		{
-			++numVisibleLines;
+			if (!bFirst)
+			{
+				++numVisibleLines;
+			}
 			view_log_t* viewLog = view->visibleLogs.data + row_n;
 			ImGui::PushID(va("%u.%u", viewLog->persistentLogIndex, viewLog->subLine));
 
@@ -549,15 +553,21 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 			float endY = ImGui::GetCursorScreenPos().y;
 			lineHeight = clipper.ItemsHeight > 0.0f ? clipper.ItemsHeight : endY - startY;
 
-			// track our visible view region so we can recenter when toggling categories on/off etc
-			view->lastVisibleSessionIndexStart = BB_MIN(view->lastVisibleSessionIndexStart, viewLog->sessionLogIndex);
-			view->lastVisibleSessionIndexEnd = BB_MAX(view->lastVisibleSessionIndexEnd, viewLog->sessionLogIndex);
-			if (viewLog->selected)
+			if (bFirst)
 			{
-				view->lastVisibleSelectedSessionIndexStart = BB_MIN(view->lastVisibleSelectedSessionIndexStart, viewLog->sessionLogIndex);
-				view->lastVisibleSelectedSessionIndexEnd = BB_MAX(view->lastVisibleSelectedSessionIndexEnd, viewLog->sessionLogIndex);
+				bFirst = false;
 			}
-
+			else
+			{
+				// track our visible view region so we can recenter when toggling categories on/off etc
+				view->lastVisibleSessionIndexStart = BB_MIN(view->lastVisibleSessionIndexStart, viewLog->sessionLogIndex);
+				view->lastVisibleSessionIndexEnd = BB_MAX(view->lastVisibleSessionIndexEnd, viewLog->sessionLogIndex);
+				if (viewLog->selected)
+				{
+					view->lastVisibleSelectedSessionIndexStart = BB_MIN(view->lastVisibleSelectedSessionIndexStart, viewLog->sessionLogIndex);
+					view->lastVisibleSelectedSessionIndexEnd = BB_MAX(view->lastVisibleSelectedSessionIndexEnd, viewLog->sessionLogIndex);
+				}
+			}
 			ImGui::PopID();
 		}
 	}
