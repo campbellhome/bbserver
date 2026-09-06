@@ -22,85 +22,6 @@ static sb_t s_textSpan;
 const char* BuildLogColumnText(view_t* view, view_log_t* viewLog, view_column_e column);
 void UIRecordedView_Logs_HandleClick(view_t* view, view_log_t* log);
 
-#define EDITABLE_TABLE_OPTIONS 0
-
-#if EDITABLE_TABLE_OPTIONS
-// Helper to display a little (?) mark which shows a tooltip when hovered.
-// In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.md)
-static void HelpMarker(const char* desc)
-{
-	ImGui::TextDisabled("(?)");
-	if (ImGui::BeginItemTooltip())
-	{
-		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-		ImGui::TextUnformatted(desc);
-		ImGui::PopTextWrapPos();
-		ImGui::EndTooltip();
-	}
-}
-
-// Make the UI compact because there are so many fields
-static void PushStyleCompact()
-{
-	ImGuiStyle& style = ImGui::GetStyle();
-	ImGui::PushStyleVarY(ImGuiStyleVar_FramePadding, (float)(int)(style.FramePadding.y * 0.60f));
-	ImGui::PushStyleVarY(ImGuiStyleVar_ItemSpacing, (float)(int)(style.ItemSpacing.y * 0.60f));
-}
-
-static void PopStyleCompact()
-{
-	ImGui::PopStyleVar(2);
-}
-
-// Show a combo box with a choice of sizing policies
-static void EditTableSizingFlags(ImGuiTableFlags* p_flags)
-{
-	BB_WARNING_PUSH(4820)
-	struct EnumDesc
-	{
-		ImGuiTableFlags Value;
-		const char* Name;
-		const char* Tooltip;
-	};
-	BB_WARNING_POP
-	static const EnumDesc policies[] = {
-		{ ImGuiTableFlags_None, "Default", "Use default sizing policy:\n- ImGuiTableFlags_SizingFixedFit if ScrollX is on or if host window has ImGuiWindowFlags_AlwaysAutoResize.\n- ImGuiTableFlags_SizingStretchSame otherwise." },
-		{ ImGuiTableFlags_SizingFixedFit, "ImGuiTableFlags_SizingFixedFit", "Columns default to _WidthFixed (if resizable) or _WidthAuto (if not resizable), matching contents width." },
-		{ ImGuiTableFlags_SizingFixedSame, "ImGuiTableFlags_SizingFixedSame", "Columns are all the same width, matching the maximum contents width.\nImplicitly disable ImGuiTableFlags_Resizable and enable ImGuiTableFlags_NoKeepColumnsVisible." },
-		{ ImGuiTableFlags_SizingStretchProp, "ImGuiTableFlags_SizingStretchProp", "Columns default to _WidthStretch with weights proportional to their widths." },
-		{ ImGuiTableFlags_SizingStretchSame, "ImGuiTableFlags_SizingStretchSame", "Columns default to _WidthStretch with same weights." }
-	};
-	int idx;
-	for (idx = 0; idx < IM_COUNTOF(policies); idx++)
-		if (policies[idx].Value == (*p_flags & ImGuiTableFlags_SizingMask_))
-			break;
-	const char* preview_text = (idx < IM_COUNTOF(policies)) ? policies[idx].Name + (idx > 0 ? strlen("ImGuiTableFlags") : 0) : "";
-	if (ImGui::BeginCombo("Sizing Policy", preview_text))
-	{
-		for (int n = 0; n < IM_COUNTOF(policies); n++)
-			if (ImGui::Selectable(policies[n].Name, idx == n))
-				*p_flags = (*p_flags & ~ImGuiTableFlags_SizingMask_) | policies[n].Value;
-		ImGui::EndCombo();
-	}
-	ImGui::SameLine();
-	ImGui::TextDisabled("(?)");
-	if (ImGui::BeginItemTooltip())
-	{
-		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 50.0f);
-		for (int m = 0; m < IM_COUNTOF(policies); m++)
-		{
-			ImGui::Separator();
-			ImGui::Text("%s:", policies[m].Name);
-			ImGui::Separator();
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetStyle().IndentSpacing * 0.5f);
-			ImGui::TextUnformatted(policies[m].Tooltip);
-		}
-		ImGui::PopTextWrapPos();
-		ImGui::EndTooltip();
-	}
-}
-#endif // EDITABLE_TABLE_OPTIONS
-
 namespace ImGui
 {
 	float TableGetColumnWidth(int column)
@@ -114,13 +35,12 @@ namespace ImGui
 	}
 } // namespace ImGui
 
-void LogTable_SetupColumns(view_t* view, ImGuiTableColumnFlags columns_base_flags, int freeze_cols, int freeze_rows)
+void LogTable_SetupColumns(view_t* view)
 {
 	// Declare columns
-
 	for (u32 i = 0; i < BB_ARRAYSIZE(view->columns); ++i)
 	{
-		ImGuiTableColumnFlags flags = columns_base_flags;
+		ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;
 		if (!view->columns[i].visible)
 		{
 			flags |= ImGuiTableColumnFlags_DefaultHide;
@@ -136,21 +56,12 @@ void LogTable_SetupColumns(view_t* view, ImGuiTableColumnFlags columns_base_flag
 			}
 		}
 	}
-	ImGuiTableColumnFlags textFlags = columns_base_flags & (~ImGuiTableColumnFlags_WidthMask_);
+	ImGuiTableColumnFlags textFlags = ImGuiTableColumnFlags_None;
 	textFlags |= ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoResize;
 	textFlags |= ImGuiTableColumnFlags_NoHide | ImGuiTableColumnFlags_NoReorder;
 	ImGui::TableSetupColumn("Text", textFlags, view->textWidth);
 
-	// We use the "user_id" parameter of TableSetupColumn() to specify a user id that will be stored in the sort specifications.
-	// This is so our sort function can identify a column given our own identifier. We could also identify them based on their index!
-	// ImGui::TableSetupColumn("ID",           columns_base_flags | ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHide, 0.0f, MyItemColumnID_ID);
-	// ImGui::TableSetupColumn("Name",         columns_base_flags | ImGuiTableColumnFlags_WidthFixed, 0.0f, MyItemColumnID_Name);
-	// ImGui::TableSetupColumn("Action",       columns_base_flags | ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed, 0.0f, MyItemColumnID_Action);
-	// ImGui::TableSetupColumn("Quantity",     columns_base_flags | ImGuiTableColumnFlags_PreferSortDescending, 0.0f, MyItemColumnID_Quantity);
-	// ImGui::TableSetupColumn("Description",  columns_base_flags | ((flags & ImGuiTableFlags_NoHostExtendX) ? 0 : ImGuiTableColumnFlags_WidthStretch), 0.0f, MyItemColumnID_Description);
-	// ImGui::TableSetupColumn("Hidden",       columns_base_flags | ImGuiTableColumnFlags_DefaultHide | ImGuiTableColumnFlags_NoSort);
-
-	ImGui::TableSetupScrollFreeze(freeze_cols, freeze_rows);
+	ImGui::TableSetupScrollFreeze(1, 1);
 }
 
 typedef struct colored_text_s
@@ -423,7 +334,7 @@ static float LogTable_EmitLogText(view_t* view, view_log_t* viewLog, named_filte
 	return requiredWidth;
 }
 
-static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherControlFocused)
+static void LogTable_EmitRows(view_t* view, b32 otherControlFocused)
 {
 	// reset visible region
 	view->lastVisibleSessionIndexStart = ~0U;
@@ -451,7 +362,7 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 			ImGui::PushID(va("%u.%u", viewLog->persistentLogIndex, viewLog->subLine));
 
 			float startY = ImGui::GetCursorScreenPos().y;
-			ImGui::TableNextRow(ImGuiTableRowFlags_None, row_min_height);
+			ImGui::TableNextRow(ImGuiTableRowFlags_None, 0.0f);
 
 			u32 logIndex = viewLog->sessionLogIndex;
 			recorded_session_t* session = view->session;
@@ -484,7 +395,7 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 						firstColumn = false;
 						ImGuiSelectableFlags selectable_flags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
 						UIRecordedView_PushLogStyleColors(viewLogColors);
-						ImGui::SelectableWithBackground(va("%s###%u_%u", columnText, viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, viewLogColors.bgColor, selectable_flags, ImVec2(0, row_min_height));
+						ImGui::SelectableWithBackground(va("%s###%u_%u", columnText, viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, viewLogColors.bgColor, selectable_flags, ImVec2(0, 0));
 						UIRecordedView_PopLogStyleColors(viewLogColors);
 
 						if (ImGui::IsItemHovered())
@@ -630,216 +541,20 @@ bool LogTable_Update(view_t* view, b32 otherControlFocused)
 	if (!view)
 		return false;
 
-	// Using those as a base value to create width/height that are factor of the size of our font
-#if EDITABLE_TABLE_OPTIONS
-	PushLogFont();
-	const float TEXT_BASE_WIDTH = ImGui::CalcTextSize("A").x;
-	const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
-	PopLogFont();
-#else
-	const float TEXT_BASE_HEIGHT = 0.0f;
-#endif // EDITABLE_TABLE_OPTIONS
-
-	static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings;
-	static ImGuiTableColumnFlags columns_base_flags = ImGuiTableColumnFlags_None;
-
-	enum ContentsType
+	const ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Borders | ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings;
+	if (ImGui::BeginTable("logtable", kColumn_Count + 1, flags, ImVec2(0, 0), 0.0f))
 	{
-		CT_Text,
-		CT_Button,
-		CT_SmallButton,
-		CT_FillButton,
-		CT_Selectable,
-		CT_SelectableSpanRow
-	};
-	static int contents_type = CT_SelectableSpanRow;
-	const char* contents_type_names[] = { "Text", "Button", "SmallButton", "FillButton", "Selectable", "Selectable (span row)" };
-	static int freeze_cols = 1;
-	static int freeze_rows = 1;
-	static ImVec2 outer_size_value = ImVec2(0.0f, -2.0f * TEXT_BASE_HEIGHT);
-	static float row_min_height = 0.0f;          // Auto
-	static float inner_width_with_scroll = 0.0f; // Auto-extend
-	static bool outer_size_enabled = true;
-	static bool show_wrapped_text = false;
-	// static ImGuiTextFilter filter;
-	// ImGui::SetNextItemOpen(true, ImGuiCond_Once); // FIXME-TABLE: Enabling this results in initial clipped first pass on table which tend to affect column sizing
-#if EDITABLE_TABLE_OPTIONS
-	if (ImGui::TreeNode("Options"))
-	{
-		// Make the UI compact because there are so many fields
-		PushStyleCompact();
-		ImGui::PushItemWidth(TEXT_BASE_WIDTH * 28.0f);
-
-		if (ImGui::TreeNodeEx("Features:", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::CheckboxFlags("ImGuiTableFlags_Resizable", &flags, ImGuiTableFlags_Resizable);
-			ImGui::CheckboxFlags("ImGuiTableFlags_Reorderable", &flags, ImGuiTableFlags_Reorderable);
-			ImGui::CheckboxFlags("ImGuiTableFlags_Hideable", &flags, ImGuiTableFlags_Hideable);
-			ImGui::CheckboxFlags("ImGuiTableFlags_Sortable", &flags, ImGuiTableFlags_Sortable);
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoSavedSettings", &flags, ImGuiTableFlags_NoSavedSettings);
-			ImGui::CheckboxFlags("ImGuiTableFlags_ContextMenuInBody", &flags, ImGuiTableFlags_ContextMenuInBody);
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNodeEx("Decorations:", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::CheckboxFlags("ImGuiTableFlags_RowBg", &flags, ImGuiTableFlags_RowBg);
-			ImGui::CheckboxFlags("ImGuiTableFlags_BordersV", &flags, ImGuiTableFlags_BordersV);
-			ImGui::CheckboxFlags("ImGuiTableFlags_BordersOuterV", &flags, ImGuiTableFlags_BordersOuterV);
-			ImGui::CheckboxFlags("ImGuiTableFlags_BordersInnerV", &flags, ImGuiTableFlags_BordersInnerV);
-			ImGui::CheckboxFlags("ImGuiTableFlags_BordersH", &flags, ImGuiTableFlags_BordersH);
-			ImGui::CheckboxFlags("ImGuiTableFlags_BordersOuterH", &flags, ImGuiTableFlags_BordersOuterH);
-			ImGui::CheckboxFlags("ImGuiTableFlags_BordersInnerH", &flags, ImGuiTableFlags_BordersInnerH);
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoBordersInBody", &flags, ImGuiTableFlags_NoBordersInBody);
-			ImGui::SameLine();
-			HelpMarker("Disable vertical borders in columns Body (borders will always appear in Headers)");
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", &flags, ImGuiTableFlags_NoBordersInBodyUntilResize);
-			ImGui::SameLine();
-			HelpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appear in Headers)");
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNodeEx("Sizing:", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			EditTableSizingFlags(&flags);
-			ImGui::SameLine();
-			HelpMarker("In the Advanced demo we override the policy of each column so those table-wide settings have less effect that typical.");
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoHostExtendX", &flags, ImGuiTableFlags_NoHostExtendX);
-			ImGui::SameLine();
-			HelpMarker("Make outer width auto-fit to columns, overriding outer_size.x value.\n\nOnly available when ScrollX/ScrollY are disabled and Stretch columns are not used.");
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoHostExtendY", &flags, ImGuiTableFlags_NoHostExtendY);
-			ImGui::SameLine();
-			HelpMarker("Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit).\n\nOnly available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible.");
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoKeepColumnsVisible", &flags, ImGuiTableFlags_NoKeepColumnsVisible);
-			ImGui::SameLine();
-			HelpMarker("Only available if ScrollX is disabled.");
-			ImGui::CheckboxFlags("ImGuiTableFlags_PreciseWidths", &flags, ImGuiTableFlags_PreciseWidths);
-			ImGui::SameLine();
-			HelpMarker("Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.");
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoClip", &flags, ImGuiTableFlags_NoClip);
-			ImGui::SameLine();
-			HelpMarker("Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with ScrollFreeze options.");
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNodeEx("Padding:", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::CheckboxFlags("ImGuiTableFlags_PadOuterX", &flags, ImGuiTableFlags_PadOuterX);
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoPadOuterX", &flags, ImGuiTableFlags_NoPadOuterX);
-			ImGui::CheckboxFlags("ImGuiTableFlags_NoPadInnerX", &flags, ImGuiTableFlags_NoPadInnerX);
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNodeEx("Scrolling:", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::CheckboxFlags("ImGuiTableFlags_ScrollX", &flags, ImGuiTableFlags_ScrollX);
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(ImGui::GetFrameHeight());
-			ImGui::DragInt("freeze_cols", &freeze_cols, 0.2f, 0, 9, NULL, ImGuiSliderFlags_NoInput);
-			ImGui::CheckboxFlags("ImGuiTableFlags_ScrollY", &flags, ImGuiTableFlags_ScrollY);
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(ImGui::GetFrameHeight());
-			ImGui::DragInt("freeze_rows", &freeze_rows, 0.2f, 0, 9, NULL, ImGuiSliderFlags_NoInput);
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNodeEx("Sorting:", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::CheckboxFlags("ImGuiTableFlags_SortMulti", &flags, ImGuiTableFlags_SortMulti);
-			ImGui::SameLine();
-			HelpMarker("When sorting is enabled: hold shift when clicking headers to sort on multiple column. TableGetSortSpecs() may return specs where (SpecsCount > 1).");
-			ImGui::CheckboxFlags("ImGuiTableFlags_SortTristate", &flags, ImGuiTableFlags_SortTristate);
-			ImGui::SameLine();
-			HelpMarker("When sorting is enabled: allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0).");
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNodeEx("Headers:", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::CheckboxFlags("ImGuiTableFlags_HighlightHoveredColumn", &flags, ImGuiTableFlags_HighlightHoveredColumn);
-			ImGui::CheckboxFlags("ImGuiTableColumnFlags_AngledHeader", &columns_base_flags, ImGuiTableColumnFlags_AngledHeader);
-			ImGui::SameLine();
-			HelpMarker("Enable AngledHeader on all columns. Best enabled on selected narrow columns (see \"Angled headers\" section of the demo).");
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNodeEx("Other:", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			ImGui::Checkbox("show_wrapped_text", &show_wrapped_text);
-
-			ImGui::DragFloat2("##OuterSize", &outer_size_value.x);
-			ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-			ImGui::Checkbox("outer_size", &outer_size_enabled);
-			ImGui::SameLine();
-			HelpMarker("If scrolling is disabled (ScrollX and ScrollY not set):\n"
-			           "- The table is output directly in the parent window.\n"
-			           "- OuterSize.x < 0.0f will right-align the table.\n"
-			           "- OuterSize.x = 0.0f will narrow fit the table unless there are any Stretch columns.\n"
-			           "- OuterSize.y then becomes the minimum size for the table, which will extend vertically if there are more rows (unless NoHostExtendY is set).");
-
-			// From a user point of view we will tend to use 'inner_width' differently depending on whether our table is embedding scrolling.
-			// To facilitate toying with this demo we will actually pass 0.0f to the BeginTable() when ScrollX is disabled.
-			ImGui::DragFloat("inner_width (when ScrollX active)", &inner_width_with_scroll, 1.0f, 0.0f, FLT_MAX);
-
-			ImGui::DragFloat("row_min_height", &row_min_height, 1.0f, 0.0f, FLT_MAX);
-			ImGui::SameLine();
-			HelpMarker("Specify height of the Selectable item.");
-
-			ImGui::Combo("items_type (first column)", &contents_type, contents_type_names, IM_COUNTOF(contents_type_names));
-			// filter.Draw("filter");
-			ImGui::TreePop();
-		}
-
-		ImGui::PopItemWidth();
-		PopStyleCompact();
-		ImGui::Spacing();
-		ImGui::TreePop();
-	}
-
-	const ImDrawList* parent_draw_list = ImGui::GetWindowDrawList();
-	const int parent_draw_list_draw_cmd_count = parent_draw_list->CmdBuffer.Size;
-	ImVec2 table_scroll_cur, table_scroll_max; // For debug display
-	const ImDrawList* table_draw_list = NULL;  // "
-#endif                                         // EDITABLE_TABLE_OPTIONS
-
-	// Submit table
-	const float inner_width_to_use = (flags & ImGuiTableFlags_ScrollX) ? inner_width_with_scroll : 0.0f;
-	if (ImGui::BeginTable("table_advanced", kColumn_Count + 1, flags, outer_size_enabled ? outer_size_value : ImVec2(0, 0), inner_width_to_use))
-	{
-		LogTable_SetupColumns(view, columns_base_flags, freeze_cols, freeze_rows);
+		LogTable_SetupColumns(view);
 
 		// Show headers
 		LogTable_HeadersRow();
 		UIRecordedView_ColumnContextMenu(view, "CategoriesContextMenu");
 
 		// rows
-		LogTable_EmitRows(view, row_min_height, otherControlFocused);
-
-#if EDITABLE_TABLE_OPTIONS
-		// Store some info to display debug details below
-		table_scroll_cur = ImVec2(ImGui::GetScrollX(), ImGui::GetScrollY());
-		table_scroll_max = ImVec2(ImGui::GetScrollMaxX(), ImGui::GetScrollMaxY());
-		table_draw_list = ImGui::GetWindowDrawList();
-#endif // EDITABLE_TABLE_OPTIONS
+		LogTable_EmitRows(view, otherControlFocused);
 
 		ImGui::EndTable();
 	}
-
-#if EDITABLE_TABLE_OPTIONS
-	static bool show_debug_details = false;
-	ImGui::Checkbox("Debug details", &show_debug_details);
-	if (show_debug_details && table_draw_list)
-	{
-		ImGui::SameLine(0.0f, 0.0f);
-		const int table_draw_list_draw_cmd_count = table_draw_list->CmdBuffer.Size;
-		if (table_draw_list == parent_draw_list)
-			ImGui::Text(": DrawCmd: +%d (in same window)",
-			            table_draw_list_draw_cmd_count - parent_draw_list_draw_cmd_count);
-		else
-			ImGui::Text(": DrawCmd: +%d (in child window), Scroll: (%.f/%.f) (%.f/%.f)",
-			            table_draw_list_draw_cmd_count - 1, table_scroll_cur.x, table_scroll_max.x, table_scroll_cur.y, table_scroll_max.y);
-	}
-#endif // EDITABLE_TABLE_OPTIONS
 
 	return true;
 }
