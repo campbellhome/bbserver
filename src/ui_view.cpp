@@ -2522,7 +2522,9 @@ void UIRecordedView_UpdateScrolling(view_t* view, b32 logsHovered, b32 otherCont
 	float curScrollY = GetScrollY();
 	const float kScreenPercent = 0.5f;
 	// view->bookmarkThreshold = (int)(clipper.DisplayStart + visibleLines * 0.5f);
-	if (view->gotoTarget >= 0)
+	bool bViewSizeChanged = view->lastNumVisibleLines != view->numVisibleLines;
+	view->lastNumVisibleLines = view->numVisibleLines;
+	if (view->gotoTarget >= 0 && !bViewSizeChanged)
 	{
 		int adjustedTarget = view->gotoTarget - (int)((float)view->numVisibleLines * kScreenPercent);
 		if (adjustedTarget < 0)

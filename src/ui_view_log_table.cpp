@@ -547,7 +547,7 @@ static void LogTable_EmitRows(view_t* view, float row_min_height, b32 otherContr
 			}
 
 			float endY = ImGui::GetCursorScreenPos().y;
-			lineHeight = endY - startY;
+			lineHeight = clipper.ItemsHeight > 0.0f ? clipper.ItemsHeight : endY - startY;
 
 			// track our visible view region so we can recenter when toggling categories on/off etc
 			view->lastVisibleSessionIndexStart = BB_MIN(view->lastVisibleSessionIndexStart, viewLog->sessionLogIndex);
