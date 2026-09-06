@@ -663,20 +663,15 @@ namespace ImGui
 
 		const char* text_display_end = bHideLabel ? FindRenderedTextEnd(text, nullptr) : nullptr;
 
-		ImVec2 pos = GetIconPosForText();
+		ImGuiWindow* window = GetCurrentWindow();
+		ImVec2 pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
 
 		ImFont* font = GetFont();
 		float fontSize = GetFontSize();
 
-		ImGuiWindow* window = GetCurrentWindow();
 		const float wrap_pos_x = window->DC.TextWrapPos;
 		const bool wrap_enabled = (wrap_pos_x >= 0.0f) && bWrapped;
 		const float wrap_width = wrap_enabled ? CalcWrapWidthForPos(window->DC.CursorPos, wrap_pos_x) : 0.0f;
-
-		ImVec2 size = font->CalcTextSizeA(fontSize, FLT_MAX, 0.0f, text);
-		float lineHeight = GetTextLineHeightWithSpacing();
-		float deltaY = lineHeight - size.y;
-		pos.y += deltaY;
 
 		ImDrawList* drawList = GetWindowDrawList();
 		drawList->AddText(font, fontSize, ImVec2(pos.x + 1, pos.y + 1), s_shadowColor, text, text_display_end, wrap_width);

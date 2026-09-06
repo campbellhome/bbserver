@@ -390,12 +390,14 @@ static void LogTable_EmitRows(view_t* view, b32 otherControlFocused)
 				{
 					view_column_e column = (view_column_e)i;
 					const char* columnText = BuildLogColumnText(view, viewLog, column);
+					ImGui::TextShadowed(columnText);
 					if (firstColumn)
 					{
 						firstColumn = false;
 						ImGuiSelectableFlags selectable_flags = ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap;
 						UIRecordedView_PushLogStyleColors(viewLogColors);
-						ImGui::SelectableWithBackground(va("%s###%u_%u", columnText, viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, viewLogColors.bgColor, selectable_flags, ImVec2(0, 0));
+						ImGui::SameLine();
+						ImGui::SelectableWithBackground(va("###%u_%u", viewLog->sessionLogIndex, viewLog->subLine), viewLog->selected != 0, viewLogColors.bgColor, selectable_flags, ImVec2(0, 0));
 						UIRecordedView_PopLogStyleColors(viewLogColors);
 
 						if (ImGui::IsItemHovered())
@@ -437,10 +439,6 @@ static void LogTable_EmitRows(view_t* view, b32 otherControlFocused)
 							UIRecordedView_LogPopup(view, viewLog);
 							ImGui::EndPopup();
 						}
-					}
-					else
-					{
-						ImGui::TextShadowed(columnText);
 					}
 				}
 			}
