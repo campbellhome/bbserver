@@ -66,6 +66,8 @@ static sb_t s_strippedLine;
 static sb_t s_textSpan;
 static sb_t s_wrappedLine;
 static sb_t s_selectedLine;
+static sb_t s_viewTitle;
+static sb_t s_newTitleName;
 static float s_lastDpiScale = 1.0f;
 static constexpr u32 g_logTruncationLen = 16u * 1024u;
 
@@ -1510,13 +1512,13 @@ void UIRecordedView_ColumnContextMenu(view_t* view, const char* menuName)
 	{
 		if (table)
 		{
-			if (ImGui::MenuItem("Reset column order", nullptr, (bool *)nullptr, true))
+			if (ImGui::MenuItem("Reset column order", nullptr, (bool*)nullptr, true))
 			{
 				table->IsResetDisplayOrderRequest = true;
 			}
-			if (ImGui::MenuItem("Reset column visibility", nullptr, (bool *)nullptr, true))
+			if (ImGui::MenuItem("Reset column visibility", nullptr, (bool*)nullptr, true))
 			{
-				//table->IsResetVisibilityRequest = true;
+				// table->IsResetVisibilityRequest = true;
 				view_reset_column_visibility(view);
 				for (s32 i = 0; i < kColumn_Count; ++i)
 				{
@@ -1716,7 +1718,16 @@ static char* UIRecordedView_GetViewId(view_t* view, bool autoTileViews)
 	const char* applicationName = session->appInfo.packet.appInfo.applicationName;
 	char* slash = strrchr(session->path, '\\');
 	char* filename = (slash) ? slash + 1 : session->path;
-	return va("%s##View_%s_%u_%d", applicationName, filename, view->viewId, autoTileViews);
+
+	sb_clear(&s_viewTitle);
+	sb_append(&s_viewTitle, sb_get(&view->config.titleInput));
+	if (sb_len(&s_viewTitle) <= 0)
+	{
+		sb_append(&s_viewTitle, "{app}");
+	}
+	sb_replace_all_inplace(&s_viewTitle, "{app}", applicationName);
+	sb_replace_all_inplace(&s_viewTitle, "{fname}", filename);
+	return va("%s###View_%s_%u_%d", sb_get(&s_viewTitle), filename, view->viewId, autoTileViews);
 }
 
 static void view_close_and_write_config(view_t* view)
@@ -1749,52 +1760,40 @@ static void UIRecordedView_HandleStopRecordingMessageBox(messageBox* mb, const c
 	}
 }
 
-static void UIRecordedView_ViewPopupContents(view_t *view, recording_t *recording)
+static void UIRecordedView_ViewPopupContents(view_t* view, recording_t* recording)
 {
-	recorded_session_t *session = view->session;
+	recorded_session_t* session = view->session;
 
-	if (ImGui::Selectable("Close this view"))
+	if (ImGui::BeginMenu("Views..."))
 	{
-		view_close_and_write_config(view);
-	}
-	if (ImGui::Selectable("Close all views"))
-	{
-		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		if (ImGui::Selectable("Close this view"))
 		{
-			view_t* otherView = *(s_gathered_views.data + viewIndex);
-			view_close_and_write_config(otherView);
+			view_close_and_write_config(view);
 		}
-	}
-	if (ImGui::Selectable("Close all but this view"))
-	{
-		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		if (ImGui::Selectable("Close all views"))
 		{
-			view_t* otherView = *(s_gathered_views.data + viewIndex);
-			if (otherView != view)
+			for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
 			{
+				view_t* otherView = *(s_gathered_views.data + viewIndex);
 				view_close_and_write_config(otherView);
 			}
 		}
-	}
-	if (ImGui::Selectable("Close all inactive views"))
-	{
-		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		if (ImGui::Selectable("Close all but this view"))
 		{
-			view_t* otherView = *(s_gathered_views.data + viewIndex);
-			const recording_t* otherRecording = recordings_find_by_path(otherView->session->path);
-			if (!otherRecording || !otherRecording->active)
+			for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
 			{
-				view_close_and_write_config(otherView);
+				view_t* otherView = *(s_gathered_views.data + viewIndex);
+				if (otherView != view)
+				{
+					view_close_and_write_config(otherView);
+				}
 			}
 		}
-	}
-	if (ImGui::Selectable("Close all inactive auto-close views"))
-	{
-		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		if (ImGui::Selectable("Close all inactive views"))
 		{
-			view_t* otherView = *(s_gathered_views.data + viewIndex);
-			if (otherView->autoClose)
+			for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
 			{
+				view_t* otherView = *(s_gathered_views.data + viewIndex);
 				const recording_t* otherRecording = recordings_find_by_path(otherView->session->path);
 				if (!otherRecording || !otherRecording->active)
 				{
@@ -1802,18 +1801,52 @@ static void UIRecordedView_ViewPopupContents(view_t *view, recording_t *recordin
 				}
 			}
 		}
-	}
-	if (ImGui::Selectable("Re-dock this view"))
-	{
-		view->redockCount = 1;
-	}
-	if (ImGui::Selectable("Re-dock all views"))
-	{
-		for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+		if (ImGui::Selectable("Close all inactive auto-close views"))
 		{
-			view_t* otherView = *(s_gathered_views.data + viewIndex);
-			otherView->redockCount = 1;
+			for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+			{
+				view_t* otherView = *(s_gathered_views.data + viewIndex);
+				if (otherView->autoClose)
+				{
+					const recording_t* otherRecording = recordings_find_by_path(otherView->session->path);
+					if (!otherRecording || !otherRecording->active)
+					{
+						view_close_and_write_config(otherView);
+					}
+				}
+			}
 		}
+		if (ImGui::Selectable("Re-dock this view"))
+		{
+			view->redockCount = 1;
+		}
+		if (ImGui::Selectable("Re-dock all views"))
+		{
+			for (u32 viewIndex = 0; viewIndex < s_gathered_views.count; ++viewIndex)
+			{
+				view_t* otherView = *(s_gathered_views.data + viewIndex);
+				otherView->redockCount = 1;
+			}
+		}
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("Rename view..."))
+	{
+		char* slash = strrchr(session->path, '\\');
+		char* filename = (slash) ? slash + 1 : session->path;
+
+		ImGui::Text("Rename \"%s\"", sb_get(&view->config.titleInput));
+		ImGui::TextUnformatted("Valid substitutions:");
+		ImGui::Text("  {app} %s %s", ICON_FK_ARROW_RIGHT, session->appInfo.packet.appInfo.applicationName);
+		ImGui::Text("  {fname} %s %s", ICON_FK_ARROW_RIGHT, filename);
+		if (ImGui::InputText("##NewTitle", &s_newTitleName, 128, ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			sb_reset(&view->config.titleInput);
+			view->config.titleInput = sb_clone(&s_newTitleName);
+			sb_reset(&s_newTitleName);
+		}
+		ImGui::EndMenu();
 	}
 
 	ImGui::Separator();
@@ -2868,4 +2901,6 @@ void UIRecordedView_Shutdown(void)
 	sb_reset(&s_textSpan);
 	sb_reset(&s_wrappedLine);
 	sb_reset(&s_selectedLine);
+	sb_reset(&s_viewTitle);
+	sb_reset(&s_newTitleName);
 }

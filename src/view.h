@@ -210,6 +210,7 @@ AUTOJSON typedef struct view_config_s
 	view_config_categories_t configCategories;
 	view_console_history_t consoleHistory;
 	view_console_history_t filterHistory;
+	sb_t titleInput;
 	sb_t filterInput;
 	sb_t spansInput;
 	sb_t frameSpansInput;
