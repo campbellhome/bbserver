@@ -48,6 +48,7 @@ AUTOSTRUCT typedef struct recording_s
 	char applicationName[kBBSize_ApplicationName];
 	char applicationFilename[kBBSize_ApplicationName];
 	char path[kBBSize_MaxPath];
+	char userTitle[kBBSize_RecordingName];
 	u32 id;
 	u32 filetimeHigh;
 	u32 filetimeLow;

@@ -602,6 +602,9 @@ recording_t recording_clone(const recording_t *src)
 		for(u32 i = 0; i < BB_ARRAYSIZE(src->path); ++i) {
 			dst.path[i] = src->path[i];
 		}
+		for(u32 i = 0; i < BB_ARRAYSIZE(src->userTitle); ++i) {
+			dst.userTitle[i] = src->userTitle[i];
+		}
 		dst.id = src->id;
 		dst.filetimeHigh = src->filetimeHigh;
 		dst.filetimeLow = src->filetimeLow;
@@ -610,9 +613,7 @@ recording_t recording_clone(const recording_t *src)
 		dst.outgoingMqId = src->outgoingMqId;
 		dst.platform = src->platform;
 		dst.pendingDelete = src->pendingDelete;
-		for(u32 i = 0; i < BB_ARRAYSIZE(src->pad); ++i) {
-			dst.pad[i] = src->pad[i];
-		}
+		dst.deleteFailed = src->deleteFailed;
 	}
 	return dst;
 }

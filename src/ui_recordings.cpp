@@ -306,21 +306,22 @@ static void UIRecordings_Recording(recording_tab_t tab, grouped_recording_entry_
 	PushStyleColor(ImGuiCol_Text, MakeColor(styleColor));
 	b32 oldShadow = PushTextShadows(styleColor);
 	const char* label = nullptr;
+	const char* name = recording->userTitle[0] ? recording->userTitle : recording->applicationName;
 	if (config->tabs[tab].showDate && config->tabs[tab].showTime)
 	{
-		label = va("%s %s: %s###Selectable", dateBuffer, timeBuffer, recording->applicationName);
+		label = va("%s %s: %s###Selectable", dateBuffer, timeBuffer, name);
 	}
 	else if (config->tabs[tab].showDate)
 	{
-		label = va("%s: %s###Selectable", dateBuffer, recording->applicationName);
+		label = va("%s: %s###Selectable", dateBuffer, name);
 	}
 	else if (config->tabs[tab].showTime)
 	{
-		label = va("%s: %s###Selectable", timeBuffer, recording->applicationName);
+		label = va("%s: %s###Selectable", timeBuffer, name);
 	}
 	else
 	{
-		label = va("%s###Selectable", recording->applicationName);
+		label = va("%s###Selectable", name);
 	}
 	TextShadow(label, false, true);
 	if (Selectable(label, e->selected != 0, ImGuiSelectableFlags_AllowDoubleClick))
@@ -339,14 +340,18 @@ static void UIRecordings_Recording(recording_tab_t tab, grouped_recording_entry_
 	PopStyleColor();
 	if (IsTooltipActive())
 	{
-		if (recording->platform == kBBPlatform_Unknown)
+		BeginTooltip();
+		if (recording->userTitle[0])
 		{
-			SetTooltip("%s", recording->path);
+			TextUnformatted(recording->userTitle);
 		}
-		else
+		TextUnformatted(recording->applicationName);
+		if (recording->platform != kBBPlatform_Unknown)
 		{
-			SetTooltip("%s - %s", recording->path, bb_platform_name((bb_platform_e)recording->platform));
+			TextUnformatted(bb_platform_name((bb_platform_e)recording->platform));
 		}
+		TextUnformatted(recording->path);
+		EndTooltip();
 	}
 	if (ImGui::BeginPopupContextItem("RecordingContextMenu"))
 	{

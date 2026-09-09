@@ -16,6 +16,7 @@
 #include "sb.h"
 #include "sdict.h"
 #include "va.h"
+#include "view.h"
 #include "view_config.h"
 
 #include "bb_array.h"
@@ -254,6 +255,26 @@ void recordings_sort(recording_tab_t tab)
 	}
 }
 
+static void recording_init_userTitle(recording_t *recording)
+{
+	sb_t viewConfigPath = view_session_config_get_path(recording->path);
+	JSON_Value* viewConfigVal = json_parse_file(sb_get(&viewConfigPath));
+	if (viewConfigVal)
+	{
+		view_session_config_t viewSessionConfig = json_deserialize_view_session_config_t(viewConfigVal);
+		if (sb_len(&viewSessionConfig.viewConfig.titleInput))
+		{
+			sb_replace_all_inplace(&viewSessionConfig.viewConfig.titleInput, "{app}", recording->applicationName);
+			sb_replace_all_inplace(&viewSessionConfig.viewConfig.titleInput, "{fname}", recording->applicationFilename);
+
+			bb_strncpy(recording->userTitle, sb_get(&viewSessionConfig.viewConfig.titleInput), sizeof(recording->userTitle));
+		}
+		view_session_config_reset(&viewSessionConfig);
+		json_value_free(viewConfigVal);
+	}
+	sb_reset(&viewConfigPath);
+}
+
 void recording_add_existing(char* data, b32 valid)
 {
 	recording_t* recording;
@@ -272,9 +293,11 @@ void recording_add_existing(char* data, b32 valid)
 				bb_strncpy(recording->applicationName, sb_get(&r.applicationName), sizeof(recording->applicationName));
 				bb_strncpy(recording->applicationFilename, sb_get(&r.applicationFilename), sizeof(recording->applicationFilename));
 				bb_strncpy(recording->path, sb_get(&r.path), sizeof(recording->path));
+				recording_init_userTitle(recording);
 				Fonts_CacheGlyphs(recording->applicationName);
 				Fonts_CacheGlyphs(recording->applicationFilename);
 				Fonts_CacheGlyphs(recording->path);
+				Fonts_CacheGlyphs(recording->userTitle);
 				recording->filetimeHigh = r.filetime.dwHighDateTime;
 				recording->filetimeLow = r.filetime.dwLowDateTime;
 				recording->outgoingMqId = mq_invalid_id();
@@ -482,9 +505,11 @@ void recording_started(char* data)
 				bb_strncpy(recording->applicationName, sb_get(&r.applicationName), sizeof(recording->applicationName));
 				bb_strncpy(recording->applicationFilename, sb_get(&r.applicationFilename), sizeof(recording->applicationFilename));
 				bb_strncpy(recording->path, sb_get(&r.path), sizeof(recording->path));
+				recording_init_userTitle(recording);
 				Fonts_CacheGlyphs(recording->applicationName);
 				Fonts_CacheGlyphs(recording->applicationFilename);
 				Fonts_CacheGlyphs(recording->path);
+				Fonts_CacheGlyphs(recording->userTitle);
 				recording->platform = r.platform;
 				recording->recordingType = r.recordingType;
 				if (r.mqId == mq_invalid_id())
@@ -815,6 +840,7 @@ static void recordings_find_files_in_dir(const char* dir, b32 bExternal)
 					b32 valid = recordings_get_application_info(filter, &decoded);
 					char applicationFilename[kBBSize_ApplicationName];
 					new_recording_t recording;
+					memset(&recording, 0, sizeof(recording));
 					recording.applicationName = sb_from_c_string(decoded.packet.appInfo.applicationName);
 					sanitize_app_filename(sb_get(&recording.applicationName), applicationFilename, sizeof(applicationFilename));
 					recording.applicationFilename = sb_from_c_string(applicationFilename);

@@ -178,6 +178,7 @@ static b32 BBServer_Init(const char* commandLineRecording)
 		if (discovery_thread_init(AF_UNSPEC) != 0)
 		{
 			new_recording_t recording;
+			memset(&recording, 0, sizeof(recording));
 			config_push_whitelist(&g_config.whitelist);
 			GetSystemTimeAsFileTime(&recording.filetime);
 			recording.applicationName = sb_from_c_string(applicationName);

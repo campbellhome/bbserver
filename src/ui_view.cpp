@@ -1712,7 +1712,7 @@ static void DrawViewToggles(view_t* view, const char* applicationName)
 	}
 }
 
-static char* UIRecordedView_GetViewId(view_t* view, bool autoTileViews)
+static const char* UIRecordedView_BuildTitle(view_t* view)
 {
 	recorded_session_t* session = view->session;
 	const char* applicationName = session->appInfo.packet.appInfo.applicationName;
@@ -1727,7 +1727,16 @@ static char* UIRecordedView_GetViewId(view_t* view, bool autoTileViews)
 	}
 	sb_replace_all_inplace(&s_viewTitle, "{app}", applicationName);
 	sb_replace_all_inplace(&s_viewTitle, "{fname}", filename);
-	return va("%s###View_%s_%u_%d", sb_get(&s_viewTitle), filename, view->viewId, autoTileViews);
+	return sb_get(&s_viewTitle);
+}
+
+static char* UIRecordedView_GetViewId(view_t* view, bool autoTileViews)
+{
+	recorded_session_t* session = view->session;
+	char* slash = strrchr(session->path, '\\');
+	char* filename = (slash) ? slash + 1 : session->path;
+
+	return va("%s###View_%s_%u_%d", UIRecordedView_BuildTitle(view), filename, view->viewId, autoTileViews);
 }
 
 static void view_close_and_write_config(view_t* view)
@@ -1845,6 +1854,15 @@ static void UIRecordedView_ViewPopupContents(view_t* view, recording_t* recordin
 			sb_reset(&view->config.titleInput);
 			view->config.titleInput = sb_clone(&s_newTitleName);
 			sb_reset(&s_newTitleName);
+
+			if (sb_len(&view->config.titleInput))
+			{
+				bb_strncpy(recording->userTitle, UIRecordedView_BuildTitle(view), sizeof(recording->userTitle));
+			}
+			else
+			{
+				recording->userTitle[0] = '0';
+			}
 		}
 		ImGui::EndMenu();
 	}
