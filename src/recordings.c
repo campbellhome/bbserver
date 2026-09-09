@@ -383,10 +383,13 @@ static void recordings_keep_latest_recordings(filterTokens* tokens, const char**
 				for (u32 j = 0; j < filteredMatches.count - entry->allowed; ++j)
 				{
 					recording_t* filteredRecording = filteredMatches.data[j];
-					BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", filteredRecording->applicationFilename, entry->allowed, sb_get(&entry->filter));
-					filteredRecording->pendingDelete = true;
-					s_tabData[tab].dirty = true;
-					s_tabData[tab].scrollToEnd = true;
+					if (!filteredRecording->deleteFailed)
+					{
+						BB_LOG("Recordings::AutoDelete", "Deleting %s when keeping %u recordings matching %s", filteredRecording->applicationFilename, entry->allowed, sb_get(&entry->filter));
+						filteredRecording->pendingDelete = true;
+						s_tabData[tab].dirty = true;
+						s_tabData[tab].scrollToEnd = true;
+					}
 				}
 			}
 
@@ -648,7 +651,7 @@ b32 recordings_delete_by_id(u32 id)
 static b32 recordings_check_autodelete(ULARGE_INTEGER nowInt, recording_t* recording)
 {
 	b32 ret = false;
-	if (!recording->active)
+	if (!recording->active && !recording->deleteFailed)
 	{
 		ULARGE_INTEGER fileInt;
 		fileInt.LowPart = recording->filetimeLow;
@@ -693,6 +696,7 @@ static u32 recordings_delete_pending_deleted(recording_tab_t tab, recordings_t* 
 			}
 			else
 			{
+				recording->deleteFailed = true;
 				bba_push(remaining, *recording);
 			}
 		}

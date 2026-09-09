@@ -55,8 +55,8 @@ AUTOSTRUCT typedef struct recording_s
 	recording_type_t recordingType;
 	u32 outgoingMqId;
 	u32 platform;
-	u32 pendingDelete;
-	u8 pad[4];
+	b32 pendingDelete;
+	b32 deleteFailed;
 } recording_t;
 
 AUTOJSON typedef struct new_recording_s
