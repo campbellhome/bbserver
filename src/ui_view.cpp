@@ -1849,11 +1849,10 @@ static void UIRecordedView_ViewPopupContents(view_t* view, recording_t* recordin
 		ImGui::TextUnformatted("Valid substitutions:");
 		ImGui::Text("  {app} %s %s", ICON_FK_ARROW_RIGHT, session->appInfo.packet.appInfo.applicationName);
 		ImGui::Text("  {fname} %s %s", ICON_FK_ARROW_RIGHT, filename);
-		if (ImGui::InputText("##NewTitle", &s_newTitleName, 128, ImGuiInputTextFlags_EnterReturnsTrue))
+		if (ImGui::InputText("##NewTitle", &s_newTitleName, 128, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll))
 		{
 			sb_reset(&view->config.titleInput);
 			view->config.titleInput = sb_clone(&s_newTitleName);
-			sb_reset(&s_newTitleName);
 
 			if (sb_len(&view->config.titleInput))
 			{
@@ -1865,6 +1864,14 @@ static void UIRecordedView_ViewPopupContents(view_t* view, recording_t* recordin
 			}
 		}
 		ImGui::EndMenu();
+	}
+	else
+	{
+		if (strcmp(sb_get(&s_newTitleName), sb_get(&view->config.titleInput)) != 0)
+		{
+			sb_clear(&s_newTitleName);
+			sb_append(&s_newTitleName, sb_get(&view->config.titleInput));
+		}
 	}
 
 	ImGui::Separator();
