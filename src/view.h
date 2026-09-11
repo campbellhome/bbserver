@@ -6,6 +6,7 @@
 #include "config.h"
 #include "message_box.h"
 #include "view_filter.h"
+#include "filter.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -350,6 +351,8 @@ typedef struct view_s
 	vfilter_t vfilter;
 	view_spans_t spans;
 	view_frame_spans_t frameSpans;
+	sb_t categoryFilterInput;
+	filterTokens categoryFilter;
 	sb_t consoleInput;
 	sb_t lastConsoleInput;
 	u64 consoleInputTime;
@@ -440,6 +443,7 @@ void view_set_category_collection_disabled(view_category_collection_t* categoryC
 void view_apply_tag(view_t* view);
 void view_remove_unreferenced_categories(view_category_collection_t* categoryCollection);
 void view_set_all_category_visibility(view_t* view, b8 visible);
+void view_set_filtered_category_visibility(view_t* view, b8 visible);
 void view_set_all_thread_visibility(view_t* view, b8 visible);
 void view_set_all_file_visibility(view_t* view, b8 visible);
 void view_set_all_pieinstance_visibility(view_t* view, b8 visible);

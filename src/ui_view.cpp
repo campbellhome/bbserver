@@ -2232,6 +2232,7 @@ static void UIRecordedView_Update(view_t* view, bool autoTileViews)
 		{
 			ImGui::SetKeyboardFocusHere();
 		}
+		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted("Filter:");
 		ImGui::SameLine();
 		if (ImGui::Checkbox("###FilterActive", &view->config.filterActive))

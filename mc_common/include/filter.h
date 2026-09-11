@@ -33,6 +33,7 @@ void reset_filter_tokens(filterTokens* tokens);
 filterToken* add_filter_token(filterTokens* tokens, const char* category, const char* text);
 void build_filter_tokens(filterTokens* tokens, const char* src);
 b32 passes_filter_tokens(filterTokens* tokens, sdict_t* sd, const char** keys, u32 numKeys);
+b32 passes_filter_tokens_simple(filterTokens* tokens, const char* value);
 
 #if defined(__cplusplus)
 }

@@ -227,6 +227,8 @@ void view_reset(view_t* view)
 	bba_free(view->visibleLogs);
 	bba_free(view->persistentLogs);
 	vfilter_reset(&view->vfilter);
+	sb_reset(&view->categoryFilterInput);
+	reset_filter_tokens(&view->categoryFilter);
 	bba_free(view->spans);
 	bba_free(view->frameSpans);
 	view_config_reset(&view->config);
@@ -1136,6 +1138,27 @@ void view_set_all_category_visibility(view_t* view, b8 visible)
 	for (i = 0; i < view->categories.count; ++i)
 	{
 		view_category_t* c = view->categories.data + i;
+		c->visible = visible;
+	}
+	view_apply_tag(view);
+}
+
+void view_set_filtered_category_visibility(view_t* view, b8 visible)
+{
+	u32 i;
+	BB_LOG("Debug", "%s filtered categories for '%s'\n",
+	       visible ? "Checked" : "Unchecked",
+	       view->session->appInfo.packet.appInfo.applicationName);
+	view->visibleLogsDirty = true;
+	view->config.newNonFavoriteCategoryVisibility = visible;
+	for (i = 0; i < view->categories.count; ++i)
+	{
+		view_category_t* c = view->categories.data + i;
+		if (view->categoryFilter.count && !passes_filter_tokens_simple(&view->categoryFilter, c->categoryName))
+		{
+			continue;
+		}
+
 		c->visible = visible;
 	}
 	view_apply_tag(view);

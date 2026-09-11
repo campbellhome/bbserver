@@ -165,3 +165,29 @@ b32 passes_filter_tokens(filterTokens* tokens, sdict_t* sd, const char** keys, u
 	}
 	return true;
 }
+
+b32 passes_filter_tokens_simple(filterTokens* tokens, const char* value)
+{
+	b32 ok = false;
+	u32 numAllowed = 0;
+	for (u32 i = 0; i < tokens->count; ++i)
+	{
+		filterToken* token = tokens->data + i;
+		numAllowed += (!token->required && !token->prohibited);
+		b32 found = bb_stristr(value, sb_get(&token->text)) != NULL;
+		if ((found && token->prohibited) || (!found && token->required))
+		{
+			return false;
+			break;
+		}
+		else if (found)
+		{
+			ok = true;
+		}
+	}
+	if (!ok && numAllowed)
+	{
+		return false;
+	}
+	return true;
+}

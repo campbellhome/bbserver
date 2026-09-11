@@ -419,7 +419,7 @@ static void UITags_SelectedCategories_RemoveTag(view_t* view, const char* tagNam
 	tag_apply_tag_to_all_views();
 }
 
-static void UITags_UnusedTagCategoryPopup(tag_t *tag, const char* categoryName)
+static void UITags_UnusedTagCategoryPopup(tag_t* tag, const char* categoryName)
 {
 	if (ImGui::BeginPopupContextItem(va("%sContextMenu", categoryName)))
 	{
@@ -755,11 +755,27 @@ void UITags_Update(view_t* view)
 		{
 			view_collect_categories_by_selection(view, &s_matching, &s_unmatching);
 
+			ImGui::PushID(-1);
+			ImGui::TextUnformatted("Filter:");
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(-1.0f);
+			if (ImGui::InputText("##CategoryFilter", &view->categoryFilterInput, ImGuiInputTextFlags_AutoSelectAll))
+			{
+				reset_filter_tokens(&view->categoryFilter);
+				build_filter_tokens(&view->categoryFilter, sb_get(&view->categoryFilterInput));
+			}
+			ImGui::PopID();
+
 			u32 checkedCount = 0;
 			u32 uncheckedCount = 0;
 			for (u32 index = 0; index < viewCategories->count; ++index)
 			{
 				view_category_t* category = viewCategories->data + index;
+				if (view->categoryFilter.count && !passes_filter_tokens_simple(&view->categoryFilter, category->categoryName))
+				{
+					continue;
+				}
+
 				if (category->visible)
 				{
 					++checkedCount;
@@ -777,7 +793,7 @@ void UITags_Update(view_t* view)
 			}
 			if (ImGui::Checkbox("", &allChecked))
 			{
-				view_set_all_category_visibility(view, allChecked);
+				view_set_filtered_category_visibility(view, allChecked);
 				if (allChecked)
 				{
 					u32 newCheckedCount = 0;
@@ -785,6 +801,11 @@ void UITags_Update(view_t* view)
 					for (u32 index = 0; index < viewCategories->count; ++index)
 					{
 						view_category_t* category = viewCategories->data + index;
+						if (view->categoryFilter.count && !passes_filter_tokens_simple(&view->categoryFilter, category->categoryName))
+						{
+							continue;
+						}
+
 						if (category->visible)
 						{
 							++newCheckedCount;
@@ -799,7 +820,7 @@ void UITags_Update(view_t* view)
 					// unchecked by tag visibility.  In that case, treat it like they're all checked.
 					if (newUncheckedCount && checkedCount == newCheckedCount)
 					{
-						view_set_all_category_visibility(view, false);
+						view_set_filtered_category_visibility(view, false);
 					}
 				}
 			}
@@ -808,7 +829,14 @@ void UITags_Update(view_t* view)
 				ImGui::PopItemFlag();
 			}
 			ImGui::SameLine();
-			ImGui::TextUnformatted("All Categories");
+			if (view->categoryFilter.count == 0)
+			{
+				ImGui::TextUnformatted("All Categories");
+			}
+			else
+			{
+				ImGui::TextUnformatted("Filtered Categories");
+			}
 			ImGui::PopID();
 
 			if (ImGui::BeginPopupContextItem("AllCategoriesPopup"))
@@ -837,6 +865,11 @@ void UITags_Update(view_t* view)
 			recorded_category_t* recordedCategory = recordedCategories->data + viewCategoryIndex;
 			view_category_t* viewCategory = viewCategories->data + viewCategoryIndex;
 			if (view_category_treat_as_empty(viewCategory))
+			{
+				continue;
+			}
+
+			if (view->categoryFilter.count && !passes_filter_tokens_simple(&view->categoryFilter, viewCategory->categoryName))
 			{
 				continue;
 			}
