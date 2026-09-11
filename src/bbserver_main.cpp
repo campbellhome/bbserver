@@ -467,10 +467,13 @@ static void LoggingFreeWrapper(void* ptr, void* user_data)
 
 int CALLBACK WinMain(_In_ HINSTANCE Instance, _In_opt_ HINSTANCE /*PrevInstance*/, _In_ LPSTR CommandLine, _In_ int /*ShowCode*/)
 {
-	crt_leak_check_init();
 #ifdef _DEBUG
-	bb_tracked_malloc_enable(true);
-	bba_set_logging(true, true);
+	if (bb_stristr(CommandLine, "-memdebug"))
+	{
+		crt_leak_check_init();
+		bb_tracked_malloc_enable(true);
+		bba_set_logging(true, true);
+	}
 #endif
 
 	setlocale(LC_ALL, "en_US.UTF8");
