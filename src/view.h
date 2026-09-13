@@ -215,6 +215,7 @@ AUTOJSON typedef struct view_config_s
 	sb_t filterInput;
 	sb_t spansInput;
 	sb_t frameSpansInput;
+	sb_t categoryFilterInput;
 	b32 showVeryVerbose;
 	b32 showVerbose;
 	b32 showLogs;
@@ -228,7 +229,9 @@ AUTOJSON typedef struct view_config_s
 	b32 newFileVisibility;
 	b32 filterActive;
 	b32 showFilterHelp;
+	b32 categoryFilterActive;
 	u32 version;
+	u32 pad;
 } view_config_t;
 
 enum
@@ -351,7 +354,6 @@ typedef struct view_s
 	vfilter_t vfilter;
 	view_spans_t spans;
 	view_frame_spans_t frameSpans;
-	sb_t categoryFilterInput;
 	filterTokens categoryFilter;
 	sb_t consoleInput;
 	sb_t lastConsoleInput;
@@ -451,6 +453,7 @@ void view_remove_all_bookmarks(view_t* view);
 void view_toggle_bookmarks_for_selection(view_t* view);
 void view_advance_to_next_bookmark(view_t* view, b32 forward);
 void view_console_history_entry_reset(view_console_history_entry_t* val);
+void view_rebuild_category_filter(view_t *view);
 
 #if defined(__cplusplus)
 }

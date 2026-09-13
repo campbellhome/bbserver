@@ -789,6 +789,7 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.filterInput = json_deserialize_sb_t(json_object_get_value(obj, "filterInput"));
 			dst.spansInput = json_deserialize_sb_t(json_object_get_value(obj, "spansInput"));
 			dst.frameSpansInput = json_deserialize_sb_t(json_object_get_value(obj, "frameSpansInput"));
+			dst.categoryFilterInput = json_deserialize_sb_t(json_object_get_value(obj, "categoryFilterInput"));
 			dst.showVeryVerbose = json_object_get_boolean_safe(obj, "showVeryVerbose");
 			dst.showVerbose = json_object_get_boolean_safe(obj, "showVerbose");
 			dst.showLogs = json_object_get_boolean_safe(obj, "showLogs");
@@ -802,7 +803,9 @@ view_config_t json_deserialize_view_config_t(JSON_Value *src)
 			dst.newFileVisibility = json_object_get_boolean_safe(obj, "newFileVisibility");
 			dst.filterActive = json_object_get_boolean_safe(obj, "filterActive");
 			dst.showFilterHelp = json_object_get_boolean_safe(obj, "showFilterHelp");
+			dst.categoryFilterActive = json_object_get_boolean_safe(obj, "categoryFilterActive");
 			dst.version = (u32)json_object_get_number(obj, "version");
+			dst.pad = (u32)json_object_get_number(obj, "pad");
 		}
 	}
 	return dst;
@@ -1552,6 +1555,7 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_value(obj, "filterInput", json_serialize_sb_t(&src->filterInput));
 		json_object_set_value(obj, "spansInput", json_serialize_sb_t(&src->spansInput));
 		json_object_set_value(obj, "frameSpansInput", json_serialize_sb_t(&src->frameSpansInput));
+		json_object_set_value(obj, "categoryFilterInput", json_serialize_sb_t(&src->categoryFilterInput));
 		json_object_set_boolean(obj, "showVeryVerbose", src->showVeryVerbose);
 		json_object_set_boolean(obj, "showVerbose", src->showVerbose);
 		json_object_set_boolean(obj, "showLogs", src->showLogs);
@@ -1565,7 +1569,9 @@ JSON_Value *json_serialize_view_config_t(const view_config_t *src)
 		json_object_set_boolean(obj, "newFileVisibility", src->newFileVisibility);
 		json_object_set_boolean(obj, "filterActive", src->filterActive);
 		json_object_set_boolean(obj, "showFilterHelp", src->showFilterHelp);
+		json_object_set_boolean(obj, "categoryFilterActive", src->categoryFilterActive);
 		json_object_set_number(obj, "version", src->version);
+		json_object_set_number(obj, "pad", src->pad);
 	}
 	return val;
 }

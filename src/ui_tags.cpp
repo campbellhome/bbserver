@@ -756,13 +756,19 @@ void UITags_Update(view_t* view)
 			view_collect_categories_by_selection(view, &s_matching, &s_unmatching);
 
 			ImGui::PushID(-1);
+
+			ImGui::AlignTextToFramePadding();
 			ImGui::TextUnformatted("Filter:");
 			ImGui::SameLine();
-			ImGui::SetNextItemWidth(-1.0f);
-			if (ImGui::InputText("##CategoryFilter", &view->categoryFilterInput, ImGuiInputTextFlags_AutoSelectAll))
+			if (ImGui::Checkbox("###FilterActive", &view->config.categoryFilterActive))
 			{
-				reset_filter_tokens(&view->categoryFilter);
-				build_filter_tokens(&view->categoryFilter, sb_get(&view->categoryFilterInput));
+				view_rebuild_category_filter(view);
+			}
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(-1.0f);
+			if (ImGui::InputText("##CategoryFilter", &view->config.categoryFilterInput, ImGuiInputTextFlags_AutoSelectAll))
+			{
+				view_rebuild_category_filter(view);
 			}
 			ImGui::PopID();
 

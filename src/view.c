@@ -207,6 +207,7 @@ void view_init_appinfo(view_t* view)
 {
 	BB_LOG("View", "init appinfo: %s\n", view->session->appInfo.packet.appInfo.applicationName);
 	view_config_read(view);
+	view_rebuild_category_filter(view); 
 }
 
 void view_reset(view_t* view)
@@ -227,7 +228,6 @@ void view_reset(view_t* view)
 	bba_free(view->visibleLogs);
 	bba_free(view->persistentLogs);
 	vfilter_reset(&view->vfilter);
-	sb_reset(&view->categoryFilterInput);
 	reset_filter_tokens(&view->categoryFilter);
 	bba_free(view->spans);
 	bba_free(view->frameSpans);
@@ -1334,5 +1334,14 @@ static void view_add_log_internal(view_t* view, recorded_log_t* log, u32 persist
 				}
 			}
 		}
+	}
+}
+
+void view_rebuild_category_filter(view_t *view)
+{
+	reset_filter_tokens(&view->categoryFilter);
+	if (view->config.categoryFilterActive)
+	{
+		build_filter_tokens(&view->categoryFilter, sb_get(&view->config.categoryFilterInput));
 	}
 }

@@ -1218,6 +1218,7 @@ void view_config_reset(view_config_t *val)
 		sb_reset(&val->filterInput);
 		sb_reset(&val->spansInput);
 		sb_reset(&val->frameSpansInput);
+		sb_reset(&val->categoryFilterInput);
 	}
 }
 view_config_t view_config_clone(const view_config_t *src)
@@ -1234,6 +1235,7 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.filterInput = sb_clone(&src->filterInput);
 		dst.spansInput = sb_clone(&src->spansInput);
 		dst.frameSpansInput = sb_clone(&src->frameSpansInput);
+		dst.categoryFilterInput = sb_clone(&src->categoryFilterInput);
 		dst.showVeryVerbose = src->showVeryVerbose;
 		dst.showVerbose = src->showVerbose;
 		dst.showLogs = src->showLogs;
@@ -1247,7 +1249,9 @@ view_config_t view_config_clone(const view_config_t *src)
 		dst.newFileVisibility = src->newFileVisibility;
 		dst.filterActive = src->filterActive;
 		dst.showFilterHelp = src->showFilterHelp;
+		dst.categoryFilterActive = src->categoryFilterActive;
 		dst.version = src->version;
+		dst.pad = src->pad;
 	}
 	return dst;
 }
