@@ -768,6 +768,7 @@ void UITags_Update(view_t* view)
 			ImGui::SetNextItemWidth(-1.0f);
 			if (ImGui::InputText("##CategoryFilter", &view->config.categoryFilterInput, ImGuiInputTextFlags_AutoSelectAll))
 			{
+				view->config.categoryFilterActive = true;
 				view_rebuild_category_filter(view);
 			}
 			ImGui::PopID();
